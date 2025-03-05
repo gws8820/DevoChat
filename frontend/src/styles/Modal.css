@@ -1,0 +1,63 @@
+/* Modal.css */
+.modal-overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+}
+
+.modal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 80%;
+    padding: 40px;
+    gap: 10px;
+    background: #fff;
+    border-radius: 10px;
+}
+
+.modal-content {
+    margin: 20px 0;
+    font-size: 20px;
+}
+
+.modal-button button {
+    margin: 0 5px;
+    padding: 15px 50px;
+    font-size: 16px;
+    border: 1px solid rgb(240, 240, 240);
+    border-radius: 5px;
+    cursor: pointer;
+    background: transparent;
+    transition: background-color 0.3s ease;
+}
+
+.modal-button button:hover {
+    background-color: rgb(240, 240, 240);
+}
+
+.modal-button .highlight:hover {
+    background-color: rgb(255, 100, 100);
+}
+
+.error-modal {
+    display: flex;
+    align-items: center;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    background: rgb(239, 68, 68);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 4px;
+    z-index: 1000;
+}

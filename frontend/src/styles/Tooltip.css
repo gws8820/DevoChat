@@ -1,0 +1,54 @@
+/* src/styles/Tooltip.css */
+
+.tooltip-wrapper {
+    position: relative;
+    display: inline-block; /* 인라인 아이콘이나 텍스트 감싸기 용 */
+  }
+  
+  .tooltip-box {
+    position: absolute;
+    z-index: 999;
+    background-color: rgb(60, 60, 60);
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    animation: fadeIn 0.2s forwards;
+  }
+  
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+  
+  .tooltip-top {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 5px;
+  }
+  
+  .tooltip-right {
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    margin-left: 5px;
+  }
+  
+  .tooltip-bottom {
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, 0);
+    margin-top: 5px;
+  }
+  
+  .tooltip-left {
+    top: 50%;
+    right: 100%;
+    transform: translateY(-50%);
+    margin-right: 5px;
+  }

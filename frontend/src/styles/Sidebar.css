@@ -1,0 +1,238 @@
+/* src/styles/Sidebar.css */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 260px;
+    height: 100dvh;
+    box-sizing: border-box;
+    border-right: 1px solid rgb(240, 240, 240);
+    background-color: rgb(252, 252, 252);
+    z-index: 2;
+    position: fixed;
+    left: 0;
+    top: 0;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between; /* 왼쪽과 오른쪽을 분리 */
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    height: 60px;
+    flex: 0 0 60px;
+    padding: 0px 20px 0 16px;
+}
+
+.sidebar .header-icon {
+    padding: 0;
+}
+
+/* 버튼 스타일 */
+.sidebar button {
+    width: 100%;
+    color: rgb(0, 0, 0);
+    background-color: transparent;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease-in-out;
+    font-size: 16px;
+    text-align: left;
+}
+
+.sidebar button:hover {
+    background-color: #f0f0f0;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo-image {
+    padding-top: 2px;
+    max-width: 70%;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+/* 사이드바 닫기 버튼 스타일 */
+.hide-sidebar {
+    cursor: pointer;
+    font-size: 18px;
+}
+
+/* Sidebar 열기 버튼 */
+.expand-sidebar {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+.newconv-container {
+    margin-top: 5px;
+    border-bottom: 1px solid rgb(240, 240, 240);
+}
+
+.new-conversation {
+    padding: 10px 20px;
+    font-weight: 500;
+}
+
+.conversation-container {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    list-style-type: none;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.conversation-container.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+.conversation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.conversation-item:hover {
+    background-color: #f0f0f0;
+}
+
+.conversation-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: none;
+}
+
+.active-conversation {
+    background-color: #e0e0e0;
+}
+
+.conversation-text {
+    font-size: 14px;
+    color: #333;
+}
+
+.context-menu {
+    font-size: 15px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+    border-radius: 4px;
+}
+
+.context-menu ul {
+    width: 100%;
+    margin: 0;
+    list-style: none;
+    padding: 8px 0;
+}
+
+.context-menu li {
+    padding: 8px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.user-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    background-color: rgb(255, 255, 255);
+    border-radius: 5px;
+    z-index: 999;
+}
+
+.user-dropdown button {
+    text-align: center;
+    width: 100%;
+    cursor: pointer;
+}
+
+.user-dropdown button:hover {
+    background-color: #f0f0f0;
+}
+
+.user-container {
+    position: relative;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 25px 20px;
+    gap: 10px;
+    border-top: 1px solid rgb(240, 240, 240);
+    cursor: pointer;
+}
+
+.user-info:hover {
+    background-color: #f0f0f0;
+}
+
+.user-icon {
+    font-size: 28px;
+}
+
+.user-billing {
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid rgb(240, 240, 240);
+}
+
+.dropdown-button {
+    width: 100%;
+    text-align: center;
+    cursor: pointer;
+    padding: 20px 0;
+    font-size: 16px;
+    color: #333;
+    border-top: 1px solid rgb(248, 248, 248);
+}
+
+.dropdown-button:hover {
+    background-color: #f0f0f0;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+    }
+    .sidebar.visible {
+        transform: translateX(0);
+    }
+}
+
+@media (hover: hover) {
+    .conversation-item:hover .delete-icon {
+      opacity: 1;
+    }
+  }
