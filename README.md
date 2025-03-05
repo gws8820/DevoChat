@@ -3,43 +3,50 @@
 ### 다양한 AI 모델을 위한 통합 대화형 인터페이스
 DevoChat은 다양한 AI 모델을 하나의 플랫폼에서 일관된 사용자 경험으로 활용할 수 있는 웹 애플리케이션입니다. API로 제공되는 여러 AI 서비스를 손쉽게 통합하고 관리할 수 있습니다.
 
-## 스크린샷
-
-<div align="center">
-  <figure>
-    <img src="samples/main.png" alt="메인 화면" width="50%">
-    <figcaption>메인 화면</figcaption>
-  </figure>
-  <br>
-  <figure>
-    <img src="samples/model-select.png" alt="모델 선택 화면" width="50%">
-    <figcaption>모델 선택 화면</figcaption>
-  </figure>
-  <br>
-  <figure>
-    <img src="samples/code-sample.png" alt="Code Block 샘플" width="50%">
-    <figcaption>코드 하이라이팅 및 복사 가능</figcaption>
-  </figure>
-  <br>
-  <figure>
-    <img src="samples/latex-sample.png" alt="LaTeX 샘플" width="50%">
-    <figcaption>수식 렌더링 지원</figcaption>
-  </figure>
-  <br>
-  <figure>
-    <img src="samples/image-sample.png" alt="이미지 샘플" width="50%">
-    <figcaption>이미지 업로드 및 처리</figcaption>
-  </figure>
-  <br>
-  <figure>
-    <img src="samples/doc-sample.png" alt="문서 샘플" width="50%">
-    <figcaption>문서 파일의 텍스트 추출</figcaption>
-  </figure>
-</div>
-
 ## 데모
 
 라이브 데모를 [여기](https://devochat.com)에서 확인하세요.
+
+## 스크린샷
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="samples/main.png" alt="메인 화면">
+      <br>
+      <em>메인 화면</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="samples/model-select.png" alt="모델 선택 화면">
+      <br>
+      <em>모델 선택 화면</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="samples/code-sample.png" alt="Code Block 샘플">
+      <br>
+      <em>코드 하이라이팅 및 복사 가능</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="samples/latex-sample.png" alt="LaTeX 샘플">
+      <br>
+      <em>수식 렌더링 지원</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="samples/image-sample.png" alt="이미지 샘플">
+      <br>
+      <em>이미지 업로드 및 처리</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="samples/doc-sample.png" alt="문서 샘플">
+      <br>
+      <em>문서 파일의 텍스트 추출</em>
+    </td>
+  </tr>
+</table>
 
 ## 주요 기능
 
@@ -133,14 +140,6 @@ XAI_API_KEY=...
 $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 ```
 
-## 사용자 인터페이스
-
-![DevoChat UI](https://your-screenshot-url.com/devochat-ui.png)
-
-- **메인 화면**: 새 대화 시작, 모델 선택, 파일 업로드
-- **채팅 화면**: 대화 내역, 메시지 관리, 기능 토글(검색, 추론, DAN)
-- **설정 패널**: 모델 파라미터 조정, 시스템 프롬프트 설정
-
 ## 사용법
 
 ### models.json 설정
@@ -179,7 +178,8 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
           "search": false
         },
         "type": "think"
-      }
+      },
+      ...
     ]
 }
 ```
@@ -228,7 +228,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 3. 변경사항을 커밋합니다 (`git commit -m 'Add amazing feature'`)
 4. 브랜치에 푸시합니다 (`git push origin feature/amazing-feature`)
 5. Pull Request를 생성합니다
-6. 
+   
 ## 라이선스
 
 이 프로젝트는 [MIT 라이선스](LICENSE)하에 배포됩니다.
