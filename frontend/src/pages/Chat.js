@@ -21,14 +21,14 @@ function Chat({ fetchConversations, isTouch }) {
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
-  const [isLoadingChat, setIsLoadingChat] = useState(false);
-  const [isLoadingResponse, setIsLoadingResponse] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [thinkingText, setThinkingText] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [isAtBottom, setIsAtBottom] = useState(true);
   const [scrollOnSend, setScrollOnSend] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const [deleteIndex, setdeleteIndex] = useState(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
@@ -65,10 +65,10 @@ function Chat({ fetchConversations, isTouch }) {
   const models = modelsData.models;
   const allowedExtensions = useMemo(
     () =>
-      /\.(pdf|doc|docx|pptx|xlsx|csv|txt|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg)$/i,
+      /\.(pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
     []
   );
-
+  
   const getFileId = useCallback((file) => {
     return `${file.name}-${file.size}-${file.lastModified}`;
   }, []);
@@ -106,7 +106,7 @@ function Chat({ fetchConversations, isTouch }) {
 
   const processFiles = useCallback(
     async (files) => {
-      const maxAllowed = 5;
+      const maxAllowed = 10;
       let acceptedFiles = [];
       const currentCount = uploadedFiles.length;
       const remaining = maxAllowed - currentCount;
@@ -151,19 +151,6 @@ function Chat({ fetchConversations, isTouch }) {
     [getFileId, uploadFiles, uploadedFiles]
   );
 
-  useEffect(() => {
-    if (isFunctionOn) {
-      if (isSearch && isInference) {
-        updateModel("sonar-reasoning");
-      } else if (isSearch) {
-        updateModel("sonar");
-      } else if (isInference) {
-        updateModel("o1");
-      }
-    }
-    // eslint-disable-next-line
-  }, [isSearch, isInference, isFunctionOn]);
-
   const updateAssistantMessage = useCallback((message, isComplete = false) => {
     if (thinkingIntervalRef.current) {
       clearInterval(thinkingIntervalRef.current);
@@ -188,22 +175,18 @@ function Chat({ fetchConversations, isTouch }) {
 
   const sendMessage = useCallback(
     async (message, files = uploadedFiles) => {
-      if (!message.trim() && files.length === 0) return;
-
-      setIsLoadingResponse(true);
-      setScrollOnSend(true);
+      if (!message.trim()) return;
 
       const contentParts = [];
-      if (message.trim()) {
-        contentParts.push({ type: "text", text: message });
-      }
-      if (files.length > 0) {
+      contentParts.push({ type: "text", text: message });
+      if (files.length > 0)
         contentParts.push(...files);
-      }
 
       setMessages((prev) => [...prev, { role: "user", content: contentParts }]);
       setInputText("");
       setUploadedFiles([]);
+      setIsLoading(true);
+      requestAnimationFrame(() => {setScrollOnSend(true)});
 
       const controller = new AbortController();
       abortControllerRef.current = controller;
@@ -292,7 +275,7 @@ function Chat({ fetchConversations, isTouch }) {
           thinkingIntervalRef.current = null;
           setIsThinking(false);
         }
-        setIsLoadingResponse(false);
+        setIsLoading(false);
         abortControllerRef.current = null;
       }
     },
@@ -307,18 +290,26 @@ function Chat({ fetchConversations, isTouch }) {
       setErrorMessage,
       isInference,
       isDAN,
-      uploadedFiles,
+      uploadedFiles
     ]
   );
 
   useEffect(() => {
+    if (isFunctionOn) {
+      if (isSearch && isInference) {
+        updateModel("sonar-reasoning");
+      } else if (isSearch) {
+        updateModel("sonar");
+      } else if (isInference) {
+        updateModel("o1");
+      }
+    }
+    // eslint-disable-next-line
+  }, [isSearch, isInference, isFunctionOn]);
+
+  useEffect(() => {
     const initializeChat = async () => {
       try {
-        setIsLoadingChat(true);
-        setIsImage(false);
-        setIsInference(false);
-        setIsSearch(false);
-
         const res = await axios.get(
           `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
           { withCredentials: true }
@@ -349,7 +340,7 @@ function Chat({ fetchConversations, isTouch }) {
           navigate("/", { state: { errorModal: "데이터를 불러오는 중 오류가 발생했습니다." } });
         }
       } finally {
-        setIsLoadingChat(false);
+        setIsInitialized(true);
       }
     };
 
@@ -537,6 +528,10 @@ function Chat({ fetchConversations, isTouch }) {
     [messages, deleteMessages, setIsImage, setErrorModal]
   );
 
+  const scrollOnImage = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+  
   useEffect(() => {
     const chatContainer = messagesEndRef.current?.parentElement;
     if (!chatContainer) return;
@@ -600,7 +595,7 @@ function Chat({ fetchConversations, isTouch }) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {isLoadingChat && (
+      {!isInitialized && (
         <div
           style={{
             display: "flex",
@@ -625,6 +620,7 @@ function Chat({ fetchConversations, isTouch }) {
               onDelete={handleDelete}
               onRegenerate={handleRegenerate}
               onEdit={handleEdit}
+              scrollOnImage={scrollOnImage}
             />
           ))}
         </AnimatePresence>
@@ -697,21 +693,7 @@ function Chat({ fetchConversations, isTouch }) {
                             <div className="file-object">
                               <span className="file-name">{file.name}</span>
                               {file.isUploading && (
-                                <div
-                                  className="file-upload-overlay"
-                                  style={{
-                                    position: "absolute",
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    display: "flex",
-                                    justifyContent: "center",
-                                    alignItems: "center",
-                                    backgroundColor: "rgba(255,255,255,0.8)",
-                                    zIndex: 2,
-                                  }}
-                                >
+                                <div className="file-upload-overlay">
                                   <ClipLoader size={20} />
                                 </div>
                               )}
@@ -794,16 +776,16 @@ function Chat({ fetchConversations, isTouch }) {
         <button
           className="send-button"
           onClick={() => {
-            if (isLoadingResponse) {
+            if (isLoading) {
               abortControllerRef.current?.abort();
             } else {
               sendMessage(inputText);
             }
           }}
           disabled={(uploadedFiles.some((file) => file.isUploading))}
-          aria-label={isLoadingResponse ? "전송 중단" : "메시지 전송"}
+          aria-label={isLoading ? "전송 중단" : "메시지 전송"}
         >
-          {isLoadingResponse ? (
+          {isLoading ? (
             <div className="loading-container">
               <ImSpinner8 className="spinner" />
               <FaStop className="stop-icon" />

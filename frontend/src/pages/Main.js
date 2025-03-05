@@ -58,7 +58,7 @@ function Main({ addConversation, isTouch }) {
   const models = modelsData.models;
   const allowedExtensions = useMemo(
     () =>
-      /\.(pdf|doc|docx|pptx|xlsx|csv|txt|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg)$/i,
+      /\.(pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
     []
   );
 
@@ -144,7 +144,7 @@ function Main({ addConversation, isTouch }) {
 
   const processFiles = useCallback(
     async (files) => {
-      const maxAllowed = 5;
+      const maxAllowed = 10;
       let acceptedFiles = [];
       const currentCount = uploadedFiles.length;
       const remaining = maxAllowed - currentCount;
@@ -197,7 +197,6 @@ function Main({ addConversation, isTouch }) {
         if (!selectedModel) {
           throw new Error("선택한 모델이 유효하지 않습니다.");
         }
-        setInputText("");
         setIsLoading(true);
 
         const response = await axios.post(
@@ -402,21 +401,7 @@ function Main({ addConversation, isTouch }) {
                       <div className="file-object">
                         <span className="file-name">{file.name}</span>
                         {file.isUploading && (
-                          <div
-                            className="file-upload-overlay"
-                            style={{
-                              position: "absolute",
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              backgroundColor: "rgba(255,255,255,0.8)",
-                              zIndex: 2,
-                            }}
-                          >
+                          <div className="file-upload-overlay">
                             <ClipLoader size={20} />
                           </div>
                         )}
@@ -513,7 +498,7 @@ function Main({ addConversation, isTouch }) {
 
       <input
         type="file"
-        accept="image/*, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg"
+        accept="image/*, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
         multiple
         ref={fileInputRef}
         style={{ display: "none" }}

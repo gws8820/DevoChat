@@ -37,6 +37,8 @@ class User(BaseModel):
     name: str
     email: str
     billing: float
+    trial: bool
+    trial_remaining: int = 0
 
 # 비밀번호 해싱 및 검증
 def hash_password(password: str) -> str:
@@ -45,7 +47,6 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
-# 사용자 등록
 @router.post("/register")
 async def register(user: RegisterUser):
     if await collection.find_one({"email": user.email}):
@@ -56,6 +57,8 @@ async def register(user: RegisterUser):
         "email": user.email,
         "password": hash_password(user.password),
         "billing": 0.0,
+        "trial": True,
+        "trial_remaining": 10,
         "created_at": datetime.utcnow()
     }
     result = await collection.insert_one(new_user)
@@ -145,5 +148,7 @@ async def get_current_user(access_token: str = Cookie(None)) -> User:
         user_id=str(db_user["_id"]),
         name=db_user["name"],
         email=db_user["email"],
-        billing=db_user["billing"]
+        billing=db_user["billing"],
+        trial=db_user.get("trial"),
+        trial_remaining=db_user.get("trial_remaining", 0)
     )

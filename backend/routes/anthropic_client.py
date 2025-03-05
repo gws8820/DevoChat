@@ -88,27 +88,53 @@ def calculate_billing(request_array, response, in_billing_rate, out_billing_rate
         search_cost = 0
     total_cost = input_cost + output_cost + search_cost
     return total_cost
-    
+
 def process_files(parts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     def extract_text(base64_str: str, filename: str) -> str:
         header, encoded = base64_str.split(",", 1)
         file_data = base64.b64decode(encoded)
         _, ext = os.path.splitext(filename)
+        ext = ext.lower()
 
-        with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
-            tmp.write(file_data)
-            tmp.flush()
-            tmp_path = tmp.name
+        text_extensions = [
+            '.txt', '.text', '.md', '.markdown',
+            '.json', '.xml', '.csv', '.tsv', '.yaml', '.yml', '.log', '.sql',
+            '.html', '.htm',
+            '.py', '.pyw', '.rb', '.pl',
+            '.java', '.c', '.cpp', '.h', '.hpp',
+            '.js', '.jsx', '.ts', '.tsx',
+            '.css', '.scss', '.less',
+            '.cs', '.sh', '.bash', '.bat', '.ps1',
+            '.ini', '.conf', '.cfg', '.toml',
+            '.tex',
+            '.r',
+            '.swift', '.scala',
+            '.hs', '.erl', '.ex', '.exs',
+            '.go', '.rs', '.php'
+        ]
 
-        try:
-            extracted_bytes = textract.process(tmp_path)
-            text = extracted_bytes.decode("utf-8", errors="ignore")
-        except Exception as e:
-            print(f"textract error: {e}")
-            text = ""
-        finally:
-            os.remove(tmp_path)
-        return text
+        if ext in text_extensions:
+            try:
+                text = file_data.decode("utf-8", errors="replace")
+            except Exception as e:
+                print(f"Direct decode error: {e}")
+                text = ""
+            return text
+        else:
+            with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+                tmp.write(file_data)
+                tmp.flush()
+                tmp_path = tmp.name
+
+            try:
+                extracted_bytes = textract.process(tmp_path)
+                text = extracted_bytes.decode("utf-8", errors="ignore")
+            except Exception as e:
+                print(f"textract error: {e}")
+                text = ""
+            finally:
+                os.remove(tmp_path)
+            return text
 
     processed = []
     for part in parts:
@@ -158,7 +184,13 @@ def format_message(message):
     elif role == "user":
         return {"role": "user", "content": [normalize_content(part) for part in content]}
         
-def get_response(request: ChatRequest, user: User, fastapi_request: Request) -> StreamingResponse:
+def get_response(request: ChatRequest, user: User, fastapi_request: Request):
+    if user.trial and user.trial_remaining <= 0:
+        async def error_generator():
+            message = "체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."
+            yield f"data: {json.dumps({'content': message})}\n\n"
+        return StreamingResponse(error_generator(), media_type="text/event-stream")
+
     conversation_data = conversation_collection.find_one({
         "user_id": user.user_id,
         "conversation_id": request.conversation_id
@@ -181,10 +213,10 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request) -> 
                         if chunk.type == "content_block_start" and hasattr(chunk, "content_block"):
                             if getattr(chunk.content_block, "type", "") == "thinking":
                                 thinking_started = True
-                                await token_queue.put('<think>\n')
+                                await token_queue.put('<div class="think-block">\n')
                         elif chunk.type == "content_block_stop":
                             if thinking_started:
-                                await token_queue.put('\n</think>\n\n')
+                                await token_queue.put('\n</div>\n\n')
                                 thinking_started = False
                     if hasattr(chunk, "delta"):
                         if hasattr(chunk.delta, "thinking"):
@@ -257,17 +289,23 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request) -> 
         finally:
             formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
             conversation.append(formatted_response)
-            billing = calculate_billing(
-                formatted_messages,
-                formatted_response,
-                request.in_billing,
-                request.out_billing,
-                request.search_billing
-            )
-            user_collection.update_one(
-                {"_id": ObjectId(user.user_id)},
-                {"$inc": {"billing": billing}}
-            )
+            if user.trial:
+                user_collection.update_one(
+                    {"_id": ObjectId(user.user_id)},
+                    {"$inc": {"trial_remaining": -1}}
+                )
+            else:
+                billing = calculate_billing(
+                    formatted_messages,
+                    formatted_response,
+                    request.in_billing,
+                    request.out_billing,
+                    request.search_billing
+                )
+                user_collection.update_one(
+                    {"_id": ObjectId(user.user_id)},
+                    {"$inc": {"billing": billing}}
+                )
             conversation_collection.update_one(
                 {"user_id": user.user_id, "conversation_id": request.conversation_id},
                 {"$set": {
@@ -279,7 +317,6 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request) -> 
                 }},
                 upsert=True
             )
-
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @router.post("/claude")

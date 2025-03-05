@@ -7,32 +7,32 @@ DevoChat은 다양한 AI 모델을 하나의 플랫폼에서 일관된 사용자
 
 <div align="center">
   <figure>
-    <img src="docs/images/main.png" alt="메인 화면" width="50%">
+    <img src="samples/main.png" alt="메인 화면" width="50%">
     <figcaption>메인 화면</figcaption>
   </figure>
   <br>
   <figure>
-    <img src="docs/images/model-select.png" alt="모델 선택 화면" width="50%">
+    <img src="samples/model-select.png" alt="모델 선택 화면" width="50%">
     <figcaption>모델 선택 화면</figcaption>
   </figure>
   <br>
   <figure>
-    <img src="docs/images/code-sample.png" alt="Code Block 샘플" width="50%">
+    <img src="samples/code-sample.png" alt="Code Block 샘플" width="50%">
     <figcaption>코드 하이라이팅 및 복사 가능</figcaption>
   </figure>
   <br>
   <figure>
-    <img src="docs/images/latex-sample.png" alt="LaTeX 샘플" width="50%">
+    <img src="samples/latex-sample.png" alt="LaTeX 샘플" width="50%">
     <figcaption>수식 렌더링 지원</figcaption>
   </figure>
   <br>
   <figure>
-    <img src="docs/images/image-sample.png" alt="이미지 샘플" width="50%">
+    <img src="samples/image-sample.png" alt="이미지 샘플" width="50%">
     <figcaption>이미지 업로드 및 처리</figcaption>
   </figure>
   <br>
   <figure>
-    <img src="docs/images/doc-sample.png" alt="문서 샘플" width="50%">
+    <img src="samples/doc-sample.png" alt="문서 샘플" width="50%">
     <figcaption>문서 파일의 텍스트 추출</figcaption>
   </figure>
 </div>
