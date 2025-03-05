@@ -1,7 +1,7 @@
 # DevoChat
 
-### 다양한 AI 모델을 위한 통합 대화형 인터페이스
-DevoChat은 다양한 AI 모델을 하나의 플랫폼에서 일관된 사용자 경험으로 활용할 수 있는 웹 애플리케이션입니다. API로 제공되는 여러 AI 서비스를 손쉽게 통합하고 관리할 수 있습니다.
+### AI 모델을 위한 통합 대화 플랫폼
+DevoChat은 여러 AI 모델을 단일 인터페이스에서 사용할 수 있는 웹 애플리케이션입니다. 다양한 AI 서비스 API를 통합하여 일관된 사용자 경험을 제공합니다.
 
 ## 데모
 
@@ -26,24 +26,24 @@ DevoChat은 다양한 AI 모델을 하나의 플랫폼에서 일관된 사용자
     <td align="center" width="50%">
       <img src="samples/code-sample.png" alt="Code Block 샘플">
       <br>
-      <em>코드 하이라이팅 및 복사 가능</em>
+      <em>코드 하이라이팅</em>
     </td>
     <td align="center" width="50%">
       <img src="samples/latex-sample.png" alt="LaTeX 샘플">
       <br>
-      <em>수식 렌더링 지원</em>
+      <em>수식 렌더링</em>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
       <img src="samples/image-sample.png" alt="이미지 샘플">
       <br>
-      <em>이미지 업로드 및 처리</em>
+      <em>이미지 업로드</em>
     </td>
     <td align="center" width="50%">
       <img src="samples/doc-sample.png" alt="문서 샘플">
       <br>
-      <em>문서 파일의 텍스트 추출</em>
+      <em>문서 파일 업로드</em>
     </td>
   </tr>
 </table>
