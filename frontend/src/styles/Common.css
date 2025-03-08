@@ -22,7 +22,7 @@
     flex-direction: row;
     align-items: center;
     border-radius: 24px;
-    margin-bottom: 55px;
+    margin-bottom: 45px;
     width: 85%;
     max-width: 720px;
     padding: 10px;
@@ -252,6 +252,7 @@
     right: 0;
     bottom: 0;
     font-size: 22px;
+    font-weight: 500;
     color: #fff;
     background: rgba(0, 0, 0, 0.4);
     pointer-events: none;

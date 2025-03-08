@@ -56,11 +56,13 @@ function Main({ addConversation, isTouch }) {
   } = useContext(SettingsContext);
 
   const models = modelsData.models;
+  const uploadingFiles = (uploadedFiles.some((file) => file.isUploading));
   const allowedExtensions = useMemo(
     () =>
-      /\.(pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
+      /\.(zip|pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
     []
   );
+  const maxFileSize = 50 * 1024 * 1024;
 
   const getFileId = useCallback((file) => {
     return `${file.name}-${file.size}-${file.lastModified}`;
@@ -103,11 +105,12 @@ function Main({ addConversation, isTouch }) {
 
   const uploadFiles = useCallback(
     async (file) => {
+      const formData = new FormData();
+      formData.append("file", file);
+  
       if (file.type.startsWith("image/")) {
-        const formData = new FormData();
-        formData.append("file", file);
         const res = await fetch(
-          `${process.env.REACT_APP_FASTAPI_URL}/upload`,
+          `${process.env.REACT_APP_FASTAPI_URL}/upload/image`,
           {
             method: "POST",
             body: formData,
@@ -118,44 +121,56 @@ function Main({ addConversation, isTouch }) {
           throw new Error(data.error);
         }
         return {
-          type: "image",
-          name: data.file_name,
-          content: data.file_path,
+          type: data.type,
+          name: data.name,
+          content: data.content,
           id: getFileId(file),
         };
       } else {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () =>
-            resolve({
-              type: "file",
-              name: file.name,
-              content: reader.result,
-              id: getFileId(file),
-            });
-          reader.onerror = () =>
-            reject(new Error(`파일 변환 중 오류가 발생했습니다: ${reader.error}`));
-          reader.readAsDataURL(file);
-        });
+        const res = await fetch(
+          `${process.env.REACT_APP_FASTAPI_URL}/upload/file`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+        const data = await res.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        return {
+          type: data.type,
+          name: data.name,
+          content: data.content,
+          id: getFileId(file),
+        };
       }
     },
     [getFileId]
   );
-
+  
   const processFiles = useCallback(
     async (files) => {
       const maxAllowed = 10;
       let acceptedFiles = [];
       const currentCount = uploadedFiles.length;
       const remaining = maxAllowed - currentCount;
-
-      if (files.length > remaining) {
+      
+      const sizeAcceptedFiles = files.filter(file => file.size <= maxFileSize);
+      const rejectedSizeFiles = files.filter(file => file.size > maxFileSize);
+      if (rejectedSizeFiles.length > 0) {
+        setErrorModal("50MB를 초과하는 파일은 업로드할 수 없습니다.");
+        setTimeout(() => setErrorModal(null), 3000);
+      }
+      
+      if (sizeAcceptedFiles.length > remaining) {
         setErrorModal("최대 업로드 가능한 파일 개수를 초과했습니다.");
         setTimeout(() => setErrorModal(null), 3000);
-        acceptedFiles = files.slice(0, remaining);
+        acceptedFiles = sizeAcceptedFiles.slice(0, remaining);
       } else {
-        acceptedFiles = files;
+        acceptedFiles = sizeAcceptedFiles;
       }
+      
       setUploadedFiles((prev) => [
         ...prev,
         ...acceptedFiles.map((file) => ({
@@ -177,7 +192,7 @@ function Main({ addConversation, isTouch }) {
               )
             );
           } catch (err) {
-            setErrorModal("파일 처리 중 오류가 발생했습니다: " + err.message);
+            setErrorModal("파일 처리 중 오류가 발생했습니다.");
             setTimeout(() => setErrorModal(null), 3000);
             setUploadedFiles((prev) =>
               prev.filter((item) => item.id !== getFileId(file))
@@ -186,7 +201,7 @@ function Main({ addConversation, isTouch }) {
         })
       );
     },
-    [getFileId, uploadFiles, uploadedFiles]
+    [getFileId, uploadFiles, uploadedFiles, maxFileSize]
   );
 
   const sendMessage = useCallback(
@@ -331,13 +346,14 @@ function Main({ addConversation, isTouch }) {
         event.key === "Enter" &&
         !event.shiftKey &&
         !isComposing &&
-        !isTouch
+        !isTouch &&
+        !uploadingFiles
       ) {
         event.preventDefault();
         sendMessage(inputText);
       }
     },
-    [inputText, isComposing, isTouch, sendMessage]
+    [inputText, isComposing, isTouch, uploadingFiles, sendMessage]
   );
 
   const adjustTextareaHeight = useCallback(() => {
@@ -482,7 +498,7 @@ function Main({ addConversation, isTouch }) {
         <button
           className="send-button"
           onClick={() => sendMessage(inputText)}
-          disabled={(uploadedFiles.some((file) => file.isUploading))}
+          disabled={uploadingFiles}
           aria-label={isLoading ? "전송 중단" : "메시지 전송"}
         >
           {isLoading ? (
@@ -498,7 +514,7 @@ function Main({ addConversation, isTouch }) {
 
       <input
         type="file"
-        accept="image/*, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
+        accept="image/*, .zip, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
         multiple
         ref={fileInputRef}
         style={{ display: "none" }}

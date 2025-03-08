@@ -2,8 +2,6 @@ import os
 import json
 import asyncio
 import base64
-import tempfile
-import textract
 import shutil
 import time
 import copy
@@ -89,66 +87,6 @@ def calculate_billing(request_array, response, in_billing_rate, out_billing_rate
     total_cost = input_cost + output_cost + search_cost
     return total_cost
 
-def process_files(parts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    def extract_text(base64_str: str, filename: str) -> str:
-        header, encoded = base64_str.split(",", 1)
-        file_data = base64.b64decode(encoded)
-        _, ext = os.path.splitext(filename)
-        ext = ext.lower()
-
-        text_extensions = [
-            '.txt', '.text', '.md', '.markdown',
-            '.json', '.xml', '.csv', '.tsv', '.yaml', '.yml', '.log', '.sql',
-            '.html', '.htm',
-            '.py', '.pyw', '.rb', '.pl',
-            '.java', '.c', '.cpp', '.h', '.hpp',
-            '.js', '.jsx', '.ts', '.tsx',
-            '.css', '.scss', '.less',
-            '.cs', '.sh', '.bash', '.bat', '.ps1',
-            '.ini', '.conf', '.cfg', '.toml',
-            '.tex',
-            '.r',
-            '.swift', '.scala',
-            '.hs', '.erl', '.ex', '.exs',
-            '.go', '.rs', '.php'
-        ]
-
-        if ext in text_extensions:
-            try:
-                text = file_data.decode("utf-8", errors="replace")
-            except Exception as e:
-                print(f"Direct decode error: {e}")
-                text = ""
-            return text
-        else:
-            with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
-                tmp.write(file_data)
-                tmp.flush()
-                tmp_path = tmp.name
-
-            try:
-                extracted_bytes = textract.process(tmp_path)
-                text = extracted_bytes.decode("utf-8", errors="ignore")
-            except Exception as e:
-                print(f"textract error: {e}")
-                text = ""
-            finally:
-                os.remove(tmp_path)
-            return text
-
-    processed = []
-    for part in parts:
-        if part.get("type") == "file":
-            extracted_text = extract_text(part.get("content"), part.get("name", ""))
-            processed.append({
-                "type": "file",
-                "name": part.get("name"),
-                "content": f"[[{part.get('name', '')}]]\n{extracted_text}"
-            })
-        else:
-            processed.append(part)
-    return processed
-
 def format_message(message):
     def normalize_content(part):
         if part.get("type") == "file":
@@ -196,9 +134,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         "conversation_id": request.conversation_id
     })
     conversation = conversation_data["conversation"][-50:] if conversation_data else []
-    processed_user_message = process_files(request.user_message)
-    conversation.append({"role": "user", "content": processed_user_message})
-
+    conversation.append({"role": "user", "content": request.user_message})
     formatted_messages = [copy.deepcopy(format_message(m)) for m in conversation]
 
     async def produce_tokens(token_queue: asyncio.Queue, request: ChatRequest, parameters: Dict[str, Any], fastapi_request: Request, client) -> None:
