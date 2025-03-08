@@ -65,7 +65,7 @@ async def upload_image(file: UploadFile = File(...)):
     image.thumbnail(max_dimension, Image.Resampling.LANCZOS)
 
     buffer = io.BytesIO()
-    image.save(buffer, format="JPEG", quality=60, optimize=True)
+    image.save(buffer, format="JPEG", quality=100, optimize=True)
     
     filename = f"{uuid.uuid4().hex}.jpeg"
     file_location = os.path.join(UPLOAD_DIR, filename)

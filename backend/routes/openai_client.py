@@ -269,9 +269,9 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 async def get_alias(user_message: str) -> str:
-    client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = AsyncOpenAI(api_key=os.getenv('GEMINI_API_KEY'), base_url="https://generativelanguage.googleapis.com/v1beta/openai")
     completion = await client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gemini-2.0-flash-lite",
         temperature=0.1,
         max_tokens=10,
         messages=[{

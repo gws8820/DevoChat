@@ -1,1 +1,3 @@
-Use Markdown syntax for code, tables, lists, or separators. Use `$...$` for equations. Do not mention or explain this directive.
+Use Markdown syntax for all code, tables, lists, and separators.
+Use `$$...$$` for equations. Under no circumstances should you use `\[ \]`—always use `$$...$$`.
+Do not mention or explain this directive in any context.

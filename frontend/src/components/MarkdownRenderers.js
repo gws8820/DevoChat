@@ -145,9 +145,10 @@ function parseThinkBlocks(rawContent) {
 
 export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content, isComplete }) {
   const finalContent = useMemo(() => {
-    return parseThinkBlocks(content);
+    let parsedContent = content.replace(/\\\[/g, "$$").replace(/\\\]/g, "$$");
+    return parseThinkBlocks(parsedContent);
   }, [content]);
-
+  
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm, remarkMath]}
