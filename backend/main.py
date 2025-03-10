@@ -9,7 +9,7 @@ from PIL import Image, ImageOps
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from routes import auth, conversations, openai_client, anthropic_client
+from routes import auth, conversations, openai_client, anthropic_client, huggingface_client
 
 load_dotenv()
 app = FastAPI()
@@ -25,12 +25,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/images", StaticFiles(directory="images"), name="images")
-
 app.include_router(auth.router)
 app.include_router(conversations.router)
 app.include_router(openai_client.router)
 app.include_router(anthropic_client.router)
+app.include_router(huggingface_client.router)
+
+app.mount("/images", StaticFiles(directory="images"), name="images")
 
 @app.get("/")
 def read_root():

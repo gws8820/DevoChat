@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from pymongo import MongoClient
 from bson import ObjectId
 from typing import Any, Union, List, Dict, Optional
-from openai import AsyncOpenAI
+from huggingface_hub import AsyncInferenceClient
 from .auth import User, get_current_user
 
 load_dotenv()
@@ -58,48 +58,6 @@ class ChatRequest(BaseModel):
     dan: bool = False
     stream: bool = True
 
-class ApiSettings(BaseModel):
-    admin_role: str = "system"
-    api_key: str
-    base_url: str = ""
-
-def calculate_billing(request_array, response, in_billing_rate, out_billing_rate, search_billing_rate: Optional[float] = None):
-    def count_tokens(message):
-        encoding = tiktoken.get_encoding("cl100k_base")
-        tokens = 4
-        tokens += len(encoding.encode(message.get("role", "")))
-        
-        content = message.get("content", "")
-        if isinstance(content, list):
-            combined = ""
-            for part in content:
-                if part.get("type") == "text":
-                    combined += "text " + part.get("text", "") + " "
-                elif part.get("type") == "image_url":
-                    combined += "image_url "
-                    tokens += 1000
-            content_str = combined.strip()
-        else:
-            content_str = content
-        tokens += len(encoding.encode(content_str))
-        return tokens
-
-    input_tokens = output_tokens = 0
-    for req in request_array:
-        input_tokens += count_tokens(req)
-    output_tokens = count_tokens(response)
-
-    input_cost = input_tokens * (in_billing_rate / 1000000)
-    output_cost = output_tokens * (out_billing_rate / 1000000)
-
-    if search_billing_rate is not None:
-        total_tokens = input_tokens + output_tokens
-        search_cost = total_tokens * (search_billing_rate / 1000000)
-    else:
-        search_cost = 0
-    total_cost = input_cost + output_cost + search_cost
-    return total_cost
-
 def format_message(message):
     def normalize_content(part):
         if part.get("type") == "file":
@@ -130,7 +88,7 @@ def format_message(message):
     elif role == "user":
         return {"role": "user", "content": [normalize_content(part) for part in content]}
         
-def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastapi_request: Request):
+def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     if user.trial and user.trial_remaining <= 0:
         async def error_generator():
             message = "체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."
@@ -147,7 +105,7 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
 
     if request.dan and DAN_PROMPT:
         formatted_messages.insert(0, {
-            "role": settings.admin_role,
+            "role": "system",
             "content": [{"type": "text", "text": DAN_PROMPT}]
         })
         for part in reversed(formatted_messages[-1]["content"]):
@@ -157,12 +115,12 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
 
     if request.system_message:
         formatted_messages.insert(0, {
-            "role": settings.admin_role,
+            "role": "system",
             "content": [{"type": "text", "text": request.system_message}]
         })
 
     formatted_messages.insert(0, {
-        "role": settings.admin_role,
+        "role": "system",
         "content": [{"type": "text", "text": MARKDOWN_PROMPT}]
     })
 
@@ -170,7 +128,7 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
         citation = None 
         try:
             if request.stream:
-                stream_result = await client.chat.completions.create(**parameters, timeout=300)
+                stream_result = await client.chat.completions.create(**parameters)
                 async for chunk in stream_result:
                     if await fastapi_request.is_disconnected():
                         return
@@ -179,7 +137,7 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
                     if citation is None and hasattr(chunk, "citations"):
                         citation = chunk.citations
             else:
-                single_result = await client.chat.completions.create(**parameters, timeout=300)
+                single_result = await client.chat.completions.create(**parameters)
                 full_response_text = single_result.choices[0].message.content
                 if hasattr(single_result, "citations"):
                     citation = single_result.citations
@@ -203,7 +161,7 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
     async def event_generator():
         response_text = ""
         try:
-            client = AsyncOpenAI(api_key=settings.api_key, base_url=(settings.base_url or None))
+            client = AsyncInferenceClient(api_key=os.getenv('HUGGINGFACE_API_KEY'), provider="fireworks-ai")
             parameters = {
                 "model": request.model.split(':')[0],
                 "temperature": request.temperature,
@@ -242,18 +200,6 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
                     {"_id": ObjectId(user.user_id)},
                     {"$inc": {"trial_remaining": -1}}
                 )
-            else:
-                billing = calculate_billing(
-                    formatted_messages,
-                    formatted_response,
-                    request.in_billing,
-                    request.out_billing,
-                    request.search_billing
-                )
-                user_collection.update_one(
-                    {"_id": ObjectId(user.user_id)},
-                    {"$inc": {"billing": billing}}
-                )
             conversation_collection.update_one(
                 {"user_id": user.user_id, "conversation_id": request.conversation_id},
                 {"$set": {
@@ -267,47 +213,18 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
             )
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-async def get_alias(user_message: str) -> str:
-    client = AsyncOpenAI(api_key=os.getenv('GEMINI_API_KEY'), base_url="https://generativelanguage.googleapis.com/v1beta/openai")
-    completion = await client.chat.completions.create(
-        model="gemini-2.0-flash-lite",
-        temperature=0.1,
-        max_tokens=10,
-        messages=[{
-            "role": "user",
-            "content": ALIAS_PROMPT + user_message
-        }],
-    )
-    return completion.choices[0].message.content.rstrip()
+@router.post("/deepseek")
+async def deepseek_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+    return get_response(chat_request, user, fastapi_request)
 
-@router.post("/gpt")
-async def gpt_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        admin_role="developer",
-        api_key=os.getenv('OPENAI_API_KEY')
-    )
-    return get_response(chat_request, settings, user, fastapi_request)
+@router.post("/qwen")
+async def qwen_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+    return get_response(chat_request, user, fastapi_request)
 
-@router.post("/gemini")
-async def gemini_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('GEMINI_API_KEY'),
-        base_url="https://generativelanguage.googleapis.com/v1beta/openai"
-    )
-    return get_response(chat_request, settings, user, fastapi_request)
+@router.post("/llama")
+async def llama_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+    return get_response(chat_request, user, fastapi_request)
 
-@router.post("/perplexity")
-async def perplexity_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('PERPLEXITY_API_KEY'),
-        base_url="https://api.perplexity.ai"
-    )
-    return get_response(chat_request, settings, user, fastapi_request)
-
-@router.post("/grok")
-async def grok_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('XAI_API_KEY'),
-        base_url="https://api.x.ai/v1"
-    )
-    return get_response(chat_request, settings, user, fastapi_request)
+@router.post("/mixtral")
+async def mixtral_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+    return get_response(chat_request, user, fastapi_request)
