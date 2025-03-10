@@ -71,14 +71,12 @@ def calculate_billing(request_array, response, in_billing_rate, out_billing_rate
         
         content = message.get("content", "")
         if isinstance(content, list):
-            combined = ""
             for part in content:
                 if part.get("type") == "text":
-                    combined += "text " + part.get("text", "") + " "
+                    content_str = "text " + part.get("text", "") + " "
                 elif part.get("type") == "image_url":
-                    combined += "image_url "
+                    content_str = "image_url "
                     tokens += 1000
-            content_str = combined.strip()
         else:
             content_str = content
         tokens += len(encoding.encode(content_str))
@@ -102,7 +100,7 @@ def calculate_billing(request_array, response, in_billing_rate, out_billing_rate
 
 def format_message(message):
     def normalize_content(part):
-        if part.get("type") == "file":
+        if part.get("type") in ["file", "url"]:
             return {
                 "type": "text",
                 "text": part.get("content")
@@ -120,6 +118,11 @@ def format_message(message):
             return {
                 "type": "image_url",
                 "image_url": {"url": base64_data}
+            }
+        elif part.get("type") == "url":
+            return {
+                "type": "text",
+                "text": part.get("content")
             }
         return part
 

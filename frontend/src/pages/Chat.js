@@ -63,7 +63,7 @@ function Chat({ fetchConversations, isTouch }) {
   } = useContext(SettingsContext);
 
   const models = modelsData.models;
-  const uploadingFiles = uploadedFiles.some((file) => file.isUploading);
+  const uploadingFiles = uploadedFiles.some((file) => !file.content);
   const allowedExtensions = useMemo(
     () =>
       /\.(zip|pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
@@ -71,15 +71,15 @@ function Chat({ fetchConversations, isTouch }) {
   );
   const maxFileSize = 50 * 1024 * 1024;
 
-  const getFileId = useCallback((file) => {
-    return `${file.name}-${file.size}-${file.lastModified}`;
+  const generateFileId = useCallback(() => {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
   }, []);
 
   const uploadFiles = useCallback(
-    async (file) => {
+    async (file, uniqueId) => {
       const formData = new FormData();
       formData.append("file", file);
-  
+
       if (file.type.startsWith("image/")) {
         const res = await fetch(
           `${process.env.REACT_APP_FASTAPI_URL}/upload/image`,
@@ -93,10 +93,10 @@ function Chat({ fetchConversations, isTouch }) {
           throw new Error(data.error);
         }
         return {
+          id: uniqueId,
           type: data.type,
           name: data.name,
           content: data.content,
-          id: getFileId(file),
         };
       } else {
         const res = await fetch(
@@ -111,14 +111,14 @@ function Chat({ fetchConversations, isTouch }) {
           throw new Error(data.error);
         }
         return {
+          id: uniqueId,
           type: data.type,
           name: data.name,
           content: data.content,
-          id: getFileId(file),
         };
       }
     },
-    [getFileId]
+    []
   );
 
   const processFiles = useCallback(
@@ -128,8 +128,8 @@ function Chat({ fetchConversations, isTouch }) {
       const currentCount = uploadedFiles.length;
       const remaining = maxAllowed - currentCount;
       
-      const sizeAcceptedFiles = files.filter(file => file.size <= maxFileSize);
-      const rejectedSizeFiles = files.filter(file => file.size > maxFileSize);
+      const sizeAcceptedFiles = files.filter((file) => file.size <= maxFileSize);
+      const rejectedSizeFiles = files.filter((file) => file.size > maxFileSize);
       if (rejectedSizeFiles.length > 0) {
         setErrorModal("50MB를 초과하는 파일은 업로드할 수 없습니다.");
         setTimeout(() => setErrorModal(null), 3000);
@@ -143,37 +143,39 @@ function Chat({ fetchConversations, isTouch }) {
         acceptedFiles = sizeAcceptedFiles;
       }
       
+      const filePairs = acceptedFiles.map((file) => {
+        const uniqueId = generateFileId();
+        return { file, uniqueId };
+      });
+
       setUploadedFiles((prev) => [
         ...prev,
-        ...acceptedFiles.map((file) => ({
-          id: getFileId(file),
+        ...filePairs.map(({ file, uniqueId }) => ({
+          id: uniqueId,
           name: file.name,
-          isUploading: true,
         })),
       ]);
 
       await Promise.all(
-        acceptedFiles.map(async (file) => {
+        filePairs.map(async ({ file, uniqueId }) => {
           try {
-            const result = await uploadFiles(file);
+            const result = await uploadFiles(file, uniqueId);
             setUploadedFiles((prev) =>
               prev.map((item) =>
-                item.id === getFileId(file)
-                  ? { ...result, isUploading: false }
-                  : item
+                item.id === uniqueId ? result : item
               )
             );
           } catch (err) {
             setErrorModal("파일 처리 중 오류가 발생했습니다.");
             setTimeout(() => setErrorModal(null), 3000);
             setUploadedFiles((prev) =>
-              prev.filter((item) => item.id !== getFileId(file))
+              prev.filter((item) => item.id !== uniqueId)
             );
           }
         })
       );
     },
-    [getFileId, uploadFiles, uploadedFiles, maxFileSize]
+    [uploadedFiles, maxFileSize, generateFileId, uploadFiles]
   );
 
   const updateAssistantMessage = useCallback((message, isComplete = false) => {
@@ -201,21 +203,74 @@ function Chat({ fetchConversations, isTouch }) {
   const sendMessage = useCallback(
     async (message, files = uploadedFiles) => {
       if (!message.trim()) return;
-
+  
       const contentParts = [];
       contentParts.push({ type: "text", text: message });
-      if (files.length > 0)
+      if (files.length > 0) {
         contentParts.push(...files);
-
-      setMessages((prev) => [...prev, { role: "user", content: contentParts }]);
+      }
+  
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: contentParts },
+      ]);
       setInputText("");
       setUploadedFiles([]);
       setIsLoading(true);
-      requestAnimationFrame(() => { setScrollOnSend(true) });
-
+      requestAnimationFrame(() => {
+        setScrollOnSend(true);
+      });
+  
+      const tokens = message.split(/\s+/);
+      const domainExtensions = [
+        ".com", ".cn", ".tk", ".de", ".net", ".uk", ".org",
+        ".nl", ".ru", ".br", ".au", ".fr", ".eu", ".za",
+        ".it", ".pl", ".in", ".ir", ".co", ".info", ".es",
+        ".ro", ".ch", ".us", ".ca", ".be", ".jp", ".biz",
+        ".club", ".kr", ".se", ".mx", ".tv", ".dev", ".top",
+        ".xyz", ".live", ".website", ".store", ".ai", ".io", ".online",
+        ".ph", ".vn", ".gr", ".pt", ".bg", ".id", ".hu", ".ly"
+      ]
+      const detectedUrls = tokens.filter((token) =>
+        domainExtensions.some((ext) => token.toLowerCase().includes(ext))
+      );
+  
+      if (detectedUrls && detectedUrls.length > 0) {
+        const previewPromises = detectedUrls.map(async (token) => {
+          let url = token;
+          if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            url = "https://" + url;
+          }
+          try {
+            const res = await fetch(
+              `${process.env.REACT_APP_FASTAPI_URL}/visit_url`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url }),
+              }
+            );
+            if (res.ok) {
+              const data = await res.json();
+              if (data.content) {
+                return { type: "url", content: data.content };
+              }
+            }
+          } catch (err) {
+          }
+          return null;
+        });
+        const urlPreviews = await Promise.all(previewPromises);
+        urlPreviews.forEach((preview) => {
+          if (preview !== null) {
+            contentParts.push(preview);
+          }
+        });
+      }
+  
       const controller = new AbortController();
       abortControllerRef.current = controller;
-
+  
       try {
         const selectedModel = models.find((m) => m.model_name === model);
         if (!selectedModel) {
@@ -231,7 +286,7 @@ function Chat({ fetchConversations, isTouch }) {
             setThinkingText(`생각 중${dots}`);
           }, 1000);
         }
-
+  
         const response = await fetch(
           `${process.env.REACT_APP_FASTAPI_URL}${selectedModel.endpoint}`,
           {
@@ -242,7 +297,9 @@ function Chat({ fetchConversations, isTouch }) {
               model: selectedModel.model_name,
               in_billing: selectedModel.in_billing,
               out_billing: selectedModel.out_billing,
-              ...(selectedModel.search_billing && { search_billing: selectedModel.search_billing }),
+              ...(selectedModel.search_billing && {
+                search_billing: selectedModel.search_billing,
+              }),
               temperature,
               reason,
               system_message: systemMessage,
@@ -254,18 +311,18 @@ function Chat({ fetchConversations, isTouch }) {
             signal: controller.signal,
           }
         );
-
+  
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
         let partialData = "";
         let assistantText = "";
-
+  
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           const chunk = decoder.decode(value, { stream: true });
           partialData += chunk;
-
+  
           const lines = partialData.split("\n\n");
           for (let i = 0; i < lines.length - 1; i++) {
             const line = lines[i];
@@ -315,7 +372,7 @@ function Chat({ fetchConversations, isTouch }) {
       setErrorMessage,
       isInference,
       isDAN,
-      uploadedFiles
+      uploadedFiles,
     ]
   );
 
@@ -504,7 +561,7 @@ function Chat({ fetchConversations, isTouch }) {
         previousMessage.content.forEach((part) => {
           if (part.type === "text") {
             newInputText += part.text;
-          } else {
+          } else if (part.type !== "url") {
             newUploadedFiles.push(part);
           }
         });
@@ -533,7 +590,7 @@ function Chat({ fetchConversations, isTouch }) {
         message.content.forEach((part) => {
           if (part.type === "text") {
             newInputText += part.text;
-          } else {
+          } else if (part.type !== "url") {
             newUploadedFiles.push(part);
           }
         });
@@ -726,7 +783,7 @@ function Chat({ fetchConversations, isTouch }) {
                           >
                             <div className="file-object">
                               <span className="file-name">{file.name}</span>
-                              {file.isUploading && (
+                              {!file.content && (
                                 <div className="file-upload-overlay">
                                   <ClipLoader size={20} />
                                 </div>
@@ -807,6 +864,7 @@ function Chat({ fetchConversations, isTouch }) {
             </div>
           </div>
         </div>
+
         <button
           className="send-button"
           onClick={() => {

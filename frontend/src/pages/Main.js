@@ -56,7 +56,7 @@ function Main({ addConversation, isTouch }) {
   } = useContext(SettingsContext);
 
   const models = modelsData.models;
-  const uploadingFiles = (uploadedFiles.some((file) => file.isUploading));
+  const uploadingFiles = uploadedFiles.some((file) => !file.content);
   const allowedExtensions = useMemo(
     () =>
       /\.(zip|pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
@@ -64,8 +64,8 @@ function Main({ addConversation, isTouch }) {
   );
   const maxFileSize = 50 * 1024 * 1024;
 
-  const getFileId = useCallback((file) => {
-    return `${file.name}-${file.size}-${file.lastModified}`;
+  const generateFileId = useCallback(() => {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
   }, []);
 
   useEffect(() => {
@@ -104,10 +104,10 @@ function Main({ addConversation, isTouch }) {
   }, [location.state]);
 
   const uploadFiles = useCallback(
-    async (file) => {
+    async (file, uniqueId) => {
       const formData = new FormData();
       formData.append("file", file);
-  
+
       if (file.type.startsWith("image/")) {
         const res = await fetch(
           `${process.env.REACT_APP_FASTAPI_URL}/upload/image`,
@@ -121,10 +121,10 @@ function Main({ addConversation, isTouch }) {
           throw new Error(data.error);
         }
         return {
+          id: uniqueId,
           type: data.type,
           name: data.name,
           content: data.content,
-          id: getFileId(file),
         };
       } else {
         const res = await fetch(
@@ -139,14 +139,14 @@ function Main({ addConversation, isTouch }) {
           throw new Error(data.error);
         }
         return {
+          id: uniqueId,
           type: data.type,
           name: data.name,
           content: data.content,
-          id: getFileId(file),
         };
       }
     },
-    [getFileId]
+    []
   );
   
   const processFiles = useCallback(
@@ -156,8 +156,8 @@ function Main({ addConversation, isTouch }) {
       const currentCount = uploadedFiles.length;
       const remaining = maxAllowed - currentCount;
       
-      const sizeAcceptedFiles = files.filter(file => file.size <= maxFileSize);
-      const rejectedSizeFiles = files.filter(file => file.size > maxFileSize);
+      const sizeAcceptedFiles = files.filter((file) => file.size <= maxFileSize);
+      const rejectedSizeFiles = files.filter((file) => file.size > maxFileSize);
       if (rejectedSizeFiles.length > 0) {
         setErrorModal("50MB를 초과하는 파일은 업로드할 수 없습니다.");
         setTimeout(() => setErrorModal(null), 3000);
@@ -171,37 +171,39 @@ function Main({ addConversation, isTouch }) {
         acceptedFiles = sizeAcceptedFiles;
       }
       
+      const filePairs = acceptedFiles.map((file) => {
+        const uniqueId = generateFileId();
+        return { file, uniqueId };
+      });
+
       setUploadedFiles((prev) => [
         ...prev,
-        ...acceptedFiles.map((file) => ({
-          id: getFileId(file),
+        ...filePairs.map(({ file, uniqueId }) => ({
+          id: uniqueId,
           name: file.name,
-          isUploading: true,
         })),
       ]);
 
       await Promise.all(
-        acceptedFiles.map(async (file) => {
+        filePairs.map(async ({ file, uniqueId }) => {
           try {
-            const result = await uploadFiles(file);
+            const result = await uploadFiles(file, uniqueId);
             setUploadedFiles((prev) =>
               prev.map((item) =>
-                item.id === getFileId(file)
-                  ? { ...result, isUploading: false }
-                  : item
+                item.id === uniqueId ? result : item
               )
             );
           } catch (err) {
             setErrorModal("파일 처리 중 오류가 발생했습니다.");
             setTimeout(() => setErrorModal(null), 3000);
             setUploadedFiles((prev) =>
-              prev.filter((item) => item.id !== getFileId(file))
+              prev.filter((item) => item.id !== uniqueId)
             );
           }
         })
       );
     },
-    [getFileId, uploadFiles, uploadedFiles, maxFileSize]
+    [uploadedFiles, maxFileSize, generateFileId, uploadFiles]
   );
 
   const sendMessage = useCallback(
@@ -404,30 +406,43 @@ function Main({ addConversation, isTouch }) {
                 transition={{ duration: 0.3 }}
               >
                 <AnimatePresence>
-                  {uploadedFiles.map((file) => (
+                  {uploadedFiles.length > 0 && (
                     <motion.div
-                      key={file.id}
-                      className="file-wrap"
-                      initial={{ y: 4, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: 4, opacity: 0 }}
+                      className="file-area"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
-                      style={{ position: "relative" }}
                     >
-                      <div className="file-object">
-                        <span className="file-name">{file.name}</span>
-                        {file.isUploading && (
-                          <div className="file-upload-overlay">
-                            <ClipLoader size={20} />
-                          </div>
-                        )}
-                      </div>
-                      <BiX
-                        className="file-delete"
-                        onClick={() => handleFileDelete(file)}
-                      />
+                      <AnimatePresence>
+                        {uploadedFiles.map((file) => (
+                          <motion.div
+                            key={file.id}
+                            className="file-wrap"
+                            initial={{ y: 4, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 4, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            style={{ position: "relative" }}
+                          >
+                            <div className="file-object">
+                              <span className="file-name">{file.name}</span>
+                              {/* 파일 객체에 content가 없으면 업로드 중임을 표시 */}
+                              {!file.content && (
+                                <div className="file-upload-overlay">
+                                  <ClipLoader size={20} />
+                                </div>
+                              )}
+                            </div>
+                            <BiX
+                              className="file-delete"
+                              onClick={() => handleFileDelete(file)}
+                            />
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
                     </motion.div>
-                  ))}
+                  )}
                 </AnimatePresence>
               </motion.div>
             )}

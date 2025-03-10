@@ -1,18 +1,27 @@
 import os
+import requests
 import io
 import uuid
 import tempfile
 import zipfile
 import textract
 from dotenv import load_dotenv
-from PIL import Image, ImageOps
+from pydantic import BaseModel
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from routes import auth, conversations, openai_client, anthropic_client, huggingface_client
+from PIL import Image, ImageOps
+from bs4 import BeautifulSoup
 
 load_dotenv()
 app = FastAPI()
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "images")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+class URLRequest(BaseModel):
+    url: str
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,9 +45,6 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 @app.get("/")
 def read_root():
     return {"message": "Service is Running"}
-
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "images")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/upload/image")
 async def upload_image(file: UploadFile = File(...)):
@@ -177,3 +183,17 @@ async def upload_file(file: UploadFile = File(...)):
             "name": filename,
             "content": f"[[{filename}]]\n{extracted_text}"
         }
+
+@app.post("/visit_url")
+def visit_url(request: URLRequest):
+    try:
+        response = requests.get(request.url, timeout=5)
+        if response.status_code != 200:
+            raise HTTPException(status_code=400, detail="URL does not exist.")
+
+        soup = BeautifulSoup(response.text, "html.parser")
+        content = soup.get_text(separator="\n", strip=True)
+
+        return {"content": f"[[{request.url}]]\n{content}"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error occured while visiting URL: {str(e)}")
