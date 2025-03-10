@@ -213,18 +213,6 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
             )
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-@router.post("/deepseek")
+@router.post("/huggingface")
 async def deepseek_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    return get_response(chat_request, user, fastapi_request)
-
-@router.post("/qwen")
-async def qwen_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    return get_response(chat_request, user, fastapi_request)
-
-@router.post("/llama")
-async def llama_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    return get_response(chat_request, user, fastapi_request)
-
-@router.post("/mixtral")
-async def mixtral_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     return get_response(chat_request, user, fastapi_request)
