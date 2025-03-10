@@ -278,8 +278,8 @@
         "model_alias": "Deepseek R1",
         "description": "추론이 가능한 Deepseek 모델",
         "endpoint": "/huggingface",
-        "in_billing": "0",
-        "out_billing": "0",
+        "in_billing": "3",
+        "out_billing": "8",
         "inference": true,
         "stream": true,
         "capabilities": {
@@ -293,8 +293,8 @@
         "model_alias": "Deepseek V3",
         "description": "표준 Deepseek 모델",
         "endpoint": "/huggingface",
-        "in_billing": "0",
-        "out_billing": "0",
+        "in_billing": "0.9",
+        "out_billing": "0.9",
         "inference": false,
         "stream": true,
         "capabilities": {
@@ -308,8 +308,8 @@
         "model_alias": "QwQ 32B",
         "description": "추론이 가능한 고속 Qwen 모델",
         "endpoint": "/huggingface",
-        "in_billing": "0",
-        "out_billing": "0",
+        "in_billing": "0.9",
+        "out_billing": "0.9",
         "inference": false,
         "stream": true,
         "capabilities": {
@@ -323,8 +323,8 @@
         "model_alias": "Llama 3.3 70B",
         "description": "최신 Llama 모델",
         "endpoint": "/huggingface",
-        "in_billing": "0",
-        "out_billing": "0",
+        "in_billing": "0.9",
+        "out_billing": "0.9",
         "inference": false,
         "stream": true,
         "capabilities": {
@@ -334,12 +334,12 @@
         "type": "default"
       },
       {
-        "model_name": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-        "model_alias": "Mixtral 8x7B Instruct",
+        "model_name": "mistralai/Mixtral-8x22B-Instruct-v0.1",
+        "model_alias": "Mixtral 8x22B Instruct",
         "description": "최신 Mixtral 모델",
         "endpoint": "/huggingface",
-        "in_billing": "0",
-        "out_billing": "0",
+        "in_billing": "1.2",
+        "out_billing": "1.2",
         "inference": false,
         "stream": true,
         "capabilities": {
