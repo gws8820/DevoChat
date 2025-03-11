@@ -1,4 +1,4 @@
-// Sidebar.js
+// src/components/Sidebar.js
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
@@ -21,6 +21,7 @@ function Sidebar({
   errorModal,
   deleteConversation,
   deleteAllConversation,
+  updateConversation,
   setErrorModal,
   isResponsive,
   fetchConversations,
@@ -73,7 +74,6 @@ function Sidebar({
 
   const handleTouchStart = (e, conversation_id) => {
     setContextMenu({ ...contextMenu, visible: false });
-    
     longPressTimer.current = setTimeout(() => {
       setSelectedConversationId(conversation_id);
       setContextMenu({
@@ -100,14 +100,15 @@ function Sidebar({
 
   const handleRename = async (conversation_id, newAlias) => {
     try {
+      updateConversation(conversation_id, newAlias);
+      setRenamingConversationId(null);
+      setRenameInputValue("");
+
       await axios.put(
         `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/rename`,
         { alias: newAlias },
         { withCredentials: true }
       );
-      fetchConversations();
-      setRenamingConversationId(null);
-      setRenameInputValue("");
     } catch (error) {
       console.error("Failed to rename conversation.", error);
       setErrorModal("대화 이름 편집에 실패했습니다.");
@@ -117,18 +118,18 @@ function Sidebar({
 
   const handleDelete = async (conversation_id) => {
     try {
-      await axios.delete(
-        `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
-        { withCredentials: true }
-      );
       deleteConversation(conversation_id);
       const currentPath = location.pathname;
       const currentConversationId = currentPath.startsWith("/chat/")
         ? currentPath.split("/chat/")[1]
         : null;
-      if (currentConversationId === conversation_id) {
+      if (currentConversationId === conversation_id)
         navigate("/");
-      }
+
+      await axios.delete(
+        `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
+        { withCredentials: true }
+      );
     } catch (error) {
       console.error("Failed to delete conversation.", error);
       setErrorModal("대화 삭제에 실패했습니다.");
@@ -152,13 +153,13 @@ function Sidebar({
   const confirmDelete = async () => {
     if (modalAction === "deleteAll") {
       try {
+        deleteAllConversation();
+        navigate("/");
+
         await axios.delete(
           `${process.env.REACT_APP_FASTAPI_URL}/conversation/all`,
           { withCredentials: true }
         );
-        deleteAllConversation();
-        fetchConversations();
-        navigate("/");
       } catch (error) {
         console.error("Failed to delete conversations.", error);
         setErrorModal("대화 삭제에 실패했습니다.");
@@ -351,6 +352,7 @@ function Sidebar({
                             setRenameInputValue("");
                           }}
                           autoFocus
+                          style={{ width: '100%' }}
                         />
                       ) : (
                         <span className="conversation-text">{conv.alias}</span>

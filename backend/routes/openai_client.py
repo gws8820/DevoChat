@@ -206,34 +206,34 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
     async def event_generator():
         response_text = ""
         try:
-            client = AsyncOpenAI(api_key=settings.api_key, base_url=(settings.base_url or None))
-            parameters = {
-                "model": request.model.split(':')[0],
-                "temperature": request.temperature,
-                "messages": formatted_messages,
-                "stream": request.stream
-            }
-            if request.reason != 0:
-                mapping = {1: "low", 2: "medium", 3: "high"}
-                parameters["reasoning_effort"] = mapping.get(request.reason)
-            
-            token_queue = asyncio.Queue()
-            producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))
-            while True:
-                token = await token_queue.get()
-                if token is None:
-                    break
-                if await fastapi_request.is_disconnected():
-                    break
-                if isinstance(token, dict) and "error" in token:
-                    yield f"data: {json.dumps(token)}\n\n"
-                    break
-                else:
-                    response_text += token
-                    yield f"data: {json.dumps({'content': token})}\n\n"
+            async with AsyncOpenAI(api_key=settings.api_key, base_url=(settings.base_url or None)) as client:
+                parameters = {
+                    "model": request.model.split(':')[0],
+                    "temperature": request.temperature,
+                    "messages": formatted_messages,
+                    "stream": request.stream
+                }
+                if request.reason != 0:
+                    mapping = {1: "low", 2: "medium", 3: "high"}
+                    parameters["reasoning_effort"] = mapping.get(request.reason)
+                
+                token_queue = asyncio.Queue()
+                producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))
+                while True:
+                    token = await token_queue.get()
+                    if token is None:
+                        break
+                    if await fastapi_request.is_disconnected():
+                        break
+                    if isinstance(token, dict) and "error" in token:
+                        yield f"data: {json.dumps(token)}\n\n"
+                        break
+                    else:
+                        response_text += token
+                        yield f"data: {json.dumps({'content': token})}\n\n"
 
-            if not producer_task.done():
-                producer_task.cancel()
+                if not producer_task.done():
+                    producer_task.cancel()
         except Exception as ex:
             print(f"Exception detected: {ex}", flush=True)
             yield f"data: {json.dumps({'error': str(ex)})}\n\n"

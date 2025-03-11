@@ -45,6 +45,16 @@ function App() {
     setConversations([]);
   };
 
+  const updateConversation = (conversation_id, newAlias) => {
+    setConversations((prevConversations) =>
+      prevConversations.map((conv) =>
+        conv.conversation_id === conversation_id
+          ? { ...conv, alias: newAlias }
+          : conv
+      )
+    );
+  };
+
   const fetchConversations = async () => {
     setIsLoadingChat(true);
     try {
@@ -108,6 +118,7 @@ function App() {
         errorModal={errorModal}
         deleteConversation={deleteConversation}
         deleteAllConversation={deleteAllConversation}
+        updateConversation={updateConversation}
         fetchConversations={fetchConversations}
         addConversation={addConversation}
         setErrorModal={setErrorModal}
@@ -125,6 +136,7 @@ function AppLayout({
   errorModal,
   deleteConversation,
   deleteAllConversation,
+  updateConversation,
   addConversation,
   setErrorModal,
   fetchConversations,
@@ -201,6 +213,7 @@ function AppLayout({
                 errorModal={errorModal}
                 deleteConversation={deleteConversation}
                 deleteAllConversation={deleteAllConversation}
+                updateConversation={updateConversation}
                 setErrorModal={setErrorModal}
                 isResponsive={isResponsive}
                 fetchConversations={fetchConversations}
@@ -229,6 +242,7 @@ function AppLayout({
                 errorModal={errorModal}
                 deleteConversation={deleteConversation}
                 deleteAllConversation={deleteAllConversation}
+                updateConversation={updateConversation}
                 setErrorModal={setErrorModal}
                 isResponsive={isResponsive}
                 fetchConversations={fetchConversations}
@@ -295,15 +309,11 @@ function AppLayout({
               />
               <Route
                 path="/login"
-                element={
-                  !isLoggedIn ? <Login /> : <Navigate to="/" />
-                }
+                element={!isLoggedIn ? <Login /> : <Navigate to="/" />}
               />
               <Route
                 path="/register"
-                element={
-                  !isLoggedIn ? <Register /> : <Navigate to="/" />
-                }
+                element={!isLoggedIn ? <Register /> : <Navigate to="/" />}
               />
             </Routes>
           </AnimatePresence>

@@ -175,48 +175,48 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     async def event_generator():
         response_text = ""
         try:
-            client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-            system_text = MARKDOWN_PROMPT
-            if request.system_message:
-                system_text += "\n\n" + request.system_message
-            if request.dan and DAN_PROMPT:
-                system_text += "\n\n" + DAN_PROMPT
-                for part in reversed(formatted_messages[-1]["content"]):
-                    if part.get("type") == "text":
-                        part["text"] += " STAY IN CHARACTER"
-                        break
+            async with anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) as client:
+                system_text = MARKDOWN_PROMPT
+                if request.system_message:
+                    system_text += "\n\n" + request.system_message
+                if request.dan and DAN_PROMPT:
+                    system_text += "\n\n" + DAN_PROMPT
+                    for part in reversed(formatted_messages[-1]["content"]):
+                        if part.get("type") == "text":
+                            part["text"] += " STAY IN CHARACTER"
+                            break
 
-            parameters = {
-                "model": request.model.split(':')[0],
-                "temperature": request.temperature,
-                "max_tokens": 4096,
-                "system": system_text,
-                "messages": formatted_messages,
-                "stream": request.stream,
-            }
-            if request.reason != 0:
-                parameters["thinking"] = {
-                    "type": "enabled",
-                    "budget_tokens": 4000
+                parameters = {
+                    "model": request.model.split(':')[0],
+                    "temperature": request.temperature,
+                    "max_tokens": 4096,
+                    "system": system_text,
+                    "messages": formatted_messages,
+                    "stream": request.stream,
                 }
+                if request.reason != 0:
+                    parameters["thinking"] = {
+                        "type": "enabled",
+                        "budget_tokens": 4000
+                    }
 
-            token_queue = asyncio.Queue()
-            producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))
-            while True:
-                token = await token_queue.get()
-                if token is None:
-                    break
-                if await fastapi_request.is_disconnected():
-                    break
-                if isinstance(token, dict) and "error" in token:
-                    yield f"data: {json.dumps(token)}\n\n"
-                    break
-                else:
-                    response_text += token
-                    yield f"data: {json.dumps({'content': token})}\n\n"
+                token_queue = asyncio.Queue()
+                producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))
+                while True:
+                    token = await token_queue.get()
+                    if token is None:
+                        break
+                    if await fastapi_request.is_disconnected():
+                        break
+                    if isinstance(token, dict) and "error" in token:
+                        yield f"data: {json.dumps(token)}\n\n"
+                        break
+                    else:
+                        response_text += token
+                        yield f"data: {json.dumps({'content': token})}\n\n"
 
-            if not producer_task.done():
-                producer_task.cancel()
+                if not producer_task.done():
+                    producer_task.cancel()
         except Exception as ex:
             print(f"Exception detected: {ex}", flush=True)
             yield f"data: {json.dumps({'error': str(ex)})}\n\n"
