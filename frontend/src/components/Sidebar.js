@@ -352,7 +352,6 @@ function Sidebar({
                             setRenameInputValue("");
                           }}
                           autoFocus
-                          style={{ width: '100%' }}
                         />
                       ) : (
                         <span className="conversation-text">{conv.alias}</span>

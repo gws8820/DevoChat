@@ -108,7 +108,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    padding: 6px 18px;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out;
@@ -124,18 +124,23 @@
 }
 
 .conversation-text {
+    padding: 4px 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: none;
+    font-size: 14px;
+    color: #333;
+}
+
+.rename-input {
+    width: 100%;
+    padding: 4px 2px;
+    border: 0;
+    font-size: 14px;
 }
 
 .active-conversation {
     background-color: #e0e0e0;
-}
-
-.conversation-text {
-    font-size: 14px;
-    color: #333;
 }
 
 .context-menu {
