@@ -145,9 +145,14 @@ function AppLayout({
   const hideLayoutRoutes = ["/login", "/register"];
   const shouldShowLayout = !hideLayoutRoutes.includes(location.pathname);
 
-  const isTouch =
-    typeof window !== "undefined" &&
-    ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  const [isTouch, setIsTouch] = useState(false);
+  window.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'touch')
+      setIsTouch(true);
+    else
+      setIsTouch(false);
+  });
+
   const isResponsive = window.innerWidth <= 768;
   const marginLeft = shouldShowLayout && !isResponsive && isSidebarVisible ? 260 : 0;
 
