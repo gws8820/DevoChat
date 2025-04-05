@@ -7,7 +7,7 @@ import { MarkdownRenderer } from "./MarkdownRenderers";
 import "../styles/Message.css";
 import "katex/dist/katex.min.css";
 
-function Message({ messageIndex, role, content, isComplete, onDelete, onRegenerate, onEdit, scrollOnImage }) {
+function Message({ messageIndex, role, content, isComplete, onDelete, onRegenerate, onEdit, setScrollOnSend }) {
   const [copied, setCopied] = React.useState(false);
 
   if ((typeof content === "string" && content.trim() === "\u200B") || (Array.isArray(content) && content.length === 0))
@@ -45,7 +45,11 @@ function Message({ messageIndex, role, content, isComplete, onDelete, onRegenera
             } else if (item.type === "image") {
               return (
                 <div key={index} className="image-object">
-                  <img src={`${process.env.REACT_APP_FASTAPI_URL}${item.content}`} alt={item.file_name} onLoad={scrollOnImage} />
+                  <img 
+                    src={`${process.env.REACT_APP_FASTAPI_URL}${item.content}`} 
+                    alt={item.file_name} 
+                    onLoad={() => setScrollOnSend(true)} 
+                  />
                 </div>
               );
             }

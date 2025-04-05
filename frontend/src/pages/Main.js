@@ -1,24 +1,19 @@
 // src/pages/Main.js
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-  useContext,
-} from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { GoPlus, GoGlobe, GoLightBulb, GoUnlock } from "react-icons/go";
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
 import { CiWarning } from "react-icons/ci";
+import { RiVoiceprintFill } from "react-icons/ri";
+import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import Modal from "../components/Modal";
 import modelsData from "../models.json";
 import "../styles/Common.css";
-import { ClipLoader } from "react-spinners";
 
 function Main({ addConversation, isTouch }) {
   const navigate = useNavigate();
@@ -28,6 +23,7 @@ function Main({ addConversation, isTouch }) {
   const [isComposing, setIsComposing] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(false);
   const [errorModal, setErrorModal] = useState(location.state?.errorModal || null);
 
   const textAreaRef = useRef(null);
@@ -59,21 +55,23 @@ function Main({ addConversation, isTouch }) {
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
   const allowedExtensions = useMemo(
     () =>
-      /\.(zip|pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
+      /\.(zip|pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|v|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
     []
   );
   const maxFileSize = 50 * 1024 * 1024;
-
-  const generateFileId = useCallback(() => {
+  const generateRandomHash = useCallback(() => {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
   }, []);
+
+  const notice = 'OpenAI o1, GPT 4.5, Claude 3 Opus 등 고가 모델은 필요할 때만 사용해주세요. 너무 비싸요 ㅠㅠ';
+  const noticeHash = btoa(encodeURIComponent(notice));
 
   useEffect(() => {
     setIsImage(false);
     setIsInference(false);
     setIsSearch(false);
     setIsDAN(false);
-    updateModel("gpt-4o");
+    updateModel("gemini-2.0-flash");
     setTemperature(0.5);
     setReason(0);
     setSystemMessage("");
@@ -87,11 +85,18 @@ function Main({ addConversation, isTouch }) {
       } else if (isSearch) {
         updateModel("sonar");
       } else if (isInference) {
-        updateModel("o1");
+        updateModel("gemini-2.0-flash-thinking-exp");
       }
     }
     // eslint-disable-next-line
   }, [isSearch, isInference, isFunctionOn]);
+
+  useEffect(() => {
+    const storedHash = localStorage.getItem('noticeHash');
+    if (!storedHash || storedHash !== noticeHash) {
+      setConfirmModal(true);
+    }
+  }, [noticeHash]);
 
   useEffect(() => {
     if (location.state?.errorModal) {
@@ -172,7 +177,7 @@ function Main({ addConversation, isTouch }) {
       }
       
       const filePairs = acceptedFiles.map((file) => {
-        const uniqueId = generateFileId();
+        const uniqueId = generateRandomHash();
         return { file, uniqueId };
       });
 
@@ -203,7 +208,7 @@ function Main({ addConversation, isTouch }) {
         })
       );
     },
-    [uploadedFiles, maxFileSize, generateFileId, uploadFiles]
+    [uploadedFiles, maxFileSize, generateRandomHash, uploadFiles]
   );
 
   const sendMessage = useCallback(
@@ -268,7 +273,7 @@ function Main({ addConversation, isTouch }) {
     if (hasUploadedImage) {
       const selectedModel = models.find((m) => m.model_name === model);
       if (selectedModel && !selectedModel.capabilities?.image) {
-        updateModel("gpt-4o");
+        updateModel("gemini-2.0-flash");
       }
     }
   }, [uploadedFiles, model, models, setIsImage, updateModel]);
@@ -371,6 +376,13 @@ function Main({ addConversation, isTouch }) {
     adjustTextareaHeight();
   }, [inputText, adjustTextareaHeight]);
 
+  const handleSendButtonClick = useCallback(() => {
+    if (inputText.trim())
+      sendMessage(inputText);
+    else
+      navigate("/realtime");
+  }, [inputText, sendMessage, navigate]);
+
   return (
     <div
       className="container"
@@ -427,7 +439,6 @@ function Main({ addConversation, isTouch }) {
                           >
                             <div className="file-object">
                               <span className="file-name">{file.name}</span>
-                              {/* 파일 객체에 content가 없으면 업로드 중임을 표시 */}
                               {!file.content && (
                                 <div className="file-upload-overlay">
                                   <ClipLoader size={20} />
@@ -473,7 +484,7 @@ function Main({ addConversation, isTouch }) {
                 setIsSearch(newSearch);
                 setIsFunctionOn(newSearch || isInference);
                 if (!newSearch && !isInference) {
-                  updateModel("gpt-4o");
+                  updateModel("gemini-2.0-flash");
                 }
               }}
             >
@@ -487,7 +498,7 @@ function Main({ addConversation, isTouch }) {
                 setIsInference(newInference);
                 setIsFunctionOn(isSearch || newInference);
                 if (!isSearch && !newInference) {
-                  updateModel("gpt-4o");
+                  updateModel("gemini-2.0-flash");
                 }
               }}
             >
@@ -512,24 +523,32 @@ function Main({ addConversation, isTouch }) {
 
         <button
           className="send-button"
-          onClick={() => sendMessage(inputText)}
+          onClick={handleSendButtonClick}
           disabled={uploadingFiles}
-          aria-label={isLoading ? "전송 중단" : "메시지 전송"}
+          aria-label={
+            isLoading
+              ? "전송 중단"
+              : inputText.trim() || uploadedFiles.length > 0
+              ? "메시지 전송"
+              : "실시간 대화"
+          }
         >
           {isLoading ? (
             <div className="loading-container">
               <ImSpinner8 className="spinner" />
               <FaStop className="stop-icon" />
             </div>
-          ) : (
+          ) : inputText.trim() || uploadedFiles.length > 0 ? (
             <FaPaperPlane />
+          ) : (
+            <RiVoiceprintFill style={{ fontSize: "23px", strokeWidth: 0.3 }}/>
           )}
         </button>
       </motion.div>
 
       <input
         type="file"
-        accept="image/*, .zip, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
+        accept="image/*, .zip, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .v, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
         multiple
         ref={fileInputRef}
         style={{ display: "none" }}
@@ -552,6 +571,19 @@ function Main({ addConversation, isTouch }) {
           >
             여기에 파일을 끌어서 추가하세요
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {confirmModal && (
+          <Modal
+            message={notice}
+            onConfirm={() => {
+              localStorage.setItem('noticeHash', noticeHash);
+              setConfirmModal(false);
+            }}
+            showCancelButton={false}
+          />
         )}
       </AnimatePresence>
 

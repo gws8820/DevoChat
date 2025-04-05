@@ -131,7 +131,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         "user_id": user.user_id,
         "conversation_id": request.conversation_id
     })
-    conversation = conversation_data["conversation"][-50:] if conversation_data else []
+    conversation = conversation_data["conversation"][-10:] if conversation_data else []
     conversation.append({"role": "user", "content": request.user_message})
     formatted_messages = [copy.deepcopy(format_message(m)) for m in conversation]
 

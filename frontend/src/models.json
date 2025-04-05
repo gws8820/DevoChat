@@ -165,8 +165,8 @@
         "type": "default"
       },
       {
-        "model_name": "gemini-2.0-pro-exp",
-        "model_alias": "Gemini 2.0 Pro",
+        "model_name": "gemini-2.5-pro-exp-03-25",
+        "model_alias": "Gemini 2.5 Pro",
         "description": "고성능 신형 Gemini 모델",
         "endpoint": "/gemini",
         "in_billing": "0",
@@ -197,7 +197,7 @@
       {
         "model_name": "sonar",
         "model_alias": "Perplexity Sonar",
-        "description": "실시간 검색이 가능한 Sonar 모델",
+        "description": "실시간 검색이 가능한 Perplexity 모델",
         "endpoint": "/perplexity",
         "in_billing": "1",
         "out_billing": "1",
@@ -213,7 +213,7 @@
       {
         "model_name": "sonar-pro",
         "model_alias": "Perplexity Sonar Pro",
-        "description": "고성능 Sonar 모델",
+        "description": "고성능 Perplexity 모델",
         "endpoint": "/perplexity",
         "in_billing": "3",
         "out_billing": "15",
@@ -229,7 +229,7 @@
       {
         "model_name": "sonar-reasoning",
         "model_alias": "Perplexity Sonar Reasoning",
-        "description": "검색과 추론이 가능한 Sonar 모델",
+        "description": "검색과 추론이 가능한 Perplexity 모델",
         "endpoint": "/perplexity",
         "in_billing": "1",
         "out_billing": "5",
@@ -245,7 +245,7 @@
       {
         "model_name": "sonar-reasoning-pro",
         "model_alias": "Perplexity Sonar Reasoning Pro",
-        "description": "고성능 Sonar Reasoning 모델",
+        "description": "추론이 가능한 고성능 Perplexity 모델",
         "endpoint": "/perplexity",
         "in_billing": "2",
         "out_billing": "8",

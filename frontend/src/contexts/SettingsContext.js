@@ -4,7 +4,7 @@ import modelsData from '../models.json';
 export const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
-  const [model, setModel] = useState("gpt-4o");
+  const [model, setModel] = useState("gemini-2.0-flash");
   const [modelType, setModelType] = useState("");
   const [temperature, setTemperature] = useState(0.5);
   const [reason, setReason] = useState(2);

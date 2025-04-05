@@ -85,7 +85,8 @@ async def create_new_conversation(request_data: NewConversationRequest, current_
         "temperature": request_data.temperature,
         "reason": request_data.reason,
         "system_message": request_data.system_message,
-        "conversation": []
+        "conversation": [],
+        "created_at": datetime.utcnow()
     }
     await conversations_collection.insert_one(new_conversation)
     return {

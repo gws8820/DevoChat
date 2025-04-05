@@ -41,7 +41,7 @@
 .model-box {
     display: flex;
     align-items: center;
-    padding: 5px 10px 7px 10px;
+    padding: 5px 10px;
     font-size: 20px;
     font-weight: 500;
     color: #333;
@@ -114,6 +114,11 @@
 
 .model-description {
     margin-top: 8px;
+    font-size: 15px;
+}
+
+.model-pricing {
+    margin-top: 3px;
     font-size: 15px;
 }
 
@@ -241,5 +246,8 @@
     }
     .system-message-container {
         width: calc(100vw - 120px);
+    }
+    .model-box {
+        padding: 5px 7px 7px 7px;
     }
 }

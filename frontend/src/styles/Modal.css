@@ -18,11 +18,12 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    max-width: 80%;
+    max-width: 500px;
     padding: 40px;
     gap: 10px;
     background: #fff;
     border-radius: 10px;
+    box-sizing: border-box;
 }
 
 .modal-content {

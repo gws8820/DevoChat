@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "./components/Sidebar";
 import Main from "./pages/Main";
 import Chat from "./pages/Chat";
+import Realtime from "./pages/Realtime";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Header from "./components/Header";
@@ -161,7 +162,7 @@ function AppLayout({
 
     let touchStartX = 0;
     let touchStartY = 0;
-    const threshold = 20;
+    const threshold = 50;
 
     const handleTouchStart = (e) => {
       touchStartX = e.touches[0].clientX;
@@ -310,6 +311,12 @@ function AppLayout({
                   ) : (
                     <Navigate to="/login" />
                   )
+                }
+              />
+              <Route
+                path="/realtime"
+                element={
+                  isLoggedIn ? <Realtime /> : <Navigate to="/login" />
                 }
               />
               <Route

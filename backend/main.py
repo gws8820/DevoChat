@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from routes import auth, conversations, openai_client, anthropic_client, huggingface_client
+from routes import auth, realtime, conversations, openai_client, anthropic_client, huggingface_client
 from PIL import Image, ImageOps
 from bs4 import BeautifulSoup
 
@@ -35,6 +35,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(realtime.router)
 app.include_router(conversations.router)
 app.include_router(openai_client.router)
 app.include_router(anthropic_client.router)
@@ -93,7 +94,7 @@ async def upload_file(file: UploadFile = File(...)):
         '.json', '.xml', '.html', '.htm',
         '.csv', '.tsv', '.yaml', '.yml', '.log', '.sql',
         '.py', '.pyw', '.rb', '.pl',
-        '.java', '.c', '.cpp', '.h', '.hpp',
+        '.java', '.c', '.cpp', '.h', '.hpp', '.v',
         '.js', '.jsx', '.ts', '.tsx',
         '.css', '.scss', '.less',
         '.cs', '.sh', '.bash', '.bat', '.ps1',

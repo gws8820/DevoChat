@@ -66,12 +66,12 @@ function Chat({ fetchConversations, isTouch }) {
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
   const allowedExtensions = useMemo(
     () =>
-      /\.(zip|pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
+      /\.(zip|pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|v|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
     []
   );
   const maxFileSize = 50 * 1024 * 1024;
 
-  const generateFileId = useCallback(() => {
+  const generateRandomId = useCallback(() => {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
   }, []);
 
@@ -144,7 +144,7 @@ function Chat({ fetchConversations, isTouch }) {
       }
       
       const filePairs = acceptedFiles.map((file) => {
-        const uniqueId = generateFileId();
+        const uniqueId = generateRandomId();
         return { file, uniqueId };
       });
 
@@ -175,7 +175,7 @@ function Chat({ fetchConversations, isTouch }) {
         })
       );
     },
-    [uploadedFiles, maxFileSize, generateFileId, uploadFiles]
+    [uploadedFiles, maxFileSize, generateRandomId, uploadFiles]
   );
 
   const updateAssistantMessage = useCallback((message, isComplete = false) => {
@@ -285,6 +285,7 @@ function Chat({ fetchConversations, isTouch }) {
             const dots = ".".repeat(dotCount % 6);
             setThinkingText(`생각 중${dots}`);
           }, 1000);
+          setScrollOnSend(true);
         }
   
         const response = await fetch(
@@ -383,7 +384,7 @@ function Chat({ fetchConversations, isTouch }) {
       } else if (isSearch) {
         updateModel("sonar");
       } else if (isInference) {
-        updateModel("o1");
+        updateModel("gemini-2.0-flash-thinking-exp");
       }
     }
     // eslint-disable-next-line
@@ -451,7 +452,7 @@ function Chat({ fetchConversations, isTouch }) {
     if (newIsImage) {
       const selectedModel = models.find((m) => m.model_name === model);
       if (selectedModel && !selectedModel.capabilities?.image) {
-        updateModel("gpt-4o");
+        updateModel("gemini-2.0-flash");
       }
     }
   }, [uploadedFiles, messages, model, models, setIsImage, updateModel]);
@@ -612,10 +613,6 @@ function Chat({ fetchConversations, isTouch }) {
     },
     [messages, deleteMessages, setIsImage, setErrorModal]
   );
-
-  const scrollOnImage = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
   
   useEffect(() => {
     const chatContainer = messagesEndRef.current?.parentElement;
@@ -711,7 +708,7 @@ function Chat({ fetchConversations, isTouch }) {
               onDelete={handleDelete}
               onRegenerate={handleRegenerate}
               onEdit={handleEdit}
-              scrollOnImage={scrollOnImage}
+              setScrollOnSend={setScrollOnSend}
             />
           ))}
         </AnimatePresence>
@@ -828,7 +825,7 @@ function Chat({ fetchConversations, isTouch }) {
                 setIsSearch(newSearch);
                 setIsFunctionOn(newSearch || isInference);
                 if (!newSearch && !isInference) {
-                  updateModel("gpt-4o");
+                  updateModel("gemini-2.0-flash");
                 }
               }}
             >
@@ -842,7 +839,7 @@ function Chat({ fetchConversations, isTouch }) {
                 setIsInference(newInference);
                 setIsFunctionOn(isSearch || newInference);
                 if (!isSearch && !newInference) {
-                  updateModel("gpt-4o");
+                  updateModel("gemini-2.0-flash");
                 }
               }}
             >
@@ -890,7 +887,7 @@ function Chat({ fetchConversations, isTouch }) {
 
       <input
         type="file"
-        accept="image/*, .zip, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg"
+        accept="image/*, .zip, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .v, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
         multiple
         ref={fileInputRef}
         style={{ display: "none" }}

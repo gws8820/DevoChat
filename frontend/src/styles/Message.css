@@ -138,7 +138,8 @@
 .chat-message ol, ul {
   width: calc(100% - 34px);
   margin: 4px 0;
-  padding: 0 0 0 20px;
+  padding: 0;
+  list-style-position: inside;
 }
 
 .chat-message li {
@@ -146,6 +147,7 @@
 }
 
 .chat-message .katex-display {
+  width: 100%;
   margin: 8px 0;
 }
 
@@ -157,6 +159,7 @@
 }
 
 .think-block {
+  width: 100%;
   font-size: 14px;
   color: rgb(100, 100, 100);
 }

@@ -1,11 +1,6 @@
 // src/components/Header.js
 import React, { useState, useContext, useRef, useEffect } from "react";
-import {
-  BsLayoutTextSidebar,
-  BsChevronRight,
-  BsSliders,
-  BsCodeSlash,
-} from "react-icons/bs";
+import { BsLayoutTextSidebar, BsChevronRight, BsSliders, BsCodeSlash } from "react-icons/bs";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Tooltip from "./Tooltip";
@@ -426,8 +421,9 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
           <motion.div
             className="hmodal-overlay"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { duration: 0.3 } }}
-            exit={{ opacity: 0, transition: { duration: 0.3 } }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
           >
             <div className="hmodal" ref={modelModalRef}>
               <div className="model-list">
@@ -442,6 +438,7 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
                   >
                     <div className="model-alias">{m.model_alias}</div>
                     <div className="model-description">{m.description}</div>
+                    <div className="model-pricing">In {m.in_billing}$ / Out {m.out_billing}$</div>
                   </div>
                 ))}
               </div>

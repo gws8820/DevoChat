@@ -1,0 +1,52 @@
+.realtime-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+}
+
+.mic-control {
+    display: flex;
+    align-items: center;
+    height: 70%;
+    cursor: pointer;
+}
+
+.mic-disabled {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 40px;
+    cursor: pointer;
+}
+
+.realtime-function-container {
+    display: flex;
+    flex-direction: row;
+    position: fixed;
+    bottom: 4%;
+    gap: 28px;
+}
+
+.realtime-function {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 65px;
+    height: 65px;
+    font-size: 28px;
+    background-color: rgba(242, 242, 242);
+    transition: background-color 0.3s;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.realtime-function:hover {
+    background-color: rgba(229, 229, 229);
+}
