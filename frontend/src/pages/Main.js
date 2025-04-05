@@ -6,14 +6,14 @@ import { GoPlus, GoGlobe, GoLightBulb, GoUnlock } from "react-icons/go";
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
 import { CiWarning } from "react-icons/ci";
-import { RiVoiceprintFill } from "react-icons/ri";
-import { ClipLoader } from "react-spinners";
+import { RiVoiceAiFill } from "react-icons/ri";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Modal from "../components/Modal";
 import modelsData from "../models.json";
 import "../styles/Common.css";
+import { ClipLoader } from "react-spinners";
 
 function Main({ addConversation, isTouch }) {
   const navigate = useNavigate();
@@ -541,7 +541,7 @@ function Main({ addConversation, isTouch }) {
           ) : inputText.trim() || uploadedFiles.length > 0 ? (
             <FaPaperPlane />
           ) : (
-            <RiVoiceprintFill style={{ fontSize: "23px", strokeWidth: 0.3 }}/>
+            <RiVoiceAiFill style={{ fontSize: "23px", strokeWidth: 0.3 }}/>
           )}
         </button>
       </motion.div>
