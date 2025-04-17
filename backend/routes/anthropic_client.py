@@ -48,6 +48,7 @@ class ChatRequest(BaseModel):
     reason: int = 0
     system_message: Optional[str] = None
     user_message: List[Dict[str, Any]]
+    search: bool = False
     dan: bool = False
     stream: bool = True
 
@@ -56,6 +57,7 @@ def calculate_billing(request_array, response, in_billing_rate, out_billing_rate
         encoding = tiktoken.get_encoding("cl100k_base")
         tokens = 4
         tokens += len(encoding.encode(message.get("role", "")))
+
         content = message.get("content", "")
         if isinstance(content, list):
             for part in content:
@@ -63,7 +65,7 @@ def calculate_billing(request_array, response, in_billing_rate, out_billing_rate
                     content_str = "text " + part.get("text", "") + " "
                 elif part.get("type") == "image":
                     content_str = "image "
-                    tokens += 1000
+                    tokens += 1024
         else:
             content_str = content
         tokens += len(encoding.encode(content_str))
@@ -135,23 +137,33 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     conversation.append({"role": "user", "content": request.user_message})
     formatted_messages = [copy.deepcopy(format_message(m)) for m in conversation]
 
+    system_text = MARKDOWN_PROMPT
+    if request.system_message:
+        system_text += "\n\n" + request.system_message
+    if request.dan and DAN_PROMPT:
+        system_text += "\n\n" + DAN_PROMPT
+        for part in reversed(formatted_messages[-1]["content"]):
+            if part.get("type") == "text":
+                part["text"] += " STAY IN CHARACTER"
+                break
+
     async def produce_tokens(token_queue: asyncio.Queue, request: ChatRequest, parameters: Dict[str, Any], fastapi_request: Request, client) -> None:
+        is_thinking = False
         try:
             if request.stream:
                 stream_result = await client.messages.create(**parameters, timeout=300)
-                thinking_started = False
                 async for chunk in stream_result:
                     if await fastapi_request.is_disconnected():
                         return
                     if hasattr(chunk, "type"):
                         if chunk.type == "content_block_start" and hasattr(chunk, "content_block"):
                             if getattr(chunk.content_block, "type", "") == "thinking":
-                                thinking_started = True
-                                await token_queue.put('<div class="think-block">\n')
+                                is_thinking = True
+                                await token_queue.put('<think>\n')
                         elif chunk.type == "content_block_stop":
-                            if thinking_started:
-                                await token_queue.put('\n</div>\n\n')
-                                thinking_started = False
+                            if is_thinking:
+                                await token_queue.put('\n</think>\n\n')
+                                is_thinking = False
                     if hasattr(chunk, "delta"):
                         if hasattr(chunk.delta, "thinking"):
                             await token_queue.put(chunk.delta.thinking)
@@ -170,21 +182,13 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
             print(f"Produce tokens exception: {ex}")
             await token_queue.put({"error": str(ex)})
         finally:
+            await client.close()
             await token_queue.put(None)
 
     async def event_generator():
         response_text = ""
         try:
             async with anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) as client:
-                system_text = MARKDOWN_PROMPT
-                if request.system_message:
-                    system_text += "\n\n" + request.system_message
-                if request.dan and DAN_PROMPT:
-                    system_text += "\n\n" + DAN_PROMPT
-                    for part in reversed(formatted_messages[-1]["content"]):
-                        if part.get("type") == "text":
-                            part["text"] += " STAY IN CHARACTER"
-                            break
 
                 parameters = {
                     "model": request.model.split(':')[0],
@@ -221,6 +225,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
             print(f"Exception detected: {ex}", flush=True)
             yield f"data: {json.dumps({'error': str(ex)})}\n\n"
         finally:
+            formatted_messages.insert(0, {"role": "system", "content": system_text})
             formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
             conversation.append(formatted_response)
             if user.trial:

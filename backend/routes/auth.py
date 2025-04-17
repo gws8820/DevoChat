@@ -13,16 +13,16 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 load_dotenv()
 router = APIRouter()
 
-# Motor client 설정
+# Motor client
 mongoclient = AsyncIOMotorClient(os.getenv('MONGODB_URI'))
 db = mongoclient.chat_db
 collection = db.users
 
-# JWT 설정
+# JWT
 AUTH_KEY = os.getenv('AUTH_KEY')
 ALGORITHM = 'HS256'
 
-# Pydantic 모델
+# Pydantic Model
 class RegisterUser(BaseModel):
     name: constr(strip_whitespace=True, min_length=1)
     email: EmailStr
@@ -37,10 +37,10 @@ class User(BaseModel):
     name: str
     email: str
     billing: float
+    admin: bool
     trial: bool
     trial_remaining: int = 0
 
-# 비밀번호 해싱 및 검증
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
@@ -57,6 +57,7 @@ async def register(user: RegisterUser):
         "email": user.email,
         "password": hash_password(user.password),
         "billing": 0.0,
+        "admin": False,
         "trial": True,
         "trial_remaining": 10,
         "created_at": datetime.utcnow()
@@ -64,7 +65,6 @@ async def register(user: RegisterUser):
     result = await collection.insert_one(new_user)
     return {"message": "Registration Success!", "user_id": str(result.inserted_id)}
 
-# 사용자 로그인
 @router.post("/login")
 async def login(user: LoginUser):
     db_user = await collection.find_one({"email": user.email})
@@ -95,14 +95,12 @@ async def login(user: LoginUser):
     )
     return response
 
-# 사용자 로그아웃
 @router.post("/logout")
 async def logout():
     response = JSONResponse(content={"message": "Successfully Logged Out"})
     response.delete_cookie("access_token")
     return response
 
-# 인증 상태 확인
 @router.get("/auth/status")
 async def get_auth_status(access_token: str = Cookie(None)):
     if not access_token:
@@ -149,6 +147,7 @@ async def get_current_user(access_token: str = Cookie(None)) -> User:
         name=db_user["name"],
         email=db_user["email"],
         billing=db_user["billing"],
+        admin=db_user["admin"],
         trial=db_user.get("trial"),
         trial_remaining=db_user.get("trial_remaining", 0)
     )

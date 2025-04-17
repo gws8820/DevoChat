@@ -4,7 +4,13 @@ import modelsData from '../models.json';
 export const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
-  const [model, setModel] = useState("gemini-2.0-flash");
+  const DEFAULT_MODEL = "gpt-4.1-mini:0";
+  const DEFAULT_IMAGE_MODEL = "gpt-4.1-mini:0";
+  const DEFAULT_SEARCH_MODEL = "gpt-4.1-mini:1";
+  const DEFAULT_INFERENCE_MODEL = "grok-3-mini";
+  const DEFAULT_SEARCH_INFERENCE_MODEL = "o4-mini:1"
+
+  const [model, setModel] = useState(DEFAULT_MODEL);
   const [modelType, setModelType] = useState("");
   const [temperature, setTemperature] = useState(0.5);
   const [reason, setReason] = useState(2);
@@ -13,7 +19,8 @@ export const SettingsProvider = ({ children }) => {
   const [isSearch, setIsSearch] = useState(false);
   const [isDAN, setIsDAN] = useState(false);
   const [isInference, setIsInference] = useState(false);
-  const [isFunctionOn, setIsFunctionOn] = useState(false);
+  const [isSearchButton, setIsSearchButton] = useState(false);
+  const [isInferenceButton, setIsInferenceButton] = useState(false);
 
   const updateModel = (newModel) => {
     setModel(newModel);
@@ -35,7 +42,7 @@ export const SettingsProvider = ({ children }) => {
       setReason((prev) => (prev === 0 ? 2 : prev));
     } else if (typeOfModel === "think") {
       setTemperature(1);
-      setReason(1);
+      setReason(2);
     } else {
       setTemperature(0.5);
       setReason(0);
@@ -50,6 +57,11 @@ export const SettingsProvider = ({ children }) => {
   return (
     <SettingsContext.Provider
       value={{
+        DEFAULT_MODEL,
+        DEFAULT_IMAGE_MODEL,
+        DEFAULT_SEARCH_MODEL,
+        DEFAULT_INFERENCE_MODEL,
+        DEFAULT_SEARCH_INFERENCE_MODEL,
         model,
         modelType,
         temperature,
@@ -59,7 +71,8 @@ export const SettingsProvider = ({ children }) => {
         isInference,
         isSearch,
         isDAN,
-        isFunctionOn,
+        isSearchButton,
+        isInferenceButton,
         updateModel,
         setTemperature,
         setReason,
@@ -68,7 +81,8 @@ export const SettingsProvider = ({ children }) => {
         setIsInference,
         setIsSearch,
         setIsDAN,
-        setIsFunctionOn
+        setIsSearchButton,
+        setIsInferenceButton
       }}
     >
       {children}

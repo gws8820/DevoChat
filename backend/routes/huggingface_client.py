@@ -38,13 +38,6 @@ try:
 except FileNotFoundError:
     MARKDOWN_PROMPT = ""
 
-alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'alias_prompt.txt')
-try:
-    with open(alias_prompt_path, 'r', encoding='utf-8') as f:
-        ALIAS_PROMPT = f.read()
-except FileNotFoundError:
-    ALIAS_PROMPT = ""
-
 class ChatRequest(BaseModel):
     conversation_id: str
     model: str
@@ -55,6 +48,7 @@ class ChatRequest(BaseModel):
     reason: int = 0
     system_message: Optional[str] = None
     user_message: List[Dict[str, Any]]
+    search: bool = False
     dan: bool = False
     stream: bool = True
 
@@ -71,7 +65,7 @@ def calculate_billing(request_array, response, in_billing_rate, out_billing_rate
                     content_str = "text " + part.get("text", "") + " "
                 elif part.get("type") == "image_url":
                     content_str = "image_url "
-                    tokens += 1000
+                    tokens += 1024
         else:
             content_str = content
         tokens += len(encoding.encode(content_str))
@@ -160,7 +154,6 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     })
 
     async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
-        citation = None 
         try:
             if request.stream:
                 stream_result = await client.chat.completions.create(**parameters)
@@ -169,13 +162,9 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                         return
                     if chunk.choices[0].delta.content:
                         await token_queue.put(chunk.choices[0].delta.content)
-                    if citation is None and hasattr(chunk, "citations"):
-                        citation = chunk.citations
             else:
                 single_result = await client.chat.completions.create(**parameters)
                 full_response_text = single_result.choices[0].message.content
-                if hasattr(single_result, "citations"):
-                    citation = single_result.citations
 
                 chunk_size = 10 
                 for i in range(0, len(full_response_text), chunk_size):
@@ -187,10 +176,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
             print(f"Produce tokens exception: {ex}")
             await token_queue.put({"error": str(ex)})
         finally:
-            if citation:
-                await token_queue.put("\n\n## 출처\n")
-                for idx, item in enumerate(citation):
-                    await token_queue.put(f"- [{idx+1}] {item}\n")
+            await client.close()
             await token_queue.put(None)
 
     async def event_generator():
@@ -203,9 +189,6 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                     "messages": formatted_messages,
                     "stream": request.stream
                 }
-                if request.reason != 0:
-                    mapping = {1: "low", 2: "medium", 3: "high"}
-                    parameters["reasoning_effort"] = mapping.get(request.reason)
                 
                 token_queue = asyncio.Queue()
                 producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))

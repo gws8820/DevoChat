@@ -30,17 +30,22 @@ function Main({ addConversation, isTouch }) {
   const fileInputRef = useRef(null);
 
   const {
+    DEFAULT_MODEL,
+    DEFAULT_IMAGE_MODEL,
+    DEFAULT_SEARCH_MODEL,
+    DEFAULT_INFERENCE_MODEL,
+    DEFAULT_SEARCH_INFERENCE_MODEL,
     model,
     modelType,
     temperature,
     reason,
     systemMessage,
     updateModel,
-    isImage,
     isInference,
     isSearch,
     isDAN,
-    isFunctionOn,
+    isSearchButton,
+    isInferenceButton,
     setTemperature,
     setReason,
     setSystemMessage,
@@ -48,7 +53,8 @@ function Main({ addConversation, isTouch }) {
     setIsInference,
     setIsSearch,
     setIsDAN,
-    setIsFunctionOn,
+    setIsSearchButton,
+    setIsInferenceButton
   } = useContext(SettingsContext);
 
   const models = modelsData.models;
@@ -63,7 +69,7 @@ function Main({ addConversation, isTouch }) {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
   }, []);
 
-  const notice = 'OpenAI o1, GPT 4.5, Claude 3 Opus 등 고가 모델은 필요할 때만 사용해주세요. 너무 비싸요 ㅠㅠ';
+  const notice = 'OpenAI o3, o4-mini가 추가되었습니다!';
   const noticeHash = btoa(encodeURIComponent(notice));
 
   useEffect(() => {
@@ -71,7 +77,7 @@ function Main({ addConversation, isTouch }) {
     setIsInference(false);
     setIsSearch(false);
     setIsDAN(false);
-    updateModel("gemini-2.0-flash");
+    updateModel(DEFAULT_MODEL);
     setTemperature(0.5);
     setReason(0);
     setSystemMessage("");
@@ -79,17 +85,16 @@ function Main({ addConversation, isTouch }) {
   }, []);
 
   useEffect(() => {
-    if (isFunctionOn) {
-      if (isSearch && isInference) {
-        updateModel("sonar-reasoning");
-      } else if (isSearch) {
-        updateModel("sonar");
-      } else if (isInference) {
-        updateModel("gemini-2.0-flash-thinking-exp");
-      }
-    }
+    if (isSearchButton && isInferenceButton)
+      updateModel(DEFAULT_SEARCH_INFERENCE_MODEL);
+    else if (isSearchButton)
+      updateModel(DEFAULT_SEARCH_MODEL);
+    else if (isInferenceButton)
+      updateModel(DEFAULT_INFERENCE_MODEL);
+    else
+      updateModel(DEFAULT_MODEL);
     // eslint-disable-next-line
-  }, [isSearch, isInference, isFunctionOn]);
+  }, [isSearchButton, isInferenceButton]);
 
   useEffect(() => {
     const storedHash = localStorage.getItem('noticeHash');
@@ -270,13 +275,22 @@ function Main({ addConversation, isTouch }) {
       return /\.(jpe?g|png|gif|bmp|webp)$/i.test(file.name);
     });
     setIsImage(hasUploadedImage);
+
     if (hasUploadedImage) {
       const selectedModel = models.find((m) => m.model_name === model);
       if (selectedModel && !selectedModel.capabilities?.image) {
-        updateModel("gemini-2.0-flash");
+        updateModel(DEFAULT_IMAGE_MODEL);
       }
     }
-  }, [uploadedFiles, model, models, setIsImage, updateModel]);
+  },
+  [
+    DEFAULT_IMAGE_MODEL,
+    models,
+    model,
+    setIsImage,
+    updateModel,
+    uploadedFiles,
+  ]);
 
   const handleFileClick = useCallback((e) => {
     e.stopPropagation();
@@ -477,15 +491,11 @@ function Main({ addConversation, isTouch }) {
             </div>
             <div
               className={`function-button ${
-                isImage ? "disabled" : isSearch ? "active" : ""
+                isSearch ? "active" : ""
               }`}
               onClick={() => {
-                const newSearch = !isSearch;
-                setIsSearch(newSearch);
-                setIsFunctionOn(newSearch || isInference);
-                if (!newSearch && !isInference) {
-                  updateModel("gemini-2.0-flash");
-                }
+                setIsSearch(!isSearch);
+                setIsSearchButton(!isSearch);
               }}
             >
               <GoGlobe style={{ strokeWidth: 0.5 }} />
@@ -494,12 +504,8 @@ function Main({ addConversation, isTouch }) {
             <div
               className={`function-button ${isInference ? "active" : ""}`}
               onClick={() => {
-                const newInference = !isInference;
-                setIsInference(newInference);
-                setIsFunctionOn(isSearch || newInference);
-                if (!isSearch && !newInference) {
-                  updateModel("gemini-2.0-flash");
-                }
+                setIsInference(!isInference);
+                setIsInferenceButton(!isInference);
               }}
             >
               <GoLightBulb style={{ strokeWidth: 0.5 }} />
@@ -521,7 +527,7 @@ function Main({ addConversation, isTouch }) {
           </div>
         </div>
 
-        <button
+        <div
           className="send-button"
           onClick={handleSendButtonClick}
           disabled={uploadingFiles}
@@ -543,7 +549,7 @@ function Main({ addConversation, isTouch }) {
           ) : (
             <RiVoiceAiFill style={{ fontSize: "23px", strokeWidth: 0.3 }}/>
           )}
-        </button>
+        </div>
       </motion.div>
 
       <input

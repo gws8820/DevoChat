@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from "react-router-dom";
-import { LuX, LuRefreshCw } from "react-icons/lu";
+import { LuX, LuRefreshCcw } from "react-icons/lu";
 import { IoMicOff } from "react-icons/io5";
 import { ClipLoader } from "react-spinners";
 import { motion, AnimatePresence } from "framer-motion";
@@ -171,7 +171,7 @@ const Realtime = () => {
 
       dataChannel.current = peerConnection.current.createDataChannel('oai-events');
       dataChannel.current.onopen = () => {
-        sendUpdateInstructions("한국어 반말로 대답해. 상냥하고 발랄한 목소리로 대화해.");
+        sendUpdateInstructions("한국어, 반말을 사용해. 상냥, 발랄하고 애교섞인 목소리를 사용해.");
       };
 
       const offer = await peerConnection.current.createOffer();
@@ -265,7 +265,7 @@ const Realtime = () => {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <IoMicOff style={{ fill: "#cc2222", stroke: "#cc2222" }} />
+                    <IoMicOff />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -280,11 +280,11 @@ const Realtime = () => {
                     exit={{ y: 10 }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
                   >
+                    <div onClick={handleRefresh} className="realtime-function new">
+                      <LuRefreshCcw strokeWidth={"2.5"} />
+                    </div>
                     <div onClick={handleNavigate} className="realtime-function stop">
                       <LuX strokeWidth={"3"} />
-                    </div>
-                    <div className="realtime-function new" onClick={handleRefresh}>
-                      <LuRefreshCw strokeWidth={"2.5"} />
                     </div>
                   </motion.div>
                 )}

@@ -19,9 +19,9 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
     setReason,
     setSystemMessage,
     isImage,
-    isInference,
     isSearch,
-    isFunctionOn,
+    isSearchButton,
+    isInferenceButton
   } = useContext(SettingsContext);
 
   const models = modelsData.models;
@@ -36,11 +36,13 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
   const systemMessageRef = useRef(null);
 
   let modelsList = models.filter((m) => {
-    if (isFunctionOn) {
-      if (isSearch && !m.capabilities?.search) return false;
-      if (isInference && !m.inference) return false;
-    }
     if (isImage && !m.capabilities?.image) return false;
+
+    if (isSearchButton && !m.capabilities?.search) return false;
+    if (!isSearch && m.hidden) return false;
+    
+    if (isInferenceButton && !m.inference) return false;
+
     return true;
   });
 

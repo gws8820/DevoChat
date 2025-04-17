@@ -159,34 +159,43 @@ function AppLayout({
 
   useEffect(() => {
     if (!isTouch) return;
-
+  
     let touchStartX = 0;
     let touchStartY = 0;
+    let touchStartTarget = null;
     const threshold = 50;
-
+    const excludedClasses = ['.slider-container', '.katex-display', '.code-block'];
+  
     const handleTouchStart = (e) => {
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
+      touchStartTarget = e.touches[0].target;
     };
-
+  
     const handleTouchEnd = (e) => {
       const touchEndX = e.changedTouches[0].clientX;
       const touchEndY = e.changedTouches[0].clientY;
       const diffX = touchEndX - touchStartX;
       const diffY = touchEndY - touchStartY;
-
+  
       if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
         if (diffX > 0 && !isSidebarVisible) {
-          toggleSidebar();
+          const isExcluded = excludedClasses.some(cls => touchStartTarget.closest(cls));
+          if (!isExcluded) {
+            toggleSidebar();
+          }
         } else if (diffX < 0 && isSidebarVisible) {
-          toggleSidebar();
+          const isExcluded = excludedClasses.some(cls => touchStartTarget.closest(cls));
+          if (!isExcluded) {
+            toggleSidebar();
+          }
         }
       }
     };
-
+    
     document.addEventListener("touchstart", handleTouchStart);
     document.addEventListener("touchend", handleTouchEnd);
-
+  
     return () => {
       document.removeEventListener("touchstart", handleTouchStart);
       document.removeEventListener("touchend", handleTouchEnd);

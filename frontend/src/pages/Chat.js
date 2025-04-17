@@ -41,6 +41,11 @@ function Chat({ fetchConversations, isTouch }) {
   const thinkingIntervalRef = useRef(null);
 
   const {
+    DEFAULT_MODEL,
+    DEFAULT_IMAGE_MODEL,
+    DEFAULT_SEARCH_MODEL,
+    DEFAULT_INFERENCE_MODEL,
+    DEFAULT_SEARCH_INFERENCE_MODEL,
     model,
     modelType,
     temperature,
@@ -51,15 +56,16 @@ function Chat({ fetchConversations, isTouch }) {
     setReason,
     setSystemMessage,
     setIsImage,
-    isImage,
     isInference,
     isSearch,
     isDAN,
-    isFunctionOn,
+    isSearchButton,
+    isInferenceButton,
     setIsInference,
     setIsSearch,
     setIsDAN,
-    setIsFunctionOn,
+    setIsSearchButton,
+    setIsInferenceButton
   } = useContext(SettingsContext);
 
   const models = modelsData.models;
@@ -305,6 +311,7 @@ function Chat({ fetchConversations, isTouch }) {
               reason,
               system_message: systemMessage,
               user_message: contentParts,
+              search: selectedModel.capabilities?.search,
               dan: isDAN,
               stream: selectedModel.stream,
             }),
@@ -378,17 +385,16 @@ function Chat({ fetchConversations, isTouch }) {
   );
 
   useEffect(() => {
-    if (isFunctionOn) {
-      if (isSearch && isInference) {
-        updateModel("sonar-reasoning");
-      } else if (isSearch) {
-        updateModel("sonar");
-      } else if (isInference) {
-        updateModel("gemini-2.0-flash-thinking-exp");
-      }
-    }
+    if (isSearchButton && isInferenceButton)
+      updateModel(DEFAULT_SEARCH_INFERENCE_MODEL);
+    else if (isSearchButton)
+      updateModel(DEFAULT_SEARCH_MODEL);
+    else if (isInferenceButton)
+      updateModel(DEFAULT_INFERENCE_MODEL);
+    else
+      updateModel(DEFAULT_MODEL);
     // eslint-disable-next-line
-  }, [isSearch, isInference, isFunctionOn]);
+  }, [isSearchButton, isInferenceButton]);
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -452,10 +458,19 @@ function Chat({ fetchConversations, isTouch }) {
     if (newIsImage) {
       const selectedModel = models.find((m) => m.model_name === model);
       if (selectedModel && !selectedModel.capabilities?.image) {
-        updateModel("gemini-2.0-flash");
+        updateModel(DEFAULT_IMAGE_MODEL);
       }
     }
-  }, [uploadedFiles, messages, model, models, setIsImage, updateModel]);
+  }, 
+  [
+    DEFAULT_IMAGE_MODEL,
+    model,
+    models,
+    setIsImage,
+    updateModel,
+    uploadedFiles,
+    messages
+  ]);
 
   const handleFileClick = useCallback((e) => {
     e.stopPropagation();
@@ -818,15 +833,11 @@ function Chat({ fetchConversations, isTouch }) {
             </div>
             <div
               className={`function-button ${
-                isImage ? "disabled" : isSearch ? "active" : ""
+                isSearch ? "active" : ""
               }`}
               onClick={() => {
-                const newSearch = !isSearch;
-                setIsSearch(newSearch);
-                setIsFunctionOn(newSearch || isInference);
-                if (!newSearch && !isInference) {
-                  updateModel("gemini-2.0-flash");
-                }
+                setIsSearch(!isSearch);
+                setIsSearchButton(!isSearch);
               }}
             >
               <GoGlobe style={{ strokeWidth: 0.5 }} />
@@ -835,12 +846,8 @@ function Chat({ fetchConversations, isTouch }) {
             <div
               className={`function-button ${isInference ? "active" : ""}`}
               onClick={() => {
-                const newInference = !isInference;
-                setIsInference(newInference);
-                setIsFunctionOn(isSearch || newInference);
-                if (!isSearch && !newInference) {
-                  updateModel("gemini-2.0-flash");
-                }
+                setIsInference(!isInference);
+                setIsInferenceButton(!isInference);
               }}
             >
               <GoLightBulb style={{ strokeWidth: 0.5 }} />
@@ -862,7 +869,7 @@ function Chat({ fetchConversations, isTouch }) {
           </div>
         </div>
 
-        <button
+        <div
           className="send-button"
           onClick={() => {
             if (isLoading) {
@@ -882,7 +889,7 @@ function Chat({ fetchConversations, isTouch }) {
           ) : (
             <FaPaperPlane />
           )}
-        </button>
+        </div>
       </motion.div>
 
       <input

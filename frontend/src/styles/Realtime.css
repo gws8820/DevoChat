@@ -31,8 +31,9 @@
 
 .mic-disabled {
     position: fixed;
-    top: 58%;
+    top: 65%;
     font-size: 40px;
+    color: rgb(230, 55, 55);
 }
 
 .realtime-function-container {
