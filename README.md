@@ -46,6 +46,13 @@ DevoChat은 여러 AI 모델을 단일 인터페이스에서 사용할 수 있�
       <em>문서 파일 업로드</em>
     </td>
   </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="samples/realtime.png" alt="실시간 대화 화면">
+      <br>
+      <em>실시간 대화</em>
+    </td>
+  </tr>
 </table>
 
 ## 주요 기능
@@ -53,15 +60,16 @@ DevoChat은 여러 AI 모델을 단일 인터페이스에서 사용할 수 있�
 - **다중 AI 모델 지원**
   - GPT
   - Claude
-  - Gemini
-  - Sonar
-  - Deepseek
-  - Llama
   - Grok
+  - Gemini
+  - Perplexity
+  - Llama
+  - Deepseek
   - ... 기타 원하는 모델
     
 - **고급 대화 기능**
-  - 실시간 스트리밍 응답
+  - Realtime 대화
+  - 스트리밍 응답
   - 추론 과정 시각화
   - 웹 검색 통합
   - 이미지 업로드 및 분석
@@ -201,6 +209,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `capabilities.image` | 이미지 처리 기능 지원 여부입니다. |
 | `capabilities.search` | 실시간 웹 검색 기능 지원 여부입니다. |
 | `type` | 모델의 유형을 나타냅니다. 가능한 값: `default`, `think`, `reason`, `none` |
+| `hidden` | 검색 기능이 비활성화된 상태에서 모델을 목록에 표시할지 여부입니다. true면 검색 기능이 켜져있을 때만 모델이 표시됩니다. |
 
 ### 모델 유형 설명
 
