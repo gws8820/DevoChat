@@ -197,6 +197,10 @@
     transition: background-color 0.3s ease;
 }
 
+.send-button.realtime {
+    color: #ffa000;
+}
+
 .send-button:disabled {
     cursor: not-allowed;
     opacity: 0.5;

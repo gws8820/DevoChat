@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 import io
 import uuid
@@ -189,13 +190,16 @@ async def upload_file(file: UploadFile = File(...)):
 @app.post("/visit_url")
 def visit_url(request: URLRequest):
     try:
-        response = requests.get(request.url, timeout=5)
-        if response.status_code != 200:
-            raise HTTPException(status_code=400, detail="URL does not exist.")
-
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        response = requests.get(request.url, headers=headers, timeout=5, allow_redirects=True)
         soup = BeautifulSoup(response.text, "html.parser")
+        
+        for tag in soup(['script', 'style', 'head', 'meta', 'noscript']):
+            tag.decompose()
+            
         content = soup.get_text(separator="\n", strip=True)
-
+        content = re.sub(r'\n\s*\n', '\n\n', content)
+        
         return {"content": f"[[{request.url}]]\n{content}"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error occured while visiting URL: {str(e)}")

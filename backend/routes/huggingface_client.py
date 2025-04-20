@@ -124,13 +124,15 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
             yield f"data: {json.dumps({'content': message})}\n\n"
         return StreamingResponse(error_generator(), media_type="text/event-stream")
 
-    conversation_data = conversation_collection.find_one({
-        "user_id": user.user_id,
-        "conversation_id": request.conversation_id
-    })
-    conversation = conversation_data["conversation"][-10:] if conversation_data else []
-    conversation.append({"role": "user", "content": request.user_message})
-    formatted_messages = [copy.deepcopy(format_message(m)) for m in conversation]
+    user_message = {"role": "user", "content": request.user_message}
+
+    conversation = conversation_collection.find_one(
+        {"user_id": user.user_id, "conversation_id": request.conversation_id},
+        {"conversation": {"$slice": -8}}
+    ).get("conversation", [])
+    conversation.append(user_message)
+
+    formatted_messages = [format_message(m) for m in conversation]
 
     if request.dan and DAN_PROMPT:
         formatted_messages.insert(0, {
@@ -232,14 +234,19 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                 )
             conversation_collection.update_one(
                 {"user_id": user.user_id, "conversation_id": request.conversation_id},
-                {"$set": {
-                    "conversation": conversation,
-                    "model": request.model,
-                    "temperature": request.temperature,
-                    "reason": request.reason,
-                    "system_message": request.system_message
-                }},
-                upsert=True
+                {
+                    "$push": {
+                        "conversation": {
+                            "$each": [user_message, formatted_response]
+                        }
+                    },
+                    "$set": {
+                        "model": request.model,
+                        "temperature": request.temperature,
+                        "reason": request.reason,
+                        "system_message": request.system_message
+                    }
+                }
             )
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 

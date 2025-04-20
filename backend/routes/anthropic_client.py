@@ -129,13 +129,15 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
             yield f"data: {json.dumps({'content': message})}\n\n"
         return StreamingResponse(error_generator(), media_type="text/event-stream")
 
-    conversation_data = conversation_collection.find_one({
-        "user_id": user.user_id,
-        "conversation_id": request.conversation_id
-    })
-    conversation = conversation_data["conversation"][-10:] if conversation_data else []
-    conversation.append({"role": "user", "content": request.user_message})
-    formatted_messages = [copy.deepcopy(format_message(m)) for m in conversation]
+    user_message = {"role": "user", "content": request.user_message}
+
+    conversation = conversation_collection.find_one(
+        {"user_id": user.user_id, "conversation_id": request.conversation_id},
+        {"conversation": {"$slice": -8}}
+    ).get("conversation", [])
+    conversation.append(user_message)
+
+    formatted_messages = [format_message(m) for m in conversation]
 
     system_text = MARKDOWN_PROMPT
     if request.system_message:
@@ -189,7 +191,6 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         response_text = ""
         try:
             async with anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) as client:
-
                 parameters = {
                     "model": request.model.split(':')[0],
                     "temperature": request.temperature,
@@ -227,7 +228,6 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         finally:
             formatted_messages.insert(0, {"role": "system", "content": system_text})
             formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
-            conversation.append(formatted_response)
             if user.trial:
                 user_collection.update_one(
                     {"_id": ObjectId(user.user_id)},
@@ -247,14 +247,19 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                 )
             conversation_collection.update_one(
                 {"user_id": user.user_id, "conversation_id": request.conversation_id},
-                {"$set": {
-                    "conversation": conversation,
-                    "model": request.model,
-                    "temperature": request.temperature,
-                    "reason": request.reason,
-                    "system_message": request.system_message
-                }},
-                upsert=True
+                {
+                    "$push": {
+                        "conversation": {
+                            "$each": [user_message, formatted_response]
+                        }
+                    },
+                    "$set": {
+                        "model": request.model,
+                        "temperature": request.temperature,
+                        "reason": request.reason,
+                        "system_message": request.system_message
+                    }
+                }
             )
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 

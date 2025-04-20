@@ -8,7 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from datetime import datetime
 from .auth import User, get_current_user
-from .openai_client import get_alias
+from .responses_client import get_alias
 
 load_dotenv()
 router = APIRouter()

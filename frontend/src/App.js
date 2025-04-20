@@ -164,7 +164,7 @@ function AppLayout({
     let touchStartY = 0;
     let touchStartTarget = null;
     const threshold = 50;
-    const excludedClasses = ['.slider-container', '.katex-display', '.code-block'];
+    const excludedClasses = ['.header', '.input-container', '.katex-display', '.code-block'];
   
     const handleTouchStart = (e) => {
       touchStartX = e.touches[0].clientX;

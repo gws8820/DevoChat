@@ -38,13 +38,6 @@ try:
 except FileNotFoundError:
     MARKDOWN_PROMPT = ""
 
-alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'alias_prompt.txt')
-try:
-    with open(alias_prompt_path, 'r', encoding='utf-8') as f:
-        ALIAS_PROMPT = f.read()
-except FileNotFoundError:
-    ALIAS_PROMPT = ""
-
 class ChatRequest(BaseModel):
     conversation_id: str
     model: str
@@ -140,13 +133,15 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
             yield f"data: {json.dumps({'content': message})}\n\n"
         return StreamingResponse(error_generator(), media_type="text/event-stream")
 
-    conversation_data = conversation_collection.find_one({
-        "user_id": user.user_id,
-        "conversation_id": request.conversation_id
-    })
-    conversation = conversation_data["conversation"][-10:] if conversation_data else []
-    conversation.append({"role": "user", "content": request.user_message})
-    formatted_messages = [copy.deepcopy(format_message(m)) for m in conversation]
+    user_message = {"role": "user", "content": request.user_message}
+    
+    conversation = conversation_collection.find_one(
+        {"user_id": user.user_id, "conversation_id": request.conversation_id},
+        {"conversation": {"$slice": -8}}
+    ).get("conversation", [])
+    conversation.append(user_message)
+
+    formatted_messages = [format_message(m) for m in conversation]
 
     if request.dan and DAN_PROMPT:
         formatted_messages.insert(0, {
@@ -195,7 +190,7 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
                         citation = chunk.citations
             else:
                 single_result = await client.chat.completions.create(**parameters, timeout=300)
-                if completion.choices[0].message.reasoning_content:
+                if single_result.choices[0].message.reasoning_content:
                     resoning_text = "<think>\n" + completion.choices[0].message.reasoning_content + "\n</think>\n\n"
                 else: reasoning_text = ""
                 full_response_text = reasoning_text + single_result.choices[0].message.content
@@ -255,7 +250,6 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
             yield f"data: {json.dumps({'error': str(ex)})}\n\n"
         finally:
             formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
-            conversation.append(formatted_response)
             if user.trial:
                 user_collection.update_one(
                     {"_id": ObjectId(user.user_id)},
@@ -275,33 +269,21 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
                 )
             conversation_collection.update_one(
                 {"user_id": user.user_id, "conversation_id": request.conversation_id},
-                {"$set": {
-                    "conversation": conversation,
-                    "model": request.model,
-                    "temperature": request.temperature,
-                    "reason": request.reason,
-                    "system_message": request.system_message
-                }},
-                upsert=True
+                {
+                    "$push": {
+                        "conversation": {
+                            "$each": [user_message, formatted_response]
+                        }
+                    },
+                    "$set": {
+                        "model": request.model,
+                        "temperature": request.temperature,
+                        "reason": request.reason,
+                        "system_message": request.system_message
+                    }
+                }
             )
     return StreamingResponse(event_generator(), media_type="text/event-stream")
-
-async def get_alias(user_message: str) -> str:
-    client = AsyncOpenAI(
-        api_key=os.getenv('GEMINI_API_KEY'),
-        base_url="https://generativelanguage.googleapis.com/v1beta/openai"
-    )
-    
-    completion = await client.chat.completions.create(
-        model="gemini-2.0-flash-lite",
-        temperature=0.1,
-        max_tokens=10,
-        messages=[{
-            "role": "user",
-            "content": ALIAS_PROMPT + user_message
-        }],
-    )
-    return completion.choices[0].message.content.rstrip()
 
 @router.post("/gemini")
 async def gemini_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):

@@ -38,6 +38,13 @@ try:
 except FileNotFoundError:
     MARKDOWN_PROMPT = ""
 
+alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'alias_prompt.txt')
+try:
+    with open(alias_prompt_path, 'r', encoding='utf-8') as f:
+        ALIAS_PROMPT = f.read()
+except FileNotFoundError:
+    ALIAS_PROMPT = ""
+
 class ChatRequest(BaseModel):
     conversation_id: str
     model: str
@@ -132,17 +139,19 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     if user.trial and user.trial_remaining <= 0:
         error_message = "체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."
         return StreamingResponse(error_generator(error_message), media_type="text/event-stream")
-    elif not user.admin and request.in_billing > 10:
+    elif not user.admin and request.in_billing >= 10:
         error_message = "해당 모델을 사용할 권한이 없습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."
         return StreamingResponse(error_generator(error_message), media_type="text/event-stream")
 
-    conversation_data = conversation_collection.find_one({
-        "user_id": user.user_id,
-        "conversation_id": request.conversation_id
-    })
-    conversation = conversation_data["conversation"][-10:] if conversation_data else []
-    conversation.append({"role": "user", "content": request.user_message})
-    formatted_messages = [copy.deepcopy(format_message(m)) for m in conversation]
+    user_message = {"role": "user", "content": request.user_message}
+
+    conversation = conversation_collection.find_one(
+        {"user_id": user.user_id, "conversation_id": request.conversation_id},
+        {"conversation": {"$slice": -8}}
+    ).get("conversation", [])
+    conversation.append(user_message)
+
+    formatted_messages = [format_message(m) for m in conversation]
 
     instructions = MARKDOWN_PROMPT
     if request.system_message:
@@ -235,7 +244,6 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         finally:
             formatted_messages.insert(0, {"role": "system", "content": instructions})
             formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
-            conversation.append(formatted_response)
             if user.trial:
                 user_collection.update_one(
                     {"_id": ObjectId(user.user_id)},
@@ -255,16 +263,35 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                 )
             conversation_collection.update_one(
                 {"user_id": user.user_id, "conversation_id": request.conversation_id},
-                {"$set": {
-                    "conversation": conversation,
-                    "model": request.model,
-                    "temperature": request.temperature,
-                    "reason": request.reason,
-                    "system_message": request.system_message
-                }},
-                upsert=True
+                {
+                    "$push": {
+                        "conversation": {
+                            "$each": [user_message, formatted_response]
+                        }
+                    },
+                    "$set": {
+                        "model": request.model,
+                        "temperature": request.temperature,
+                        "reason": request.reason,
+                        "system_message": request.system_message
+                    }
+                }
             )
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+async def get_alias(user_message: str) -> str:
+    async with AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY')) as client:
+        completion = await client.chat.completions.create(
+            model="gpt-4.1-nano",
+            temperature=0.1,
+            max_tokens=10,
+            messages=[{
+                "role": "user",
+                "content": ALIAS_PROMPT + user_message
+            }],
+        )
+    
+    return completion.choices[0].message.content.rstrip()
 
 @router.post("/gpt")
 async def gpt_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):

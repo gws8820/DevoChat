@@ -48,7 +48,7 @@
       {
         "model_name": "grok-3",
         "model_alias": "Grok 3",
-        "description": "최신 Grok 모델",
+        "description": "표준 Grok 모델",
         "endpoint": "/grok",
         "in_billing": "3",
         "out_billing": "15",
@@ -93,7 +93,7 @@
       {
         "model_name": "gpt-4.1:0",
         "model_alias": "GPT 4.1",
-        "description": "최신 표준 GPT 모델",
+        "description": "표준 GPT 모델",
         "endpoint": "/gpt",
         "in_billing": "2",
         "out_billing": "8",
@@ -108,7 +108,7 @@
       {
         "model_name": "gpt-4.1:1",
         "model_alias": "GPT 4.1 Search",
-        "description": "최신 표준 GPT 모델",
+        "description": "표준 GPT 모델",
         "endpoint": "/gpt",
         "in_billing": "2",
         "out_billing": "8",
@@ -155,7 +155,7 @@
       {
         "model_name": "o4-mini:0",
         "model_alias": "OpenAI o4 mini",
-        "description": "최신 추론 GPT 모델",
+        "description": "경량 추론 GPT 모델",
         "endpoint": "/gpt",
         "in_billing": "1.1",
         "out_billing": "4.4",
@@ -170,7 +170,7 @@
       {
         "model_name": "o4-mini:1",
         "model_alias": "OpenAI o4 mini Search",
-        "description": "최신 추론 GPT 모델",
+        "description": "경량 추론 GPT 모델",
         "endpoint": "/gpt",
         "in_billing": "1.1",
         "out_billing": "4.4",
@@ -230,43 +230,28 @@
         "type": "none"
       },
       {
-        "model_name": "gemini-2.5-pro-exp-03-25",
+        "model_name": "gemini-2.5-flash-preview-04-17",
+        "model_alias": "Gemini 2.5 Flash",
+        "description": "표준 Gemini 모델",
+        "endpoint": "/gemini",
+        "in_billing": "0.15",
+        "out_billing": "0.6",
+        "inference": false,
+        "stream": true,
+        "capabilities": {
+          "image": true,
+          "search": false
+        },
+        "type": "default"
+      },
+      {
+        "model_name": "gemini-2.5-pro-preview-03-25",
         "model_alias": "Gemini 2.5 Pro",
-        "description": "최신 고성능 Gemini 모델",
+        "description": "고성능 Gemini 모델",
         "endpoint": "/gemini",
         "in_billing": "1.25",
         "out_billing": "10",
         "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": false
-        },
-        "type": "default"
-      },
-      {
-        "model_name": "gemini-2.0-flash",
-        "model_alias": "Gemini 2.0 Flash",
-        "description": "표준 Gemini 모델",
-        "endpoint": "/gemini",
-        "in_billing": "0.1",
-        "out_billing": "0.4",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": false
-        },
-        "type": "default"
-      },
-      {
-        "model_name": "gemini-2.0-flash-thinking-exp",
-        "model_alias": "Gemini 2.0 Flash Thinking",
-        "description": "Gemini 2.0의 추론 모델",
-        "endpoint": "/gemini",
-        "in_billing": "0",
-        "out_billing": "0",
-        "inference": true,
         "stream": true,
         "capabilities": {
           "image": true,
@@ -341,7 +326,7 @@
       {
         "model_name": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
         "model_alias": "Llama 4 Maverick",
-        "description": "최신 Llama 모델",
+        "description": "표준 Llama 모델",
         "endpoint": "/huggingface",
         "in_billing": "0.22",
         "out_billing": "0.88",
@@ -371,7 +356,7 @@
       {
         "model_name": "deepseek-ai/DeepSeek-V3-0324",
         "model_alias": "Deepseek V3",
-        "description": "최신 표준 Deepseek 모델",
+        "description": "표준 Deepseek 모델",
         "endpoint": "/huggingface",
         "in_billing": "0.9",
         "out_billing": "0.9",
@@ -386,7 +371,7 @@
       {
         "model_name": "Qwen/Qwen2.5-72B-Instruct",
         "model_alias": "Qwen 2.5 72B",
-        "description": "최신 표준 Qwen 모델",
+        "description": "표준 Qwen 모델",
         "endpoint": "/huggingface",
         "in_billing": "0.9",
         "out_billing": "0.9",

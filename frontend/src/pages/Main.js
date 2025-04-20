@@ -69,7 +69,7 @@ function Main({ addConversation, isTouch }) {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
   }, []);
 
-  const notice = 'OpenAI o3, o4-mini가 추가되었습니다!';
+  const notice = 'Gemini 2.5 Flash가 추가되었습니다!';
   const noticeHash = btoa(encodeURIComponent(notice));
 
   useEffect(() => {
@@ -528,7 +528,9 @@ function Main({ addConversation, isTouch }) {
         </div>
 
         <div
-          className="send-button"
+          className={`send-button ${
+            inputText.trim() || uploadedFiles.length > 0  ? "" : "realtime"
+          }`}
           onClick={handleSendButtonClick}
           disabled={uploadingFiles}
           aria-label={
