@@ -1,0 +1,23 @@
+.logo-header {
+    display: flex;
+    justify-content: space-between; /* 왼쪽과 오른쪽을 분리 */
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    height: 60px;
+    flex: 0 0 60px;
+    padding: 0px 20px 0 16px;
+}
+
+.header-logo {
+    width: 143.5px;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}

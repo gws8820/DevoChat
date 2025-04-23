@@ -1,4 +1,5 @@
-import React from "react";
+// Message.js
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { GoCopy, GoCheck, GoPencil, GoTrash, GoSync } from "react-icons/go";
 import { TbRefresh } from "react-icons/tb";
@@ -7,11 +8,84 @@ import { MarkdownRenderer } from "./MarkdownRenderers";
 import "../styles/Message.css";
 import "katex/dist/katex.min.css";
 
-function Message({ messageIndex, role, content, isComplete, onDelete, onRegenerate, onEdit, setScrollOnSend }) {
-  const [copied, setCopied] = React.useState(false);
+function Message({ messageIndex, role, content, isComplete, onDelete, onRegenerate, onSendEditedMessage, setScrollOnSend, isTouch }) {
+  const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
+  const [editText, setEditText] = useState("");
+  const textareaRef = useRef(null);
 
-  if ((typeof content === "string" && content.trim() === "\u200B") || (Array.isArray(content) && content.length === 0))
-    return null;
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      const selectionStart = textareaRef.current.selectionStart;
+      const selectionEnd = textareaRef.current.selectionEnd;
+      const scrollTop = textareaRef.current.scrollTop;
+      
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      
+      textareaRef.current.selectionStart = selectionStart;
+      textareaRef.current.selectionEnd = selectionEnd;
+      textareaRef.current.scrollTop = scrollTop;
+    }
+  };
+
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      adjustTextareaHeight();
+      textareaRef.current.focus();
+      textareaRef.current.selectionStart = textareaRef.current.value.length;
+      textareaRef.current.selectionEnd = textareaRef.current.value.length;
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    cancelEdit();
+  }, [content]);
+
+  const startEdit = () => {
+    const textContent = content.find(item => item.type === "text")?.text;
+    setEditText(textContent);
+    setIsEditing(true);
+    setTimeout(() => {
+      adjustTextareaHeight();
+    }, 0);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditText("");
+  };
+
+  const saveEdit = useCallback(() => {
+    const nonTextContent = content.filter(item => item.type !== "text");
+    const updatedContent = [
+      { type: "text", text: editText },
+      ...nonTextContent
+    ];
+    onSendEditedMessage(messageIndex, updatedContent);
+    setIsEditing(false);
+  }, [content, editText, messageIndex, onSendEditedMessage]);
+
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey &&
+        !isComposing &&
+        !isTouch
+      ) {
+        event.preventDefault();
+        saveEdit();
+      }
+    },
+    [isComposing, isTouch, saveEdit]
+  );
+
+  const handleTextareaChange = (e) => {
+    setEditText(e.target.value);
+    adjustTextareaHeight();
+  };
 
   const handleCopy = async () => {
     try {
@@ -26,10 +100,13 @@ function Message({ messageIndex, role, content, isComplete, onDelete, onRegenera
     }
   };
 
+  if ((typeof content === "string" && content.trim() === "\u200B") || (Array.isArray(content) && content.length === 0))
+    return null;
+
   if (role === "user") {
     return (
       <motion.div
-        className="user-wrap"
+        className={`user-wrap ${isEditing ? 'editing' : ''}`}
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0, transition: { duration: 0.3, delay: 0.2, ease: "easeOut" } }}
         exit={{ opacity: 0, x: 20, transition: { duration: 0.3 } }}
@@ -48,7 +125,7 @@ function Message({ messageIndex, role, content, isComplete, onDelete, onRegenera
                   <img 
                     src={`${process.env.REACT_APP_FASTAPI_URL}${item.content}`} 
                     alt={item.file_name} 
-                    onLoad={() => setScrollOnSend(true)} 
+                    onLoad={() => setScrollOnSend && setScrollOnSend(true)} 
                   />
                 </div>
               );
@@ -58,23 +135,42 @@ function Message({ messageIndex, role, content, isComplete, onDelete, onRegenera
         </div>
   
         <div className="chat-message user">
-          {content.map((item, index) => {
-            if (item.type === "text") {
-              return <span key={index}>{item.text}</span>;
-            }
-            return null;
-          })}
+          {isEditing ? (
+            <textarea
+              ref={textareaRef}
+              value={editText}
+              onChange={handleTextareaChange}
+              onKeyDown={handleKeyDown}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={() => setIsComposing(false)}
+              className="message-edit"
+            />
+          ) : (
+            content.map((item, index) => {
+              if (item.type === "text") {
+                return <span key={index}>{item.text}</span>;
+              }
+              return null;
+            })
+          )}
         </div>
   
-        <div className="message-function user">
-          {copied ? (
-            <GoCheck className="function-button" />
-          ) : (
-            <GoCopy className="function-button" onClick={handleCopy} />
-          )}
-          <GoPencil className="function-button" onClick={() => onEdit(messageIndex)} />
-          <GoTrash className="function-button" onClick={() => onDelete(messageIndex)} />
-        </div>
+        {isEditing ? (
+          <div className="edit-buttons">
+            <button className="edit-button cancel" onClick={cancelEdit}>취소</button>
+            <button className="edit-button save" onClick={saveEdit}>완료</button>
+          </div>
+        ) : (
+          <div className="message-function user">
+            {copied ? (
+              <GoCheck className="function-button" />
+            ) : (
+              <GoCopy className="function-button" onClick={handleCopy} />
+            )}
+            <GoPencil className="function-button" onClick={startEdit} />
+            {onDelete && <GoTrash className="function-button" onClick={() => onDelete(messageIndex)} />}
+          </div>
+        )}
       </motion.div>
     );
   } else if (role === "assistant") {
@@ -86,7 +182,7 @@ function Message({ messageIndex, role, content, isComplete, onDelete, onRegenera
         {...{ exit: { opacity: 0, x: 20 }, transition: { duration: 0.3 } }}
       >
         <div className="chat-message assistant">
-          <MarkdownRenderer content={content} isComplete={isComplete} />
+          <MarkdownRenderer content={content} isComplete={isComplete !== undefined ? isComplete : true} />
         </div>
         <div className="message-function">
           {copied ? (
@@ -94,7 +190,7 @@ function Message({ messageIndex, role, content, isComplete, onDelete, onRegenera
           ) : (
             <GoCopy className="function-button" onClick={handleCopy} />
           )}
-          <GoSync className="function-button" onClick={() => onRegenerate(messageIndex)} />
+          {onRegenerate && <GoSync className="function-button" onClick={() => onRegenerate(messageIndex)} />}
         </div>
       </motion.div>
     );
@@ -126,6 +222,7 @@ Message.propTypes = {
   onDelete: PropTypes.func,
   onRegenerate: PropTypes.func,
   onEdit: PropTypes.func,
+  onSendEditedMessage: PropTypes.func,
 };
 
 Message.defaultProps = {

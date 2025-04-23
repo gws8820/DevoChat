@@ -127,7 +127,6 @@
     padding: 4px 2px;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: none;
     font-size: 14px;
     color: #333;
 }
@@ -137,6 +136,10 @@
     padding: 4px 2px;
     border: 0;
     font-size: 14px;
+}
+
+input:focus {
+    outline: none;
 }
 
 .active-conversation {

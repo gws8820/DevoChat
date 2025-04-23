@@ -123,12 +123,12 @@ function Register() {
         {errorModal && (
           <motion.div
             className="error-modal"
-            initial={{ opacity: 0, y: -20, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: -20, x: "-50%" }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <CiWarning style={{ marginRight: "4px", fontSize: "16px" }} />
+            <CiWarning style={{ flexShrink: 0, marginRight: "4px", fontSize: "16px" }} />
             {errorModal}
           </motion.div>
         )}

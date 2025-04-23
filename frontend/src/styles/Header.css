@@ -1,7 +1,6 @@
-/* 공통 헤더 스타일 */
 .header {
     display: flex;
-    justify-content: space-between; /* 왼쪽과 오른쪽을 분리 */
+    justify-content: space-between;
     align-items: center;
     box-sizing: border-box;
     width: 100%;
@@ -10,38 +9,36 @@
     padding: 0px 20px;
 }
 
-/* 헤더 왼쪽 컨테이너 */
 .header-left {
     display: flex;
     align-items: center;
     position: relative;
 }
 
-/* 헤더 아이콘 컨테이너 */
 .header-right {
     display: flex;
     position: relative;
 }
 
-/* 개별 헤더 아이콘 */
+.header-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
 .header-icon {
     display: flex;
     align-items: center;
-    padding: 0 10px;
+    padding: 0 8px;
     height: 40px;
-    font-size: 18px;
+    font-size: 20px;
     cursor: pointer;
 }
 
-.toggle-icon {
-    padding: 0 10px;
-}
-
-/* 모델 선택 박스 */
 .model-box {
     display: flex;
     align-items: center;
-    padding: 5px 10px;
+    padding: 5px 8px;
     font-size: 20px;
     font-weight: 500;
     color: #333;
@@ -56,12 +53,11 @@
 
 .expand-icon {
     margin: 1px 0 0 5px;
-    font-size: 12px;
+    font-size: 17px;
     color: rgb(180, 180, 180);
     stroke-width: 1px;
 }
 
-/* 모달 오버레이 배경 블러 효과 */
 .hmodal-overlay {
     display: flex;
     justify-content: center;
@@ -76,7 +72,6 @@
     backdrop-filter: blur(20px);
 }
 
-/* 모델 선택 모달 창 */
 .hmodal {
     padding: 20px;
     width: 400px;
@@ -89,7 +84,6 @@
     scrollbar-width: none;
 }
 
-/* 모델 리스트 */
 .model-list {
     display: flex;
     flex-direction: column;
@@ -97,7 +91,6 @@
     gap: 18px;
 }
 
-/* 개별 모델 아이템 */
 .model-item {
     display: flex;
     flex-direction: column;
@@ -122,18 +115,21 @@
     font-size: 15px;
 }
 
-/* 온도 슬라이더 컨테이너 */
+.share-icon {
+    margin: 1px 2px 0 0;
+}
+
 .slider-container {
-    display: flex;
     position: absolute;
     width: 160px;
     top: 50%;
     right: 100%;
+    transform: translateY(-50%);
     padding: 0 15px;
+    margin-right: 10px;
     border-radius: 10px;
     background-color: white;
-    z-index: 1;
-    animation: fadeIn 0.3s ease;
+    z-index: 100;
 }
 
 .slider-wrapper {
@@ -141,7 +137,6 @@
     width: 100%;
 }
 
-/* 슬라이더 스타일 */
 .temperature-slider {
     -webkit-appearance: none;
     appearance: none;
@@ -166,7 +161,6 @@
     transition: background 0.2s;
 }
 
-/* 슬라이더 스타일 */
 .reason-slider {
     -webkit-appearance: none;
     appearance: none;
@@ -212,11 +206,10 @@
     padding: 5px;
     margin-right: 10px;
     background-color: rgb(248, 248, 248);
-    z-index: 1;
+    z-index: 100;
     border-radius: 10px;
 }
 
-/* 시스템 메시지 입력 필드 */
 .system-message-input {
     width: 100%;
     padding: 10px;
@@ -233,7 +226,6 @@
     pointer-events: none;
 }
 
-/* 반응형 디자인 */
 @media (max-width: 840px) {
     .system-message-container {
         width: 380px;
@@ -242,12 +234,12 @@
 
 @media (max-width: 768px) {
     .header {
-        padding: 0 10px;
+        padding: 0 12px;
     }
     .system-message-container {
         width: calc(100vw - 120px);
     }
     .model-box {
-        padding: 5px 7px 7px 7px;
+        padding-bottom: 7px;
     }
 }

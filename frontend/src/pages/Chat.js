@@ -21,12 +21,12 @@ function Chat({ fetchConversations, isTouch }) {
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [thinkingText, setThinkingText] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [scrollOnSend, setScrollOnSend] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [deleteIndex, setdeleteIndex] = useState(null);
@@ -206,10 +206,27 @@ function Chat({ fetchConversations, isTouch }) {
     setMessages((prev) => [...prev, { role: "error", content: message }]);
   }, []);
 
+  const deleteMessages = useCallback(
+    async (startIndex) => {
+      setMessages((prevMessages) => prevMessages.slice(0, startIndex));
+
+      return axios
+        .delete(
+          `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/${startIndex}`,
+          { withCredentials: true }
+        )
+        .catch((err) => {
+          setErrorModal("메세지 삭제 중 오류가 발생했습니다.");
+          setTimeout(() => setErrorModal(null), 2000);
+        });
+    },
+    [conversation_id]
+  );
+
   const sendMessage = useCallback(
     async (message, files = uploadedFiles) => {
       if (!message.trim()) return;
-  
+
       const contentParts = [];
       contentParts.push({ type: "text", text: message });
       if (files.length > 0) {
@@ -384,15 +401,59 @@ function Chat({ fetchConversations, isTouch }) {
     ]
   );
 
+  const resendMesage = useCallback(
+    async (messageContent, deleteIndex = null) => {
+      setIsLoading(true);
+      try {
+        if (deleteIndex !== null) {
+          await deleteMessages(deleteIndex);
+        }
+        
+        const textContent = messageContent.find(item => item.type === "text")?.text || "";
+        const nonTextContent = messageContent.filter(item => item.type !== "text");
+        
+        sendMessage(textContent, nonTextContent);
+      } catch (err) {
+        setErrorModal("메세지 처리 중 오류가 발생했습니다.");
+        setTimeout(() => setErrorModal(null), 2000);
+      }
+    },
+    [deleteMessages, sendMessage, setErrorModal]
+  );
+
+  const sendEditedMessage = useCallback(
+    (idx, updatedContent) => {
+      resendMesage(updatedContent, idx);
+    },
+    [resendMesage]
+  );
+
+  const handleRegenerate = useCallback(
+    (startIndex) => {
+      const previousMessage = messages[startIndex - 1];
+      if (!previousMessage) return;
+      
+      resendMesage(previousMessage.content, startIndex - 1);
+    },
+    [messages, resendMesage]
+  );
+
+  const handleDelete = useCallback((idx) => {
+    setdeleteIndex(idx);
+    setConfirmModal(true);
+  }, []);
+
   useEffect(() => {
-    if (isSearchButton && isInferenceButton)
-      updateModel(DEFAULT_SEARCH_INFERENCE_MODEL);
-    else if (isSearchButton)
-      updateModel(DEFAULT_SEARCH_MODEL);
-    else if (isInferenceButton)
-      updateModel(DEFAULT_INFERENCE_MODEL);
-    else
-      updateModel(DEFAULT_MODEL);
+    if(isInitialized) {
+      if (isSearchButton && isInferenceButton)
+        updateModel(DEFAULT_SEARCH_INFERENCE_MODEL);
+      else if (isSearchButton)
+        updateModel(DEFAULT_SEARCH_MODEL);
+      else if (isInferenceButton)
+        updateModel(DEFAULT_INFERENCE_MODEL);
+      else
+        updateModel(DEFAULT_MODEL);
+    }
     // eslint-disable-next-line
   }, [isSearchButton, isInferenceButton]);
 
@@ -400,8 +461,7 @@ function Chat({ fetchConversations, isTouch }) {
     const initializeChat = async () => {
       try {
         const res = await axios.get(
-          `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
-          { withCredentials: true }
+          `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`
         );
         updateModel(res.data.model);
         setTemperature(res.data.temperature);
@@ -543,92 +603,6 @@ function Chat({ fetchConversations, isTouch }) {
     [allowedExtensions, processFiles]
   );
 
-  const deleteMessages = useCallback(
-    async (startIndex) => {
-      setMessages((prevMessages) => prevMessages.slice(0, startIndex));
-
-      return axios
-        .delete(
-          `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/${startIndex}`,
-          { withCredentials: true }
-        )
-        .catch((err) => {
-          setErrorModal("메세지 삭제 중 오류가 발생했습니다.");
-          setTimeout(() => setErrorModal(null), 2000);
-        });
-    },
-    [conversation_id]
-  );
-
-  const handleDelete = useCallback((idx) => {
-    setdeleteIndex(idx);
-    setConfirmModal(true);
-  }, []);
-
-  const handleRegenerate = useCallback(
-    async (startIndex) => {
-      try {
-        const previousMessage = messages[startIndex - 1];
-        if (!previousMessage) return;
-
-        let newInputText = "";
-        let newUploadedFiles = [];
-
-        previousMessage.content.forEach((part) => {
-          if (part.type === "text") {
-            newInputText += part.text;
-          } else if (part.type !== "url") {
-            newUploadedFiles.push(part);
-          }
-        });
-
-        await deleteMessages(startIndex - 1);
-        setInputText(newInputText.trim());
-        setUploadedFiles(newUploadedFiles);
-        sendMessage(newInputText, newUploadedFiles);
-      } catch (err) {
-        setErrorModal("메세지 재생성 중 오류가 발생하였습니다.");
-        setTimeout(() => setErrorModal(null), 2000);
-      }
-    },
-    [messages, deleteMessages, sendMessage, setErrorModal]
-  );
-
-  const handleEdit = useCallback(
-    async (idx) => {
-      try {
-        const message = messages[idx];
-        if (!message) return;
-
-        let newInputText = "";
-        let newUploadedFiles = [];
-
-        message.content.forEach((part) => {
-          if (part.type === "text") {
-            newInputText += part.text;
-          } else if (part.type !== "url") {
-            newUploadedFiles.push(part);
-          }
-        });
-
-        setInputText(newInputText.trim());
-        setUploadedFiles(newUploadedFiles);
-
-        await deleteMessages(idx);
-
-        const hasImage = newUploadedFiles.some(
-          (file) =>
-            file.type === "image" || (file.type && file.type.startsWith("image/"))
-        );
-        setIsImage(hasImage);
-      } catch (err) {
-        setErrorModal("메세지 수정 중 오류가 발생했습니다: " + err.message);
-        setTimeout(() => setErrorModal(null), 2000);
-      }
-    },
-    [messages, deleteMessages, setIsImage, setErrorModal]
-  );
-  
   useEffect(() => {
     const chatContainer = messagesEndRef.current?.parentElement;
     if (!chatContainer) return;
@@ -682,7 +656,7 @@ function Chat({ fetchConversations, isTouch }) {
     const textarea = textAreaRef.current;
     if (textarea) {
       textarea.style.height = "auto";
-      const newHeight = Math.min(textarea.scrollHeight, 180);
+      const newHeight = Math.min(textarea.scrollHeight, 250);
       textarea.style.height = `${newHeight}px`;
     }
   }, []);
@@ -722,8 +696,9 @@ function Chat({ fetchConversations, isTouch }) {
               isComplete={msg.isComplete}
               onDelete={handleDelete}
               onRegenerate={handleRegenerate}
-              onEdit={handleEdit}
+              onSendEditedMessage={sendEditedMessage}
               setScrollOnSend={setScrollOnSend}
+              isTouch={isTouch}
             />
           ))}
         </AnimatePresence>
@@ -871,13 +846,11 @@ function Chat({ fetchConversations, isTouch }) {
 
         <div
           className="send-button"
-          onClick={() => {
-            if (isLoading) {
-              abortControllerRef.current?.abort();
-            } else {
-              sendMessage(inputText);
-            }
-          }}
+          onClick={() =>
+            isLoading
+              ? abortControllerRef.current?.abort()
+              : sendMessage(inputText)
+          }
           disabled={uploadingFiles}
           aria-label={isLoading ? "전송 중단" : "메시지 전송"}
         >
@@ -929,7 +902,7 @@ function Chat({ fetchConversations, isTouch }) {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <CiWarning style={{ marginRight: "4px", fontSize: "16px" }} />
+            <CiWarning style={{ flexShrink: 0, marginRight: "4px", fontSize: "16px" }} />
             {errorModal}
           </motion.div>
         )}

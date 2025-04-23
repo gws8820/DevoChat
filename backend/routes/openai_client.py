@@ -250,23 +250,23 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
             yield f"data: {json.dumps({'error': str(ex)})}\n\n"
         finally:
             formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
+            
             if user.trial:
                 user_collection.update_one(
                     {"_id": ObjectId(user.user_id)},
                     {"$inc": {"trial_remaining": -1}}
                 )
-            else:
-                billing = calculate_billing(
-                    formatted_messages,
-                    formatted_response,
-                    request.in_billing,
-                    request.out_billing,
-                    request.search_billing
-                )
-                user_collection.update_one(
-                    {"_id": ObjectId(user.user_id)},
-                    {"$inc": {"billing": billing}}
-                )
+            billing = calculate_billing(
+                formatted_messages,
+                formatted_response,
+                request.in_billing,
+                request.out_billing,
+                request.search_billing
+            )
+            user_collection.update_one(
+                {"_id": ObjectId(user.user_id)},
+                {"$inc": {"billing": billing}}
+            )
             conversation_collection.update_one(
                 {"user_id": user.user_id, "conversation_id": request.conversation_id},
                 {

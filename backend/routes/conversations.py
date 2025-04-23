@@ -7,18 +7,18 @@ from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from datetime import datetime
-from .auth import User, get_current_user
+from .auth import User, get_current_user, check_admin
 from .responses_client import get_alias
 
 load_dotenv()
 router = APIRouter()
 
-# Motor client 설정
+# Motor client
 mongo_client = AsyncIOMotorClient(os.getenv('MONGODB_URI'))
 db = mongo_client.chat_db
 conversations_collection = db.conversations
 
-# Pydantic 모델
+# Pydantic
 class NewConversationRequest(BaseModel):
     user_message: str
     model: str
@@ -29,15 +29,8 @@ class NewConversationRequest(BaseModel):
 class RenameRequest(BaseModel):
     alias: str
 
-async def update_aliases():
-    await conversations_collection.update_many(
-        {"alias": {"$exists": False}},
-        {"$set": {"alias": "제목 없음"}}
-    )
-
 @router.get("/conversations", response_model=dict)
 async def get_conversations(current_user: User = Depends(get_current_user)):
-    await update_aliases()
     user_id = current_user.user_id
     cursor = conversations_collection.find(
         {"user_id": user_id},
@@ -53,14 +46,43 @@ async def get_conversations(current_user: User = Depends(get_current_user)):
         })
     return {"conversations": conversations}
 
+@router.get("/conversations/{user_id}", response_model=dict)
+async def get_user_conversations(
+    user_id: str, 
+    admin_user = Depends(check_admin)
+):
+    if not ObjectId.is_valid(user_id):
+        raise HTTPException(status_code=400, detail="Invalid User ID")
+    
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    cursor = conversations_collection.find(
+        {"user_id": user_id},
+        {"_id": 1, "user_id": 1, "conversation_id": 1, "alias": 1, "model": 1}
+    ).sort("created_at", -1)
+    
+    conversations = []
+    async for doc in cursor:
+        conversations.append({
+            "_id": str(doc["_id"]),
+            "user_id": doc["user_id"],
+            "conversation_id": doc["conversation_id"],
+            "alias": doc["alias"],
+            "model": doc["model"]
+        })
+    
+    return {"conversations": conversations}
+
 @router.get("/conversation/{conversation_id}", response_model=dict)
-async def get_conversation(conversation_id: str, current_user: User = Depends(get_current_user)):
-    user_id = current_user.user_id
-    doc = await conversations_collection.find_one({"user_id": user_id, "conversation_id": conversation_id})
+async def get_conversation(conversation_id: str):
+    doc = await conversations_collection.find_one({"conversation_id": conversation_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return {
         "conversation_id": doc["conversation_id"],
+        "alias": doc["alias"],
         "model": doc["model"],
         "temperature": doc["temperature"],
         "reason": doc["reason"],

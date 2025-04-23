@@ -2,10 +2,11 @@ import os
 import jwt
 import bcrypt
 from dotenv import load_dotenv
-from fastapi import APIRouter, HTTPException, Cookie, Depends, status
+from fastapi import APIRouter, HTTPException, Cookie, Depends, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, constr
 from motor.motor_asyncio import AsyncIOMotorClient
+from typing import List
 from bson import ObjectId
 from datetime import datetime
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
@@ -117,7 +118,6 @@ async def get_auth_status(access_token: str = Cookie(None)):
     except (ExpiredSignatureError, InvalidTokenError):
         return {"logged_in": False, "error": "Invalid or expired token"}
 
-# 현재 사용자 가져오기
 @router.get("/auth/user")
 async def get_current_user(access_token: str = Cookie(None)) -> User:
     if not access_token:
@@ -148,6 +148,101 @@ async def get_current_user(access_token: str = Cookie(None)) -> User:
         email=db_user["email"],
         billing=db_user["billing"],
         admin=db_user["admin"],
-        trial=db_user.get("trial"),
-        trial_remaining=db_user.get("trial_remaining", 0)
+        trial=db_user["trial"],
+        trial_remaining=db_user["trial_remaining"]
     )
+
+async def check_admin(access_token: str = Cookie(None)):
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+    
+    try:
+        payload = jwt.decode(access_token, AUTH_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
+    except (ExpiredSignatureError, InvalidTokenError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    
+    db_user = await collection.find_one({"_id": ObjectId(user_id)})
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+    
+    if not db_user.get("admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    
+    return db_user
+
+@router.get("/users", response_model=List[User])
+async def get_all_users(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    admin_user = Depends(check_admin)
+):
+    users = []
+    cursor = collection.find({}).skip(skip).limit(limit)
+    
+    async for user in cursor:
+        users.append(User(
+            user_id=str(user["_id"]),
+            name=user["name"],
+            email=user["email"],
+            billing=user["billing"],
+            admin=user["admin"],
+            trial=user["trial"],
+            trial_remaining=user["trial_remaining"]
+        ))
+    
+    return users
+
+@router.patch("/users/{user_id}")
+async def update_user_status(
+    user_id: str,
+    user_data: dict,
+    admin_user = Depends(check_admin)
+):
+    try:
+        if "trial" not in user_data:
+            raise HTTPException(status_code=400, detail="There is no trial field")
+            
+        if not ObjectId.is_valid(user_id):
+            raise HTTPException(status_code=400, detail="Invalid User ID")
+            
+        user = await collection.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+        update_data = {
+            "trial": user_data["trial"],
+            "trial_remaining": 10 if user_data["trial"] else 0
+        }
+        
+        await collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": update_data}
+        )
+        
+        updated_user = await collection.find_one({"_id": ObjectId(user_id)})
+        
+        return User(
+            user_id=str(updated_user["_id"]),
+            name=updated_user["name"],
+            email=updated_user["email"],
+            billing=updated_user["billing"],
+            admin=updated_user["admin"],
+            trial=updated_user["trial"],
+            trial_remaining=updated_user["trial_remaining"]
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error occured: {str(e)}")

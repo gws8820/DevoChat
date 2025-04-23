@@ -1,8 +1,12 @@
 import React, { useState } from "react";
 import "../styles/Tooltip.css";
 
-function Tooltip({ content, children, position = "bottom" }) {
+function Tooltip({ content, children, position = "bottom", isTouch = false }) {
   const [visible, setVisible] = useState(false);
+
+  if (isTouch) {
+    return children;
+  }
 
   return (
     <span

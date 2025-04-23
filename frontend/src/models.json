@@ -270,7 +270,7 @@
         "inference": false,
         "stream": true,
         "capabilities": {
-          "image": false,
+          "image": true,
           "search": true
         },
         "type": "default"
@@ -286,7 +286,7 @@
         "inference": false,
         "stream": true,
         "capabilities": {
-          "image": false,
+          "image": true,
           "search": true
         },
         "type": "default"
@@ -302,7 +302,7 @@
         "inference": true,
         "stream": true,
         "capabilities": {
-          "image": false,
+          "image": true,
           "search": true
         },
         "type": "default"
@@ -318,7 +318,7 @@
         "inference": true,
         "stream": true,
         "capabilities": {
-          "image": false,
+          "image": true,
           "search": true
         },
         "type": "default"

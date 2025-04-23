@@ -1,6 +1,7 @@
-// src/components/Header.js
 import React, { useState, useContext, useRef, useEffect } from "react";
-import { BsLayoutTextSidebar, BsChevronRight, BsSliders, BsCodeSlash } from "react-icons/bs";
+import { useLocation } from 'react-router-dom';
+import { RiMenuLine, RiArrowRightSLine, RiShare2Line, RiLightbulbLine, RiEdit2Line } from "react-icons/ri";
+import { GoCopy } from "react-icons/go";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Tooltip from "./Tooltip";
@@ -24,11 +25,15 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
     isInferenceButton
   } = useContext(SettingsContext);
 
+  const location = useLocation();
+  const conversation_id = location.pathname.split('/chat/')[1];
+
   const models = modelsData.models;
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
   const [isTempSliderOpen, setIsTempSliderOpen] = useState(false);
   const [isReasonSliderOpen, setIsReasonSliderOpen] = useState(false);
   const [isSystemMessageOpen, setIsSystemMessageOpen] = useState(false);
+  const [copyModal, setCopyModal] = useState(false);
 
   const modelModalRef = useRef(null);
   const tempSliderRef = useRef(null);
@@ -46,8 +51,7 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
     return true;
   });
 
-  const currentModelAlias =
-    models.find((m) => m.model_name === model)?.model_alias || "모델 선택";
+  const currentModelAlias = models.find((m) => m.model_name === model)?.model_alias || "모델 선택";
 
   const getTempPosition = (value) => {
     const percent = value * 100;
@@ -89,6 +93,16 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
   };
   const reasonLabels = ["low", "medium", "high"];
 
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(`https://devochat.com/view/${conversation_id}`);
+      setCopyModal(true);
+      setTimeout(() => setCopyModal(false), 2000);
+    } catch (err) {
+      console.error("복사 실패:", err);
+    }
+  };
+  
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -138,24 +152,13 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
   return (
     <div className="header">
       <div className="header-left">
-        {!isSidebarVisible &&
-          (isTouch ? (
+        {!isSidebarVisible && (
+          <Tooltip content="사이드바 열기" position="right" isTouch={isTouch}>
             <div className="header-icon toggle-icon">
-              <BsLayoutTextSidebar
-                onClick={toggleSidebar}
-                style={{ strokeWidth: 0.3 }}
-              />
+              <RiMenuLine onClick={toggleSidebar} />
             </div>
-          ) : (
-            <Tooltip content="사이드바 열기" position="right">
-              <div className="header-icon toggle-icon">
-                <BsLayoutTextSidebar
-                  onClick={toggleSidebar}
-                  style={{ strokeWidth: 0.3 }}
-                />
-              </div>
-            </Tooltip>
-          ))}
+          </Tooltip>
+        )}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentModelAlias}
@@ -166,93 +169,23 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
             transition={{ duration: 0.2 }}
           >
             {currentModelAlias}
-            <BsChevronRight className="expand-icon" />
+            <RiArrowRightSLine className="expand-icon" />
           </motion.div>
         </AnimatePresence>
       </div>
 
       <div className="header-right">
-        {isTouch ? (
-          <div className="header-icon slider-icon">
-            <BsSliders
-              onClick={() => {
-                if (modelType === "default") {
-                  setIsTempSliderOpen(!isTempSliderOpen);
-                  setIsSystemMessageOpen(false);
-                  setIsReasonSliderOpen(false);
-                } else if (modelType === "reason") {
-                  setIsReasonSliderOpen(!isReasonSliderOpen);
-                  setIsSystemMessageOpen(false);
-                  setIsTempSliderOpen(false);
-                }
-              }}
-              className={
-                modelType === "default" || modelType === "reason" ? "" : "disabled"
-              }
-              style={{ strokeWidth: 0.3 }}
-            />
-            <AnimatePresence>
-              {isTempSliderOpen && (
-                <motion.div
-                  className="slider-container"
-                  ref={tempSliderRef}
-                  initial={{ x: 5, opacity: 0, translateY: "-50%" }}
-                  animate={{ x: 0, opacity: 1, translateY: "-50%" }}
-                  exit={{ x: 5, opacity: 0, translateY: "-50%" }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="slider-wrapper">
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.1"
-                      value={temperature}
-                      onChange={(e) =>
-                        setTemperature(parseFloat(e.target.value))
-                      }
-                      className="temperature-slider"
-                    />
-                    <div
-                      className="slider-value"
-                      style={getTempPosition(temperature)}
-                    >
-                      {temperature}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-              {isReasonSliderOpen && (
-                <motion.div
-                  className="slider-container"
-                  ref={reasonSliderRef}
-                  initial={{ x: 5, opacity: 0, translateY: "-50%" }}
-                  animate={{ x: 0, opacity: 1, translateY: "-50%" }}
-                  exit={{ x: 5, opacity: 0, translateY: "-50%" }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="slider-wrapper">
-                    <input
-                      type="range"
-                      min="1"
-                      max="3"
-                      step="1"
-                      value={reason}
-                      onChange={(e) => setReason(parseInt(e.target.value))}
-                      className="reason-slider"
-                    />
-                    <div
-                      className="slider-value"
-                      style={getReasonPosition(reason)}
-                    >
-                      {reasonLabels[reason - 1]}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {conversation_id && (
+          <div className="header-icon-wrapper">
+            <Tooltip content="공유하기" position="left" isTouch={isTouch}>
+              <div className="header-icon share-icon">
+                <RiShare2Line onClick={handleShare} />
+              </div>
+            </Tooltip>
           </div>
-        ) : (
+        )}
+
+        <div className="header-icon-wrapper">
           <Tooltip
             content={
               modelType === "default"
@@ -262,9 +195,10 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
                 : "온도/추론 성능 설정"
             }
             position="left"
+            isTouch={isTouch}
           >
             <div className="header-icon slider-icon">
-              <BsSliders
+              <RiLightbulbLine
                 onClick={() => {
                   if (modelType === "default") {
                     setIsTempSliderOpen(!isTempSliderOpen);
@@ -281,108 +215,75 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
                 }
                 style={{ strokeWidth: 0.3 }}
               />
-              <AnimatePresence>
-                {isTempSliderOpen && (
-                  <motion.div
-                    className="slider-container"
-                    ref={tempSliderRef}
-                    initial={{ x: 5, opacity: 0, translateY: "-50%" }}
-                    animate={{ x: 0, opacity: 1, translateY: "-50%" }}
-                    exit={{ x: 5, opacity: 0, translateY: "-50%" }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className="slider-wrapper">
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        value={temperature}
-                        onChange={(e) =>
-                          setTemperature(parseFloat(e.target.value))
-                        }
-                        className="temperature-slider"
-                      />
-                      <div
-                        className="slider-value"
-                        style={getTempPosition(temperature)}
-                      >
-                        {temperature}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-                {isReasonSliderOpen && (
-                  <motion.div
-                    className="slider-container"
-                    ref={reasonSliderRef}
-                    initial={{ x: 5, opacity: 0, translateY: "-50%" }}
-                    animate={{ x: 0, opacity: 1, translateY: "-50%" }}
-                    exit={{ x: 5, opacity: 0, translateY: "-50%" }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className="slider-wrapper">
-                      <input
-                        type="range"
-                        min="1"
-                        max="3"
-                        step="1"
-                        value={reason}
-                        onChange={(e) => setReason(parseInt(e.target.value))}
-                        className="reason-slider"
-                      />
-                      <div
-                        className="slider-value"
-                        style={getReasonPosition(reason)}
-                      >
-                        {reasonLabels[reason - 1]}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </Tooltip>
-        )}
-
-        {isTouch ? (
-          <div className="header-icon system-message-icon">
-            <BsCodeSlash
-              onClick={() => {
-                if (modelType !== "none") {
-                  setIsSystemMessageOpen(!isSystemMessageOpen);
-                  setIsTempSliderOpen(false);
-                  setIsReasonSliderOpen(false);
-                }
-              }}
-              className={modelType === "none" ? "disabled" : ""}
-              style={{ fontSize: "20px", strokeWidth: 0.3 }}
-            />
-            <AnimatePresence>
-              {isSystemMessageOpen && (
-                <motion.div
-                  className="system-message-container"
-                  ref={systemMessageRef}
-                  initial={{ x: 50, opacity: 0, translateY: "-50%" }}
-                  animate={{ x: 0, opacity: 1, translateY: "-50%" }}
-                  exit={{ x: 50, opacity: 0, translateY: "-50%" }}
-                  transition={{ duration: 0.2 }}
-                >
+          
+          <AnimatePresence>
+            {isTempSliderOpen && (
+              <motion.div
+                className="slider-container"
+                ref={tempSliderRef}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="slider-wrapper">
                   <input
-                    type="text"
-                    value={systemMessage}
-                    onChange={(e) => setSystemMessage(e.target.value)}
-                    className="system-message-input"
-                    placeholder="지시어를 입력하세요."
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={temperature}
+                    onChange={(e) =>
+                      setTemperature(parseFloat(e.target.value))
+                    }
+                    className="temperature-slider"
                   />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        ) : (
-          <Tooltip content="지시어 설정" position="left">
+                  <div
+                    className="slider-value"
+                    style={getTempPosition(temperature)}
+                  >
+                    {temperature}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+            {isReasonSliderOpen && (
+              <motion.div
+                className="slider-container"
+                ref={reasonSliderRef}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="slider-wrapper">
+                  <input
+                    type="range"
+                    min="1"
+                    max="3"
+                    step="1"
+                    value={reason}
+                    onChange={(e) => setReason(parseInt(e.target.value))}
+                    className="reason-slider"
+                  />
+                  <div
+                    className="slider-value"
+                    style={getReasonPosition(reason)}
+                  >
+                    {reasonLabels[reason - 1]}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="header-icon-wrapper">
+          <Tooltip content="지시어 설정" position="left" isTouch={isTouch}>
             <div className="header-icon system-message-icon">
-              <BsCodeSlash
+              <RiEdit2Line
                 onClick={() => {
                   if (modelType !== "none") {
                     setIsSystemMessageOpen(!isSystemMessageOpen);
@@ -393,29 +294,30 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
                 className={modelType === "none" ? "disabled" : ""}
                 style={{ fontSize: "20px", strokeWidth: 0.3 }}
               />
-              <AnimatePresence>
-                {isSystemMessageOpen && (
-                  <motion.div
-                    className="system-message-container"
-                    ref={systemMessageRef}
-                    initial={{ x: 50, opacity: 0, translateY: "-50%" }}
-                    animate={{ x: 0, opacity: 1, translateY: "-50%" }}
-                    exit={{ x: 50, opacity: 0, translateY: "-50%" }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <input
-                      type="text"
-                      value={systemMessage}
-                      onChange={(e) => setSystemMessage(e.target.value)}
-                      className="system-message-input"
-                      placeholder="지시어를 입력하세요."
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </Tooltip>
-        )}
+          
+          <AnimatePresence>
+            {isSystemMessageOpen && (
+              <motion.div
+                className="system-message-container"
+                ref={systemMessageRef}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <input
+                  type="text"
+                  value={systemMessage}
+                  onChange={(e) => setSystemMessage(e.target.value)}
+                  className="system-message-input"
+                  placeholder="지시어를 입력하세요."
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -445,6 +347,21 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch }) {
                 ))}
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {copyModal && (
+          <motion.div
+            className="copy-modal"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20, }}
+            transition={{ duration: 0.3 }}
+          >
+            <GoCopy style={{ flexShrink: 0, marginRight: "6px", fontSize: "14px" }} />
+            공유 링크가 복사되었습니다.
           </motion.div>
         )}
       </AnimatePresence>

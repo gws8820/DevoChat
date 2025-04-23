@@ -2,15 +2,15 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
-import { BsLayoutTextSidebar } from "react-icons/bs";
+import { RiMenuLine } from "react-icons/ri";
 import { CiWarning } from "react-icons/ci";
 import { ClipLoader } from "react-spinners";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Modal from "./Modal";
 import Tooltip from "./Tooltip";
-import "../styles/Sidebar.css";
 import logo from "../logo.png";
+import "../styles/Sidebar.css";
 
 function Sidebar({
   toggleSidebar,
@@ -280,23 +280,11 @@ function Sidebar({
           <div className="logo">
             <img src={logo} alt="DEVOCHAT" className="logo-image" />
           </div>
-          {isTouch ? (
+          <Tooltip content="사이드바 닫기" position="bottom" isTouch={isTouch}>
             <div className="header-icon toggle-icon">
-              <BsLayoutTextSidebar
-                onClick={toggleSidebar}
-                style={{ strokeWidth: 0.3 }}
-              />
+              <RiMenuLine onClick={toggleSidebar} />
             </div>
-          ) : (
-            <Tooltip content="사이드바 닫기" position="bottom">
-              <div className="header-icon toggle-icon">
-                <BsLayoutTextSidebar
-                  onClick={toggleSidebar}
-                  style={{ strokeWidth: 0.3 }}
-                />
-              </div>
-            </Tooltip>
-          )}
+          </Tooltip>
         </div>
 
         <div className="newconv-container">
@@ -432,12 +420,12 @@ function Sidebar({
         {errorModal && (
           <motion.div
             className="error-modal"
-            initial={{ opacity: 0, y: -20, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: -20, x: "-50%" }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <CiWarning style={{ marginRight: "4px", fontSize: "16px" }} />
+            <CiWarning style={{ flexShrink: 0, marginRight: "4px", fontSize: "16px" }} />
             {errorModal}
           </motion.div>
         )}

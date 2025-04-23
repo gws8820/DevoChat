@@ -1,24 +1,19 @@
 // src/App.js
 import axios from "axios";
 import { useEffect, useState, useCallback } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-  useLocation,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-
 import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
 import Main from "./pages/Main";
 import Chat from "./pages/Chat";
+import View from "./pages/View";
 import Realtime from "./pages/Realtime";
+import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Header from "./components/Header";
 import { SettingsProvider } from "./contexts/SettingsContext";
-import "./styles/Common.css";
+import logo from "./logo.png";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(null);
@@ -143,8 +138,10 @@ function AppLayout({
   fetchConversations,
 }) {
   const location = useLocation();
-  const hideLayoutRoutes = ["/login", "/register"];
-  const shouldShowLayout = !hideLayoutRoutes.includes(location.pathname);
+  const navigate = useNavigate();
+
+  const shouldShowLayout = location.pathname === "/" || location.pathname.startsWith("/chat");
+  const shouldShowLogo = location.pathname.startsWith("/view");
 
   const [isTouch, setIsTouch] = useState(false);
   window.addEventListener('pointerdown', (event) => {
@@ -204,68 +201,54 @@ function AppLayout({
 
   return (
     <div style={{ display: "flex", position: "relative" }}>
-      {shouldShowLayout && (
-        <>
-          {!isResponsive && (
-            <motion.div
-              initial={{ x: isSidebarVisible ? 0 : -260 }}
-              animate={{ x: isSidebarVisible ? 0 : -260 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              style={{
-                position: "fixed",
-                left: 0,
-                top: 0,
-                bottom: 0,
-                zIndex: 20,
-              }}
-            >
-              <Sidebar
-                toggleSidebar={toggleSidebar}
-                isSidebarVisible={isSidebarVisible}
-                isTouch={isTouch}
-                conversations={conversations}
-                isLoadingChat={isLoadingChat}
-                errorModal={errorModal}
-                deleteConversation={deleteConversation}
-                deleteAllConversation={deleteAllConversation}
-                updateConversation={updateConversation}
-                setErrorModal={setErrorModal}
-                isResponsive={isResponsive}
-                fetchConversations={fetchConversations}
-              />
-            </motion.div>
-          )}
-
-          {isResponsive && (
-            <div
-              style={{
-                position: "fixed",
-                top: 0,
-                left: isSidebarVisible ? 0 : "-260px",
-                width: 260,
-                height: "100%",
-                transition: "left 0.3s ease-in-out",
-                zIndex: 20,
-              }}
-            >
-              <Sidebar
-                toggleSidebar={toggleSidebar}
-                isSidebarVisible={isSidebarVisible}
-                isTouch={isTouch}
-                conversations={conversations}
-                isLoadingChat={isLoadingChat}
-                errorModal={errorModal}
-                deleteConversation={deleteConversation}
-                deleteAllConversation={deleteAllConversation}
-                updateConversation={updateConversation}
-                setErrorModal={setErrorModal}
-                isResponsive={isResponsive}
-                fetchConversations={fetchConversations}
-              />
-            </div>
-          )}
-        </>
-      )}
+      {shouldShowLayout && (() => {
+        const sidebarProps = {
+          toggleSidebar,
+          isSidebarVisible,
+          isTouch,
+          conversations,
+          isLoadingChat,
+          errorModal,
+          deleteConversation,
+          deleteAllConversation,
+          updateConversation,
+          setErrorModal,
+          isResponsive,
+          fetchConversations
+        };
+        
+        return !isResponsive ? (
+          <motion.div
+            initial={{ x: isSidebarVisible ? 0 : -260 }}
+            animate={{ x: isSidebarVisible ? 0 : -260 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            style={{
+              position: "fixed",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 260,
+              zIndex: 20,
+            }}
+          >
+            <Sidebar {...sidebarProps} />
+          </motion.div>
+        ) : (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: isSidebarVisible ? 0 : -260,
+              width: 260,
+              height: "100%",
+              transition: "left 0.3s ease-in-out",
+              zIndex: 20,
+            }}
+          >
+            <Sidebar {...sidebarProps} />
+          </div>
+        );
+      })()}
 
       {isResponsive && isSidebarVisible && shouldShowLayout && (
         <div
@@ -300,6 +283,12 @@ function AppLayout({
             />
           )}
 
+          {shouldShowLogo && (
+              <div className="header" style={{ padding: "0 20px" }}>
+                <img src={logo} alt="DEVOCHAT" width="143.5px" onClick={() => navigate("/")} style={{ cursor: "pointer" }} />
+              </div>
+          )}
+
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route
@@ -323,10 +312,16 @@ function AppLayout({
                 }
               />
               <Route
+                path="/view/:conversation_id"
+                element={<View />}
+              />
+              <Route
                 path="/realtime"
-                element={
-                  isLoggedIn ? <Realtime /> : <Navigate to="/login" />
-                }
+                element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/admin"
+                element={isLoggedIn ? <Admin /> : <Navigate to="/" />}
               />
               <Route
                 path="/login"

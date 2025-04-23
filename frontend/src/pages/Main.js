@@ -69,7 +69,7 @@ function Main({ addConversation, isTouch }) {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
   }, []);
 
-  const notice = 'Gemini 2.5 Flash가 추가되었습니다!';
+  const notice = '이제 퍼플렉시티 모델이 이미지 업로드를 지원합니다!';
   const noticeHash = btoa(encodeURIComponent(notice));
 
   useEffect(() => {
@@ -381,7 +381,7 @@ function Main({ addConversation, isTouch }) {
     const textarea = textAreaRef.current;
     if (textarea) {
       textarea.style.height = "auto";
-      const newHeight = Math.min(textarea.scrollHeight, 180);
+      const newHeight = Math.min(textarea.scrollHeight, 250);
       textarea.style.height = `${newHeight}px`;
     }
   }, []);
@@ -599,12 +599,12 @@ function Main({ addConversation, isTouch }) {
         {errorModal && (
           <motion.div
             className="error-modal"
-            initial={{ opacity: 0, y: -20, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: -20, x: "-50%" }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <CiWarning style={{ marginRight: "4px", fontSize: "16px" }} />
+            <CiWarning style={{ flexShrink: 0, marginRight: "4px", fontSize: "16px" }} />
             {errorModal}
           </motion.div>
         )}

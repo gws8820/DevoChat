@@ -44,6 +44,12 @@
   opacity: 1;
 }
 
+.user-wrap.editing {
+  width: 80%;
+  max-width: unset;
+  align-items: stretch;
+}
+
 .chat-message.user {
   padding: 10px 20px;
   background-color: rgba(232, 232, 232, 0.5);
@@ -236,7 +242,6 @@ code {
   background-color: #f1f1f1;
 }
 
-/* 복사 버튼 스타일링 */
 .copy-button {
   display: flex;
   align-items: center;
@@ -251,6 +256,56 @@ code {
 
 .copy-button:hover {
   opacity: 1;
+}
+
+.message-edit {
+  width: 100%;
+  padding: 4px 2px;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+  resize: none;
+  overflow: hidden;
+  background-color: transparent;
+  box-sizing: border-box;
+}
+
+textarea:focus {
+  outline: none;
+}
+
+.edit-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0 14px;
+}
+
+.edit-button {
+  padding: 8px 14px;
+  border: 1px solid rgb(240, 240, 240);
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.edit-button.cancel {
+  background-color: #ffffff;
+}
+
+.edit-button.cancel:hover {
+  background-color: #f2f2f2;
+}
+
+.edit-button.save {
+  background-color: #000000;
+  color: white;
+}
+
+.edit-button.save:hover {
+  background-color: #303030;
 }
 
 @container (max-width: 768px) {
@@ -274,5 +329,9 @@ code {
   
   .message-file-area .file-object, .message-file-area .image-object {
     margin: 0 5px 2px 0;
+  }
+
+  .edit-buttons {
+    margin: 0;
   }
 }
