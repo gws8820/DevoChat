@@ -8,11 +8,6 @@ body, button, textarea, input {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  margin: 0;
-  overflow: hidden;
-}
-
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

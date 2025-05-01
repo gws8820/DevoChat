@@ -36,7 +36,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  max-width: 70%;
+  max-width: 75%;
   margin-left: auto;
 }
 
@@ -45,7 +45,7 @@
 }
 
 .user-wrap.editing {
-  width: 80%;
+  width: 75%;
   max-width: unset;
   align-items: stretch;
 }
@@ -260,7 +260,7 @@ code {
 
 .message-edit {
   width: 100%;
-  padding: 4px 2px;
+  padding: 0;
   border: none;
   font-family: inherit;
   font-size: inherit;

@@ -69,7 +69,7 @@ function Main({ addConversation, isTouch }) {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
   }, []);
 
-  const notice = '이제 퍼플렉시티 모델이 이미지 업로드를 지원합니다!';
+  const notice = '대화내역 공유 기능이 추가되었습니다!';
   const noticeHash = btoa(encodeURIComponent(notice));
 
   useEffect(() => {

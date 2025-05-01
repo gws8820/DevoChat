@@ -76,10 +76,15 @@ async def get_user_conversations(
     return {"conversations": conversations}
 
 @router.get("/conversation/{conversation_id}", response_model=dict)
-async def get_conversation(conversation_id: str):
+async def get_conversation(conversation_id: str, current_user: User = Depends(get_current_user)):
     doc = await conversations_collection.find_one({"conversation_id": conversation_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Conversation not found")
+    if doc["user_id"] != current_user.user_id and not current_user.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this conversation"
+        )
     return {
         "conversation_id": doc["conversation_id"],
         "alias": doc["alias"],

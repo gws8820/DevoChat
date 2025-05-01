@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+        <html>
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                <meta name="theme-color" content="#000000" />
+                <meta name="description" content="DevoChat" />
+                <meta property="og:title" content="리다이렉트 기능 추가 가능">
+                <meta property="og:site-name" content="리다이렉트 기능 추가 가능">
+                <meta property="og:description" content="DevoChat 공유">
+                <meta property="og:image" content="https://devochat.com/full_logo.png">
+                <meta property="og:url" content="https://share.devochat.com/og">
+                <meta property="og:type" content="website">
+
+                <link rel="icon" type="image/png" href="https://devochat.com/favicon/favicon-96x96.png" sizes="96x96" />
+                <link rel="icon" type="image/svg+xml" href="https://devochat.com/favicon/favicon.svg" />
+                <link rel="shortcut icon" href="https://devochat.com/favicon/favicon.ico" />
+                <link rel="apple-touch-icon" sizes="180x180" href="https://devochat.com/favicon/apple-touch-icon.png" />
+                <meta name="apple-mobile-web-app-title" content="DevoChat 공유" />
+
+                <title>리다이렉트 기능 추가 가능</title>
+                <link rel="stylesheet" href="https://devochat.com/static/css/main.e84b6821.css">
+<style></style>
+<style data-emotion="css" data-s=""></style>
+
+            </head>
+            <body style="display: flex; position: relative; flex-direction: column; margin: 0; overflow: hidden;">
+                <div class="header" style="position: sticky; top: 0; background-color: white; padding: 0 20px;">
+                    <img src="https://devochat.com/logo.png" alt="DEVOCHAT" width="143.5px" style="cursor: pointer;" onclick="location.href='https://devochat.com'" />
+                </div>
+                <div class="container">
+                    <div class="chat-messages"><div class="user-wrap " style="opacity: 1; transform: none;"><div class="message-file-area"></div><div class="chat-message user"><span>import os
+import re
+import requests
+import io
+import uuid
+import tempfile
+import zipfile
+import textract
+from dotenv import load_dotenv
+from pydantic import BaseModel
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from routes import auth, realtime, conversations, openai_client, responses_client, anthropic_client, huggingface_client
+from PIL import Image, ImageOps
+from typing import List
+from bs4 import BeautifulSoup
+
+load_dotenv()
+app = FastAPI()
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "images")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+class URLRequest(BaseModel):
+    url: str
+
+class WebContent(BaseModel):
+    html: str
+    stylesheets: List[str]
+    title: str
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        os.getenv('PRODUCTION_URL'),
+        os.getenv('DEVELOPMENT_URL')
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(auth.router)
+app.include_router(realtime.router)
+app.include_router(conversations.router)
+app.include_router(openai_client.router)
+app.include_router(responses_client.router)
+app.include_router(anthropic_client.router)
+app.include_router(huggingface_client.router)
+
+app.mount("/images", StaticFiles(directory="images"), name="images")
+
+@app.get("/")
+def read_root():
+    return {"message": "Service is Running"}
+
+@app.post("/upload/image")
+async def upload_image(file: UploadFile = File(...)):
+    file_data = await file.read()
+    if len(file_data) &gt; 100 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size exceeds size limit.")
+
+    try:
+        image = Image.open(io.BytesIO(file_data))
+    except Exception:
+        return {"error": "Can't Read Image File"}
+
+    image = ImageOps.exif_transpose(image)
+
+    if image.mode in ("RGBA", "LA") or (image.mode == "P" and "transparency" in image.info):
+        if image.mode != "RGBA":
+            image = image.convert("RGBA")
+        background = Image.new("RGB", image.size, (255, 255, 255))
+        background.paste(image, mask=image.split()[3])
+        image = background
+    else:
+        image = image.convert("RGB")
+
+    max_dimension = (1024, 1024)
+    image.thumbnail(max_dimension, Image.Resampling.LANCZOS)
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="JPEG", quality=100, optimize=True)
+    
+    filename = f"{uuid.uuid4().hex}.jpeg"
+    file_location = os.path.join(UPLOAD_DIR, filename)
+    with open(file_location, "wb") as f:
+        f.write(buffer.getvalue())
+
+    return {
+        "type": "image",
+        "name": filename,
+        "content": f"/images/{filename}"
+    }
+
+@app.post("/upload/file")
+async def upload_file(file: UploadFile = File(...)):
+    supported_archives = ['.zip']
+    text_extensions = [
+        '.txt', '.text', '.md', '.markdown',
+        '.json', '.xml', '.html', '.htm',
+        '.csv', '.tsv', '.yaml', '.yml', '.log', '.sql',
+        '.py', '.pyw', '.rb', '.pl',
+        '.java', '.c', '.cpp', '.h', '.hpp', '.v',
+        '.js', '.jsx', '.ts', '.tsx',
+        '.css', '.scss', '.less',
+        '.cs', '.sh', '.bash', '.bat', '.ps1',
+        '.ini', '.conf', '.cfg', '.toml',
+        '.tex',
+        '.r',
+        '.swift', '.scala',
+        '.hs', '.erl', '.ex', '.exs',
+        '.go', '.rs', '.php'
+    ]
+    
+    file_data = await file.read()
+    if len(file_data) &gt; 100 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size exceeds size limit.")
+
+    filename = file.filename
+    _, ext = os.path.splitext(filename)
+    ext = ext.lower()
+
+    if ext in supported_archives:
+        extracted_parts = []
+        try:
+            with zipfile.ZipFile(io.BytesIO(file_data)) as z:
+                for inner_filename in z.namelist():
+                    if inner_filename.startswith("__MACOSX") or os.path.basename(inner_filename).startswith("._"):
+                        continue
+                    if inner_filename.endswith('/'):
+                        continue
+
+                    inner_ext = os.path.splitext(inner_filename)[1].lower()
+                    inner_file_data = z.read(inner_filename)
+
+                    if inner_ext in text_extensions:
+                        try:
+                            extracted_text = inner_file_data.decode("utf-8", errors="replace")
+                        except Exception as e:
+                            print(f"Decoding error for {inner_filename}: {e}")
+                            extracted_text = ""
+                    else:
+                        with tempfile.NamedTemporaryFile(suffix=inner_ext, delete=False) as tmp:
+                            tmp.write(inner_file_data)
+                            tmp.flush()
+                            tmp_path = tmp.name
+                        try:
+                            extracted_bytes = textract.process(tmp_path)
+                            extracted_text = extracted_bytes.decode("utf-8", errors="ignore")
+                        except Exception as e:
+                            print(f"textract error for {inner_filename}: {e}")
+                            extracted_text = ""
+                        finally:
+                            os.remove(tmp_path)
+                    extracted_parts.append(f"[[{inner_filename}]]\n{extracted_text}")
+            final_extracted_text = "\n\n".join(extracted_parts)
+        except Exception as e:
+            print(f"Error processing archive file {filename}: {e}")
+            final_extracted_text = ""
+        
+        return {
+            "type": "file",
+            "name": filename,
+            "content": final_extracted_text
+        }
+    else:
+        if ext in text_extensions:
+            try:
+                extracted_text = file_data.decode("utf-8", errors="replace")
+            except Exception as e:
+                print(f"Direct decode error: {e}")
+                extracted_text = ""
+        else:
+            with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+                tmp.write(file_data)
+                tmp.flush()
+                tmp_path = tmp.name
+
+            try:
+                extracted_bytes = textract.process(tmp_path)
+                extracted_text = extracted_bytes.decode("utf-8", errors="ignore")
+            except Exception as e:
+                print(f"textract error: {e}")
+                extracted_text = ""
+            finally:
+                os.remove(tmp_path)
+
+        return {
+            "type": "file",
+            "name": filename,
+            "content": f"[[{filename}]]\n{extracted_text}"
+        }
+
+@app.post("/upload_page")
+async def upload_page(content: WebContent):
+    try:
+        unique_id = str(uuid.uuid4())
+        
+        stylesheet_content = ""
+        for sheet in content.stylesheets:
+            if sheet.startswith('http'):
+                stylesheet_content += f'&lt;link rel="stylesheet" href="{sheet}"&gt;\n'
+            else:
+                stylesheet_content += f'{sheet}\n'
+        
+        html_content = f"""&lt;!DOCTYPE html&gt;
+            &lt;html&gt;
+            &lt;head&gt;
+                &lt;meta charset="utf-8" /&gt;
+                &lt;meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"&gt;
+                &lt;meta name="theme-color" content="#000000" /&gt;
+                &lt;meta name="description" content="DevoChat" /&gt;
+                &lt;meta property="og:title" content="{content.title}"&gt;
+                &lt;meta property="og:site-name" content="{content.title}"&gt;
+                &lt;meta property="og:description" content="DevoChat"&gt;
+                &lt;meta property="og:image" content="https://devochat.com/full_logo.png"&gt;
+                &lt;meta property="og:url" content="https://share.devochat.com"&gt;
+                &lt;meta property="og:type" content="website"&gt;
+
+                &lt;link rel="icon" type="image/png" href="https://devochat.com/favicon/favicon-96x96.png" sizes="96x96" /&gt;
+                &lt;link rel="icon" type="image/svg+xml" href="https://devochat.com/favicon/favicon.svg" /&gt;
+                &lt;link rel="shortcut icon" href="https://devochat.com/favicon/favicon.ico" /&gt;
+                &lt;link rel="apple-touch-icon" sizes="180x180" href="https://devochat.com/favicon/apple-touch-icon.png" /&gt;
+                &lt;meta name="apple-mobile-web-app-title" content="DevoChat" /&gt;
+                &lt;link rel="manifest" href="https://devochat.com/favicon/site.webmanifest" /&gt;
+
+                &lt;title&gt;{content.title}&lt;/title&gt;
+                {stylesheet_content}
+            &lt;/head&gt;
+            &lt;body style="display: flex; position: relative; flex-direction: column; margin: 0; overflow: hidden;"&gt;
+                &lt;div class="header" style="position: sticky; top: 0; background-color: white; padding: 0 20px;"&gt;
+                    &lt;img src="https://devochat.com/logo.png" alt="DEVOCHAT" width="143.5px" style="cursor: pointer;" onclick="location.href='https://devochat.com'" /&gt;
+                &lt;/div&gt;
+                {content.html}
+            &lt;/body&gt;
+            &lt;/html&gt;"""
+
+        file_path = os.path.join("shared_pages", f"{unique_id}.html")
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(html_content)
+        
+        share_url = f"https://share.devochat.com/id/{unique_id}"
+        
+        return {"success": True, "url": share_url}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/id/{share_id}", response_class=HTMLResponse)
+async def get_shared_page(share_id: str):
+    file_path = os.path.join("shared_pages", f"{share_id}.html")
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="공유된 페이지를 찾을 수 없습니다")
+    
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        return content
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/visit_url")
+def visit_url(request: URLRequest):
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        response = requests.get(request.url, headers=headers, timeout=5, allow_redirects=True)
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        for tag in soup(['script', 'style', 'head', 'meta', 'noscript']):
+            tag.decompose()
+            
+        content = soup.get_text(separator="\n", strip=True)
+        content = re.sub(r'\n\s*\n', '\n\n', content)
+        
+        return {"content": f"[[{request.url}]]\n{content}"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error occured while visiting URL: {str(e)}")
+
+
+야 이 코드를 봐봐 / 로 가면 그냥 {"message": "Service is Running"} 이런거 뜨지 말고 특정 웹사이트로 리다이렉트시킨다던가 이런건 없어?</span></div></div><div class="assistant-wrap" style="opacity: 1; transform: none;"><div class="chat-message assistant"><p>현재 코드에서는 <code class="inline-code">/</code> 경로에 접속하면 간단한 JSON 응답 <code class="inline-code">{"message": "Service is Running"}</code>만 반환하고 있습니다. 리다이렉트 기능은 구현되어 있지 않네요.</p>
+<p>리다이렉트를 추가하려면 FastAPI의 <code class="inline-code">RedirectResponse</code>를 사용하여 다음과 같이 코드를 수정할 수 있습니다:</p>
+<div class="code-block"><div class="code-header-wrap"><div class="code-header"><span class="code-type">python</span></div></div><pre style="background: rgb(245, 245, 245); color: rgb(56, 58, 66); font-family: &quot;Fira Code&quot;, &quot;Fira Mono&quot;, Menlo, Consolas, &quot;DejaVu Sans Mono&quot;, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; line-height: 1.5; tab-size: 2; hyphens: none; padding: 16px; margin: 0px; overflow: auto; border-radius: 0px 0px 6px 6px;"><code class="language-python" style="white-space: pre; background: rgb(250, 250, 250); color: rgb(56, 58, 66); font-family: &quot;Fira Code&quot;, &quot;Fira Mono&quot;, Menlo, Consolas, &quot;DejaVu Sans Mono&quot;, monospace; direction: ltr; text-align: left; word-spacing: normal; word-break: normal; line-height: 1.5; tab-size: 2; hyphens: none;"><span class="token" style="color: rgb(166, 38, 164);">from</span><span> fastapi</span><span class="token" style="color: rgb(56, 58, 66);">.</span><span>responses </span><span class="token" style="color: rgb(166, 38, 164);">import</span><span> RedirectResponse
+</span>
+<span></span><span class="token decorator annotation" style="color: rgb(56, 58, 66);">@app</span><span class="token decorator annotation" style="color: rgb(56, 58, 66);">.</span><span class="token decorator annotation" style="color: rgb(56, 58, 66);">get</span><span class="token" style="color: rgb(56, 58, 66);">(</span><span class="token" style="color: rgb(80, 161, 79);">"/"</span><span class="token" style="color: rgb(56, 58, 66);">)</span><span>
+</span><span></span><span class="token" style="color: rgb(166, 38, 164);">def</span><span> </span><span class="token" style="color: rgb(64, 120, 242);">read_root</span><span class="token" style="color: rgb(56, 58, 66);">(</span><span class="token" style="color: rgb(56, 58, 66);">)</span><span class="token" style="color: rgb(56, 58, 66);">:</span><span>
+</span><span>    </span><span class="token" style="color: rgb(160, 161, 167); font-style: italic;"># 특정 웹사이트로 리다이렉트</span><span>
+</span><span>    </span><span class="token" style="color: rgb(166, 38, 164);">return</span><span> RedirectResponse</span><span class="token" style="color: rgb(56, 58, 66);">(</span><span>url</span><span class="token" style="color: rgb(64, 120, 242);">=</span><span class="token" style="color: rgb(80, 161, 79);">"https://devochat.com"</span><span class="token" style="color: rgb(56, 58, 66);">)</span></code></pre></div>
+<p>이렇게 수정하면 루트 경로(<code class="inline-code">/</code>)에 접속했을 때 지정한 URL로 리다이렉트됩니다. 위 예시에서는 "<a target="_blank" rel="noopener noreferrer" href="https://devochat.com%22%EC%9C%BC%EB%A1%9C">https://devochat.com"으로</a> 리다이렉트하도록 설정했습니다.</p>
+<p>필요에 따라 상태 코드도 지정할 수 있습니다:</p>
+<div class="code-block"><div class="code-header-wrap"><div class="code-header"><span class="code-type">python</span></div></div><pre style="background: rgb(245, 245, 245); color: rgb(56, 58, 66); font-family: &quot;Fira Code&quot;, &quot;Fira Mono&quot;, Menlo, Consolas, &quot;DejaVu Sans Mono&quot;, monospace; direction: ltr; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; line-height: 1.5; tab-size: 2; hyphens: none; padding: 16px; margin: 0px; overflow: auto; border-radius: 0px 0px 6px 6px;"><code class="language-python" style="white-space: pre; background: rgb(250, 250, 250); color: rgb(56, 58, 66); font-family: &quot;Fira Code&quot;, &quot;Fira Mono&quot;, Menlo, Consolas, &quot;DejaVu Sans Mono&quot;, monospace; direction: ltr; text-align: left; word-spacing: normal; word-break: normal; line-height: 1.5; tab-size: 2; hyphens: none;"><span class="token decorator annotation" style="color: rgb(56, 58, 66);">@app</span><span class="token decorator annotation" style="color: rgb(56, 58, 66);">.</span><span class="token decorator annotation" style="color: rgb(56, 58, 66);">get</span><span class="token" style="color: rgb(56, 58, 66);">(</span><span class="token" style="color: rgb(80, 161, 79);">"/"</span><span class="token" style="color: rgb(56, 58, 66);">)</span><span>
+</span><span></span><span class="token" style="color: rgb(166, 38, 164);">def</span><span> </span><span class="token" style="color: rgb(64, 120, 242);">read_root</span><span class="token" style="color: rgb(56, 58, 66);">(</span><span class="token" style="color: rgb(56, 58, 66);">)</span><span class="token" style="color: rgb(56, 58, 66);">:</span><span>
+</span><span>    </span><span class="token" style="color: rgb(166, 38, 164);">return</span><span> RedirectResponse</span><span class="token" style="color: rgb(56, 58, 66);">(</span><span>url</span><span class="token" style="color: rgb(64, 120, 242);">=</span><span class="token" style="color: rgb(80, 161, 79);">"https://devochat.com"</span><span class="token" style="color: rgb(56, 58, 66);">,</span><span> status_code</span><span class="token" style="color: rgb(64, 120, 242);">=</span><span class="token" style="color: rgb(183, 107, 1);">302</span><span class="token" style="color: rgb(56, 58, 66);">)</span></code></pre></div>
+<p>302는 임시 리다이렉트, 301은 영구 리다이렉트를 의미합니다.</p></div></div><div></div></div>
+                </div>
+            </body>
+        </html>

@@ -276,29 +276,13 @@
         "type": "default"
       },
       {
-        "model_name": "sonar-pro",
-        "model_alias": "Perplexity Sonar Pro",
-        "description": "고성능 Perplexity 모델",
+        "model_name": "sonar-reasoning-pro",
+        "model_alias": "Perplexity Sonar Reasoning Pro",
+        "description": "고성능 추론 Perplexity 모델",
         "endpoint": "/perplexity",
-        "in_billing": "3",
-        "out_billing": "15",
+        "in_billing": "2",
+        "out_billing": "8",
         "search_billing": "0.015",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "default"
-      },
-      {
-        "model_name": "sonar-reasoning",
-        "model_alias": "Perplexity Sonar Reasoning",
-        "description": "Perplexity Sonar의 추론 모델",
-        "endpoint": "/perplexity",
-        "in_billing": "1",
-        "out_billing": "5",
-        "search_billing": "0.005",
         "inference": true,
         "stream": true,
         "capabilities": {
@@ -308,13 +292,13 @@
         "type": "default"
       },
       {
-        "model_name": "sonar-reasoning-pro",
-        "model_alias": "Perplexity Sonar Reasoning Pro",
-        "description": "Perplexity Sonar Pro의 추론 모델",
+        "model_name": "sonar-deep-research",
+        "model_alias": "Perplexity Sonar Deep Research",
+        "description": "Deep Research 지원 Perplexity 모델",
         "endpoint": "/perplexity",
-        "in_billing": "2",
+        "in_billing": "5",
         "out_billing": "8",
-        "search_billing": "0.015",
+        "search_billing": "0.05",
         "inference": true,
         "stream": true,
         "capabilities": {

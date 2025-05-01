@@ -12,6 +12,7 @@ export const SettingsProvider = ({ children }) => {
 
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [modelType, setModelType] = useState("");
+  const [alias, setAlias] = useState("");
   const [temperature, setTemperature] = useState(0.5);
   const [reason, setReason] = useState(2);
   const [systemMessage, setSystemMessage] = useState("");
@@ -64,6 +65,7 @@ export const SettingsProvider = ({ children }) => {
         DEFAULT_SEARCH_INFERENCE_MODEL,
         model,
         modelType,
+        alias,
         temperature,
         reason,
         systemMessage,
@@ -74,6 +76,7 @@ export const SettingsProvider = ({ children }) => {
         isSearchButton,
         isInferenceButton,
         updateModel,
+        setAlias,
         setTemperature,
         setReason,
         setSystemMessage,

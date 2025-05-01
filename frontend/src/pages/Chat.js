@@ -14,7 +14,7 @@ import Message from "../components/Message";
 import Modal from "../components/Modal";
 import "../styles/Common.css";
 
-function Chat({ fetchConversations, isTouch }) {
+function Chat({ fetchConversations, isTouch, chatMessageRef }) {
   const { conversation_id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -52,6 +52,7 @@ function Chat({ fetchConversations, isTouch }) {
     reason,
     systemMessage,
     updateModel,
+    setAlias,
     setTemperature,
     setReason,
     setSystemMessage,
@@ -461,9 +462,11 @@ function Chat({ fetchConversations, isTouch }) {
     const initializeChat = async () => {
       try {
         const res = await axios.get(
-          `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`
+          `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
+          { withCredentials: true }
         );
         updateModel(res.data.model);
+        setAlias(res.data.alias);
         setTemperature(res.data.temperature);
         setReason(res.data.reason);
         setSystemMessage(res.data.system_message);
@@ -685,7 +688,7 @@ function Chat({ fetchConversations, isTouch }) {
           <ClipLoader loading={true} size={50} />
         </div>
       )}
-      <div className="chat-messages">
+      <div className="chat-messages" ref={chatMessageRef}>
         <AnimatePresence>
           {messages.map((msg, idx) => (
             <Message

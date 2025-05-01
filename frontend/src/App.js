@@ -1,6 +1,6 @@
 // src/App.js
 import axios from "axios";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "./components/Sidebar";
@@ -21,6 +21,8 @@ function App() {
   const [conversations, setConversations] = useState([]);
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const [errorModal, setErrorModal] = useState(null);
+
+  const chatMessageRef = useRef(null);
 
   const addConversation = (newConversation) => {
     setConversations((prevConversations) => [
@@ -112,6 +114,7 @@ function App() {
         conversations={conversations}
         isLoadingChat={isLoadingChat}
         errorModal={errorModal}
+        chatMessageRef={chatMessageRef}
         deleteConversation={deleteConversation}
         deleteAllConversation={deleteAllConversation}
         updateConversation={updateConversation}
@@ -130,6 +133,7 @@ function AppLayout({
   conversations,
   isLoadingChat,
   errorModal,
+  chatMessageRef,
   deleteConversation,
   deleteAllConversation,
   updateConversation,
@@ -200,7 +204,7 @@ function AppLayout({
   }, [isTouch, isSidebarVisible, toggleSidebar]);
 
   return (
-    <div style={{ display: "flex", position: "relative" }}>
+    <div style={{ display: "flex", position: "relative", margin: "0", overflow: "hidden" }}>
       {shouldShowLayout && (() => {
         const sidebarProps = {
           toggleSidebar,
@@ -280,6 +284,7 @@ function AppLayout({
               toggleSidebar={toggleSidebar}
               isSidebarVisible={isSidebarVisible}
               isTouch={isTouch}
+              chatMessageRef={chatMessageRef}
             />
           )}
 
@@ -305,7 +310,7 @@ function AppLayout({
                 path="/chat/:conversation_id"
                 element={
                   isLoggedIn ? (
-                    <Chat fetchConversations={fetchConversations} isTouch={isTouch} />
+                    <Chat fetchConversations={fetchConversations} isTouch={isTouch} chatMessageRef={chatMessageRef} />
                   ) : (
                     <Navigate to="/login" />
                   )

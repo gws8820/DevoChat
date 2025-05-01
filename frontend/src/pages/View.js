@@ -12,7 +12,6 @@ function View() {
     const navigate = useNavigate();
 
     const [messages, setMessages] = useState([]);
-    const [scrollOnImage, setScrollOnImage] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
     const messagesEndRef = useRef(null);
 
@@ -20,11 +19,11 @@ function View() {
         const initializeChat = async () => {
         try {
             const res = await axios.get(
-            `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`
+                `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
+                { withCredentials: true }
             );
-
             const updatedMessages = res.data.messages.map((m) =>
-            m.role === "assistant" ? { ...m, isComplete: true } : m
+                m.role === "assistant" ? { ...m, isComplete: true } : m
             );
             setMessages(updatedMessages);
         } catch (err) {
@@ -41,23 +40,6 @@ function View() {
         initializeChat();
         // eslint-disable-next-line
     }, [conversation_id, location.state]);
-
-    useEffect(() => {
-        if (isInitialized) {
-          requestAnimationFrame(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-          });
-        }
-    }, [isInitialized]);
-
-    useEffect(() => {
-        if (scrollOnImage) {
-          requestAnimationFrame(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-          });
-          setScrollOnImage(false);
-        }
-      }, [messages, scrollOnImage]);
 
     return (
         <div className="container">
@@ -82,7 +64,6 @@ function View() {
                             messageIndex={idx}
                             role={msg.role}
                             content={msg.content}
-                            setScrollOnSend={scrollOnImage}
                         />
                     ))}
                 </AnimatePresence>

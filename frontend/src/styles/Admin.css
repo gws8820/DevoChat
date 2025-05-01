@@ -184,15 +184,15 @@ input:checked + .toggle-slider:before {
 .back-button {
   position: absolute;
   padding: 8px 16px;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  border: 1px solid #f0f0f0;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
 }
 
 .back-button:hover {
-  background-color: #e0e0e0;
+  background-color: #eeeeee;
 }
 
 .user-info-card {

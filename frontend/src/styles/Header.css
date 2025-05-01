@@ -38,7 +38,7 @@
 .model-box {
     display: flex;
     align-items: center;
-    padding: 5px 8px;
+    padding: 5px 5px 5px 8.5px;
     font-size: 20px;
     font-weight: 500;
     color: #333;
@@ -117,6 +117,11 @@
 
 .share-icon {
     margin: 1px 2px 0 0;
+}
+
+.slider-icon {
+    margin-bottom: 1px;
+    font-size: 19px;
 }
 
 .slider-container {
@@ -240,6 +245,6 @@
         width: calc(100vw - 120px);
     }
     .model-box {
-        padding-bottom: 7px;
+        padding: 5px 2px 7px 5.5px;
     }
 }
