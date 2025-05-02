@@ -8,6 +8,7 @@ import { CiWarning } from "react-icons/ci";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { v4 as uuidv4 } from 'uuid';
 import axios from "axios";
 import modelsData from "../models.json";
 import Message from "../components/Message";
@@ -78,10 +79,6 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
   );
   const maxFileSize = 50 * 1024 * 1024;
 
-  const generateRandomId = useCallback(() => {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
-  }, []);
-
   const uploadFiles = useCallback(
     async (file, uniqueId) => {
       const formData = new FormData();
@@ -151,7 +148,7 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
       }
       
       const filePairs = acceptedFiles.map((file) => {
-        const uniqueId = generateRandomId();
+        const uniqueId = uuidv4();
         return { file, uniqueId };
       });
 
@@ -182,7 +179,7 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
         })
       );
     },
-    [uploadedFiles, maxFileSize, generateRandomId, uploadFiles]
+    [uploadedFiles, maxFileSize, uploadFiles]
   );
 
   const updateAssistantMessage = useCallback((message, isComplete = false) => {

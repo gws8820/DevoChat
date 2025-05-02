@@ -2,9 +2,9 @@ import React, { useState, useContext, useRef, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
 import { RiMenuLine, RiArrowRightSLine, RiShare2Line, RiLightbulbLine, RiEdit2Line } from "react-icons/ri";
 import { GoCopy } from "react-icons/go";
-import { ImSpinner8 } from "react-icons/im";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { v4 as uuidv4 } from 'uuid';
 import Tooltip from "./Tooltip";
 import modelsData from "../models.json";
 import "../styles/Header.css";
@@ -31,7 +31,6 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
   const conversation_id = location.pathname.split('/chat/')[1];
 
   const models = modelsData.models;
-  const [isSharing, setIsSharing] = useState(false);
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
   const [isTempSliderOpen, setIsTempSliderOpen] = useState(false);
   const [isReasonSliderOpen, setIsReasonSliderOpen] = useState(false);
@@ -97,8 +96,9 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
   const reasonLabels = ["low", "medium", "high"];
 
   const handleShare = async () => {
-    setIsSharing(true);
     try {
+      const uniqueId = uuidv4();
+
       const containerClone = chatMessageRef.current.cloneNode(true);
       const elementsToRemove = containerClone.querySelectorAll('.message-function, .copy-button');
       elementsToRemove.forEach(el => {
@@ -118,7 +118,15 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
       styleElements.forEach(style => {
         stylesheets.push(style.outerHTML);
       });
-      
+
+      try {
+        await navigator.clipboard.writeText(`https://share.devochat.com/id/${uniqueId}`);
+        setCopyModal(true);
+        setTimeout(() => setCopyModal(false), 2000);
+      } catch (err) {
+        console.error("복사 실패:", err);
+      }
+
       const res = await fetch(
         `${process.env.REACT_APP_FASTAPI_URL}/upload_page`,
         {
@@ -127,29 +135,21 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            unique_id: uniqueId,
             html: htmlContent,
             stylesheets,
             title: alias
           })
         }
       );
-      
-      const data = await res.json();
-      if (data.error) {
-        throw new Error(data.error);
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || res.status);
       }
-  
-      try {
-        await navigator.clipboard.writeText(data.url);
-        setCopyModal(true);
-        setTimeout(() => setCopyModal(false), 2000);
-      } catch (err) {
-        console.error("복사 실패:", err);
-      }
+
     } catch (error) {
       console.error('링크 생성 실패:', error);
-    } finally {
-      setIsSharing(false);
     }
   };
   
@@ -229,11 +229,7 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
           <div className="header-icon-wrapper">
             <Tooltip content="공유하기" position="left" isTouch={isTouch}>
               <div className="header-icon share-icon">
-                {isSharing ? (
-                  <ImSpinner8 className="spinner" style={{ marginRight: "1px", fontSize: "18px", pointer: "cursor" }} />
-                ) : (
-                  <RiShare2Line onClick={handleShare} />
-                )}
+                <RiShare2Line onClick={handleShare} />
               </div>
             </Tooltip>
           </div>

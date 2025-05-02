@@ -107,21 +107,23 @@ function App() {
 
   return isLoggedIn !== null ? (
     <Router>
-      <AppLayout
-        isLoggedIn={isLoggedIn}
-        isSidebarVisible={isSidebarVisible}
-        toggleSidebar={toggleSidebar}
-        conversations={conversations}
-        isLoadingChat={isLoadingChat}
-        errorModal={errorModal}
-        chatMessageRef={chatMessageRef}
-        deleteConversation={deleteConversation}
-        deleteAllConversation={deleteAllConversation}
-        updateConversation={updateConversation}
-        fetchConversations={fetchConversations}
-        addConversation={addConversation}
-        setErrorModal={setErrorModal}
-      />
+      <SettingsProvider>
+        <AppLayout
+          isLoggedIn={isLoggedIn}
+          isSidebarVisible={isSidebarVisible}
+          toggleSidebar={toggleSidebar}
+          conversations={conversations}
+          isLoadingChat={isLoadingChat}
+          errorModal={errorModal}
+          chatMessageRef={chatMessageRef}
+          deleteConversation={deleteConversation}
+          deleteAllConversation={deleteAllConversation}
+          updateConversation={updateConversation}
+          fetchConversations={fetchConversations}
+          addConversation={addConversation}
+          setErrorModal={setErrorModal}
+        />
+      </SettingsProvider>
     </Router>
   ) : null;
 }
@@ -278,67 +280,65 @@ function AppLayout({
         animate={{ marginLeft }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        <SettingsProvider>
-          {shouldShowLayout && (
-            <Header
-              toggleSidebar={toggleSidebar}
-              isSidebarVisible={isSidebarVisible}
-              isTouch={isTouch}
-              chatMessageRef={chatMessageRef}
+        {shouldShowLayout && (
+          <Header
+            toggleSidebar={toggleSidebar}
+            isSidebarVisible={isSidebarVisible}
+            isTouch={isTouch}
+            chatMessageRef={chatMessageRef}
+          />
+        )}
+
+        {shouldShowLogo && (
+            <div className="header" style={{ padding: "0 20px" }}>
+              <img src={logo} alt="DEVOCHAT" width="143.5px" onClick={() => navigate("/")} style={{ cursor: "pointer" }} />
+            </div>
+        )}
+
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route
+              path="/"
+              element={
+                isLoggedIn ? (
+                  <Main addConversation={addConversation} isTouch={isTouch} />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
             />
-          )}
-
-          {shouldShowLogo && (
-              <div className="header" style={{ padding: "0 20px" }}>
-                <img src={logo} alt="DEVOCHAT" width="143.5px" onClick={() => navigate("/")} style={{ cursor: "pointer" }} />
-              </div>
-          )}
-
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-              <Route
-                path="/"
-                element={
-                  isLoggedIn ? (
-                    <Main addConversation={addConversation} isTouch={isTouch} />
-                  ) : (
-                    <Navigate to="/login" />
-                  )
-                }
-              />
-              <Route
-                path="/chat/:conversation_id"
-                element={
-                  isLoggedIn ? (
-                    <Chat fetchConversations={fetchConversations} isTouch={isTouch} chatMessageRef={chatMessageRef} />
-                  ) : (
-                    <Navigate to="/login" />
-                  )
-                }
-              />
-              <Route
-                path="/view/:conversation_id"
-                element={<View />}
-              />
-              <Route
-                path="/realtime"
-                element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />}
-              />
-              <Route
-                path="/admin"
-                element={isLoggedIn ? <Admin /> : <Navigate to="/" />}
-              />
-              <Route
-                path="/login"
-                element={!isLoggedIn ? <Login /> : <Navigate to="/" />}
-              />
-              <Route
-                path="/register"
-                element={!isLoggedIn ? <Register /> : <Navigate to="/" />}
-              />
-            </Routes>
-          </AnimatePresence>
-        </SettingsProvider>
+            <Route
+              path="/chat/:conversation_id"
+              element={
+                isLoggedIn ? (
+                  <Chat fetchConversations={fetchConversations} isTouch={isTouch} chatMessageRef={chatMessageRef} />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+            <Route
+              path="/view/:conversation_id"
+              element={<View />}
+            />
+            <Route
+              path="/realtime"
+              element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/admin"
+              element={isLoggedIn ? <Admin /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/login"
+              element={!isLoggedIn ? <Login /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/register"
+              element={!isLoggedIn ? <Register /> : <Navigate to="/" />}
+            />
+          </Routes>
+        </AnimatePresence>
       </motion.div>
     </div>
   );

@@ -8,7 +8,7 @@ import zipfile
 import textract
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -27,6 +27,7 @@ class URLRequest(BaseModel):
     url: str
 
 class WebContent(BaseModel):
+    unique_id: str
     html: str
     stylesheets: List[str]
     title: str
@@ -193,8 +194,6 @@ async def upload_file(file: UploadFile = File(...)):
 @app.post("/upload_page")
 async def upload_page(content: WebContent):
     try:
-        unique_id = str(uuid.uuid4())
-        
         stylesheet_content = ""
         for sheet in content.stylesheets:
             if sheet.startswith('http'):
@@ -226,7 +225,7 @@ async def upload_page(content: WebContent):
                 {stylesheet_content}
             </head>
             <body style="display: flex; position: relative; flex-direction: column; margin: 0; overflow: hidden;">
-                <div class="header" style="position: sticky; top: 0; background-color: white; padding: 0 20px;">
+                <div class="header" style="position: sticky; top: 0; background-color: white;">
                     <img src="https://devochat.com/logo.png" alt="DEVOCHAT" width="143.5px" style="cursor: pointer;" onclick="location.href='https://devochat.com'" />
                 </div>
                 <div class="container">
@@ -235,27 +234,27 @@ async def upload_page(content: WebContent):
             </body>
         </html>"""
 
-        file_path = os.path.join("shared_pages", f"{unique_id}.html")
+        file_path = os.path.join("shared_pages", f"{content.unique_id}.html")
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(html_content)
         
-        share_url = f"https://share.devochat.com/id/{unique_id}"
-        
-        return {"success": True, "url": share_url}
+        return {"success": True}
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/og")
-async def get_opengraph_page():
-    return {"detail": "Not Found"}
 
 @app.get("/id/{share_id}", response_class=HTMLResponse)
 async def get_shared_page(share_id: str):
     file_path = os.path.join("shared_pages", f"{share_id}.html")
     
     if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="공유된 페이지를 찾을 수 없습니다.")
+        with open("./error.html", "r", encoding="utf-8") as f:
+            error_content = f.read()
+        return Response(
+            content=error_content,
+            media_type="text/html; charset=utf-8",
+            status_code=404
+        )
     
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -281,6 +280,16 @@ def visit_url(request: URLRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error occured while visiting URL: {str(e)}")
 
+@app.get("/og")
+async def get_opengraph_page():
+    return {"detail": "Not Found"}
+
 @app.get("/{full_path:path}")
 def catch_all(full_path: str):
-    return RedirectResponse(url="https://devochat.com")
+    with open("./error.html", "r", encoding="utf-8") as f:
+        error_content = f.read()
+    return Response(
+        content=error_content,
+        media_type="text/html; charset=utf-8",
+        status_code=404
+    )

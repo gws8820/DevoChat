@@ -1,10 +1,11 @@
 // src/components/Sidebar.js
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { RiMenuLine } from "react-icons/ri";
 import { CiWarning } from "react-icons/ci";
 import { ClipLoader } from "react-spinners";
+import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Modal from "./Modal";
@@ -45,6 +46,8 @@ function Sidebar({
   const hasNavigatedRef = useRef(false);
   const userContainerRef = useRef(null);
   const longPressTimer = useRef(null);
+
+  const { setAlias } = useContext(SettingsContext);  
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -98,12 +101,20 @@ function Sidebar({
     }
   };
 
+  const currentConversationId = location.pathname.startsWith("/chat/")
+    ? location.pathname.split("/chat/")[1]
+    : null;
+
   const handleRename = async (conversation_id, newAlias) => {
     try {
       updateConversation(conversation_id, newAlias);
       setRenamingConversationId(null);
       setRenameInputValue("");
-
+  
+      if (conversation_id === currentConversationId) {
+        setAlias(newAlias);
+      }
+  
       await axios.put(
         `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/rename`,
         { alias: newAlias },
@@ -119,10 +130,6 @@ function Sidebar({
   const handleDelete = async (conversation_id) => {
     try {
       deleteConversation(conversation_id);
-      const currentPath = location.pathname;
-      const currentConversationId = currentPath.startsWith("/chat/")
-        ? currentPath.split("/chat/")[1]
-        : null;
       if (currentConversationId === conversation_id)
         navigate("/");
 
@@ -209,10 +216,6 @@ function Sidebar({
     navigate("/");
     if (isResponsive) toggleSidebar();
   };
-
-  const currentConversationId = location.pathname.startsWith("/chat/")
-    ? location.pathname.split("/chat/")[1]
-    : null;
 
   const handleConversationContextMenu = (e, conversation_id) => {
     e.preventDefault();
