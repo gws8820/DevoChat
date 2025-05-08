@@ -201,16 +201,16 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `model_name` | API 호출 시 사용되는 모델의 실제 식별자입니다. 같은 모델의 다른 구성을 위해 접미사를 추가할 수 있습니다. 가능한 값: `:default`, `:inference`, `:search`, `:all`|
 | `model_alias` | UI에 표시되는 모델의 사용자 친화적인 이름입니다. |
 | `description` | 모델에 대한 간략한 설명으로, 선택 시 참고할 수 있습니다. |
-| `endpoint` | 백엔드에서 해당 모델 요청을 처리할 API 경로입니다. (예: `/gpt`, `/claude`, `/gemini) |
+| `endpoint` | 백엔드에서 해당 모델 요청을 처리할 API 경로입니다. (예: `/gpt`, `/claude`, `/gemini`) |
 | `in_billing` | 입력 토큰(프롬프트)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
 | `out_billing` | 출력 토큰(응답)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
 | `search_billing` | (선택 사항) 검색 기능 사용 시 추가되는 청구 비용입니다. |
-| `inference` | 추론(reasoning) 기능 지원 여부입니다. `true`인 경우 추론 UI가 활성화됩니다. |
+| `inference` | 추론 기능 지원 여부입니다. `true`인 경우 추론 UI가 활성화됩니다. |
 | `stream` | 응답 스트리밍 지원 여부입니다. `true`인 경우 실시간으로 응답이 표시됩니다. |
 | `capabilities` | 모델이 지원하는 특수 기능들을 정의합니다. |
 | `capabilities.image` | 이미지 처리 기능 지원 여부입니다. |
 | `capabilities.search` | 실시간 웹 검색 기능 지원 여부입니다. |
-| `type` | 모델의 유형을 나타냅니다. 가능한 값: `default`, `think`, `reason`, `none` |
+| `type` | 모델의 유형을 나타냅니다. 가능한 값: `default`, `reason`, `think`, `none` |
 | `hidden` | 특정 기능이 활성화되기 전까지 모델을 UI에서 숨길지 여부를 결정합니다. 해당 기능이 활성화될 때만 모델이 표시됩니다. 가능한 값: `search`, `inference`, `all` |
 | `related_models` | 해당 모델과 연관된 다른 모델의 목록입니다. 사용자 인터페이스에서 관련 모델로 쉽게 전환할 수 있게 합니다. |
 
