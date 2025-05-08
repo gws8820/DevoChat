@@ -1,7 +1,7 @@
 {
     "models": [
       {
-        "model_name": "claude-3-7-sonnet-latest:0",
+        "model_name": "claude-3-7-sonnet-latest:default",
         "model_alias": "Claude 3.7 Sonnet",
         "description": "고성능 Claude 모델",
         "endpoint": "/claude",
@@ -13,10 +13,28 @@
           "image": true,
           "search": false
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["claude-3-7-sonnet-latest:inference", "claude-3-7-sonnet-latest:search"]
       },
       {
-        "model_name": "claude-3-7-sonnet-latest:1",
+        "model_name": "claude-3-7-sonnet-latest:search",
+        "model_alias": "Claude 3.7 Sonnet Search",
+        "description": "고성능 Claude 모델",
+        "endpoint": "/claude",
+        "in_billing": "3",
+        "out_billing": "15",
+        "inference": false,
+        "stream": true,
+        "capabilities": {
+          "image": true,
+          "search": true
+        },
+        "type": "default",
+        "related_models": ["claude-3-7-sonnet-latest:all", "claude-3-7-sonnet-latest:default"],
+        "hidden": "search"
+      },
+      {
+        "model_name": "claude-3-7-sonnet-latest:inference",
         "model_alias": "Claude 3.7 Sonnet Thinking",
         "description": "Claude 3.7의 추론 모델",
         "endpoint": "/claude",
@@ -28,10 +46,62 @@
           "image": true,
           "search": false
         },
-        "type": "think"
+        "type": "think",
+        "related_models": ["claude-3-7-sonnet-latest:default", "claude-3-7-sonnet-latest:all"],
+        "hidden": "inference"
       },
       {
-        "model_name": "claude-3-5-haiku-latest",
+        "model_name": "claude-3-7-sonnet-latest:all",
+        "model_alias": "Claude 3.7 Sonnet Thinking Search",
+        "description": "Claude 3.7의 추론 모델",
+        "endpoint": "/claude", 
+        "in_billing": "3",
+        "out_billing": "15",
+        "inference": true,
+        "stream": true,
+        "capabilities": {
+          "image": true,
+          "search": true
+        },
+        "type": "think",
+        "related_models": ["claude-3-7-sonnet-latest:search", "claude-3-7-sonnet-latest:inference"],
+        "hidden": "all"
+      },
+      {
+        "model_name": "claude-3-5-sonnet-latest:default",
+        "model_alias": "Claude 3.5 Sonnet",
+        "description": "문학 특화 Claude 모델",
+        "endpoint": "/claude",
+        "in_billing": "3",
+        "out_billing": "15",
+        "inference": false,
+        "stream": true,
+        "capabilities": {
+          "image": true,
+          "search": false
+        },
+        "type": "default",
+        "related_models": ["claude-3-7-sonnet-latest:inference", "claude-3-5-sonnet-latest:search"]
+      },
+      {
+        "model_name": "claude-3-5-sonnet-latest:search",
+        "model_alias": "Claude 3.5 Sonnet Search",
+        "description": "문학 특화 Claude 모델",
+        "endpoint": "/claude",
+        "in_billing": "3",
+        "out_billing": "15",
+        "inference": false,
+        "stream": true,
+        "capabilities": {
+          "image": true,
+          "search": true
+        },
+        "type": "default",
+        "related_models": ["claude-3-7-sonnet-latest:inference", "claude-3-5-sonnet-latest:default"],
+        "hidden": "search"
+      },
+      {
+        "model_name": "claude-3-5-haiku-latest:default",
         "model_alias": "Claude 3.5 Haiku",
         "description": "빠른 속도의 Claude 모델",
         "endpoint": "/claude",
@@ -43,44 +113,65 @@
           "image": true,
           "search": false
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["claude-3-7-sonnet-latest:inference", "claude-3-5-haiku-latest:search"]
       },
       {
-        "model_name": "grok-3",
-        "model_alias": "Grok 3",
-        "description": "표준 Grok 모델",
-        "endpoint": "/grok",
-        "in_billing": "3",
-        "out_billing": "15",
+        "model_name": "claude-3-5-haiku-latest:search",
+        "model_alias": "Claude 3.5 Haiku Search",
+        "description": "빠른 속도의 Claude 모델",
+        "endpoint": "/claude",
+        "in_billing": "0.8",
+        "out_billing": "4",
         "inference": false,
         "stream": true,
         "capabilities": {
-          "image": false,
-          "search": false
+          "image": true,
+          "search": true
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["claude-3-7-sonnet-latest:inference", "claude-3-5-haiku-latest:default"],
+        "hidden": "search"
       },
       {
-        "model_name": "grok-3-mini",
-        "model_alias": "Grok 3 mini",
-        "description": "Grok 3의 경량 추론 모델",
-        "endpoint": "/grok",
-        "in_billing": "0.3",
-        "out_billing": "0.5",
+        "model_name": "gemini-2.5-flash-preview-04-17:default",
+        "model_alias": "Gemini 2.5 Flash",
+        "description": "표준 Gemini 모델",
+        "endpoint": "/gemini",
+        "in_billing": "0.15",
+        "out_billing": "0.6",
+        "inference": false,
+        "stream": true,
+        "capabilities": {
+          "image": true,
+          "search": false
+        },
+        "type": "default",
+        "related_models": ["gemini-2.5-flash-preview-04-17:inference"]
+      },
+      {
+        "model_name": "gemini-2.5-flash-preview-04-17:inference",
+        "model_alias": "Gemini 2.5 Flash Thinking",
+        "description": "추론 Gemini 모델",
+        "endpoint": "/gemini",
+        "in_billing": "0.15",
+        "out_billing": "0.6",
         "inference": true,
         "stream": true,
         "capabilities": {
-          "image": false,
+          "image": true,
           "search": false
         },
-        "type": "reason"
+        "type": "reason",
+        "related_models": ["gemini-2.5-flash-preview-04-17:default"],
+        "hidden": "inference"
       },
       {
-        "model_name": "grok-2-vision-1212",
-        "model_alias": "Grok 2 Vision",
-        "description": "이미지 인식이 가능한 Grok 모델",
-        "endpoint": "/grok",
-        "in_billing": "2",
+        "model_name": "gemini-2.5-pro-preview-05-06:default",
+        "model_alias": "Gemini 2.5 Pro",
+        "description": "고성능 Gemini 모델",
+        "endpoint": "/gemini",
+        "in_billing": "1.25",
         "out_billing": "10",
         "inference": false,
         "stream": true,
@@ -88,10 +179,28 @@
           "image": true,
           "search": false
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["gemini-2.5-pro-preview-05-06:inference"]
       },
       {
-        "model_name": "gpt-4.1:0",
+        "model_name": "gemini-2.5-pro-preview-05-06:inference",
+        "model_alias": "Gemini 2.5 Pro Thinking",
+        "description": "고성능 추론 Gemini 모델",
+        "endpoint": "/gemini",
+        "in_billing": "1.25",
+        "out_billing": "10",
+        "inference": true,
+        "stream": true,
+        "capabilities": {
+          "image": true,
+          "search": false
+        },
+        "type": "reason",
+        "related_models": ["gemini-2.5-pro-preview-05-06:default"],
+        "hidden": "inference"
+      },
+      {
+        "model_name": "gpt-4.1:default",
         "model_alias": "GPT 4.1",
         "description": "표준 GPT 모델",
         "endpoint": "/gpt",
@@ -103,10 +212,11 @@
           "image": true,
           "search": false
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["o4-mini:default", "gpt-4.1:search"]
       },
       {
-        "model_name": "gpt-4.1:1",
+        "model_name": "gpt-4.1:search",
         "model_alias": "GPT 4.1 Search",
         "description": "표준 GPT 모델",
         "endpoint": "/gpt",
@@ -119,10 +229,11 @@
           "search": true
         },
         "type": "default",
-        "hidden": "true"
+        "related_models": ["o4-mini:default", "gpt-4.1:default"],
+        "hidden": "search"
       },
       {
-        "model_name": "gpt-4.1-mini:0",
+        "model_name": "gpt-4.1-mini:default",
         "model_alias": "GPT 4.1 mini",
         "description": "GPT 4.1의 경량 모델",
         "endpoint": "/gpt",
@@ -134,10 +245,11 @@
           "image": true,
           "search": false
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["o4-mini:default", "gpt-4.1-mini:search"]
       },
       {
-        "model_name": "gpt-4.1-mini:1",
+        "model_name": "gpt-4.1-mini:search",
         "model_alias": "GPT 4.1 mini Search",
         "description": "GPT 4.1의 경량 모델",
         "endpoint": "/gpt",
@@ -150,10 +262,11 @@
           "search": true
         },
         "type": "default",
-        "hidden": "true"
+        "related_models": ["o4-mini:default", "gpt-4.1-mini:default"],
+        "hidden": "search"
       },
       {
-        "model_name": "o4-mini:0",
+        "model_name": "o4-mini:default",
         "model_alias": "OpenAI o4 mini",
         "description": "경량 추론 GPT 모델",
         "endpoint": "/gpt",
@@ -165,10 +278,11 @@
           "image": true,
           "search": false
         },
-        "type": "reason"
+        "type": "reason",
+        "related_models": ["gpt-4.1-mini:default", "o4-mini:search"]
       },
       {
-        "model_name": "o4-mini:1",
+        "model_name": "o4-mini:search",
         "model_alias": "OpenAI o4 mini Search",
         "description": "경량 추론 GPT 모델",
         "endpoint": "/gpt",
@@ -181,10 +295,11 @@
           "search": true
         },
         "type": "reason",
-        "hidden": "true"
+        "related_models": ["gpt-4.1-mini:default", "o4-mini:default"],
+        "hidden": "search"
       },
       {
-        "model_name": "o3:0",
+        "model_name": "o3:default",
         "model_alias": "OpenAI o3",
         "description": "고성능 추론 GPT 모델",
         "endpoint": "/gpt",
@@ -196,10 +311,11 @@
           "image": true,
           "search": false
         },
-        "type": "reason"
+        "type": "reason",
+        "related_models": ["gpt-4.1-mini:default", "o3:search"]
       },
       {
-        "model_name": "o3:1",
+        "model_name": "o3:search",
         "model_alias": "OpenAI o3 Search",
         "description": "고성능 추론 GPT 모델",
         "endpoint": "/gpt",
@@ -212,7 +328,8 @@
           "search": true
         },
         "type": "reason",
-        "hidden": "true"
+        "related_models": ["gpt-4.1-mini:default", "o3:default"],
+        "hidden": "search"
       },
       {
         "model_name": "o1-pro",
@@ -227,29 +344,47 @@
           "image": true,
           "search": false
         },
-        "type": "none"
+        "type": "none",
+        "related_models": ["gpt-4.1-mini:default", "o4-mini:search"]
       },
       {
-        "model_name": "gemini-2.5-flash-preview-04-17",
-        "model_alias": "Gemini 2.5 Flash",
-        "description": "표준 Gemini 모델",
-        "endpoint": "/gemini",
-        "in_billing": "0.15",
-        "out_billing": "0.6",
+        "model_name": "grok-3",
+        "model_alias": "Grok 3",
+        "description": "표준 Grok 모델",
+        "endpoint": "/grok",
+        "in_billing": "3",
+        "out_billing": "15",
         "inference": false,
         "stream": true,
         "capabilities": {
-          "image": true,
+          "image": false,
           "search": false
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["grok-3-mini", "grok-2-vision-1212"]
       },
       {
-        "model_name": "gemini-2.5-pro-preview-03-25",
-        "model_alias": "Gemini 2.5 Pro",
-        "description": "고성능 Gemini 모델",
-        "endpoint": "/gemini",
-        "in_billing": "1.25",
+        "model_name": "grok-3-mini",
+        "model_alias": "Grok 3 mini",
+        "description": "Grok 3의 경량 추론 모델",
+        "endpoint": "/grok",
+        "in_billing": "0.3",
+        "out_billing": "0.5",
+        "inference": true,
+        "stream": true,
+        "capabilities": {
+          "image": false,
+          "search": false
+        },
+        "type": "reason",
+        "related_models": ["grok-3", "grok-2-vision-1212"]
+      },
+      {
+        "model_name": "grok-2-vision-1212",
+        "model_alias": "Grok 2 Vision",
+        "description": "이미지 인식이 가능한 Grok 모델",
+        "endpoint": "/grok",
+        "in_billing": "2",
         "out_billing": "10",
         "inference": false,
         "stream": true,
@@ -257,7 +392,8 @@
           "image": true,
           "search": false
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["grok-3-mini"]
       },
       {
         "model_name": "sonar",
@@ -273,12 +409,48 @@
           "image": true,
           "search": true
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["sonar-reasoning"]
+      },
+      {
+        "model_name": "sonar-reasoning",
+        "model_alias": "Perplexity Sonar Reasoning",
+        "description": "Perplexity Sonar의 추론 모델",
+        "endpoint": "/perplexity",
+        "in_billing": "1",
+        "out_billing": "5",
+        "search_billing": "0.005",
+        "inference": true,
+        "stream": true,
+        "capabilities": {
+          "image": true,
+          "search": true
+        },
+        "type": "default",
+        "related_models": ["sonar"],
+        "hidden": "inference"
+      },
+      {
+        "model_name": "sonar-pro",
+        "model_alias": "Perplexity Sonar Pro",
+        "description": "고성능 Perplexity 모델",
+        "endpoint": "/perplexity",
+        "in_billing": "3",
+        "out_billing": "15",
+        "search_billing": "0.015",
+        "inference": false,
+        "stream": true,
+        "capabilities": {
+          "image": true,
+          "search": true
+        },
+        "type": "default",
+        "related_models": ["sonar-reasoning-pro"]
       },
       {
         "model_name": "sonar-reasoning-pro",
         "model_alias": "Perplexity Sonar Reasoning Pro",
-        "description": "고성능 추론 Perplexity 모델",
+        "description": "Perplexity Sonar Pro의 추론 모델",
         "endpoint": "/perplexity",
         "in_billing": "2",
         "out_billing": "8",
@@ -289,7 +461,9 @@
           "image": true,
           "search": true
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["sonar-pro"],
+        "hidden": "inference"
       },
       {
         "model_name": "sonar-deep-research",
@@ -305,7 +479,8 @@
           "image": true,
           "search": true
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["sonar"]
       },
       {
         "model_name": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
@@ -323,21 +498,6 @@
         "type": "default"
       },
       {
-        "model_name": "deepseek-ai/DeepSeek-R1",
-        "model_alias": "Deepseek R1",
-        "description": "고성능 추론 Deepseek 모델",
-        "endpoint": "/huggingface",
-        "in_billing": "3",
-        "out_billing": "8",
-        "inference": true,
-        "stream": true,
-        "capabilities": {
-          "image": false,
-          "search": false
-        },
-        "type": "default"
-      },
-      {
         "model_name": "deepseek-ai/DeepSeek-V3-0324",
         "model_alias": "Deepseek V3",
         "description": "표준 Deepseek 모델",
@@ -350,30 +510,32 @@
           "image": false,
           "search": false
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["deepseek-ai/DeepSeek-R1"]
       },
       {
-        "model_name": "Qwen/Qwen2.5-72B-Instruct",
-        "model_alias": "Qwen 2.5 72B",
-        "description": "표준 Qwen 모델",
+        "model_name": "deepseek-ai/DeepSeek-R1",
+        "model_alias": "Deepseek R1",
+        "description": "고성능 추론 Deepseek 모델",
         "endpoint": "/huggingface",
-        "in_billing": "0.9",
-        "out_billing": "0.9",
-        "inference": false,
+        "in_billing": "3",
+        "out_billing": "8",
+        "inference": true,
         "stream": true,
         "capabilities": {
           "image": false,
           "search": false
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["deepseek-ai/DeepSeek-V3-0324"]
       },
       {
-        "model_name": "Qwen/QwQ-32B",
-        "model_alias": "QwQ 32B",
-        "description": "고속 추론 Qwen 모델",
+        "model_name": "Qwen/Qwen3-235B-A22B",
+        "model_alias": "Qwen 3 235B",
+        "description": "추론 Qwen 모델",
         "endpoint": "/huggingface",
-        "in_billing": "0.9",
-        "out_billing": "0.9",
+        "in_billing": "0.22",
+        "out_billing": "0.88",
         "inference": true,
         "stream": true,
         "capabilities": {

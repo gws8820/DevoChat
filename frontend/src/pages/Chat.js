@@ -61,8 +61,6 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
     isInference,
     isSearch,
     isDAN,
-    isSearchButton,
-    isInferenceButton,
     setIsInference,
     setIsSearch,
     setIsDAN,
@@ -134,16 +132,17 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
       
       const sizeAcceptedFiles = files.filter((file) => file.size <= maxFileSize);
       const rejectedSizeFiles = files.filter((file) => file.size > maxFileSize);
-      if (rejectedSizeFiles.length > 0) {
-        setErrorModal("50MB를 초과하는 파일은 업로드할 수 없습니다.");
-        setTimeout(() => setErrorModal(null), 3000);
-      }
-      
+
       if (sizeAcceptedFiles.length > remaining) {
         setErrorModal("최대 업로드 가능한 파일 개수를 초과했습니다.");
         setTimeout(() => setErrorModal(null), 3000);
         acceptedFiles = sizeAcceptedFiles.slice(0, remaining);
-      } else {
+      }
+      else if (rejectedSizeFiles.length > 0) {
+        setErrorModal("50MB를 초과하는 파일은 업로드할 수 없습니다.");
+        setTimeout(() => setErrorModal(null), 3000);
+      }
+      else {
         acceptedFiles = sizeAcceptedFiles;
       }
       
@@ -223,7 +222,7 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
 
   const sendMessage = useCallback(
     async (message, files = uploadedFiles) => {
-      if (!message.trim()) return;
+      if (!message.trim() || uploadingFiles) return;
 
       const contentParts = [];
       contentParts.push({ type: "text", text: message });
@@ -242,21 +241,18 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
         setScrollOnSend(true);
       });
   
-      const tokens = message.split(/\s+/);
-      const domainExtensions = [
-        ".com", ".cn", ".tk", ".de", ".net", ".uk", ".org",
-        ".nl", ".ru", ".br", ".au", ".fr", ".eu", ".za",
-        ".it", ".pl", ".in", ".ir", ".co", ".info", ".es",
-        ".ro", ".ch", ".us", ".ca", ".be", ".jp", ".biz",
-        ".club", ".kr", ".se", ".mx", ".tv", ".dev", ".top",
-        ".xyz", ".live", ".website", ".store", ".ai", ".io", ".online",
-        ".ph", ".vn", ".gr", ".pt", ".bg", ".id", ".hu", ".ly"
-      ]
-      const detectedUrls = tokens.filter((token) =>
-        domainExtensions.some((ext) => token.toLowerCase().includes(ext))
-      );
-  
-      if (detectedUrls && detectedUrls.length > 0) {
+      const validPrefixes = ["http://", "https://", "www."];
+      const validDomainExtensions = [".com", ".net", ".kr"];
+      
+      const detectedUrls = message.split(/\s+/).filter((token) => {
+        const lowerToken = token.toLowerCase();
+        const startsWithValidPrefix = validPrefixes.some(prefix => lowerToken.startsWith(prefix));
+        const endsWithValidExtension = validDomainExtensions.some(ext => lowerToken.endsWith(ext));
+        
+        return startsWithValidPrefix || endsWithValidExtension;
+      });
+      
+      if (detectedUrls.length > 0) {
         const previewPromises = detectedUrls.map(async (token) => {
           let url = token;
           if (!url.startsWith("http://") && !url.startsWith("https://")) {
@@ -277,10 +273,10 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
                 return { type: "url", content: data.content };
               }
             }
-          } catch (err) {
-          }
+          } catch (err) {}
           return null;
         });
+        
         const urlPreviews = await Promise.all(previewPromises);
         urlPreviews.forEach((preview) => {
           if (preview !== null) {
@@ -396,6 +392,7 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
       isInference,
       isDAN,
       uploadedFiles,
+      uploadingFiles
     ]
   );
 
@@ -441,19 +438,41 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
     setConfirmModal(true);
   }, []);
 
-  useEffect(() => {
-    if(isInitialized) {
-      if (isSearchButton && isInferenceButton)
-        updateModel(DEFAULT_SEARCH_INFERENCE_MODEL);
-      else if (isSearchButton)
-        updateModel(DEFAULT_SEARCH_MODEL);
-      else if (isInferenceButton)
-        updateModel(DEFAULT_INFERENCE_MODEL);
-      else
-        updateModel(DEFAULT_MODEL);
+  function handleButtonClick(buttonType) {
+    const newIsSearch = buttonType === "search" ? !isSearch : isSearch;
+    const newIsInference = buttonType === "inference" ? !isInference : isInference;
+    
+    if (buttonType === "search") {
+      setIsSearch(newIsSearch);
+      setIsSearchButton(newIsSearch);
+    } else { // buttonType === "inference"
+      setIsInference(newIsInference);
+      setIsInferenceButton(newIsInference);
     }
-    // eslint-disable-next-line
-  }, [isSearchButton, isInferenceButton]);
+  
+    const currentModel = models.find(m => m.model_name === model);
+    if (currentModel?.related_models && currentModel.related_models.length > 0) {
+      for (const relatedModelName of currentModel.related_models) {
+        const relatedModel = models.find(m => m.model_name === relatedModelName);
+        
+        if (relatedModel && 
+            newIsSearch === relatedModel.capabilities?.search && 
+            newIsInference === relatedModel.inference) {
+          updateModel(relatedModelName);
+          return;
+        }
+      }
+    }
+  
+    if (newIsSearch && newIsInference)
+      updateModel(DEFAULT_SEARCH_INFERENCE_MODEL);
+    else if (newIsSearch)
+      updateModel(DEFAULT_SEARCH_MODEL);
+    else if (newIsInference)
+      updateModel(DEFAULT_INFERENCE_MODEL);
+    else
+      updateModel(DEFAULT_MODEL);
+  }
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -516,12 +535,26 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
     setIsImage(newIsImage);
   
     if (newIsImage) {
-      const selectedModel = models.find((m) => m.model_name === model);
-      if (selectedModel && !selectedModel.capabilities?.image) {
-        updateModel(DEFAULT_IMAGE_MODEL);
+      const currentModel = models.find((m) => m.model_name === model);
+      
+      if (currentModel && currentModel.capabilities?.image) {
+        return;
       }
+      
+      if (currentModel && currentModel.related_models && currentModel.related_models.length > 0) {
+        for (const relatedModelName of currentModel.related_models) {
+          const relatedModel = models.find((m) => m.model_name === relatedModelName);
+          
+          if (relatedModel && relatedModel.capabilities?.image) {
+            updateModel(relatedModelName);
+            return;
+          }
+        }
+      }
+      
+      updateModel(DEFAULT_IMAGE_MODEL);
     }
-  }, 
+  },
   [
     DEFAULT_IMAGE_MODEL,
     model,
@@ -732,7 +765,7 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
         <div ref={messagesEndRef} />
       </div>
       <motion.div
-        className="input-container chat-input-container"
+        className="input-container"
         initial={{ y: 8, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 8, opacity: 0 }}
@@ -749,42 +782,30 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
                 transition={{ duration: 0.3 }}
               >
                 <AnimatePresence>
-                  {uploadedFiles.length > 0 && (
+                  {uploadedFiles.map((file) => (
                     <motion.div
-                      className="file-area"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
+                      key={file.id}
+                      className="file-wrap"
+                      initial={{ y: 4, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 4, opacity: 0 }}
                       transition={{ duration: 0.3 }}
+                      style={{ position: "relative" }}
                     >
-                      <AnimatePresence>
-                        {uploadedFiles.map((file) => (
-                          <motion.div
-                            key={file.id}
-                            className="file-wrap"
-                            initial={{ y: 4, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: 4, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            style={{ position: "relative" }}
-                          >
-                            <div className="file-object">
-                              <span className="file-name">{file.name}</span>
-                              {!file.content && (
-                                <div className="file-upload-overlay">
-                                  <ClipLoader size={20} />
-                                </div>
-                              )}
-                            </div>
-                            <BiX
-                              className="file-delete"
-                              onClick={() => handleFileDelete(file)}
-                            />
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
+                      <div className="file-object">
+                        <span className="file-name">{file.name}</span>
+                        {!file.content && (
+                          <div className="file-upload-overlay">
+                            <ClipLoader size={20} />
+                          </div>
+                        )}
+                      </div>
+                      <BiX
+                        className="file-delete"
+                        onClick={() => handleFileDelete(file)}
+                      />
                     </motion.div>
-                  )}
+                  ))}
                 </AnimatePresence>
               </motion.div>
             )}
@@ -810,20 +831,14 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
               className={`function-button ${
                 isSearch ? "active" : ""
               }`}
-              onClick={() => {
-                setIsSearch(!isSearch);
-                setIsSearchButton(!isSearch);
-              }}
+              onClick={() => handleButtonClick("search")}
             >
               <GoGlobe style={{ strokeWidth: 0.5 }} />
               검색
             </div>
             <div
               className={`function-button ${isInference ? "active" : ""}`}
-              onClick={() => {
-                setIsInference(!isInference);
-                setIsInferenceButton(!isInference);
-              }}
+              onClick={() => handleButtonClick("inference")}
             >
               <GoLightBulb style={{ strokeWidth: 0.5 }} />
               추론
@@ -844,7 +859,7 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
           </div>
         </div>
 
-        <div
+        <button
           className="send-button"
           onClick={() =>
             isLoading
@@ -862,7 +877,7 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
           ) : (
             <FaPaperPlane />
           )}
-        </div>
+        </button>
       </motion.div>
 
       <input

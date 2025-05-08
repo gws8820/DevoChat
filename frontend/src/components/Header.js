@@ -22,6 +22,7 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
     setReason,
     setSystemMessage,
     isImage,
+    isInference,
     isSearch,
     isSearchButton,
     isInferenceButton
@@ -46,9 +47,12 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
     if (isImage && !m.capabilities?.image) return false;
 
     if (isSearchButton && !m.capabilities?.search) return false;
-    if (!isSearch && m.hidden) return false;
+    if (!isSearch && (m.hidden === "search")) return false;
     
     if (isInferenceButton && !m.inference) return false;
+    if (!isInference && (m.hidden === "inference")) return false;
+
+    if ((!isSearch || !isInference) && (m.hidden === "all")) return false;
 
     return true;
   });

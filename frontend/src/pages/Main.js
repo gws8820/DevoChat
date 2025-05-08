@@ -44,14 +44,12 @@ function Main({ addConversation, isTouch }) {
     isInference,
     isSearch,
     isDAN,
-    isSearchButton,
-    isInferenceButton,
     setTemperature,
     setReason,
     setSystemMessage,
     setIsImage,
-    setIsInference,
     setIsSearch,
+    setIsInference,
     setIsDAN,
     setIsSearchButton,
     setIsInferenceButton
@@ -69,32 +67,58 @@ function Main({ addConversation, isTouch }) {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
   }, []);
 
-  const notice = '대화내역 공유 기능이 추가되었습니다!';
+  const notice = '이제 Claude 모델의 웹 검색이 가능합니다!';
   const noticeHash = btoa(encodeURIComponent(notice));
 
   useEffect(() => {
     setIsImage(false);
-    setIsInference(false);
     setIsSearch(false);
+    setIsInference(false);
     setIsDAN(false);
+    setIsSearchButton(false);
+    setIsInferenceButton(false);
     updateModel(DEFAULT_MODEL);
     setTemperature(0.5);
     setReason(0);
     setSystemMessage("");
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (isSearchButton && isInferenceButton)
+  function handleButtonClick(buttonType) {
+    const newIsSearch = buttonType === "search" ? !isSearch : isSearch;
+    const newIsInference = buttonType === "inference" ? !isInference : isInference;
+    
+    if (buttonType === "search") {
+      setIsSearch(newIsSearch);
+      setIsSearchButton(newIsSearch);
+    } else { // buttonType === "inference"
+      setIsInference(newIsInference);
+      setIsInferenceButton(newIsInference);
+    }
+  
+    const currentModel = models.find(m => m.model_name === model);
+    if (currentModel?.related_models && currentModel.related_models.length > 0) {
+      for (const relatedModelName of currentModel.related_models) {
+        const relatedModel = models.find(m => m.model_name === relatedModelName);
+        
+        if (relatedModel && 
+            newIsSearch === relatedModel.capabilities?.search && 
+            newIsInference === relatedModel.inference) {
+          updateModel(relatedModelName);
+          return;
+        }
+      }
+    }
+  
+    if (newIsSearch && newIsInference)
       updateModel(DEFAULT_SEARCH_INFERENCE_MODEL);
-    else if (isSearchButton)
+    else if (newIsSearch)
       updateModel(DEFAULT_SEARCH_MODEL);
-    else if (isInferenceButton)
+    else if (newIsInference)
       updateModel(DEFAULT_INFERENCE_MODEL);
     else
       updateModel(DEFAULT_MODEL);
-    // eslint-disable-next-line
-  }, [isSearchButton, isInferenceButton]);
+  }
 
   useEffect(() => {
     const storedHash = localStorage.getItem('noticeHash');
@@ -168,16 +192,17 @@ function Main({ addConversation, isTouch }) {
       
       const sizeAcceptedFiles = files.filter((file) => file.size <= maxFileSize);
       const rejectedSizeFiles = files.filter((file) => file.size > maxFileSize);
-      if (rejectedSizeFiles.length > 0) {
-        setErrorModal("50MB를 초과하는 파일은 업로드할 수 없습니다.");
-        setTimeout(() => setErrorModal(null), 3000);
-      }
-      
+
       if (sizeAcceptedFiles.length > remaining) {
         setErrorModal("최대 업로드 가능한 파일 개수를 초과했습니다.");
         setTimeout(() => setErrorModal(null), 3000);
         acceptedFiles = sizeAcceptedFiles.slice(0, remaining);
-      } else {
+      }
+      else if (rejectedSizeFiles.length > 0) {
+        setErrorModal("50MB를 초과하는 파일은 업로드할 수 없습니다.");
+        setTimeout(() => setErrorModal(null), 3000);
+      }
+      else {
         acceptedFiles = sizeAcceptedFiles;
       }
       
@@ -218,7 +243,7 @@ function Main({ addConversation, isTouch }) {
 
   const sendMessage = useCallback(
     async (message) => {
-      if (!message.trim()) return;
+      if (!message.trim() || uploadingFiles) return;
       try {
         const selectedModel = models.find((m) => m.model_name === model);
         if (!selectedModel) {
@@ -264,6 +289,7 @@ function Main({ addConversation, isTouch }) {
       navigate,
       addConversation,
       uploadedFiles,
+      uploadingFiles
     ]
   );
 
@@ -277,10 +303,24 @@ function Main({ addConversation, isTouch }) {
     setIsImage(hasUploadedImage);
 
     if (hasUploadedImage) {
-      const selectedModel = models.find((m) => m.model_name === model);
-      if (selectedModel && !selectedModel.capabilities?.image) {
-        updateModel(DEFAULT_IMAGE_MODEL);
+      const currentModel = models.find((m) => m.model_name === model);
+      
+      if (currentModel && currentModel.capabilities?.image) {
+        return;
       }
+      
+      if (currentModel && currentModel.related_models && currentModel.related_models.length > 0) {
+        for (const relatedModelName of currentModel.related_models) {
+          const relatedModel = models.find((m) => m.model_name === relatedModelName);
+          
+          if (relatedModel && relatedModel.capabilities?.image) {
+            updateModel(relatedModelName);
+            return;
+          }
+        }
+      }
+      
+      updateModel(DEFAULT_IMAGE_MODEL);
     }
   },
   [
@@ -404,15 +444,17 @@ function Main({ addConversation, isTouch }) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <motion.div
-        className="welcome-message"
-        initial={{ y: 5 }}
-        animate={{ y: 0 }}
-        exit={{ y: 5 }}
-        transition={{ duration: 0.3 }}
-      >
-        무엇을 도와드릴까요?
-      </motion.div>
+      <div className="welcome-container">
+        <motion.div
+          className="welcome-message"
+          initial={{ y: 5 }}
+          animate={{ y: 0 }}
+          exit={{ y: 5 }}
+          transition={{ duration: 0.3 }}
+        >
+          무엇을 도와드릴까요?
+        </motion.div>
+      </div>
 
       <motion.div
         className="input-container main-input-container"
@@ -432,42 +474,30 @@ function Main({ addConversation, isTouch }) {
                 transition={{ duration: 0.3 }}
               >
                 <AnimatePresence>
-                  {uploadedFiles.length > 0 && (
+                  {uploadedFiles.map((file) => (
                     <motion.div
-                      className="file-area"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
+                      key={file.id}
+                      className="file-wrap"
+                      initial={{ y: 4, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 4, opacity: 0 }}
                       transition={{ duration: 0.3 }}
+                      style={{ position: "relative" }}
                     >
-                      <AnimatePresence>
-                        {uploadedFiles.map((file) => (
-                          <motion.div
-                            key={file.id}
-                            className="file-wrap"
-                            initial={{ y: 4, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: 4, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            style={{ position: "relative" }}
-                          >
-                            <div className="file-object">
-                              <span className="file-name">{file.name}</span>
-                              {!file.content && (
-                                <div className="file-upload-overlay">
-                                  <ClipLoader size={20} />
-                                </div>
-                              )}
-                            </div>
-                            <BiX
-                              className="file-delete"
-                              onClick={() => handleFileDelete(file)}
-                            />
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
+                      <div className="file-object">
+                        <span className="file-name">{file.name}</span>
+                        {!file.content && (
+                          <div className="file-upload-overlay">
+                            <ClipLoader size={20} />
+                          </div>
+                        )}
+                      </div>
+                      <BiX
+                        className="file-delete"
+                        onClick={() => handleFileDelete(file)}
+                      />
                     </motion.div>
-                  )}
+                  ))}
                 </AnimatePresence>
               </motion.div>
             )}
@@ -493,20 +523,14 @@ function Main({ addConversation, isTouch }) {
               className={`function-button ${
                 isSearch ? "active" : ""
               }`}
-              onClick={() => {
-                setIsSearch(!isSearch);
-                setIsSearchButton(!isSearch);
-              }}
+              onClick={() => handleButtonClick("search")}
             >
               <GoGlobe style={{ strokeWidth: 0.5 }} />
               검색
             </div>
             <div
               className={`function-button ${isInference ? "active" : ""}`}
-              onClick={() => {
-                setIsInference(!isInference);
-                setIsInferenceButton(!isInference);
-              }}
+              onClick={() => handleButtonClick("inference")}
             >
               <GoLightBulb style={{ strokeWidth: 0.5 }} />
               추론
@@ -527,7 +551,7 @@ function Main({ addConversation, isTouch }) {
           </div>
         </div>
 
-        <div
+        <button
           className={`send-button ${
             inputText.trim() || uploadedFiles.length > 0  ? "" : "realtime"
           }`}
@@ -551,7 +575,7 @@ function Main({ addConversation, isTouch }) {
           ) : (
             <RiVoiceAiFill style={{ fontSize: "23px", strokeWidth: 0.3 }}/>
           )}
-        </div>
+        </button>
       </motion.div>
 
       <input

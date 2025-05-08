@@ -2,13 +2,11 @@ import os
 import json
 import asyncio
 import base64
-import shutil
-import time
 import copy
 import tiktoken
 import anthropic
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from pymongo import MongoClient
@@ -123,12 +121,24 @@ def format_message(message):
         return {"role": "user", "content": [normalize_content(part) for part in content]}
         
 def get_response(request: ChatRequest, user: User, fastapi_request: Request):
-    if user.trial and user.trial_remaining <= 0:
-        async def error_generator():
-            message = "체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."
-            yield f"data: {json.dumps({'content': message})}\n\n"
-        return StreamingResponse(error_generator(), media_type="text/event-stream")
+    async def error_generator(error_message):
+        yield f"data: {json.dumps({'content': error_message})}\n\n"
 
+    if user.trial and user.trial_remaining <= 0:
+        return StreamingResponse(
+            error_generator("체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."),
+            media_type="text/event-stream"
+        )
+    if not user.admin and request.in_billing >= 10:
+        return StreamingResponse(
+            error_generator("해당 모델을 사용할 권한이 없습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."),
+            media_type="text/event-stream"
+        )
+    if not request.user_message:
+        return StreamingResponse(
+            error_generator("메시지 내용이 비어 있습니다. 내용을 입력해 주세요."),
+            media_type="text/event-stream"
+        )
     user_message = {"role": "user", "content": request.user_message}
 
     conversation = conversation_collection.find_one(
@@ -137,7 +147,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     ).get("conversation", [])
     conversation.append(user_message)
 
-    formatted_messages = [format_message(m) for m in conversation]
+    formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
     system_text = MARKDOWN_PROMPT
     if request.system_message:
@@ -153,7 +163,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         is_thinking = False
         try:
             if request.stream:
-                stream_result = await client.messages.create(**parameters, timeout=300)
+                stream_result = await client.beta.messages.create(**parameters, timeout=300)
                 async for chunk in stream_result:
                     if await fastapi_request.is_disconnected():
                         return
@@ -172,7 +182,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                         elif hasattr(chunk.delta, "text"):
                             await token_queue.put(chunk.delta.text)
             else:
-                single_result = await client.messages.create(**parameters, timeout=300)
+                single_result = await client.beta.messages.create(**parameters, timeout=300)
                 full_response_text = single_result.completion if hasattr(single_result, "completion") else ""
                 chunk_size = 10
                 for i in range(0, len(full_response_text), chunk_size):
@@ -204,6 +214,11 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                         "type": "enabled",
                         "budget_tokens": 4000
                     }
+                if request.search:
+                    parameters["tools"] = [{
+                        "name": "web_search",
+                        "type": "web_search_20250305"
+                    }]
 
                 token_queue = asyncio.Queue()
                 producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))

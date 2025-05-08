@@ -14,20 +14,17 @@ function Login() {
   const navigate = useNavigate();
 
   function validateEmail(email) {
-    // 간단한 정규식 예시
     const re = /\S+@\S+\.\S+/;
     return re.test(email);
   }
 
   async function handleLogin() {
-    // 빈 필드 검사
     if (!email || !password) {
       setErrorModal("모든 필드를 입력해 주세요.");
       setTimeout(() => setErrorModal(null), 2000);
       return;
     }
 
-    // 이메일 형식 검사
     if (!validateEmail(email)) {
       setErrorModal("올바른 이메일 형식을 입력해 주세요.");
       setTimeout(() => setErrorModal(null), 2000);
@@ -52,12 +49,6 @@ function Login() {
     }
   }
 
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter") {
-      handleLogin();
-    }
-  };
-
   return (
     <motion.div
       className="auth-container"
@@ -68,14 +59,17 @@ function Login() {
       <div className="auth-logo">
         <img src={logo} alt="DEVOCHAT" className="logo-image" />
       </div>
-      <div className="auth-input-container">
+      <form className="auth-input-container" onSubmit={(e) => {
+        e.preventDefault();
+        handleLogin();
+      }}>
         <input
           className="id field"
           type="email"
           placeholder="이메일"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          onKeyDown={handleKeyDown}
+          autoComplete="username"
         />
         <input
           className="password field"
@@ -83,12 +77,12 @@ function Login() {
           placeholder="비밀번호"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={handleKeyDown}
+          autoComplete="current-password"
         />
-        <button className="continue field" onClick={handleLogin}>
+        <button className="continue field" type="submit">
           로그인
         </button>
-      </div>
+      </form>
       <div className="footer">
         <p>계정이 없으신가요?</p>
         <button className="route" onClick={() => navigate("/register")}>

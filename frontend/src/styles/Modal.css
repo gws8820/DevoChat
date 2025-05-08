@@ -19,7 +19,7 @@
     align-items: center;
     justify-content: center;
     max-width: 500px;
-    margin: 0 20px;
+    margin: 0 10px;
     padding: 40px;
     gap: 10px;
     background: #fff;
@@ -30,6 +30,7 @@
 .modal-content {
     margin: 20px 0;
     font-size: 20px;
+    word-break: break-all;
 }
 
 .modal-button button {

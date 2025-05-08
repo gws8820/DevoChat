@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
-import { RiMenuLine } from "react-icons/ri";
+import { RiSearchLine, RiMenuLine, RiCloseLine  } from "react-icons/ri";
 import { CiWarning } from "react-icons/ci";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
@@ -37,7 +37,9 @@ function Sidebar({
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [renamingConversationId, setRenamingConversationId] = useState(null);
   const [renameInputValue, setRenameInputValue] = useState("");
-
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  
   const [contextMenu, setContextMenu] = useState({
     visible: false,
     x: 0,
@@ -45,6 +47,7 @@ function Sidebar({
   });
   const hasNavigatedRef = useRef(false);
   const userContainerRef = useRef(null);
+  const searchInputRef = useRef(null);
   const longPressTimer = useRef(null);
 
   const { setAlias } = useContext(SettingsContext);  
@@ -219,6 +222,8 @@ function Sidebar({
 
   const handleConversationContextMenu = (e, conversation_id) => {
     e.preventDefault();
+    if (renamingConversationId !== null) return;
+    
     setSelectedConversationId(conversation_id);
     setContextMenu({
       visible: true,
@@ -226,7 +231,7 @@ function Sidebar({
       y: e.pageY,
     });
   };
-
+  
   useEffect(() => {
     const handleClickOutsideContextMenu = () => {
       if (contextMenu.visible) {
@@ -255,6 +260,17 @@ function Sidebar({
     };
   }, [isDropdown]);
 
+  useEffect(() => {
+      setIsSearchVisible(false);
+      setSearchQuery("");
+  }, [isSidebarVisible]);
+
+  useEffect(() => {
+    if (isSearchVisible && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchVisible]);
+
   const handleCustomAction = (action) => {
     if (action === "rename") {
       if (selectedConversationId) {
@@ -274,21 +290,69 @@ function Sidebar({
     setContextMenu({ ...contextMenu, visible: false });
   };
 
+  const toggleSearch = () => {
+    setIsSearchVisible(!isSearchVisible);
+    if (isSearchVisible) {
+      setSearchQuery("");
+    }
+  };
+
+  const filteredConversations = searchQuery
+    ? conversations.filter(conv => 
+        conv.alias.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : conversations;
+
   return (
     <>
       <div
         className={`sidebar ${isResponsive && isSidebarVisible ? "visible" : ""}`}
       >
-        <div className="sidebar-header">
-          <div className="logo">
-            <img src={logo} alt="DEVOCHAT" className="logo-image" />
-          </div>
-          <Tooltip content="사이드바 닫기" position="bottom" isTouch={isTouch}>
-            <div className="header-icon toggle-icon">
-              <RiMenuLine onClick={toggleSidebar} />
+        <div className="header sidebar-header">
+          <div className="header-left">
+            <div className="logo">
+              <img src={logo} alt="DEVOCHAT" className="logo-image" />
             </div>
-          </Tooltip>
+          </div>
+          <div className="header-right">
+            <Tooltip content="검색" position="bottom" isTouch={isTouch}>
+              <div className="header-icon open-search" onClick={toggleSearch}>
+                <RiSearchLine />
+              </div>
+            </Tooltip>
+            <Tooltip content="사이드바 닫기" position="bottom" isTouch={isTouch}>
+              <div className="header-icon toggle-icon">
+                <RiMenuLine onClick={toggleSidebar} />
+              </div>
+            </Tooltip>
+          </div>
         </div>
+
+        <AnimatePresence>
+          {isSearchVisible && (
+            <motion.div 
+              className="search-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              ref={searchInputRef}
+            >
+              <div className="search-container">
+                <input
+                  type="text"
+                  placeholder="검색어를 입력하세요."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+                <div className="header-icon close-search" onClick={toggleSearch}>
+                  <RiCloseLine  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="newconv-container">
           <button onClick={handleNewConversation} className="new-conversation">
@@ -301,55 +365,63 @@ function Sidebar({
             <ClipLoader loading={true} size={40} />
           ) : (
             <AnimatePresence>
-              {conversations
-                .slice()
-                .reverse()
-                .map((conv) => (
-                  <motion.li
-                    key={conv.conversation_id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
-                    onContextMenu={(e) =>
-                      handleConversationContextMenu(e, conv.conversation_id)
-                    }
-                    onTouchStart={(e) => handleTouchStart(e, conv.conversation_id)}
-                    onTouchEnd={handleTouchEnd}
-                    onTouchMove={handleTouchMove}
-                    onTouchCancel={handleTouchEnd}
-                  >
-                    <div
-                      className={`conversation-item ${
-                        currentConversationId === conv.conversation_id
-                          ? "active-conversation"
-                          : ""
-                      }`}
-                      onClick={() => handleNavigate(conv.conversation_id)}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {filteredConversations
+                  .slice()
+                  .reverse()
+                  .map((conv) => (
+                    <li
+                      key={conv.conversation_id}
+                      onContextMenu={(e) =>
+                        handleConversationContextMenu(e, conv.conversation_id)
+                      }
+                      onTouchStart={(e) => handleTouchStart(e, conv.conversation_id)}
+                      onTouchEnd={handleTouchEnd}
+                      onTouchMove={handleTouchMove}
+                      onTouchCancel={handleTouchEnd}
                     >
-                      {renamingConversationId === conv.conversation_id ? (
-                        <input
-                          type="text"
-                          className="rename-input"
-                          value={renameInputValue}
-                          onChange={(e) => setRenameInputValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              handleRename(conv.conversation_id, renameInputValue);
-                            }
-                          }}
-                          onBlur={() => {
-                            setRenamingConversationId(null);
-                            setRenameInputValue("");
-                          }}
-                          autoFocus
-                        />
-                      ) : (
-                        <span className="conversation-text">{conv.alias}</span>
-                      )}
-                    </div>
-                  </motion.li>
-                ))}
+                      <div
+                        className={`conversation-item ${
+                          currentConversationId === conv.conversation_id
+                            ? "active-conversation"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          if (renamingConversationId !== conv.conversation_id) {
+                            handleNavigate(conv.conversation_id);
+                          }
+                        }}
+                      >
+                        {renamingConversationId === conv.conversation_id ? (
+                          <input
+                            type="text"
+                            className="rename-input"
+                            value={renameInputValue}
+                            onChange={(e) => setRenameInputValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                handleRename(conv.conversation_id, renameInputValue);
+                              }
+                            }}
+                            enterKeyHint="done"
+                            onBlur={() => {
+                              setRenamingConversationId(null);
+                              setRenameInputValue("");
+                            }}
+                            autoFocus
+                          />
+                        ) : (
+                          <span className="conversation-text">{conv.alias}</span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+              </motion.div>
             </AnimatePresence>
           )}
         </div>

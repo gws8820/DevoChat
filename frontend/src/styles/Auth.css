@@ -28,6 +28,8 @@
     border: 1px solid rgb(200, 200, 200);
     border-radius: 5px;
     box-sizing: border-box;
+    color: black;
+    font-weight: 500;
 }
 
 .info {
@@ -57,7 +59,7 @@
 }
 
 .route {
-    padding: 0 6px;
+    padding: 0 6px 1px 6px;
     font-size: 15px;
     font-weight: 500;
     background-color: transparent;

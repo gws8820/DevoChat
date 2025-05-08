@@ -138,8 +138,7 @@ OPENAI_API_KEY=...
 ANTHROPIC_API_KEY=...
 GEMINI_API_KEY=...
 PERPLEXITY_API_KEY=...
-LLAMA_API_KEY=...
-DEEPSEEK_API_KEY=...
+HUGGINGFACE_API_KEY=...
 XAI_API_KEY=...
 ```
 
@@ -158,35 +157,38 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 {
     "models": [
       {
-        "model_name": "gpt-4.5-preview",
-        "model_alias": "GPT 4.5 (Preview)",
-        "description": "고성능 최신 GPT 모델",
-        "endpoint": "/gpt",
-        "in_billing": "75",
-        "out_billing": "150",
+        "model_name": "claude-3-7-sonnet-latest:default",
+        "model_alias": "Claude 3.7 Sonnet",
+        "description": "고성능 Claude 모델",
+        "endpoint": "/claude",
+        "in_billing": "3",
+        "out_billing": "15",
         "inference": false,
         "stream": true,
         "capabilities": {
           "image": true,
           "search": false
         },
-        "type": "default"
+        "type": "default",
+        "related_models": ["claude-3-7-sonnet-latest:inference", "claude-3-7-sonnet-latest:search"]
       },
       {
-        "model_name": "claude-3-7-sonnet-latest:1",
-        "model_alias": "Claude 3.7 Sonnet Thinking",
-        "description": "추론이 가능한 최신 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "3",
-        "out_billing": "15",
+        "model_name": "gemini-2.5-pro-preview-05-06:inference",
+        "model_alias": "Gemini 2.5 Pro Thinking",
+        "description": "고성능 추론 Gemini 모델",
+        "endpoint": "/gemini",
+        "in_billing": "1.25",
+        "out_billing": "10",
         "inference": true,
         "stream": true,
         "capabilities": {
           "image": true,
           "search": false
         },
-        "type": "think"
-      },
+        "type": "reason",
+        "related_models": ["gemini-2.5-pro-preview-05-06:default"],
+        "hidden": "inference"
+      }
       ...
     ]
 }
@@ -196,10 +198,10 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 | 파라미터 | 설명 |
 |---------|------|
-| `model_name` | API 호출 시 사용되는 모델의 실제 식별자입니다. 같은 모델의 다른 구성을 위해 인덱스(`:0`, `:1` 등)를 추가할 수 있습니다. |
+| `model_name` | API 호출 시 사용되는 모델의 실제 식별자입니다. 같은 모델의 다른 구성을 위해 접미사를 추가할 수 있습니다. 가능한 값: `:default`, `:inference`, `:search`, `:all`|
 | `model_alias` | UI에 표시되는 모델의 사용자 친화적인 이름입니다. |
 | `description` | 모델에 대한 간략한 설명으로, 선택 시 참고할 수 있습니다. |
-| `endpoint` | 백엔드에서 해당 모델 요청을 처리할 API 경로입니다. (예: `/gpt`, `/claude`) |
+| `endpoint` | 백엔드에서 해당 모델 요청을 처리할 API 경로입니다. (예: `/gpt`, `/claude`, `/gemini) |
 | `in_billing` | 입력 토큰(프롬프트)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
 | `out_billing` | 출력 토큰(응답)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
 | `search_billing` | (선택 사항) 검색 기능 사용 시 추가되는 청구 비용입니다. |
@@ -209,13 +211,14 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `capabilities.image` | 이미지 처리 기능 지원 여부입니다. |
 | `capabilities.search` | 실시간 웹 검색 기능 지원 여부입니다. |
 | `type` | 모델의 유형을 나타냅니다. 가능한 값: `default`, `think`, `reason`, `none` |
-| `hidden` | 검색 기능이 비활성화된 상태에서 모델을 목록에 표시할지 여부입니다. true면 검색 기능이 켜져있을 때만 모델이 표시됩니다. |
+| `hidden` | 특정 기능이 활성화되기 전까지 모델을 UI에서 숨길지 여부를 결정합니다. 해당 기능이 활성화될 때만 모델이 표시됩니다. 가능한 값: `search`, `inference`, `all` |
+| `related_models` | 해당 모델과 연관된 다른 모델의 목록입니다. 사용자 인터페이스에서 관련 모델로 쉽게 전환할 수 있게 합니다. |
 
 ### 모델 유형 설명
 
 - **default**: 기본 채팅 모델
-- **think**: Claude의 Extended Thinking을 지원하는 모델
 - **reason**: Reasoning-Effect를 지원하는 모델
+- **think**: 추론이 가능하지만 Reasoning-Effect를 지원하지 않는 모델
 - **none**: Temperature나 System Message를 지원하지 않는 모델
 
 ### 지원되는 파일 형식
@@ -223,7 +226,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 - **이미지**: jpg, jpeg, png, gif, bmp, webp
 - **문서**: pdf, doc, docx, pptx, xlsx, csv, txt, rtf, html, htm, odt, eml, epub, msg
 - **데이터**: json, xml, tsv, yml, yaml
-- **코드**: py, java, c, cpp, h, hpp, js, jsx, ts, tsx, css, scss, less, cs, sh, bash, bat, ps1, go, rs, php 등
+- **코드**: py, java, c, cpp, h, hpp, v, js, jsx, ts, tsx, css, scss, less, cs, sh, bash, bat, ps1, go, rs, php 등
 
 ## 향후 계획
 

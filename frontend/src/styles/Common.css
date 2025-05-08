@@ -1,12 +1,20 @@
 /* src/styles/Common.css */
 .container {
-    height: calc(100dvh - 60px);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;  
     position: relative;
+    height: calc(100dvh - 60px);
     container-type: inline-size;
+}
+
+.welcome-container {
+    width: 100%;
+    display: flex;
+    flex: 0 1 auto;
+    align-items: center;
+    justify-content: center;
 }
 
 .welcome-message {
@@ -15,7 +23,6 @@
     margin-bottom: 20px;
 }
 
-/* 공통 메시지 입력 및 버튼 스타일 */
 .input-container {
     display: flex;
     flex-direction: row;
@@ -29,7 +36,6 @@
     opacity: 1;
 }
 
-/* Main 페이지의 input-container */
 .main-input-container {
     top: 50%;
     transform: translateY(-50%);
@@ -211,7 +217,6 @@
     background-color: #f0f0f0;
 }
 
-/* send-button 내 로딩 아이콘 컨테이너 */
 .loading-container {
     display: flex;
     align-items: center;
@@ -269,23 +274,19 @@
     100% { transform: rotate(360deg); }
 }
 
-/* 반응형 디자인 */
 @media (max-width: 768px) {
+    .welcome-container {
+        flex-grow: 1;
+    }
     .welcome-message {
-        position: absolute;
+        margin: 10px 0 0 0;
         max-width: 90%;
-        top: 40%;
         font-size: 25px;
     }
     .input-container {
         width: 90%;
         margin-bottom: 5%;
         padding: 6px;
-    }
-    .main-input-container {
-        position: fixed;
-        top: auto;
-        bottom: 0;
     }
     .message-input {
         font-size: 15px;

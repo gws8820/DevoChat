@@ -4,11 +4,11 @@ import modelsData from '../models.json';
 export const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
-  const DEFAULT_MODEL = "gpt-4.1-mini:0";
-  const DEFAULT_IMAGE_MODEL = "gpt-4.1-mini:0";
-  const DEFAULT_SEARCH_MODEL = "gpt-4.1-mini:1";
-  const DEFAULT_INFERENCE_MODEL = "grok-3-mini";
-  const DEFAULT_SEARCH_INFERENCE_MODEL = "o4-mini:1"
+  const DEFAULT_MODEL = "gpt-4.1-mini:default";
+  const DEFAULT_IMAGE_MODEL = "gpt-4.1-mini:default";
+  const DEFAULT_SEARCH_MODEL = "gpt-4.1-mini:search";
+  const DEFAULT_INFERENCE_MODEL = "o4-mini:default";
+  const DEFAULT_SEARCH_INFERENCE_MODEL = "o4-mini:search"
 
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [modelType, setModelType] = useState("");
@@ -18,8 +18,8 @@ export const SettingsProvider = ({ children }) => {
   const [systemMessage, setSystemMessage] = useState("");
   const [isImage, setIsImage] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
-  const [isDAN, setIsDAN] = useState(false);
   const [isInference, setIsInference] = useState(false);
+  const [isDAN, setIsDAN] = useState(false);
   const [isSearchButton, setIsSearchButton] = useState(false);
   const [isInferenceButton, setIsInferenceButton] = useState(false);
 
@@ -84,8 +84,8 @@ export const SettingsProvider = ({ children }) => {
         setIsInference,
         setIsSearch,
         setIsDAN,
-        setIsSearchButton,
-        setIsInferenceButton
+        setIsInferenceButton,
+        setIsSearchButton
       }}
     >
       {children}

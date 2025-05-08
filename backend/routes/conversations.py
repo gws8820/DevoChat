@@ -60,7 +60,7 @@ async def get_user_conversations(
     
     cursor = conversations_collection.find(
         {"user_id": user_id},
-        {"_id": 1, "user_id": 1, "conversation_id": 1, "alias": 1, "model": 1}
+        {"_id": 1, "user_id": 1, "conversation_id": 1, "alias": 1, "model": 1, "created_at": 1}
     ).sort("created_at", -1)
     
     conversations = []
@@ -68,9 +68,10 @@ async def get_user_conversations(
         conversations.append({
             "_id": str(doc["_id"]),
             "user_id": doc["user_id"],
-            "conversation_id": doc["conversation_id"],
             "alias": doc["alias"],
-            "model": doc["model"]
+            "conversation_id": doc["conversation_id"],
+            "model": doc["model"],
+            "created_at": doc.get("created_at", "-")
         })
     
     return {"conversations": conversations}

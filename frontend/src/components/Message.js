@@ -25,13 +25,10 @@ function Message({
   const [isComposing, setIsComposing] = useState(false);
   const [editText, setEditText] = useState("");
   const textareaRef = useRef(null);
-
-  useEffect(() => {
-    cancelEdit();
-  }, [content]);
-
+  
   const startEdit = () => {
-    const textContent = content.find((item) => item.type === "text")?.text || "";
+    const textContent =
+      content.find((item) => item.type === "text")?.text || "";
     setEditText(textContent);
     setIsEditing(true);
   };
@@ -41,7 +38,13 @@ function Message({
     setEditText("");
   };
 
+  useEffect(() => {
+    cancelEdit();
+  }, [content]);
+
   const saveEdit = useCallback(() => {
+    if (!editText.trim()) return;
+
     const nonText = content.filter((item) => item.type !== "text");
     const updated = [{ type: "text", text: editText }, ...nonText];
     onSendEditedMessage(messageIndex, updated);
@@ -120,6 +123,7 @@ function Message({
           {isEditing ? (
             <TextareaAutosize
               ref={textareaRef}
+              autoFocus
               className="message-edit"
               minRows={1}
               value={editText}

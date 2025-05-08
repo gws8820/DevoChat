@@ -22,21 +22,18 @@ function Register() {
   }
 
   async function handleRegister() {
-    // 빈 필드 검사
     if (!name || !email || !password) {
       setErrorModal("모든 필드를 입력해 주세요.");
       setTimeout(() => setErrorModal(null), 2000);
       return;
     }
 
-    // 이메일 형식 검사
     if (!validateEmail(email)) {
       setErrorModal("올바른 이메일 형식을 입력해 주세요.");
       setTimeout(() => setErrorModal(null), 2000);
       return;
     }
 
-    // 비밀번호 길이 검사 (8~20자)
     if (password.length < 8 || password.length > 20) {
       setErrorModal("비밀번호는 8자리 이상 20자리 이하로 입력해 주세요.");
       setTimeout(() => setErrorModal(null), 2000);
@@ -57,12 +54,6 @@ function Register() {
     }
   }
 
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter") {
-      handleRegister();
-    }
-  };
-
   return (
     <motion.div
       className="auth-container"
@@ -73,14 +64,17 @@ function Register() {
       <div className="auth-logo">
         <img src={logo} alt="DEVOCHAT" className="logo-image" />
       </div>
-      <div className="auth-input-container">
+      <form className="auth-input-container" onSubmit={(e) => {
+        e.preventDefault();
+        handleRegister();
+      }}>
         <input 
           className="name field" 
           type="text" 
           placeholder="이름" 
           value={name} 
           onChange={(e) => setName(e.target.value)}
-          onKeyDown={handleKeyDown}
+          autoComplete="name"
         />
         <input 
           className="id field" 
@@ -88,7 +82,7 @@ function Register() {
           placeholder="이메일" 
           value={email} 
           onChange={(e) => setEmail(e.target.value)}
-          onKeyDown={handleKeyDown}
+          autoComplete="username"
         />
         <input 
           className="password field" 
@@ -96,11 +90,11 @@ function Register() {
           placeholder="비밀번호" 
           value={password} 
           onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={handleKeyDown}
+          autoComplete="new-password"
         />
         <p className="info">*비밀번호는 8자리 이상으로 입력해 주세요.</p>
-        <button className="continue field" onClick={handleRegister}>회원가입</button>
-      </div>
+        <button className="continue field" type="submit">회원가입</button>
+      </form>
       <div className="footer">
         <p>이미 가입하셨나요?</p>
         <button className="route" onClick={() => navigate("/login")}>로그인</button>

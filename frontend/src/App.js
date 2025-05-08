@@ -16,14 +16,33 @@ import { SettingsProvider } from "./contexts/SettingsContext";
 import logo from "./logo.png";
 
 function App() {
+  return (
+    <Router>
+      <SettingsProvider>
+        <AppContent />
+      </SettingsProvider>
+    </Router>
+  );
+}
+
+function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(null);
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
-  const [conversations, setConversations] = useState([]);
   const [isLoadingChat, setIsLoadingChat] = useState(false);
+  const [isTouch, setIsTouch] = useState(false);
+  const [conversations, setConversations] = useState([]);
   const [errorModal, setErrorModal] = useState(null);
 
   const chatMessageRef = useRef(null);
 
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  const shouldShowLayout = location.pathname === "/" || location.pathname.startsWith("/chat");
+  const shouldShowLogo = location.pathname.startsWith("/view");
+  const isResponsive = window.innerWidth <= 768;
+  const marginLeft = shouldShowLayout && !isResponsive && isSidebarVisible ? 260 : 0;
+  
   const addConversation = (newConversation) => {
     setConversations((prevConversations) => [
       ...prevConversations,
@@ -88,77 +107,32 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const updateSidebarVisibility = () => {
-      if (window.innerWidth <= 768) {
-        setIsSidebarVisible(false);
-      } else {
-        setIsSidebarVisible(true);
-      }
-    };
-    updateSidebarVisibility();
-    window.addEventListener("resize", updateSidebarVisibility);
+    setIsSidebarVisible(window.innerWidth > 768);
 
-    return () => window.removeEventListener("resize", updateSidebarVisibility);
+    const isMobile = /android|iphone|ipod/i.test(
+      (navigator.userAgent || navigator.vendor || window.opera).toLowerCase()
+    );
+    if (!isMobile) {
+      const handleResize = () => setIsSidebarVisible(window.innerWidth > 768);
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+    
+    return undefined;
   }, []);
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarVisible((prev) => !prev);
   }, []);
-
-  return isLoggedIn !== null ? (
-    <Router>
-      <SettingsProvider>
-        <AppLayout
-          isLoggedIn={isLoggedIn}
-          isSidebarVisible={isSidebarVisible}
-          toggleSidebar={toggleSidebar}
-          conversations={conversations}
-          isLoadingChat={isLoadingChat}
-          errorModal={errorModal}
-          chatMessageRef={chatMessageRef}
-          deleteConversation={deleteConversation}
-          deleteAllConversation={deleteAllConversation}
-          updateConversation={updateConversation}
-          fetchConversations={fetchConversations}
-          addConversation={addConversation}
-          setErrorModal={setErrorModal}
-        />
-      </SettingsProvider>
-    </Router>
-  ) : null;
-}
-
-function AppLayout({
-  isLoggedIn,
-  isSidebarVisible,
-  toggleSidebar,
-  conversations,
-  isLoadingChat,
-  errorModal,
-  chatMessageRef,
-  deleteConversation,
-  deleteAllConversation,
-  updateConversation,
-  addConversation,
-  setErrorModal,
-  fetchConversations,
-}) {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const shouldShowLayout = location.pathname === "/" || location.pathname.startsWith("/chat");
-  const shouldShowLogo = location.pathname.startsWith("/view");
-
-  const [isTouch, setIsTouch] = useState(false);
-  window.addEventListener('pointerdown', (event) => {
-    if (event.pointerType === 'touch')
-      setIsTouch(true);
-    else
-      setIsTouch(false);
-  });
-
-  const isResponsive = window.innerWidth <= 768;
-  const marginLeft = shouldShowLayout && !isResponsive && isSidebarVisible ? 260 : 0;
+  
+  useEffect(() => {
+    window.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'touch')
+        setIsTouch(true);
+      else
+        setIsTouch(false);
+    });
+  }, []);
 
   useEffect(() => {
     if (!isTouch) return;
@@ -167,7 +141,7 @@ function AppLayout({
     let touchStartY = 0;
     let touchStartTarget = null;
     const threshold = 50;
-    const excludedClasses = ['.header', '.input-container', '.katex-display', '.code-block'];
+    const excludedClasses = ['.header', '.context-menu', '.input-container', '.katex-display', '.code-block'];
   
     const handleTouchStart = (e) => {
       touchStartX = e.touches[0].clientX;
@@ -182,16 +156,13 @@ function AppLayout({
       const diffY = touchEndY - touchStartY;
   
       if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
-        if (diffX > 0 && !isSidebarVisible) {
-          const isExcluded = excludedClasses.some(cls => touchStartTarget.closest(cls));
-          if (!isExcluded) {
-            toggleSidebar();
-          }
-        } else if (diffX < 0 && isSidebarVisible) {
-          const isExcluded = excludedClasses.some(cls => touchStartTarget.closest(cls));
-          if (!isExcluded) {
-            toggleSidebar();
-          }
+        const isExcluded = excludedClasses.some(cls => touchStartTarget && touchStartTarget.closest(cls));
+        if (!isExcluded) {
+            if (diffX > 0 && !isSidebarVisible) {
+                toggleSidebar();
+            } else if (diffX < 0 && isSidebarVisible) {
+                toggleSidebar();
+            }
         }
       }
     };
@@ -205,7 +176,7 @@ function AppLayout({
     };
   }, [isTouch, isSidebarVisible, toggleSidebar]);
 
-  return (
+  return isLoggedIn !== null ? (
     <div style={{ display: "flex", position: "relative", margin: "0", overflow: "hidden" }}>
       {shouldShowLayout && (() => {
         const sidebarProps = {
@@ -327,21 +298,21 @@ function AppLayout({
             />
             <Route
               path="/admin"
-              element={isLoggedIn ? <Admin /> : <Navigate to="/" />}
+              element={isLoggedIn ? <Admin /> : <Navigate to="/login" />}
             />
             <Route
               path="/login"
-              element={!isLoggedIn ? <Login /> : <Navigate to="/" />}
+              element={isLoggedIn ? <Navigate to="/" /> : <Login />}
             />
             <Route
               path="/register"
-              element={!isLoggedIn ? <Register /> : <Navigate to="/" />}
+              element={isLoggedIn ? <Navigate to="/" /> : <Register />}
             />
           </Routes>
         </AnimatePresence>
       </motion.div>
     </div>
-  );
+  ) : null;
 }
 
 export default App;

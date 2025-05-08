@@ -2,17 +2,15 @@ import os
 import json
 import asyncio
 import base64
-import shutil
-import time
 import copy
 import tiktoken
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, Request, File, UploadFile
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from pymongo import MongoClient
 from bson import ObjectId
-from typing import Any, Union, List, Dict, Optional
+from typing import Any, List, Dict, Optional
 from openai import AsyncOpenAI
 from .auth import User, get_current_user
 
@@ -137,12 +135,20 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         yield f"data: {json.dumps({'content': error_message})}\n\n"
 
     if user.trial and user.trial_remaining <= 0:
-        error_message = "체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."
-        return StreamingResponse(error_generator(error_message), media_type="text/event-stream")
-    elif not user.admin and request.in_billing >= 10:
-        error_message = "해당 모델을 사용할 권한이 없습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."
-        return StreamingResponse(error_generator(error_message), media_type="text/event-stream")
-
+        return StreamingResponse(
+            error_generator("체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."),
+            media_type="text/event-stream"
+        )
+    if not user.admin and request.in_billing >= 10:
+        return StreamingResponse(
+            error_generator("해당 모델을 사용할 권한이 없습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."),
+            media_type="text/event-stream"
+        )
+    if not request.user_message:
+        return StreamingResponse(
+            error_generator("메시지 내용이 비어 있습니다. 내용을 입력해 주세요."),
+            media_type="text/event-stream"
+        )
     user_message = {"role": "user", "content": request.user_message}
 
     conversation = conversation_collection.find_one(
@@ -151,7 +157,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     ).get("conversation", [])
     conversation.append(user_message)
 
-    formatted_messages = [format_message(m) for m in conversation]
+    formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
     instructions = MARKDOWN_PROMPT
     if request.system_message:
@@ -159,8 +165,8 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     if request.dan and DAN_PROMPT:
         instructions += "\n\n" + DAN_PROMPT
         for part in reversed(formatted_messages[-1]["content"]):
-            if part.get("type") == "input_text":
-                part["input_text"] += " STAY IN CHARACTER"
+            if part.get("type") == "text":
+                part["text"] += " STAY IN CHARACTER"
                 break
 
     mapping = {1: "low", 2: "medium", 3: "high"}
@@ -281,18 +287,21 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
 
 async def get_alias(user_message: str) -> str:
     async with AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY')) as client:
-        completion = await client.chat.completions.create(
-            model="gpt-4.1-nano",
-            temperature=0.1,
-            max_tokens=10,
-            messages=[{
-                "role": "user",
-                "content": ALIAS_PROMPT + user_message
-            }],
-        )
+        try:
+            response = await client.responses.create(
+                model="gpt-4.1-nano",
+                temperature=0.1,
+                max_output_tokens=16,
+                instructions=ALIAS_PROMPT,
+                input=[{
+                    "role": "user",
+                    "content": user_message
+                }]
+            )
+            return response.output_text
+        except Exception as ex:
+            return "제목 없음"
     
-    return completion.choices[0].message.content.rstrip()
-
 @router.post("/gpt")
 async def gpt_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     return get_response(chat_request, user, fastapi_request)

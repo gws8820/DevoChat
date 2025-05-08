@@ -2,12 +2,10 @@ import os
 import json
 import asyncio
 import base64
-import shutil
-import time
 import copy
 import tiktoken
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, HTTPException, Request, File, UploadFile
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from pymongo import MongoClient
@@ -127,12 +125,24 @@ def format_message(message):
         return {"role": "user", "content": [normalize_content(part) for part in content]}
         
 def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastapi_request: Request):
-    if user.trial and user.trial_remaining <= 0:
-        async def error_generator():
-            message = "체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."
-            yield f"data: {json.dumps({'content': message})}\n\n"
-        return StreamingResponse(error_generator(), media_type="text/event-stream")
+    async def error_generator(error_message):
+        yield f"data: {json.dumps({'content': error_message})}\n\n"
 
+    if user.trial and user.trial_remaining <= 0:
+        return StreamingResponse(
+            error_generator("체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."),
+            media_type="text/event-stream"
+        )
+    if not user.admin and request.in_billing >= 10:
+        return StreamingResponse(
+            error_generator("해당 모델을 사용할 권한이 없습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."),
+            media_type="text/event-stream"
+        )
+    if not request.user_message:
+        return StreamingResponse(
+            error_generator("메시지 내용이 비어 있습니다. 내용을 입력해 주세요."),
+            media_type="text/event-stream"
+        )
     user_message = {"role": "user", "content": request.user_message}
     
     conversation = conversation_collection.find_one(
@@ -141,7 +151,7 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
     ).get("conversation", [])
     conversation.append(user_message)
 
-    formatted_messages = [format_message(m) for m in conversation]
+    formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
     if request.dan and DAN_PROMPT:
         formatted_messages.insert(0, {
@@ -163,6 +173,9 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
         "role": "system",
         "content": [{"type": "text", "text": MARKDOWN_PROMPT}]
     })
+
+    mapping = {1: "low", 2: "medium", 3: "high"}
+    reasoning_effort = mapping.get(request.reason) or None
 
     async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
         citation = None
@@ -224,6 +237,7 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
                 parameters = {
                     "model": request.model.split(':')[0],
                     "temperature": request.temperature,
+                    "reasoning_effort": reasoning_effort,
                     "messages": formatted_messages,
                     "stream": request.stream
                 }

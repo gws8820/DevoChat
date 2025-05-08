@@ -147,6 +147,23 @@ function Admin() {
     );
   };
 
+  const formatDate = (dateString) => {
+    if (dateString === '-') {
+      return '-';
+    }
+
+    const date = new Date(dateString);
+    date.setHours(date.getHours() + 9);
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  };
+
   if (loading) {
     return (
       <div className="admin-loading-container">
@@ -165,15 +182,15 @@ function Admin() {
         
         <div className="user-info-card">
           <div className="user-info-item">
-            <span className="label">이메일:</span>
+            <span className="label">이메일</span>
             <span className="value">{selectedUser.email}</span>
           </div>
           <div className="user-info-item">
-            <span className="label">사용량:</span>
+            <span className="label">사용량</span>
             <span className="value">${selectedUser.billing.toFixed(2)}</span>
           </div>
           <div className="user-info-item">
-            <span className="label">상태:</span>
+            <span className="label">상태</span>
             <span className="value">{selectedUser.trial ? '임시회원' : '정회원'}</span>
           </div>
         </div>
@@ -188,7 +205,7 @@ function Admin() {
               <thead>
                 <tr>
                   <th>대화 제목</th>
-                  <th>모델</th>
+                  <th>생성일</th>
                 </tr>
               </thead>
               <tbody>
@@ -207,7 +224,7 @@ function Admin() {
                           {conv.alias}
                         </button>
                       </td>
-                      <td>{conv.model}</td>
+                      <td>{formatDate(conv.created_at)}</td>
                     </tr>
                   ))
                 )}

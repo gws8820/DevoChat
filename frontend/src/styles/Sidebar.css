@@ -13,35 +13,47 @@
     top: 0;
 }
 
-.sidebar-header {
-    display: flex;
-    justify-content: space-between; /* 왼쪽과 오른쪽을 분리 */
-    align-items: center;
-    box-sizing: border-box;
-    width: 100%;
-    height: 60px;
-    flex: 0 0 60px;
-    padding: 0px 20px 0 16px;
+.sidebar .header {
+    padding: 0 8px;
 }
 
 .sidebar .header-icon {
-    padding: 0;
+    padding: 0 6px;
 }
 
-/* 버튼 스타일 */
-.sidebar button {
+.open-search {
+    font-size: 19px !important;
+}
+
+.search-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    color: rgb(0, 0, 0);
-    background-color: transparent;
-    cursor: pointer;
-    border: none;
-    transition: background-color 0.2s ease-in-out;
-    font-size: 16px;
-    text-align: left;
+    height: 60px;
+    background-color: rgb(252, 252, 252);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.sidebar button:hover {
-    background-color: #f0f0f0;
+.search-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0 8px;
+    box-sizing: border-box;
+}
+
+.search-input {
+    width: 100%;
+    margin: 0 2px;
+    padding: 12px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: rgb(248, 248, 248);
 }
 
 .logo {
@@ -50,8 +62,8 @@
 }
 
 .logo-image {
-    padding-top: 2px;
-    max-width: 70%;
+    padding: 0 8px;
+    max-width: 80%;
     -webkit-user-drag: none;
     -khtml-user-drag: none;
     -moz-user-drag: none;
@@ -63,31 +75,26 @@
     user-select: none;
 }
 
-/* 사이드바 닫기 버튼 스타일 */
-.hide-sidebar {
-    cursor: pointer;
-    font-size: 18px;
-}
-
-/* Sidebar 열기 버튼 */
-.expand-sidebar {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
-    color: #333;
-    display: flex;
-    align-items: center;
-}
-
 .newconv-container {
+    width: 100%;
     margin-top: 5px;
     border-bottom: 1px solid rgb(240, 240, 240);
 }
 
 .new-conversation {
+    all: unset;
+    display: block;
+    width: 100%;
     padding: 10px 20px;
     font-weight: 500;
+
+    transition: background-color 0.2s ease-in-out;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.new-conversation:hover {
+    background-color: #f0f0f0;
 }
 
 .conversation-container {
@@ -167,6 +174,12 @@ input:focus {
     white-space: nowrap;
 }
 
+.context-menu li {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
 .user-dropdown {
     position: absolute;
     bottom: 100%;
@@ -228,7 +241,7 @@ input:focus {
 .dropdown-button:hover {
     background-color: #f0f0f0;
 }
-
+  
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
@@ -243,4 +256,4 @@ input:focus {
     .conversation-item:hover .delete-icon {
       opacity: 1;
     }
-  }
+}

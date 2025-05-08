@@ -57,6 +57,10 @@
   white-space: pre-wrap;
 }
 
+.assistant-wrap {
+  width: 100%;
+}
+
 .assistant-wrap:hover .message-function {
   opacity: 1;
 }
@@ -142,7 +146,7 @@
 }
 
 .chat-message ol, ul {
-  width: calc(100% - 34px);
+  width: 100%;
   margin: 4px 0;
   padding: 0;
   list-style-position: inside;
@@ -317,10 +321,6 @@ textarea:focus {
 
   .chat-message.user {
     margin-right: 0;
-  }
-
-  .chat-message ol, ul {
-    width: calc(100% - 20px);
   }
 
   .message-file-area .image-object {
