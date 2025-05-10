@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 from .auth import User, get_current_user, check_admin
 from .responses_client import get_alias
 
@@ -29,27 +29,37 @@ class NewConversationRequest(BaseModel):
 class RenameRequest(BaseModel):
     alias: str
 
+class StarRequest(BaseModel):
+    starred: bool
+
 @router.get("/conversations", response_model=dict)
 async def get_conversations(current_user: User = Depends(get_current_user)):
     user_id = current_user.user_id
     cursor = conversations_collection.find(
         {"user_id": user_id},
-        {"_id": 1, "user_id": 1, "conversation_id": 1, "alias": 1}
-    )
+        {"_id": 1, "user_id": 1, "conversation_id": 1, "alias": 1, "starred": 1, "starred_at": 1, "created_at": 1}
+    ).sort([
+        ("starred", -1),
+        ("starred_at", -1),
+        ("created_at", -1)
+    ])
     conversations = []
     async for doc in cursor:
         conversations.append({
             "_id": str(doc["_id"]),
             "user_id": doc["user_id"],
             "conversation_id": doc["conversation_id"],
-            "alias": doc["alias"]
+            "alias": doc["alias"],
+            "starred": doc["starred"],
+            "starred_at": doc["starred_at"].isoformat() if doc.get("starred_at") else None,
+            "created_at": doc["created_at"].isoformat() if doc.get("created_at") else None
         })
     return {"conversations": conversations}
 
 @router.get("/conversations/{user_id}", response_model=dict)
 async def get_user_conversations(
     user_id: str, 
-    admin_user = Depends(check_admin)
+    _ = Depends(check_admin)
 ):
     if not ObjectId.is_valid(user_id):
         raise HTTPException(status_code=400, detail="Invalid User ID")
@@ -71,7 +81,7 @@ async def get_user_conversations(
             "alias": doc["alias"],
             "conversation_id": doc["conversation_id"],
             "model": doc["model"],
-            "created_at": doc.get("created_at", "-")
+            "created_at": doc["created_at"].isoformat() if doc.get("created_at") else None
         })
     
     return {"conversations": conversations}
@@ -114,13 +124,16 @@ async def create_new_conversation(request_data: NewConversationRequest, current_
         "reason": request_data.reason,
         "system_message": request_data.system_message,
         "conversation": [],
-        "created_at": datetime.utcnow()
+        "starred": False,
+        "starred_at": None,
+        "created_at": datetime.now(timezone.utc)
     }
     await conversations_collection.insert_one(new_conversation)
     return {
         "message": "New conversation created",
         "alias": alias,
-        "conversation_id": conversation_id
+        "conversation_id": conversation_id,
+        "created_at": new_conversation["created_at"].isoformat()
     }
 
 @router.put("/conversation/{conversation_id}/rename", response_model=dict)
@@ -187,4 +200,26 @@ async def delete_messages_from_index(
     return {
         "message": "Conversation truncated successfully.",
         "conversation_id": conversation_id
+    }
+
+@router.put("/conversation/{conversation_id}/star", response_model=dict)
+async def toggle_star_conversation(
+    conversation_id: str,
+    request: StarRequest,
+    current_user: User = Depends(get_current_user)
+):
+    user_id = current_user.user_id
+    result = await conversations_collection.update_one(
+        {"user_id": user_id, "conversation_id": conversation_id},
+        {
+            "$set": {
+                "starred": request.starred,
+                "starred_at": datetime.now(timezone.utc) if request.starred else None
+            }
+        }
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {
+        "message": "Conversation star status updated successfully"
     }

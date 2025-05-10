@@ -5,10 +5,10 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Cookie, Depends, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, constr
+from typing import List, Annotated
 from motor.motor_asyncio import AsyncIOMotorClient
-from typing import List
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 load_dotenv()
@@ -25,13 +25,13 @@ ALGORITHM = 'HS256'
 
 # Pydantic Model
 class RegisterUser(BaseModel):
-    name: constr(strip_whitespace=True, min_length=1)
+    name: Annotated[str, constr(strip_whitespace=True, min_length=1)]
     email: EmailStr
-    password: constr(min_length=8, max_length=20)
+    password: Annotated[str, constr(min_length=8, max_length=20)]
 
 class LoginUser(BaseModel):
     email: EmailStr
-    password: constr(strip_whitespace=True, min_length=1)
+    password: Annotated[str, constr(strip_whitespace=True, min_length=1)]
 
 class User(BaseModel):
     user_id: str
@@ -61,7 +61,7 @@ async def register(user: RegisterUser):
         "admin": False,
         "trial": True,
         "trial_remaining": 10,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     }
     result = await collection.insert_one(new_user)
     return {"message": "Registration Success!", "user_id": str(result.inserted_id)}
@@ -187,7 +187,7 @@ async def check_admin(access_token: str = Cookie(None)):
 async def get_all_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    admin_user = Depends(check_admin)
+    _ = Depends(check_admin)
 ):
     users = []
     cursor = collection.find({}).skip(skip).limit(limit)
@@ -209,12 +209,9 @@ async def get_all_users(
 async def update_user_status(
     user_id: str,
     user_data: dict,
-    admin_user = Depends(check_admin)
+    _ = Depends(check_admin)
 ):
     try:
-        if "trial" not in user_data:
-            raise HTTPException(status_code=400, detail="There is no trial field")
-            
         if not ObjectId.is_valid(user_id):
             raise HTTPException(status_code=400, detail="Invalid User ID")
             

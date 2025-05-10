@@ -72,6 +72,16 @@ function AppContent() {
     );
   };
 
+  const toggleStarConversation = (conversation_id, starred) => {
+    setConversations(prevConversations => 
+      prevConversations.map(conv => 
+        conv.conversation_id === conversation_id 
+          ? { ...conv, starred, starred_at: starred ? new Date().toISOString() : null }
+          : conv
+      )
+    );
+  };
+
   const fetchConversations = async () => {
     setIsLoadingChat(true);
     try {
@@ -189,6 +199,7 @@ function AppContent() {
           deleteConversation,
           deleteAllConversation,
           updateConversation,
+          toggleStarConversation,
           setErrorModal,
           isResponsive,
           fetchConversations

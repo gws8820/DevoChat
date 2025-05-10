@@ -148,11 +148,12 @@ function Admin() {
   };
 
   const formatDate = (dateString) => {
-    if (dateString === '-') {
+    if (!dateString) {
       return '-';
     }
 
     const date = new Date(dateString);
+
     date.setHours(date.getHours() + 9);
     
     const year = date.getFullYear();

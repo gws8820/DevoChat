@@ -396,6 +396,38 @@
         "related_models": ["grok-3-mini"]
       },
       {
+        "model_name": "deepseek-ai/DeepSeek-V3-0324",
+        "model_alias": "Deepseek V3",
+        "description": "표준 Deepseek 모델",
+        "endpoint": "/huggingface",
+        "in_billing": "0.9",
+        "out_billing": "0.9",
+        "inference": false,
+        "stream": true,
+        "capabilities": {
+          "image": false,
+          "search": false
+        },
+        "type": "default",
+        "related_models": ["r1-1776"]
+      },
+      {
+        "model_name": "r1-1776",
+        "model_alias": "Deepseek R1 1776",
+        "description": "추론 Deepseek 모델",
+        "endpoint": "/perplexity",
+        "in_billing": "2",
+        "out_billing": "8",
+        "inference": true,
+        "stream": true,
+        "capabilities": {
+          "image": true,
+          "search": false
+        },
+        "type": "default",
+        "related_models": ["deepseek-ai/DeepSeek-V3-0324"]
+      },
+      {
         "model_name": "sonar",
         "model_alias": "Perplexity Sonar",
         "description": "실시간 검색이 가능한 Perplexity 모델",
@@ -496,38 +528,6 @@
           "search": false
         },
         "type": "default"
-      },
-      {
-        "model_name": "deepseek-ai/DeepSeek-V3-0324",
-        "model_alias": "Deepseek V3",
-        "description": "표준 Deepseek 모델",
-        "endpoint": "/huggingface",
-        "in_billing": "0.9",
-        "out_billing": "0.9",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": false,
-          "search": false
-        },
-        "type": "default",
-        "related_models": ["deepseek-ai/DeepSeek-R1"]
-      },
-      {
-        "model_name": "deepseek-ai/DeepSeek-R1",
-        "model_alias": "Deepseek R1",
-        "description": "고성능 추론 Deepseek 모델",
-        "endpoint": "/huggingface",
-        "in_billing": "3",
-        "out_billing": "8",
-        "inference": true,
-        "stream": true,
-        "capabilities": {
-          "image": false,
-          "search": false
-        },
-        "type": "default",
-        "related_models": ["deepseek-ai/DeepSeek-V3-0324"]
       },
       {
         "model_name": "Qwen/Qwen3-235B-A22B",

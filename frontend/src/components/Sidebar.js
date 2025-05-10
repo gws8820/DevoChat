@@ -1,8 +1,9 @@
 // src/components/Sidebar.js
-import React, { useEffect, useState, useRef, useContext } from "react";
+import React, { useEffect, useState, useRef, useContext, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { RiSearchLine, RiMenuLine, RiCloseLine  } from "react-icons/ri";
+import { IoMdStar } from "react-icons/io";
 import { CiWarning } from "react-icons/ci";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
@@ -23,6 +24,7 @@ function Sidebar({
   deleteConversation,
   deleteAllConversation,
   updateConversation,
+  toggleStarConversation,
   setErrorModal,
   isResponsive,
   fetchConversations,
@@ -51,6 +53,32 @@ function Sidebar({
   const longPressTimer = useRef(null);
 
   const { setAlias } = useContext(SettingsContext);  
+
+  const starringConversationId = useState(null);
+
+  const sortedConversations = useMemo(() => {
+    return [...conversations].sort((a, b) => {
+      if (a.starred && !b.starred) return -1;
+      if (!a.starred && b.starred) return 1;
+      
+      if (a.starred && b.starred) {
+        if (!a.starred_at) return 1;
+        if (!b.starred_at) return -1;
+        return new Date(b.starred_at) - new Date(a.starred_at);
+      }
+      
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+  }, [conversations]);
+
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery.trim()) return sortedConversations;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return sortedConversations.filter(conv => 
+      conv.alias.toLowerCase().includes(query)
+    );
+  }, [sortedConversations, searchQuery]);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -272,7 +300,16 @@ function Sidebar({
   }, [isSearchVisible]);
 
   const handleCustomAction = (action) => {
-    if (action === "rename") {
+    if (action === "star") {
+      if (selectedConversationId) {
+        const conv = conversations.find(
+          (c) => c.conversation_id === selectedConversationId
+        );
+        if (conv) {
+          toggleStar(conv.conversation_id, { stopPropagation: () => {} });
+        }
+      }
+    } else if (action === "rename") {
       if (selectedConversationId) {
         const conv = conversations.find(
           (c) => c.conversation_id === selectedConversationId
@@ -297,11 +334,29 @@ function Sidebar({
     }
   };
 
-  const filteredConversations = searchQuery
-    ? conversations.filter(conv => 
-        conv.alias.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : conversations;
+  const toggleStar = async (conversation_id, e) => {
+    e.stopPropagation();
+    try {
+      const conversation = conversations.find(c => c.conversation_id === conversation_id);
+      if (!conversation) return;
+
+      toggleStarConversation(conversation_id, !conversation.starred);
+      
+      await axios.put(
+        `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/star`,
+        { starred: !conversation.starred },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Failed to toggle star status:", error);
+      setErrorModal("별표 상태 변경에 실패했습니다.");
+      const conversation = conversations.find(c => c.conversation_id === conversation_id);
+      if (conversation) {
+        toggleStarConversation(conversation_id, conversation.starred);
+      }
+      setTimeout(() => setErrorModal(null), 2000);
+    }
+  };
 
   return (
     <>
@@ -370,57 +425,88 @@ function Sidebar({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
+                style={{ 
+                  height: '100%', 
+                  display: 'flex', 
+                  flexDirection: 'column'
+                }}
               >
-                {filteredConversations
-                  .slice()
-                  .reverse()
-                  .map((conv) => (
-                    <li
-                      key={conv.conversation_id}
-                      onContextMenu={(e) =>
-                        handleConversationContextMenu(e, conv.conversation_id)
-                      }
-                      onTouchStart={(e) => handleTouchStart(e, conv.conversation_id)}
-                      onTouchEnd={handleTouchEnd}
-                      onTouchMove={handleTouchMove}
-                      onTouchCancel={handleTouchEnd}
-                    >
-                      <div
-                        className={`conversation-item ${
-                          currentConversationId === conv.conversation_id
-                            ? "active-conversation"
-                            : ""
-                        }`}
-                        onClick={() => {
-                          if (renamingConversationId !== conv.conversation_id) {
-                            handleNavigate(conv.conversation_id);
-                          }
+                {filteredConversations.length > 0 ? (
+                  filteredConversations
+                    .slice()
+                    .map((conv) => (
+                      <motion.li
+                        key={conv.conversation_id}
+                        layout
+                        initial={false}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ 
+                          type: "tween",
+                          duration: 0.3,
+                          ease: "easeInOut"
                         }}
+                        onContextMenu={(e) =>
+                          handleConversationContextMenu(e, conv.conversation_id)
+                        }
+                        onTouchStart={(e) => handleTouchStart(e, conv.conversation_id)}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchMove={handleTouchMove}
+                        onTouchCancel={handleTouchEnd}
                       >
-                        {renamingConversationId === conv.conversation_id ? (
-                          <input
-                            type="text"
-                            className="rename-input"
-                            value={renameInputValue}
-                            onChange={(e) => setRenameInputValue(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                handleRename(conv.conversation_id, renameInputValue);
-                              }
-                            }}
-                            enterKeyHint="done"
-                            onBlur={() => {
-                              setRenamingConversationId(null);
-                              setRenameInputValue("");
-                            }}
-                            autoFocus
-                          />
-                        ) : (
-                          <span className="conversation-text">{conv.alias}</span>
-                        )}
-                      </div>
-                    </li>
-                  ))}
+                        <motion.div
+                          className={`conversation-item ${
+                            currentConversationId === conv.conversation_id
+                              ? "active-conversation"
+                              : ""
+                          }`}
+                          layout
+                          onClick={() => {
+                            if (renamingConversationId !== conv.conversation_id) {
+                              handleNavigate(conv.conversation_id);
+                            }
+                          }}
+                        >
+                          {renamingConversationId === conv.conversation_id ? (
+                            <input
+                              type="text"
+                              className="rename-input"
+                              value={renameInputValue}
+                              onChange={(e) => setRenameInputValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleRename(conv.conversation_id, renameInputValue);
+                                }
+                              }}
+                              enterKeyHint="done"
+                              onBlur={() => {
+                                setRenamingConversationId(null);
+                                setRenameInputValue("");
+                              }}
+                              autoFocus
+                            />
+                          ) : (
+                            <span className="conversation-text">{conv.alias}</span>
+                          )}
+
+                          <motion.div 
+                            className={`star-icon ${conv.starred ? 'starred' : ''} ${isTouch && !conv.starred ? 'disabled' : ''}`}  
+                            onClick={(e) => {toggleStar(conv.conversation_id, e)}}
+                          >
+                            {starringConversationId === conv.conversation_id ? (
+                              <ClipLoader size={14} color="#666" />
+                            ) : (
+                              <IoMdStar />
+                            )}
+                          </motion.div>
+                        </motion.div>
+                      </motion.li>
+                    ))
+                ) : (
+                  <div className="no-search-results">
+                    검색 결과가 없습니다.
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
           )}
@@ -474,8 +560,17 @@ function Sidebar({
             }}
           >
             <ul>
-              <li onClick={() => handleCustomAction("rename")}>이름 편집</li>
-              <li onClick={() => handleCustomAction("delete")}>삭제</li>
+              {selectedConversationId && (
+                <>
+                  {conversations.find(c => c.conversation_id === selectedConversationId)?.starred ? (
+                    <li onClick={() => handleCustomAction("star")}>즐겨찾기 해제</li>
+                  ) : (
+                    <li onClick={() => handleCustomAction("star")}>즐겨찾기</li>
+                  )}
+                  <li onClick={() => handleCustomAction("rename")}>이름 편집</li>
+                  <li onClick={() => handleCustomAction("delete")}>삭제</li>
+                </>
+              )}
             </ul>
           </motion.div>
         )}

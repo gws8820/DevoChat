@@ -22,8 +22,6 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
     setReason,
     setSystemMessage,
     isImage,
-    isInference,
-    isSearch,
     isSearchButton,
     isInferenceButton
   } = useContext(SettingsContext);
@@ -45,15 +43,15 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
 
   let modelsList = models.filter((m) => {
     if (isImage && !m.capabilities?.image) return false;
-
-    if (isSearchButton && !m.capabilities?.search) return false;
-    if (!isSearch && (m.hidden === "search")) return false;
     
-    if (isInferenceButton && !m.inference) return false;
-    if (!isInference && (m.hidden === "inference")) return false;
-
-    if ((!isSearch || !isInference) && (m.hidden === "all")) return false;
-
+    if ((isSearchButton && !m.capabilities?.search) || 
+        (!isSearchButton && m.hidden === "search")) return false;
+    
+    if ((isInferenceButton && !m.inference) || 
+        (!isInferenceButton && m.hidden === "inference")) return false;
+    
+    if (m.hidden === "all" && (!isSearchButton || !isInferenceButton)) return false;
+    
     return true;
   });
 

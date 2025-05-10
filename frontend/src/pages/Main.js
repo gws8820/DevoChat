@@ -67,7 +67,7 @@ function Main({ addConversation, isTouch }) {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
   }, []);
 
-  const notice = '이제 Claude 모델의 웹 검색이 가능합니다!';
+  const notice = '대화 즐겨찾기 기능이 추가되었습니다!';
   const noticeHash = btoa(encodeURIComponent(notice));
 
   useEffect(() => {
@@ -263,8 +263,14 @@ function Main({ addConversation, isTouch }) {
           { withCredentials: true }
         );
 
-        const { conversation_id, alias } = response.data;
-        const newConversation = { conversation_id, alias };
+        const { conversation_id, alias, created_at } = response.data;
+        const newConversation = { 
+          conversation_id, 
+          alias, 
+          starred: false, 
+          starred_at: null,
+          created_at: created_at
+        };
         addConversation(newConversation);
         navigate(`/chat/${conversation_id}`, {
           state: {

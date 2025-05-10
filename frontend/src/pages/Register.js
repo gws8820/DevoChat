@@ -81,7 +81,12 @@ function Register() {
           type="email" 
           placeholder="이메일" 
           value={email} 
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (/^[a-zA-Z0-9@._-]*$/.test(value)) {
+              setEmail(value);
+            }
+          }}
           autoComplete="username"
         />
         <input 
@@ -89,7 +94,12 @@ function Register() {
           type="password" 
           placeholder="비밀번호" 
           value={password} 
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (/^[a-zA-Z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]*$/.test(value)) {
+              setPassword(value);
+            }
+          }}
           autoComplete="new-password"
         />
         <p className="info">*비밀번호는 8자리 이상으로 입력해 주세요.</p>

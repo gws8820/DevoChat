@@ -290,12 +290,12 @@ async def get_alias(user_message: str) -> str:
         try:
             response = await client.responses.create(
                 model="gpt-4.1-nano",
-                temperature=0.1,
+                temperature=0.5,
                 max_output_tokens=16,
                 instructions=ALIAS_PROMPT,
                 input=[{
                     "role": "user",
-                    "content": user_message
+                    "content": f"메세지: {user_message}"
                 }]
             )
             return response.output_text
