@@ -206,7 +206,7 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
       <div className="header-left">
         {!isSidebarVisible && (
           <Tooltip content="사이드바 열기" position="right" isTouch={isTouch}>
-            <div className="header-icon toggle-icon">
+            <div className="header-icon menu-icon">
               <RiMenuLine onClick={toggleSidebar} />
             </div>
           </Tooltip>

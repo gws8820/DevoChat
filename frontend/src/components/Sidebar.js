@@ -371,12 +371,12 @@ function Sidebar({
           </div>
           <div className="header-right">
             <Tooltip content="검색" position="bottom" isTouch={isTouch}>
-              <div className="header-icon open-search" onClick={toggleSearch}>
-                <RiSearchLine />
+              <div className="header-icon open-search">
+                <RiSearchLine onClick={toggleSearch} />
               </div>
             </Tooltip>
             <Tooltip content="사이드바 닫기" position="bottom" isTouch={isTouch}>
-              <div className="header-icon toggle-icon">
+              <div className="header-icon">
                 <RiMenuLine onClick={toggleSidebar} />
               </div>
             </Tooltip>
@@ -401,8 +401,8 @@ function Sidebar({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="search-input"
                 />
-                <div className="header-icon close-search" onClick={toggleSearch}>
-                  <RiCloseLine  />
+                <div className="header-icon close-search">
+                  <RiCloseLine  onClick={toggleSearch} />
                 </div>
               </div>
             </motion.div>

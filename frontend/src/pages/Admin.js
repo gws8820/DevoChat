@@ -206,13 +206,14 @@ function Admin() {
               <thead>
                 <tr>
                   <th>대화 제목</th>
+                  <th>모델</th>
                   <th>생성일</th>
                 </tr>
               </thead>
               <tbody>
                 {conversations.length === 0 ? (
                   <tr>
-                    <td colSpan="2" className="no-data">대화 내역이 없습니다.</td>
+                    <td colSpan="3" className="no-data">대화 내역이 없습니다.</td>
                   </tr>
                 ) : (
                   conversations.map(conv => (
@@ -225,6 +226,7 @@ function Admin() {
                           {conv.alias}
                         </button>
                       </td>
+                      <td>{conv.model || '-'}</td>
                       <td>{formatDate(conv.created_at)}</td>
                     </tr>
                   ))

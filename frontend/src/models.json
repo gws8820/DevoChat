@@ -81,7 +81,7 @@
           "search": false
         },
         "type": "default",
-        "related_models": ["claude-3-7-sonnet-latest:inference", "claude-3-5-sonnet-latest:search"]
+        "related_models": ["claude-3-5-sonnet-latest:search"]
       },
       {
         "model_name": "claude-3-5-sonnet-latest:search",
@@ -97,7 +97,7 @@
           "search": true
         },
         "type": "default",
-        "related_models": ["claude-3-7-sonnet-latest:inference", "claude-3-5-sonnet-latest:default"],
+        "related_models": ["claude-3-5-sonnet-latest:default"],
         "hidden": "search"
       },
       {
@@ -114,7 +114,7 @@
           "search": false
         },
         "type": "default",
-        "related_models": ["claude-3-7-sonnet-latest:inference", "claude-3-5-haiku-latest:search"]
+        "related_models": ["claude-3-5-haiku-latest:search"]
       },
       {
         "model_name": "claude-3-5-haiku-latest:search",
@@ -130,7 +130,7 @@
           "search": true
         },
         "type": "default",
-        "related_models": ["claude-3-7-sonnet-latest:inference", "claude-3-5-haiku-latest:default"],
+        "related_models": ["claude-3-5-haiku-latest:default"],
         "hidden": "search"
       },
       {
@@ -213,7 +213,7 @@
           "search": false
         },
         "type": "default",
-        "related_models": ["o4-mini:default", "gpt-4.1:search"]
+        "related_models": ["gpt-4.1:search"]
       },
       {
         "model_name": "gpt-4.1:search",
@@ -229,7 +229,7 @@
           "search": true
         },
         "type": "default",
-        "related_models": ["o4-mini:default", "gpt-4.1:default"],
+        "related_models": ["gpt-4.1:default"],
         "hidden": "search"
       },
       {
@@ -246,7 +246,7 @@
           "search": false
         },
         "type": "default",
-        "related_models": ["o4-mini:default", "gpt-4.1-mini:search"]
+        "related_models": ["gpt-4.1-mini:search"]
       },
       {
         "model_name": "gpt-4.1-mini:search",
@@ -262,11 +262,11 @@
           "search": true
         },
         "type": "default",
-        "related_models": ["o4-mini:default", "gpt-4.1-mini:default"],
+        "related_models": ["gpt-4.1-mini:default"],
         "hidden": "search"
       },
       {
-        "model_name": "o4-mini:default",
+        "model_name": "o4-mini",
         "model_alias": "OpenAI o4 mini",
         "description": "경량 추론 GPT 모델",
         "endpoint": "/gpt",
@@ -278,28 +278,10 @@
           "image": true,
           "search": false
         },
-        "type": "reason",
-        "related_models": ["gpt-4.1-mini:default", "o4-mini:search"]
+        "type": "reason"
       },
       {
-        "model_name": "o4-mini:search",
-        "model_alias": "OpenAI o4 mini Search",
-        "description": "경량 추론 GPT 모델",
-        "endpoint": "/gpt",
-        "in_billing": "1.1",
-        "out_billing": "4.4",
-        "inference": true,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "reason",
-        "related_models": ["gpt-4.1-mini:default", "o4-mini:default"],
-        "hidden": "search"
-      },
-      {
-        "model_name": "o3:default",
+        "model_name": "o3",
         "model_alias": "OpenAI o3",
         "description": "고성능 추론 GPT 모델",
         "endpoint": "/gpt",
@@ -311,25 +293,7 @@
           "image": true,
           "search": false
         },
-        "type": "reason",
-        "related_models": ["gpt-4.1-mini:default", "o3:search"]
-      },
-      {
-        "model_name": "o3:search",
-        "model_alias": "OpenAI o3 Search",
-        "description": "고성능 추론 GPT 모델",
-        "endpoint": "/gpt",
-        "in_billing": "10",
-        "out_billing": "40",
-        "inference": true,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "reason",
-        "related_models": ["gpt-4.1-mini:default", "o3:default"],
-        "hidden": "search"
+        "type": "reason"
       },
       {
         "model_name": "o1-pro",
@@ -344,8 +308,7 @@
           "image": true,
           "search": false
         },
-        "type": "none",
-        "related_models": ["gpt-4.1-mini:default", "o4-mini:search"]
+        "type": "none"
       },
       {
         "model_name": "grok-3",
@@ -361,7 +324,7 @@
           "search": false
         },
         "type": "default",
-        "related_models": ["grok-3-mini", "grok-2-vision-1212"]
+        "related_models": ["grok-3-mini"]
       },
       {
         "model_name": "grok-3-mini",
@@ -377,7 +340,7 @@
           "search": false
         },
         "type": "reason",
-        "related_models": ["grok-3", "grok-2-vision-1212"]
+        "related_models": ["grok-3"]
       },
       {
         "model_name": "grok-2-vision-1212",
