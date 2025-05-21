@@ -5,20 +5,18 @@ import base64
 import copy
 import tiktoken
 from dotenv import load_dotenv
+from db_util import Database
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from pymongo import MongoClient
 from bson import ObjectId
 from typing import Any, List, Dict, Optional
 from openai import AsyncOpenAI
 from .auth import User, get_current_user
 
 load_dotenv()
-
 router = APIRouter()
-mongoclient = MongoClient(os.getenv('MONGODB_URI'))
-db = mongoclient.chat_db
+db = Database.get_db()
 user_collection = db.users
 conversation_collection = db.conversations
 
@@ -305,3 +303,19 @@ async def get_alias(user_message: str) -> str:
 @router.post("/gpt")
 async def gpt_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     return get_response(chat_request, user, fastapi_request)
+
+class AliasRequest(BaseModel):
+    conversation_id: str
+    text: str
+
+@router.post("/get_alias")
+async def get_alias_endpoint(request: AliasRequest, user: User = Depends(get_current_user)):
+    try:
+        alias = await get_alias(request.text)
+        conversation_collection.update_one(
+            {"user_id": user.user_id, "conversation_id": request.conversation_id},
+            {"$set": {"alias": alias}}
+        )
+        return {"alias": alias}
+    except Exception as e:
+        return {"alias": "새 대화", "error": str(e)}

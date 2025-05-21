@@ -52,9 +52,7 @@ function Sidebar({
   const searchInputRef = useRef(null);
   const longPressTimer = useRef(null);
 
-  const { setAlias } = useContext(SettingsContext);  
-
-  const starringConversationId = useState(null);
+  const { setAlias } = useContext(SettingsContext); 
 
   const sortedConversations = useMemo(() => {
     return [...conversations].sort((a, b) => {
@@ -108,6 +106,7 @@ function Sidebar({
 
   const handleTouchStart = (e, conversation_id) => {
     setContextMenu({ ...contextMenu, visible: false });
+    
     longPressTimer.current = setTimeout(() => {
       setSelectedConversationId(conversation_id);
       setContextMenu({
@@ -115,17 +114,27 @@ function Sidebar({
         x: e.touches[0].pageX,
         y: e.touches[0].pageY,
       });
+      
+      const preventDefaultOnce = (evt) => {
+        evt.preventDefault();
+        document.removeEventListener('contextmenu', preventDefaultOnce);
+      };
+      document.addEventListener('contextmenu', preventDefaultOnce);
     }, 500);
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e) => {
+    if (contextMenu.visible) {
+      e.preventDefault();
+    }
+    
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
   };
 
-  const handleTouchMove = () => {
+  const handleTouchMove = (e) => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
@@ -446,9 +455,10 @@ function Sidebar({
                           duration: 0.3,
                           ease: "easeInOut"
                         }}
-                        onContextMenu={(e) =>
+                        onContextMenu={(e) => {
+                          e.preventDefault();
                           handleConversationContextMenu(e, conv.conversation_id)
-                        }
+                        }}
                         onTouchStart={(e) => handleTouchStart(e, conv.conversation_id)}
                         onTouchEnd={handleTouchEnd}
                         onTouchMove={handleTouchMove}
@@ -486,18 +496,50 @@ function Sidebar({
                               autoFocus
                             />
                           ) : (
-                            <span className="conversation-text">{conv.alias}</span>
+                            <span className={`conversation-text`}>
+                              <AnimatePresence mode="wait">
+                                {conv.isLoading ? (
+                                  <motion.span
+                                    key="loading"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ 
+                                      opacity: 1,
+                                      color: "#666",
+                                      fontSize: "13.5px"
+                                    }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                  >
+                                    로딩 중...
+                                  </motion.span>
+                                ) : (
+                                  <motion.span
+                                    key="alias"
+                                    initial={{ 
+                                      opacity: 0, 
+                                      color: "#666",
+                                      fontSize: "13.5px"
+                                    }}
+                                    animate={{ 
+                                      opacity: 1, 
+                                      color: "#333",
+                                      fontSize: "14px"
+                                    }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                  >
+                                    {conv.alias}
+                                  </motion.span>
+                                )}
+                              </AnimatePresence>
+                            </span>
                           )}
 
                           <motion.div 
                             className={`star-icon ${conv.starred ? 'starred' : ''} ${isTouch && !conv.starred ? 'disabled' : ''}`}  
                             onClick={(e) => {toggleStar(conv.conversation_id, e)}}
                           >
-                            {starringConversationId === conv.conversation_id ? (
-                              <ClipLoader size={14} color="#666" />
-                            ) : (
-                              <IoMdStar />
-                            )}
+                            <IoMdStar />
                           </motion.div>
                         </motion.div>
                       </motion.li>

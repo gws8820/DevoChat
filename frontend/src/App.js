@@ -62,11 +62,15 @@ function AppContent() {
     setConversations([]);
   };
 
-  const updateConversation = (conversation_id, newAlias) => {
+  const updateConversation = (conversation_id, newAlias, isLoading = undefined) => {
     setConversations((prevConversations) =>
       prevConversations.map((conv) =>
         conv.conversation_id === conversation_id
-          ? { ...conv, alias: newAlias }
+          ? { 
+              ...conv, 
+              alias: newAlias,
+              ...(isLoading !== undefined && { isLoading })
+            }
           : conv
       )
     );
@@ -151,7 +155,7 @@ function AppContent() {
     let touchStartY = 0;
     let touchStartTarget = null;
     const threshold = 50;
-    const excludedClasses = ['.header', '.context-menu', '.input-container', '.katex-display', '.code-block'];
+    const excludedClasses = ['.header', '.context-menu', '.message-edit', '.input-container', '.katex-display', '.code-block'];
   
     const handleTouchStart = (e) => {
       touchStartX = e.touches[0].clientX;
@@ -293,7 +297,12 @@ function AppContent() {
               path="/chat/:conversation_id"
               element={
                 isLoggedIn ? (
-                  <Chat fetchConversations={fetchConversations} isTouch={isTouch} chatMessageRef={chatMessageRef} />
+                  <Chat 
+                    fetchConversations={fetchConversations} 
+                    updateConversation={updateConversation}
+                    isTouch={isTouch} 
+                    chatMessageRef={chatMessageRef} 
+                  />
                 ) : (
                   <Navigate to="/login" />
                 )

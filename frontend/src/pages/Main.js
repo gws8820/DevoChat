@@ -1,5 +1,5 @@
 // src/pages/Main.js
-import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from "react";
+import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { GoPlus, GoGlobe, GoLightBulb, GoUnlock } from "react-icons/go";
@@ -7,13 +7,15 @@ import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
 import { CiWarning } from "react-icons/ci";
 import { RiVoiceAiFill } from "react-icons/ri";
+import { FiPaperclip, FiMic } from "react-icons/fi";
+import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { useFileUpload } from "../hooks/useFileUpload";
 import axios from "axios";
 import Modal from "../components/Modal";
 import modelsData from "../models.json";
 import "../styles/Common.css";
-import { ClipLoader } from "react-spinners";
 
 function Main({ addConversation, isTouch }) {
   const navigate = useNavigate();
@@ -21,13 +23,27 @@ function Main({ addConversation, isTouch }) {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
-  const [errorModal, setErrorModal] = useState(location.state?.errorModal || null);
+  const [showMediaOptions, setShowMediaOptions] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
 
+  const recognitionRef = useRef(null);
   const textAreaRef = useRef(null);
   const fileInputRef = useRef(null);
+  const abortControllerRef = useRef(null);
+  const optionsRef = useRef(null);
+  const recordingTimerRef = useRef(null);
+
+  const { 
+    uploadedFiles, 
+    errorModal, 
+    setErrorModal, 
+    processFiles, 
+    removeFile,
+    allowedExtensions
+  } = useFileUpload([]);
 
   const {
     DEFAULT_MODEL,
@@ -57,17 +73,8 @@ function Main({ addConversation, isTouch }) {
 
   const models = modelsData.models;
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
-  const allowedExtensions = useMemo(
-    () =>
-      /\.(zip|pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|v|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
-    []
-  );
-  const maxFileSize = 50 * 1024 * 1024;
-  const generateRandomHash = useCallback(() => {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
-  }, []);
 
-  const notice = '대화 즐겨찾기 기능이 추가되었습니다!';
+  const notice = 'Gemini 2.5 Flash 모델이 05-20 버전으로 업데이트 되었습니다.';
   const noticeHash = btoa(encodeURIComponent(notice));
 
   useEffect(() => {
@@ -83,6 +90,32 @@ function Main({ addConversation, isTouch }) {
     setSystemMessage("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
+        setShowMediaOptions(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isRecording) {
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(recordingTimerRef.current);
+      setRecordingTime(0);
+    }
+    
+    return () => clearInterval(recordingTimerRef.current);
+  }, [isRecording]);
 
   function handleButtonClick(buttonType) {
     const newIsSearch = buttonType === "search" ? !isSearch : isSearch;
@@ -135,111 +168,7 @@ function Main({ addConversation, isTouch }) {
         window.history.replaceState({}, document.title);
       }, 2000);
     }
-  }, [location.state]);
-
-  const uploadFiles = useCallback(
-    async (file, uniqueId) => {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      if (file.type.startsWith("image/")) {
-        const res = await fetch(
-          `${process.env.REACT_APP_FASTAPI_URL}/upload/image`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-        const data = await res.json();
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        return {
-          id: uniqueId,
-          type: data.type,
-          name: data.name,
-          content: data.content,
-        };
-      } else {
-        const res = await fetch(
-          `${process.env.REACT_APP_FASTAPI_URL}/upload/file`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-        const data = await res.json();
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        return {
-          id: uniqueId,
-          type: data.type,
-          name: data.name,
-          content: data.content,
-        };
-      }
-    },
-    []
-  );
-  
-  const processFiles = useCallback(
-    async (files) => {
-      const maxAllowed = 10;
-      let acceptedFiles = [];
-      const currentCount = uploadedFiles.length;
-      const remaining = maxAllowed - currentCount;
-      
-      const sizeAcceptedFiles = files.filter((file) => file.size <= maxFileSize);
-      const rejectedSizeFiles = files.filter((file) => file.size > maxFileSize);
-
-      if (sizeAcceptedFiles.length > remaining) {
-        setErrorModal("최대 업로드 가능한 파일 개수를 초과했습니다.");
-        setTimeout(() => setErrorModal(null), 3000);
-        acceptedFiles = sizeAcceptedFiles.slice(0, remaining);
-      }
-      else if (rejectedSizeFiles.length > 0) {
-        setErrorModal("50MB를 초과하는 파일은 업로드할 수 없습니다.");
-        setTimeout(() => setErrorModal(null), 3000);
-      }
-      else {
-        acceptedFiles = sizeAcceptedFiles;
-      }
-      
-      const filePairs = acceptedFiles.map((file) => {
-        const uniqueId = generateRandomHash();
-        return { file, uniqueId };
-      });
-
-      setUploadedFiles((prev) => [
-        ...prev,
-        ...filePairs.map(({ file, uniqueId }) => ({
-          id: uniqueId,
-          name: file.name,
-        })),
-      ]);
-
-      await Promise.all(
-        filePairs.map(async ({ file, uniqueId }) => {
-          try {
-            const result = await uploadFiles(file, uniqueId);
-            setUploadedFiles((prev) =>
-              prev.map((item) =>
-                item.id === uniqueId ? result : item
-              )
-            );
-          } catch (err) {
-            setErrorModal("파일 처리 중 오류가 발생했습니다.");
-            setTimeout(() => setErrorModal(null), 3000);
-            setUploadedFiles((prev) =>
-              prev.filter((item) => item.id !== uniqueId)
-            );
-          }
-        })
-      );
-    },
-    [uploadedFiles, maxFileSize, generateRandomHash, uploadFiles]
-  );
+  }, [location.state, setErrorModal]);
 
   const sendMessage = useCallback(
     async (message) => {
@@ -250,7 +179,7 @@ function Main({ addConversation, isTouch }) {
           throw new Error("선택한 모델이 유효하지 않습니다.");
         }
         setIsLoading(true);
-
+        
         const response = await axios.post(
           `${process.env.REACT_APP_FASTAPI_URL}/new_conversation`,
           {
@@ -258,20 +187,26 @@ function Main({ addConversation, isTouch }) {
             temperature: temperature,
             reason: reason,
             system_message: systemMessage,
-            user_message: message,
+            user_message: "",
           },
-          { withCredentials: true }
+          { 
+            withCredentials: true
+          }
         );
-
-        const { conversation_id, alias, created_at } = response.data;
-        const newConversation = { 
-          conversation_id, 
-          alias, 
-          starred: false, 
+        
+        const conversation_id = response.data.conversation_id;
+        const created_at = response.data.created_at;
+        
+        const newConversation = {
+          conversation_id,
+          alias: "새 대화",
+          starred: false,
           starred_at: null,
-          created_at: created_at
+          created_at: created_at,
+          isLoading: true
         };
         addConversation(newConversation);
+        
         navigate(`/chat/${conversation_id}`, {
           state: {
             initialMessage: message,
@@ -282,7 +217,6 @@ function Main({ addConversation, isTouch }) {
       } catch (error) {
         setErrorModal("새 대화를 시작하는 데 실패했습니다.");
         setTimeout(() => setErrorModal(null), 2000);
-      } finally {
         setIsLoading(false);
       }
     },
@@ -293,12 +227,20 @@ function Main({ addConversation, isTouch }) {
       reason,
       systemMessage,
       navigate,
-      addConversation,
       uploadedFiles,
-      uploadingFiles
+      uploadingFiles,
+      setErrorModal,
+      addConversation
     ]
   );
 
+  const cancelRequest = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  }, []);
+  
   useEffect(() => {
     const hasUploadedImage = uploadedFiles.some((file) => {
       if (file.type && (file.type === "image" || file.type.startsWith("image/"))) {
@@ -338,16 +280,88 @@ function Main({ addConversation, isTouch }) {
     uploadedFiles,
   ]);
 
+  const handlePlusButtonClick = useCallback((e) => {
+    e.stopPropagation();
+    setShowMediaOptions(!showMediaOptions);
+  }, [showMediaOptions]);
+
   const handleFileClick = useCallback((e) => {
     e.stopPropagation();
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
+    setShowMediaOptions(false);
   }, []);
 
+  const handleRecordingStop = useCallback(() => {
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+      clearInterval(recordingTimerRef.current);
+      setRecordingTime(0);
+      setIsRecording(false);
+    }
+  }, [isRecording]);
+
+  const handleRecordingStart = useCallback(async () => {
+    try {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (!SpeechRecognition) {
+        setErrorModal("이 브라우저는 음성 인식을 지원하지 않습니다.");
+        setTimeout(() => setErrorModal(null), 2000);
+        return;
+      }
+      
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ko-KR';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      
+      recognition.onresult = (event) => {
+        let finalText = '';
+        let interimText = '';
+        
+        for (let i = 0; i < event.results.length; i++) {
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          
+          if (result.isFinal)
+            finalText += transcript;
+          else 
+            interimText += transcript;
+        }
+        
+        const newText = inputText + finalText + interimText;
+        setInputText(newText);
+      };
+      
+      recognition.onerror = (event) => {
+        setErrorModal(`음성 인식 오류가 발생했습니다. ${event.error}`);
+        setTimeout(() => setErrorModal(null), 2000);
+        handleRecordingStop();
+      };
+      
+      recognition.onend = () => {
+        if (isRecording) {
+          recognition.start();
+        }
+      };
+      
+      recognition.start();
+      recognitionRef.current = recognition;
+      
+      setIsRecording(true);
+      setShowMediaOptions(false);
+    } catch (error) {
+      setErrorModal("음성 인식을 시작하는 데 실패했습니다.");
+      setTimeout(() => setErrorModal(null), 2000);
+    }
+  }, [setErrorModal, isRecording, handleRecordingStop, inputText]);
+
   const handleFileDelete = useCallback((file) => {
-    setUploadedFiles((prev) => prev.filter((f) => f.id !== file.id));
-  }, []);
+    removeFile(file.id);
+  }, [removeFile]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -380,7 +394,7 @@ function Main({ addConversation, isTouch }) {
         await processFiles(acceptedFiles);
       }
     },
-    [allowedExtensions, processFiles]
+    [allowedExtensions, processFiles, setErrorModal]
   );
 
   const handlePaste = useCallback(
@@ -437,11 +451,22 @@ function Main({ addConversation, isTouch }) {
   }, [inputText, adjustTextareaHeight]);
 
   const handleSendButtonClick = useCallback(() => {
+    if (isLoading) {
+      cancelRequest();
+      return;
+    }
+    
     if (inputText.trim())
       sendMessage(inputText);
     else
       navigate("/realtime");
-  }, [inputText, sendMessage, navigate]);
+  }, [inputText, sendMessage, navigate, isLoading, cancelRequest]);
+
+  const formatRecordingTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div
@@ -464,9 +489,9 @@ function Main({ addConversation, isTouch }) {
 
       <motion.div
         className="input-container main-input-container"
-        initial={{ y: 5 }}
-        animate={{ y: 0 }}
-        exit={{ y: 5 }}
+        initial={{ y: 8, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 8, opacity: 0 }}
         transition={{ duration: 0.3 }}
       >
         <div className="content-container">
@@ -509,6 +534,25 @@ function Main({ addConversation, isTouch }) {
             )}
           </AnimatePresence>
           <div className="input-area">
+            <AnimatePresence>
+              {isRecording && (
+                <motion.div 
+                  className="recording-indicator"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="recording-dot"></div>
+                  <span>
+                    {`녹음 중... ${formatRecordingTime(recordingTime)}`}
+                  </span>
+                  <button className="stop-recording-button" onClick={handleRecordingStop}>
+                    완료
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <textarea
               ref={textAreaRef}
               className="message-input"
@@ -522,9 +566,36 @@ function Main({ addConversation, isTouch }) {
             />
           </div>
           <div className="button-area">
-            <div className="function-button" onClick={handleFileClick}>
-              <GoPlus style={{ strokeWidth: 0.5 }} />
+            <div className="function-button-container" ref={optionsRef}>
+              <div 
+                className="function-button plus-button" 
+                onClick={handlePlusButtonClick}
+              >
+                <GoPlus style={{ strokeWidth: 0.5 }} />
+              </div>
+              
+              <AnimatePresence>
+                {showMediaOptions && (
+                  <motion.div 
+                    className="media-options-dropdown"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="media-option" onClick={handleFileClick}>
+                      <FiPaperclip />
+                      파일 업로드
+                    </div>
+                    <div className="media-option" onClick={handleRecordingStart}>
+                      <FiMic />
+                      녹음 시작
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
+            
             <div
               className={`function-button ${
                 isSearch ? "active" : ""
@@ -562,7 +633,7 @@ function Main({ addConversation, isTouch }) {
             inputText.trim() || uploadedFiles.length > 0  ? "" : "realtime"
           }`}
           onClick={handleSendButtonClick}
-          disabled={uploadingFiles}
+          disabled={uploadingFiles || isRecording}
           aria-label={
             isLoading
               ? "전송 중단"
@@ -586,7 +657,7 @@ function Main({ addConversation, isTouch }) {
 
       <input
         type="file"
-        accept="image/*, .zip, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .v, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
+        accept="image/*, .zip, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .flac, .amr, .amr-wb, .mulaw, .alaw, .webm, .m4a, .mp4, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .v, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
         multiple
         ref={fileInputRef}
         style={{ display: "none" }}

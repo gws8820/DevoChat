@@ -69,7 +69,7 @@
       },
       {
         "model_name": "claude-3-5-sonnet-latest:default",
-        "model_alias": "Claude 3.5 Sonnet",
+        "model_alias": "Claude 3.5 Sonnet v2",
         "description": "문학 특화 Claude 모델",
         "endpoint": "/claude",
         "in_billing": "3",
@@ -85,7 +85,7 @@
       },
       {
         "model_name": "claude-3-5-sonnet-latest:search",
-        "model_alias": "Claude 3.5 Sonnet Search",
+        "model_alias": "Claude 3.5 Sonnet v2 Search",
         "description": "문학 특화 Claude 모델",
         "endpoint": "/claude",
         "in_billing": "3",
@@ -134,7 +134,7 @@
         "hidden": "search"
       },
       {
-        "model_name": "gemini-2.5-flash-preview-04-17:default",
+        "model_name": "gemini-2.5-flash-preview-05-20:default",
         "model_alias": "Gemini 2.5 Flash",
         "description": "표준 Gemini 모델",
         "endpoint": "/gemini",
@@ -147,15 +147,15 @@
           "search": false
         },
         "type": "default",
-        "related_models": ["gemini-2.5-flash-preview-04-17:inference"]
+        "related_models": ["gemini-2.5-flash-preview-05-20:inference"]
       },
       {
-        "model_name": "gemini-2.5-flash-preview-04-17:inference",
+        "model_name": "gemini-2.5-flash-preview-05-20:inference",
         "model_alias": "Gemini 2.5 Flash Thinking",
         "description": "추론 Gemini 모델",
         "endpoint": "/gemini",
         "in_billing": "0.15",
-        "out_billing": "0.6",
+        "out_billing": "3.5",
         "inference": true,
         "stream": true,
         "capabilities": {
@@ -163,7 +163,7 @@
           "search": false
         },
         "type": "reason",
-        "related_models": ["gemini-2.5-flash-preview-04-17:default"],
+        "related_models": ["gemini-2.5-flash-preview-05-20:default"],
         "hidden": "inference"
       },
       {

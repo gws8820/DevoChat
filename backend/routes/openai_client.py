@@ -5,20 +5,19 @@ import base64
 import copy
 import tiktoken
 from dotenv import load_dotenv
+from db_util import Database
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from pymongo import MongoClient
 from bson import ObjectId
-from typing import Any, Union, List, Dict, Optional
+from typing import Any, List, Dict, Optional
 from openai import AsyncOpenAI
 from .auth import User, get_current_user
 
 load_dotenv()
 
 router = APIRouter()
-mongoclient = MongoClient(os.getenv('MONGODB_URI'))
-db = mongoclient.chat_db
+db = Database.get_db()
 user_collection = db.users
 conversation_collection = db.conversations
 
@@ -204,7 +203,7 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
             else:
                 single_result = await client.chat.completions.create(**parameters, timeout=300)
                 if single_result.choices[0].message.reasoning_content:
-                    resoning_text = "<think>\n" + completion.choices[0].message.reasoning_content + "\n</think>\n\n"
+                    resoning_text = "<think>\n" + single_result.choices[0].message.reasoning_content + "\n</think>\n\n"
                 else: reasoning_text = ""
                 full_response_text = reasoning_text + single_result.choices[0].message.content
 

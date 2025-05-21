@@ -9,13 +9,14 @@ import textract
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from fastapi import FastAPI, File, UploadFile, HTTPException, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from routes import auth, realtime, conversations, openai_client, responses_client, anthropic_client, huggingface_client
 from PIL import Image, ImageOps
 from typing import List
 from bs4 import BeautifulSoup
+from google.cloud import speech
 
 load_dotenv()
 app = FastAPI()
@@ -85,7 +86,7 @@ async def upload_image(file: UploadFile = File(...)):
     file_location = os.path.join(UPLOAD_DIR, filename)
     with open(file_location, "wb") as f:
         f.write(buffer.getvalue())
-
+    
     return {
         "type": "image",
         "name": filename,
@@ -112,6 +113,8 @@ async def upload_file(file: UploadFile = File(...)):
         '.go', '.rs', '.php'
     ]
     
+    audio_extensions = ['.wav', '.mp3', '.ogg', '.flac', '.amr', '.amr-wb', '.mulaw', '.alaw', '.webm', '.m4a', '.mp4']
+    
     file_data = await file.read()
     if len(file_data) > 100 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File size exceeds size limit.")
@@ -137,25 +140,26 @@ async def upload_file(file: UploadFile = File(...)):
                         try:
                             extracted_text = inner_file_data.decode("utf-8", errors="replace")
                         except Exception as e:
-                            print(f"Decoding error for {inner_filename}: {e}")
                             extracted_text = ""
                     else:
                         with tempfile.NamedTemporaryFile(suffix=inner_ext, delete=False) as tmp:
                             tmp.write(inner_file_data)
                             tmp.flush()
                             tmp_path = tmp.name
+                        
                         try:
                             extracted_bytes = textract.process(tmp_path)
-                            extracted_text = extracted_bytes.decode("utf-8", errors="ignore")
+                            extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
                         except Exception as e:
-                            print(f"textract error for {inner_filename}: {e}")
                             extracted_text = ""
                         finally:
                             os.remove(tmp_path)
+                    
                     extracted_parts.append(f"[[{inner_filename}]]\n{extracted_text}")
+            
             final_extracted_text = "\n\n".join(extracted_parts)
+        
         except Exception as e:
-            print(f"Error processing archive file {filename}: {e}")
             final_extracted_text = ""
         
         return {
@@ -164,12 +168,45 @@ async def upload_file(file: UploadFile = File(...)):
             "content": final_extracted_text
         }
     else:
-        if ext in text_extensions:
+        if ext in audio_extensions:
+            with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+                tmp.write(file_data)
+                tmp.flush()
+                tmp_path = tmp.name
+            
+            extracted_text = ""
+            try:
+                client = speech.SpeechClient(client_options={"api_key": os.getenv("GOOGLE_STT_API_KEY")})
+                
+                with open(tmp_path, "rb") as audio_file:
+                    content = audio_file.read()
+                audio = speech.RecognitionAudio(content=content)
+                
+                config = speech.RecognitionConfig(
+                    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                    language_code="ko-KR",
+                    alternative_language_codes=["en-US"],
+                    enable_automatic_punctuation=True,
+                )
+                response = client.recognize(config=config, audio=audio)
+                
+                for result in response.results:
+                    extracted_text += result.alternatives[0].transcript + " "
+            except Exception as e:
+                try:
+                    extracted_bytes = textract.process(tmp_path)
+                    extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
+                except Exception as e:
+                    extracted_text = ""
+            finally:
+                os.remove(tmp_path)
+        
+        elif ext in text_extensions:
             try:
                 extracted_text = file_data.decode("utf-8", errors="replace")
             except Exception as e:
-                print(f"Direct decode error: {e}")
                 extracted_text = ""
+        
         else:
             with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
                 tmp.write(file_data)
@@ -178,9 +215,8 @@ async def upload_file(file: UploadFile = File(...)):
 
             try:
                 extracted_bytes = textract.process(tmp_path)
-                extracted_text = extracted_bytes.decode("utf-8", errors="ignore")
+                extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
             except Exception as e:
-                print(f"textract error: {e}")
                 extracted_text = ""
             finally:
                 os.remove(tmp_path)
@@ -235,6 +271,8 @@ async def upload_page(content: WebContent):
         </html>"""
 
         file_path = os.path.join("shared_pages", f"{content.unique_id}.html")
+        os.makedirs("shared_pages", exist_ok=True)
+        
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(html_content)
         
@@ -285,7 +323,7 @@ async def get_opengraph_page():
     return {"detail": "Not Found"}
 
 @app.get("/{full_path:path}")
-def catch_all(full_path: str):
+def catch_all():
     with open("./error.html", "r", encoding="utf-8") as f:
         error_content = f.read()
     return Response(

@@ -1,12 +1,10 @@
 import os
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from .auth import User, get_current_user
 
 load_dotenv()
-
-app = FastAPI()
 router = APIRouter()
 
 @router.get("/session")

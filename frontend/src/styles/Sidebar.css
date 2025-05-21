@@ -115,6 +115,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: 37px;
+    box-sizing: border-box;
     padding: 6px 18px;
     border-radius: 5px;
     cursor: pointer;

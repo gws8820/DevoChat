@@ -4,11 +4,11 @@ import modelsData from '../models.json';
 export const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
-  const DEFAULT_MODEL = "gpt-4.1-mini:default";
-  const DEFAULT_IMAGE_MODEL = "gpt-4.1-mini:default";
-  const DEFAULT_SEARCH_MODEL = "gpt-4.1-mini:search";
-  const DEFAULT_INFERENCE_MODEL = "o4-mini:default";
-  const DEFAULT_SEARCH_INFERENCE_MODEL = "o4-mini:search"
+  const DEFAULT_MODEL = "gemini-2.5-flash-preview-05-20:default";
+  const DEFAULT_IMAGE_MODEL = "gemini-2.5-flash-preview-05-20:default";
+  const DEFAULT_SEARCH_MODEL = "sonar";
+  const DEFAULT_INFERENCE_MODEL = "gemini-2.5-flash-preview-05-20:inference";
+  const DEFAULT_SEARCH_INFERENCE_MODEL = "sonar-reasoning"
 
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [modelType, setModelType] = useState("");

@@ -6,17 +6,14 @@ from fastapi import APIRouter, HTTPException, Cookie, Depends, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, constr
 from typing import List, Annotated
-from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from datetime import datetime, timezone
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+from db_util import Database
 
 load_dotenv()
 router = APIRouter()
-
-# Motor client
-mongoclient = AsyncIOMotorClient(os.getenv('MONGODB_URI'))
-db = mongoclient.chat_db
+db = Database.get_db()
 collection = db.users
 
 # JWT
@@ -50,7 +47,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 @router.post("/register")
 async def register(user: RegisterUser):
-    if await collection.find_one({"email": user.email}):
+    if collection.find_one({"email": user.email}):
         raise HTTPException(status_code=400, detail="이미 존재하는 사용자입니다.")
     
     new_user = {
@@ -63,12 +60,12 @@ async def register(user: RegisterUser):
         "trial_remaining": 10,
         "created_at": datetime.now(timezone.utc)
     }
-    result = await collection.insert_one(new_user)
+    result = collection.insert_one(new_user)
     return {"message": "Registration Success!", "user_id": str(result.inserted_id)}
 
 @router.post("/login")
 async def login(user: LoginUser):
-    db_user = await collection.find_one({"email": user.email})
+    db_user = collection.find_one({"email": user.email})
     if not db_user or not verify_password(user.password, db_user["password"]):
         raise HTTPException(status_code=401, detail="이메일 또는 비밀번호 오류입니다.")
     
@@ -135,7 +132,7 @@ async def get_current_user(access_token: str = Cookie(None)) -> User:
             detail="Invalid token"
         )
     
-    db_user = await collection.find_one({"_id": ObjectId(user_id)})
+    db_user = collection.find_one({"_id": ObjectId(user_id)})
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -168,7 +165,7 @@ async def check_admin(access_token: str = Cookie(None)):
             detail="Invalid token"
         )
     
-    db_user = await collection.find_one({"_id": ObjectId(user_id)})
+    db_user = collection.find_one({"_id": ObjectId(user_id)})
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -192,7 +189,7 @@ async def get_all_users(
     users = []
     cursor = collection.find({}).skip(skip).limit(limit)
     
-    async for user in cursor:
+    for user in cursor:
         users.append(User(
             user_id=str(user["_id"]),
             name=user["name"],
@@ -215,7 +212,7 @@ async def update_user_status(
         if not ObjectId.is_valid(user_id):
             raise HTTPException(status_code=400, detail="Invalid User ID")
             
-        user = await collection.find_one({"_id": ObjectId(user_id)})
+        user = collection.find_one({"_id": ObjectId(user_id)})
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
             
@@ -224,12 +221,12 @@ async def update_user_status(
             "trial_remaining": 10 if user_data["trial"] else 0
         }
         
-        await collection.update_one(
+        collection.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": update_data}
         )
         
-        updated_user = await collection.find_one({"_id": ObjectId(user_id)})
+        updated_user = collection.find_one({"_id": ObjectId(user_id)})
         
         return User(
             user_id=str(updated_user["_id"]),

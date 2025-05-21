@@ -1,28 +1,28 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from "react";
+import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { GoPlus, GoGlobe, GoLightBulb, GoUnlock } from "react-icons/go";
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
 import { CiWarning } from "react-icons/ci";
+import { FiPaperclip, FiMic } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { v4 as uuidv4 } from 'uuid';
+import { useFileUpload } from "../hooks/useFileUpload";
 import axios from "axios";
 import modelsData from "../models.json";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
 import "../styles/Common.css";
 
-function Chat({ fetchConversations, isTouch, chatMessageRef }) {
+function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef }) {
   const { conversation_id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
@@ -33,13 +33,28 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
   const [deleteIndex, setdeleteIndex] = useState(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
-  const [errorModal, setErrorModal] = useState(null);
+  const [showMediaOptions, setShowMediaOptions] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  
+  const { 
+    uploadedFiles, 
+    setUploadedFiles,
+    errorModal, 
+    setErrorModal, 
+    processFiles, 
+    removeFile, 
+    allowedExtensions 
+  } = useFileUpload([]);
 
   const textAreaRef = useRef(null);
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
   const thinkingIntervalRef = useRef(null);
+  const optionsRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const recordingTimerRef = useRef(null);
 
   const {
     DEFAULT_MODEL,
@@ -70,116 +85,6 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
 
   const models = modelsData.models;
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
-  const allowedExtensions = useMemo(
-    () =>
-      /\.(zip|pdf|doc|docx|pptx|xlsx|csv|txt|text|rtf|html|htm|odt|eml|epub|msg|json|wav|mp3|ogg|md|markdown|xml|tsv|yml|yaml|py|pyw|rb|pl|java|c|cpp|h|hpp|v|js|jsx|ts|tsx|css|scss|less|cs|sh|bash|bat|ps1|ini|conf|cfg|toml|tex|r|swift|scala|hs|erl|ex|exs|go|rs|php)$/i,
-    []
-  );
-  const maxFileSize = 50 * 1024 * 1024;
-
-  const uploadFiles = useCallback(
-    async (file, uniqueId) => {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      if (file.type.startsWith("image/")) {
-        const res = await fetch(
-          `${process.env.REACT_APP_FASTAPI_URL}/upload/image`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-        const data = await res.json();
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        return {
-          id: uniqueId,
-          type: data.type,
-          name: data.name,
-          content: data.content,
-        };
-      } else {
-        const res = await fetch(
-          `${process.env.REACT_APP_FASTAPI_URL}/upload/file`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-        const data = await res.json();
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        return {
-          id: uniqueId,
-          type: data.type,
-          name: data.name,
-          content: data.content,
-        };
-      }
-    },
-    []
-  );
-
-  const processFiles = useCallback(
-    async (files) => {
-      const maxAllowed = 10;
-      let acceptedFiles = [];
-      const currentCount = uploadedFiles.length;
-      const remaining = maxAllowed - currentCount;
-      
-      const sizeAcceptedFiles = files.filter((file) => file.size <= maxFileSize);
-      const rejectedSizeFiles = files.filter((file) => file.size > maxFileSize);
-
-      if (sizeAcceptedFiles.length > remaining) {
-        setErrorModal("최대 업로드 가능한 파일 개수를 초과했습니다.");
-        setTimeout(() => setErrorModal(null), 3000);
-        acceptedFiles = sizeAcceptedFiles.slice(0, remaining);
-      }
-      else if (rejectedSizeFiles.length > 0) {
-        setErrorModal("50MB를 초과하는 파일은 업로드할 수 없습니다.");
-        setTimeout(() => setErrorModal(null), 3000);
-      }
-      else {
-        acceptedFiles = sizeAcceptedFiles;
-      }
-      
-      const filePairs = acceptedFiles.map((file) => {
-        const uniqueId = uuidv4();
-        return { file, uniqueId };
-      });
-
-      setUploadedFiles((prev) => [
-        ...prev,
-        ...filePairs.map(({ file, uniqueId }) => ({
-          id: uniqueId,
-          name: file.name,
-        })),
-      ]);
-
-      await Promise.all(
-        filePairs.map(async ({ file, uniqueId }) => {
-          try {
-            const result = await uploadFiles(file, uniqueId);
-            setUploadedFiles((prev) =>
-              prev.map((item) =>
-                item.id === uniqueId ? result : item
-              )
-            );
-          } catch (err) {
-            setErrorModal("파일 처리 중 오류가 발생했습니다.");
-            setTimeout(() => setErrorModal(null), 3000);
-            setUploadedFiles((prev) =>
-              prev.filter((item) => item.id !== uniqueId)
-            );
-          }
-        })
-      );
-    },
-    [uploadedFiles, maxFileSize, uploadFiles]
-  );
 
   const updateAssistantMessage = useCallback((message, isComplete = false) => {
     if (thinkingIntervalRef.current) {
@@ -217,7 +122,7 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
           setTimeout(() => setErrorModal(null), 2000);
         });
     },
-    [conversation_id]
+    [conversation_id, setErrorModal]
   );
 
   const sendMessage = useCallback(
@@ -392,7 +297,8 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
       isInference,
       isDAN,
       uploadedFiles,
-      uploadingFiles
+      uploadingFiles,
+      setUploadedFiles
     ]
   );
 
@@ -491,12 +397,41 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
           m.role === "assistant" ? { ...m, isComplete: true } : m
         );
         setMessages(updatedMessages);
+        
+        setIsInitialized(true);
 
         if (location.state?.initialMessage && updatedMessages.length === 0) {
           if (location.state.initialFiles && location.state.initialFiles.length > 0) {
             sendMessage(location.state.initialMessage, location.state.initialFiles);
           } else {
             sendMessage(location.state.initialMessage);
+          }
+          
+          if (!res.data.alias) {
+            (async () => {
+              try {
+                const aliasResponse = await fetch(
+                  `${process.env.REACT_APP_FASTAPI_URL}/get_alias`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                      conversation_id: conversation_id,
+                      text: location.state.initialMessage 
+                    }),
+                    credentials: "include"
+                  }
+                );
+                const aliasData = await aliasResponse.json();
+                if (aliasData && aliasData.alias) {
+                  setAlias(aliasData.alias);
+                  updateConversation(conversation_id, aliasData.alias, false);
+                }
+              } catch (err) {
+                console.error("Alias generation failed:", err);
+                updateConversation(conversation_id, "새 대화", false);
+              }
+            })();
           }
         }
       } catch (err) {
@@ -565,16 +500,22 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
     messages
   ]);
 
+  const handlePlusButtonClick = useCallback((e) => {
+    e.stopPropagation();
+    setShowMediaOptions(!showMediaOptions);
+  }, [showMediaOptions]);
+
   const handleFileClick = useCallback((e) => {
     e.stopPropagation();
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
+    setShowMediaOptions(false);
   }, []);
 
   const handleFileDelete = useCallback((file) => {
-    setUploadedFiles((prev) => prev.filter((f) => f.id !== file.id));
-  }, []);
+    removeFile(file.id);
+  }, [removeFile]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -609,7 +550,7 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
         await processFiles(acceptedFiles);
       }
     },
-    [allowedExtensions, processFiles]
+    [allowedExtensions, processFiles, setErrorModal]
   );
 
   const handlePaste = useCallback(
@@ -697,6 +638,104 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
   useEffect(() => {
     adjustTextareaHeight();
   }, [inputText, adjustTextareaHeight]);
+  
+  const handleRecordingStop = useCallback(() => {
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+      clearInterval(recordingTimerRef.current);
+      setRecordingTime(0);
+      setIsRecording(false);
+    }
+  }, [isRecording]);
+
+  const handleRecordingStart = useCallback(async () => {
+    try {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (!SpeechRecognition) {
+        setErrorModal("이 브라우저는 음성 인식을 지원하지 않습니다.");
+        setTimeout(() => setErrorModal(null), 2000);
+        return;
+      }
+      
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ko-KR';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      
+      recognition.onresult = (event) => {
+        let finalText = '';
+        let interimText = '';
+        
+        for (let i = 0; i < event.results.length; i++) {
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          
+          if (result.isFinal)
+            finalText += transcript;
+          else 
+            interimText += transcript;
+        }
+        
+        const newText = inputText + finalText + interimText;
+        setInputText(newText);
+      };
+      
+      recognition.onerror = (event) => {
+        setErrorModal(`음성 인식 오류가 발생했습니다. ${event.error}`);
+        setTimeout(() => setErrorModal(null), 2000);
+        handleRecordingStop();
+      };
+      
+      recognition.onend = () => {
+        if (isRecording) {
+          recognition.start();
+        }
+      };
+      
+      recognition.start();
+      recognitionRef.current = recognition;
+      
+      setIsRecording(true);
+      setShowMediaOptions(false);
+    } catch (error) {
+      setErrorModal("음성 인식을 시작하는 데 실패했습니다.");
+      setTimeout(() => setErrorModal(null), 2000);
+    }
+  }, [setErrorModal, isRecording, handleRecordingStop, inputText]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
+        setShowMediaOptions(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isRecording) {
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(recordingTimerRef.current);
+      setRecordingTime(0);
+    }
+    
+    return () => clearInterval(recordingTimerRef.current);
+  }, [isRecording]);
+
+  const formatRecordingTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div
@@ -811,6 +850,25 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
             )}
           </AnimatePresence>
           <div className="input-area">
+            <AnimatePresence>
+              {isRecording && (
+                <motion.div 
+                  className="recording-indicator"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="recording-dot"></div>
+                  <span>
+                    {`녹음 중... ${formatRecordingTime(recordingTime)}`}
+                  </span>
+                  <button className="stop-recording-button" onClick={handleRecordingStop}>
+                    완료
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <textarea
               ref={textAreaRef}
               className="message-input"
@@ -824,9 +882,36 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
             />
           </div>
           <div className="button-area">
-            <div className="function-button" onClick={handleFileClick}>
-              <GoPlus style={{ strokeWidth: 0.5 }} />
+            <div className="function-button-container" ref={optionsRef}>
+              <div 
+                className="function-button" 
+                onClick={handlePlusButtonClick}
+              >
+                <GoPlus style={{ strokeWidth: 0.5 }} />
+              </div>
+              
+              <AnimatePresence>
+                {showMediaOptions && (
+                  <motion.div 
+                    className="media-options-dropdown"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="media-option" onClick={handleFileClick}>
+                      <FiPaperclip />
+                      파일 업로드
+                    </div>
+                    <div className="media-option" onClick={handleRecordingStart}>
+                      <FiMic />
+                      녹음 시작
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
+            
             <div
               className={`function-button ${
                 isSearch ? "active" : ""
@@ -882,7 +967,7 @@ function Chat({ fetchConversations, isTouch, chatMessageRef }) {
 
       <input
         type="file"
-        accept="image/*, .zip, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .v, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
+        accept="image/*, .zip, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .flac, .amr, .amr-wb, .mulaw, .alaw, .webm, .m4a, .mp4, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .v, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
         multiple
         ref={fileInputRef}
         style={{ display: "none" }}
