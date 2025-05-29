@@ -17,6 +17,7 @@ from PIL import Image, ImageOps
 from typing import List
 from bs4 import BeautifulSoup
 from google.cloud import speech
+import base64
 
 load_dotenv()
 app = FastAPI()
@@ -32,6 +33,10 @@ class WebContent(BaseModel):
     html: str
     stylesheets: List[str]
     title: str
+
+class NoticeResponse(BaseModel):
+    message: str
+    hash: str
 
 app.add_middleware(
     CORSMiddleware,
@@ -317,6 +322,16 @@ def visit_url(request: URLRequest):
         return {"content": f"[[{request.url}]]\n{content}"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error occured while visiting URL: {str(e)}")
+
+@app.get("/notice", response_model=NoticeResponse)
+async def get_notice():
+    notice_message = 'Deepseek R1 모델이 05-28 버전으로 업데이트 되었습니다.'
+    notice_hash = base64.b64encode(notice_message.encode('utf-8')).decode('utf-8')
+    
+    return NoticeResponse(
+        message=notice_message,
+        hash=notice_hash
+    )
 
 @app.get("/og")
 async def get_opengraph_page():

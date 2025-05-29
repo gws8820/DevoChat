@@ -20,6 +20,8 @@ import "../styles/Common.css";
 function Main({ addConversation, isTouch }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [notice, setNotice] = useState("");
+  const [noticeHash, setNoticeHash] = useState("");
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
@@ -74,8 +76,23 @@ function Main({ addConversation, isTouch }) {
   const models = modelsData.models;
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
 
-  const notice = 'Gemini 2.5 Flash 모델이 05-20 버전으로 업데이트 되었습니다.';
-  const noticeHash = btoa(encodeURIComponent(notice));
+  useEffect(() => {
+    const fetchNotice = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_FASTAPI_URL}/notice`);
+        const { message, hash } = response.data;
+        setNotice(message);
+        setNoticeHash(hash);
+        
+        const storedHash = localStorage.getItem('noticeHash');
+        if (!storedHash || storedHash !== hash) {
+          setConfirmModal(true);
+        }
+      } catch (error) {}
+    };
+    
+    fetchNotice();
+  }, []);
 
   useEffect(() => {
     setIsImage(false);
@@ -152,13 +169,6 @@ function Main({ addConversation, isTouch }) {
     else
       updateModel(DEFAULT_MODEL);
   }
-
-  useEffect(() => {
-    const storedHash = localStorage.getItem('noticeHash');
-    if (!storedHash || storedHash !== noticeHash) {
-      setConfirmModal(true);
-    }
-  }, [noticeHash]);
 
   useEffect(() => {
     if (location.state?.errorModal) {

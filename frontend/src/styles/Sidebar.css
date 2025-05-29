@@ -133,15 +133,24 @@
     background-color: #f0f0f0;
 }
 
-.conversation-text {
+.conversation-text,
+.loading-text {
     padding: 4px 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 14px;
-    color: #333;
     flex: 1;
     min-width: 0;
+}
+
+.conversation-text {
+    font-size: 14px;
+    color: #333;
+}
+
+.loading-text {
+    font-size: 13.5px;
+    color: #666;
 }
 
 .rename-input {

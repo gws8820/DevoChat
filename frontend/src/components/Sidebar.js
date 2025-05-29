@@ -1,5 +1,5 @@
 // src/components/Sidebar.js
-import React, { useEffect, useState, useRef, useContext, useMemo } from "react";
+import React, { useEffect, useState, useRef, useContext, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { RiSearchLine, RiMenuLine, RiCloseLine  } from "react-icons/ri";
@@ -13,6 +13,112 @@ import Modal from "./Modal";
 import Tooltip from "./Tooltip";
 import logo from "../logo.png";
 import "../styles/Sidebar.css";
+
+const ConversationItem = React.memo(({
+  conv,
+  currentConversationId,
+  renamingConversationId,
+  renameInputValue,
+  setRenameInputValue,
+  handleRename,
+  setRenamingConversationId,
+  handleNavigate,
+  handleConversationContextMenu,
+  handleTouchStart,
+  handleTouchEnd,
+  handleTouchMove,
+  toggleStar,
+  isTouch
+}) => {
+  const isRenaming = renamingConversationId === conv.conversation_id;
+  const isActive = currentConversationId === conv.conversation_id;
+
+  return (
+    <motion.li
+      key={conv.conversation_id}
+      layout
+      initial={false}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ 
+        type: "tween",
+        duration: 0.3,
+        ease: "easeInOut"
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        handleConversationContextMenu(e, conv.conversation_id)
+      }}
+      onTouchStart={(e) => handleTouchStart(e, conv.conversation_id)}
+      onTouchEnd={(e) => handleTouchEnd(e, conv.conversation_id)}
+      onTouchMove={handleTouchMove}
+      onTouchCancel={(e) => handleTouchEnd(e, conv.conversation_id)}
+    >
+      <motion.div
+        className={`conversation-item ${isActive ? "active-conversation" : ""}`}
+        layout
+        onClick={!isTouch ? () => {
+          if (!isRenaming) {
+            handleNavigate(conv.conversation_id);
+          }
+        } : undefined}
+      >
+        {isRenaming ? (
+          <input
+            type="text"
+            className="rename-input"
+            value={renameInputValue}
+            onChange={(e) => setRenameInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleRename(conv.conversation_id, renameInputValue);
+              }
+            }}
+            enterKeyHint="done"
+            onBlur={() => {
+              setRenamingConversationId(null);
+              setRenameInputValue("");
+            }}
+            autoFocus
+          />
+        ) : (
+          <AnimatePresence mode="wait">
+            {conv.isLoading ? (
+              <motion.span
+                key="loading"
+                className="loading-text"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                로딩 중...
+              </motion.span>
+            ) : (
+              <motion.span
+                key="alias"
+                className="conversation-text"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {conv.alias}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        )}
+
+        <motion.div 
+          className={`star-icon ${conv.starred ? 'starred' : ''} ${isTouch && !conv.starred ? 'disabled' : ''}`}  
+          onClick={(e) => {toggleStar(conv.conversation_id, e)}}
+        >
+          <IoMdStar />
+        </motion.div>
+      </motion.div>
+    </motion.li>
+  );
+});
 
 function Sidebar({
   toggleSidebar,
@@ -51,6 +157,7 @@ function Sidebar({
   const userContainerRef = useRef(null);
   const searchInputRef = useRef(null);
   const longPressTimer = useRef(null);
+  const contextMenuProtected = useRef(false);
 
   const { setAlias } = useContext(SettingsContext); 
 
@@ -115,6 +222,15 @@ function Sidebar({
         y: e.touches[0].pageY,
       });
       
+      if (navigator.vibrate) {
+        navigator.vibrate(100);
+      }
+      
+      contextMenuProtected.current = true;
+      setTimeout(() => {
+        contextMenuProtected.current = false;
+      }, 500);
+      
       const preventDefaultOnce = (evt) => {
         evt.preventDefault();
         document.removeEventListener('contextmenu', preventDefaultOnce);
@@ -123,14 +239,20 @@ function Sidebar({
     }, 500);
   };
 
-  const handleTouchEnd = (e) => {
+  const handleTouchEnd = (e, conversation_id) => {
     if (contextMenu.visible) {
       e.preventDefault();
+      e.stopPropagation();
+      return;
     }
     
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
+      
+      if (renamingConversationId !== conversation_id) {
+        handleNavigate(conversation_id);
+      }
     }
   };
 
@@ -145,7 +267,7 @@ function Sidebar({
     ? location.pathname.split("/chat/")[1]
     : null;
 
-  const handleRename = async (conversation_id, newAlias) => {
+  const handleRename = useCallback(async (conversation_id, newAlias) => {
     try {
       updateConversation(conversation_id, newAlias);
       setRenamingConversationId(null);
@@ -165,7 +287,7 @@ function Sidebar({
       setErrorModal("대화 이름 편집에 실패했습니다.");
       setTimeout(() => setErrorModal(null), 2000);
     }
-  };
+  }, [updateConversation, currentConversationId, setAlias, setErrorModal]);
 
   const handleDelete = async (conversation_id) => {
     try {
@@ -239,7 +361,7 @@ function Sidebar({
     setModalAction(null);
   };
 
-  const handleNavigate = (conversation_id) => {
+  const handleNavigate = useCallback((conversation_id) => {
     const conversationExists = conversations.find(
       (c) => c.conversation_id === conversation_id
     );
@@ -250,14 +372,14 @@ function Sidebar({
     }
     navigate(`/chat/${conversation_id}`);
     if (isResponsive) toggleSidebar();
-  };
+  }, [conversations, setErrorModal, navigate, isResponsive, toggleSidebar]);
 
   const handleNewConversation = () => {
     navigate("/");
     if (isResponsive) toggleSidebar();
   };
 
-  const handleConversationContextMenu = (e, conversation_id) => {
+  const handleConversationContextMenu = useCallback((e, conversation_id) => {
     e.preventDefault();
     if (renamingConversationId !== null) return;
     
@@ -267,11 +389,11 @@ function Sidebar({
       x: e.pageX,
       y: e.pageY,
     });
-  };
+  }, [renamingConversationId]);
   
   useEffect(() => {
     const handleClickOutsideContextMenu = () => {
-      if (contextMenu.visible) {
+      if (contextMenu.visible && !contextMenuProtected.current) {
         setContextMenu({ ...contextMenu, visible: false });
       }
     };
@@ -343,7 +465,7 @@ function Sidebar({
     }
   };
 
-  const toggleStar = async (conversation_id, e) => {
+  const toggleStar = useCallback(async (conversation_id, e) => {
     e.stopPropagation();
     try {
       const conversation = conversations.find(c => c.conversation_id === conversation_id);
@@ -365,7 +487,7 @@ function Sidebar({
       }
       setTimeout(() => setErrorModal(null), 2000);
     }
-  };
+  }, [conversations, toggleStarConversation, setErrorModal]);
 
   return (
     <>
@@ -444,105 +566,23 @@ function Sidebar({
                   filteredConversations
                     .slice()
                     .map((conv) => (
-                      <motion.li
+                      <ConversationItem
                         key={conv.conversation_id}
-                        layout
-                        initial={false}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ 
-                          type: "tween",
-                          duration: 0.3,
-                          ease: "easeInOut"
-                        }}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          handleConversationContextMenu(e, conv.conversation_id)
-                        }}
-                        onTouchStart={(e) => handleTouchStart(e, conv.conversation_id)}
-                        onTouchEnd={handleTouchEnd}
-                        onTouchMove={handleTouchMove}
-                        onTouchCancel={handleTouchEnd}
-                      >
-                        <motion.div
-                          className={`conversation-item ${
-                            currentConversationId === conv.conversation_id
-                              ? "active-conversation"
-                              : ""
-                          }`}
-                          layout
-                          onClick={() => {
-                            if (renamingConversationId !== conv.conversation_id) {
-                              handleNavigate(conv.conversation_id);
-                            }
-                          }}
-                        >
-                          {renamingConversationId === conv.conversation_id ? (
-                            <input
-                              type="text"
-                              className="rename-input"
-                              value={renameInputValue}
-                              onChange={(e) => setRenameInputValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  handleRename(conv.conversation_id, renameInputValue);
-                                }
-                              }}
-                              enterKeyHint="done"
-                              onBlur={() => {
-                                setRenamingConversationId(null);
-                                setRenameInputValue("");
-                              }}
-                              autoFocus
-                            />
-                          ) : (
-                            <span className={`conversation-text`}>
-                              <AnimatePresence mode="wait">
-                                {conv.isLoading ? (
-                                  <motion.span
-                                    key="loading"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ 
-                                      opacity: 1,
-                                      color: "#666",
-                                      fontSize: "13.5px"
-                                    }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                  >
-                                    로딩 중...
-                                  </motion.span>
-                                ) : (
-                                  <motion.span
-                                    key="alias"
-                                    initial={{ 
-                                      opacity: 0, 
-                                      color: "#666",
-                                      fontSize: "13.5px"
-                                    }}
-                                    animate={{ 
-                                      opacity: 1, 
-                                      color: "#333",
-                                      fontSize: "14px"
-                                    }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                  >
-                                    {conv.alias}
-                                  </motion.span>
-                                )}
-                              </AnimatePresence>
-                            </span>
-                          )}
-
-                          <motion.div 
-                            className={`star-icon ${conv.starred ? 'starred' : ''} ${isTouch && !conv.starred ? 'disabled' : ''}`}  
-                            onClick={(e) => {toggleStar(conv.conversation_id, e)}}
-                          >
-                            <IoMdStar />
-                          </motion.div>
-                        </motion.div>
-                      </motion.li>
+                        conv={conv}
+                        currentConversationId={currentConversationId}
+                        renamingConversationId={renamingConversationId}
+                        renameInputValue={renameInputValue}
+                        setRenameInputValue={setRenameInputValue}
+                        handleRename={handleRename}
+                        setRenamingConversationId={setRenamingConversationId}
+                        handleNavigate={handleNavigate}
+                        handleConversationContextMenu={handleConversationContextMenu}
+                        handleTouchStart={handleTouchStart}
+                        handleTouchEnd={handleTouchEnd}
+                        handleTouchMove={handleTouchMove}
+                        toggleStar={toggleStar}
+                        isTouch={isTouch}
+                      />
                     ))
                 ) : (
                   <div className="no-search-results">
