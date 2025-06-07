@@ -243,8 +243,10 @@
 .button-area .function-button {
     display: flex;
     align-items: center;
+    justify-content: center;
     position: relative;
     padding: 10px;
+    height: 17px;
     gap: 5px;
     border-radius: 20px;
     border: 1px solid rgb(240, 240, 240);
@@ -253,22 +255,33 @@
     cursor: pointer;
 }
 
+.button-area .function-button.plus-button {
+    width: 17px;
+}
+
 .button-area .function-button:hover {
     background-color: #f5f5f5;
 }
 
 .button-area .active {
     color: rgb(2, 133, 255);
-    background-color: rgb(238, 248, 255);
+    background-color: rgb(238, 245, 255);
 }
 
 .button-area .function-button.active:hover {
-    background-color: #e0f0ff;
+    background-color: rgb(228, 239, 255);
+}
+
+.button-area .active-disabled {
+    color: rgb(2, 100, 195);
+    background-color: rgb(238, 245, 255);
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .button-area .disabled {
+    opacity: 0.6;
     cursor: not-allowed;
-    opacity: 0.5;
     pointer-events: none;
 }
 

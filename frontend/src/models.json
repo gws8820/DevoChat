@@ -1,270 +1,79 @@
 {
     "models": [
       {
-        "model_name": "claude-sonnet-4-20250514:default",
-        "model_alias": "Claude 4 Sonnet",
-        "description": "고성능 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "3",
-        "out_billing": "15",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": false
-        },
-        "type": "default",
-        "related_models": ["claude-sonnet-4-20250514:inference", "claude-sonnet-4-20250514:search"]
-      },
-      {
-        "model_name": "claude-sonnet-4-20250514:search",
-        "model_alias": "Claude 4 Sonnet",
-        "description": "고성능 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "3",
-        "out_billing": "15",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "default",
-        "related_models": ["claude-sonnet-4-20250514:all", "claude-sonnet-4-20250514:default"],
-        "hidden": "search"
-      },
-      {
-        "model_name": "claude-sonnet-4-20250514:inference",
-        "model_alias": "Claude 4 Sonnet Thinking",
-        "description": "고성능 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "3",
-        "out_billing": "15",
-        "inference": true,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": false
-        },
-        "type": "think",
-        "related_models": ["claude-sonnet-4-20250514:default", "claude-sonnet-4-20250514:all"],
-        "hidden": "inference"
-      },
-      {
-        "model_name": "claude-sonnet-4-20250514:all",
-        "model_alias": "Claude 4 Sonnet Thinking",
-        "description": "고성능 Claude 모델",
-        "endpoint": "/claude", 
-        "in_billing": "3",
-        "out_billing": "15",
-        "inference": true,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "think",
-        "related_models": ["claude-sonnet-4-20250514:search", "claude-sonnet-4-20250514:inference"],
-        "hidden": "all"
-      },
-      {
-        "model_name": "claude-opus-4-20250514:default",
-        "model_alias": "Claude 4 Opus",
-        "description": "최고 성능 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "15",
-        "out_billing": "75",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": false
-        },
-        "type": "default",
-        "related_models": ["claude-opus-4-20250514:inference", "claude-opus-4-20250514:search"]
-      },
-      {
-        "model_name": "claude-opus-4-20250514:search",
-        "model_alias": "Claude 4 Opus",
-        "description": "최고 성능 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "15",
-        "out_billing": "75",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "default",
-        "related_models": ["claude-opus-4-20250514:all", "claude-opus-4-20250514:default"],
-        "hidden": "search"
-      },
-      {
-        "model_name": "claude-opus-4-20250514:inference",
-        "model_alias": "Claude 4 Opus Thinking",
-        "description": "최고 성능 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "15",
-        "out_billing": "75",
-        "inference": true,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": false
-        },
-        "type": "think",
-        "related_models": ["claude-opus-4-20250514:default", "claude-opus-4-20250514:all"],
-        "hidden": "inference"
-      },
-      {
-        "model_name": "claude-opus-4-20250514:all",
-        "model_alias": "Claude 4 Opus Thinking",
-        "description": "최고 성능 Claude 모델",
-        "endpoint": "/claude", 
-        "in_billing": "15",
-        "out_billing": "75",
-        "inference": true,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "think",
-        "related_models": ["claude-opus-4-20250514:search", "claude-opus-4-20250514:inference"],
-        "hidden": "all"
-      },
-      {
-        "model_name": "claude-3-5-sonnet-latest:default",
-        "model_alias": "Claude 3.5 Sonnet v2",
-        "description": "문학 특화 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "3",
-        "out_billing": "15",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": false
-        },
-        "type": "default",
-        "related_models": ["claude-3-5-sonnet-latest:search"]
-      },
-      {
-        "model_name": "claude-3-5-sonnet-latest:search",
-        "model_alias": "Claude 3.5 Sonnet v2",
-        "description": "문학 특화 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "3",
-        "out_billing": "15",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "default",
-        "related_models": ["claude-3-5-sonnet-latest:default"],
-        "hidden": "search"
-      },
-      {
-        "model_name": "claude-3-5-haiku-latest:default",
-        "model_alias": "Claude 3.5 Haiku",
-        "description": "빠른 속도의 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "0.8",
-        "out_billing": "4",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": false
-        },
-        "type": "default",
-        "related_models": ["claude-3-5-haiku-latest:search"]
-      },
-      {
-        "model_name": "claude-3-5-haiku-latest:search",
-        "model_alias": "Claude 3.5 Haiku",
-        "description": "빠른 속도의 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "0.8",
-        "out_billing": "4",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "default",
-        "related_models": ["claude-3-5-haiku-latest:default"],
-        "hidden": "search"
-      },
-      {
-        "model_name": "gemini-2.5-flash-preview-05-20:default",
+        "model_name": "gemini-2.5-flash-preview-05-20",
         "model_alias": "Gemini 2.5 Flash",
-        "description": "고성능 Gemini 모델",
+        "description": "표준 Gemini 모델",
         "endpoint": "/gemini",
         "in_billing": "0.15",
         "out_billing": "0.6",
-        "inference": false,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
-          "search": false
+          "inference": "toggle",
+          "search": "toggle"
         },
-        "type": "default",
-        "related_models": ["gemini-2.5-flash-preview-05-20:inference"]
+        "slider": "reason"
       },
       {
-        "model_name": "gemini-2.5-flash-preview-05-20:inference",
-        "model_alias": "Gemini 2.5 Flash Thinking",
+        "model_name": "gemini-2.5-pro-preview-06-05",
+        "model_alias": "Gemini 2.5 Pro",
         "description": "고성능 Gemini 모델",
         "endpoint": "/gemini",
-        "in_billing": "0.15",
-        "out_billing": "3.5",
-        "inference": true,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": false
-        },
-        "type": "reason",
-        "related_models": ["gemini-2.5-flash-preview-05-20:default"],
-        "hidden": "inference"
-      },
-      {
-        "model_name": "gemini-2.5-pro-preview-05-06:default",
-        "model_alias": "Gemini 2.5 Pro",
-        "description": "최고 성능 Gemini 모델",
-        "endpoint": "/gemini",
         "in_billing": "1.25",
         "out_billing": "10",
-        "inference": false,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
-          "search": false
+          "inference": true,
+          "search": "toggle"
         },
-        "type": "default",
-        "related_models": ["gemini-2.5-pro-preview-05-06:inference"]
+        "slider": "reason"
       },
       {
-        "model_name": "gemini-2.5-pro-preview-05-06:inference",
-        "model_alias": "Gemini 2.5 Pro Thinking",
-        "description": "최고 성능 Gemini 모델",
-        "endpoint": "/gemini",
-        "in_billing": "1.25",
-        "out_billing": "10",
-        "inference": true,
-        "stream": true,
+        "model_name": "claude-sonnet-4-20250514",
+        "model_alias": "Claude 4 Sonnet",
+        "description": "고성능 Claude 모델",
+        "endpoint": "/claude",
+        "in_billing": "3",
+        "out_billing": "15",
         "capabilities": {
+          "stream": true,
           "image": true,
-          "search": false
+          "inference": "toggle",
+          "search": "toggle"
         },
-        "type": "reason",
-        "related_models": ["gemini-2.5-pro-preview-05-06:default"],
-        "hidden": "inference"
+        "slider": "fixed_reason"
+      },
+      {
+        "model_name": "claude-opus-4-20250514",
+        "model_alias": "Claude 4 Opus",
+        "description": "최고 성능 Claude 모델",
+        "endpoint": "/claude",
+        "in_billing": "15",
+        "out_billing": "75",
+        "capabilities": {
+          "stream": true,
+          "image": true,
+          "inference": "toggle",
+          "search": "toggle"
+        },
+        "slider": "fixed_reason"
+      },
+      {
+        "model_name": "claude-3-5-haiku-latest",
+        "model_alias": "Claude 3.5 Haiku",
+        "description": "표준 Claude 모델",
+        "endpoint": "/claude",
+        "in_billing": "0.8",
+        "out_billing": "4",
+        "capabilities": {
+          "stream": true,
+          "image": true,
+          "inference": false,
+          "search": "toggle"
+        },
+        "slider": "temperature"
       },
       {
         "model_name": "deepseek-ai/DeepSeek-V3-0324",
@@ -273,14 +82,13 @@
         "endpoint": "/huggingface",
         "in_billing": "0.9",
         "out_billing": "0.9",
-        "inference": false,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": false,
+          "inference": false,
           "search": false
         },
-        "type": "default",
-        "related_models": ["deepseek-ai/DeepSeek-R1-0528"]
+        "slider": "temperature"
       },
       {
         "model_name": "deepseek-ai/DeepSeek-R1-0528",
@@ -289,14 +97,13 @@
         "endpoint": "/huggingface",
         "in_billing": "3",
         "out_billing": "8",
-        "inference": true,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": false,
+          "inference": true,
           "search": false
         },
-        "type": "default",
-        "related_models": ["deepseek-ai/DeepSeek-V3-0324"]
+        "slider": "temperature"
       },
       {
         "model_name": "grok-3",
@@ -305,14 +112,13 @@
         "endpoint": "/grok",
         "in_billing": "3",
         "out_billing": "15",
-        "inference": false,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": false,
+          "inference": false,
           "search": false
         },
-        "type": "default",
-        "related_models": ["grok-3-mini"]
+        "slider": "temperature"
       },
       {
         "model_name": "grok-3-mini",
@@ -321,14 +127,13 @@
         "endpoint": "/grok",
         "in_billing": "0.3",
         "out_billing": "0.5",
-        "inference": true,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": false,
+          "inference": true,
           "search": false
         },
-        "type": "reason",
-        "related_models": ["grok-3"]
+        "slider": "reason"
       },
       {
         "model_name": "grok-2-vision-1212",
@@ -337,80 +142,43 @@
         "endpoint": "/grok",
         "in_billing": "2",
         "out_billing": "10",
-        "inference": false,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
+          "inference": false,
           "search": false
         },
-        "type": "default",
-        "related_models": ["grok-3-mini"]
+        "slider": "temperature"
       },
       {
-        "model_name": "gpt-4.1:default",
+        "model_name": "gpt-4.1",
         "model_alias": "GPT 4.1",
         "description": "표준 GPT 모델",
         "endpoint": "/gpt",
         "in_billing": "2",
         "out_billing": "8",
-        "inference": false,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
-          "search": false
+          "inference": false,
+          "search": "toggle"
         },
-        "type": "default",
-        "related_models": ["gpt-4.1:search"]
+        "slider": "temperature"
       },
       {
-        "model_name": "gpt-4.1:search",
-        "model_alias": "GPT 4.1",
-        "description": "표준 GPT 모델",
-        "endpoint": "/gpt",
-        "in_billing": "2",
-        "out_billing": "8",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "default",
-        "related_models": ["gpt-4.1:default"],
-        "hidden": "search"
-      },
-      {
-        "model_name": "gpt-4.1-mini:default",
+        "model_name": "gpt-4.1-mini",
         "model_alias": "GPT 4.1 mini",
         "description": "경량 GPT 모델",
         "endpoint": "/gpt",
         "in_billing": "0.4",
         "out_billing": "1.6",
-        "inference": false,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
-          "search": false
+          "inference": false,
+          "search": "toggle"
         },
-        "type": "default",
-        "related_models": ["gpt-4.1-mini:search"]
-      },
-      {
-        "model_name": "gpt-4.1-mini:search",
-        "model_alias": "GPT 4.1 mini",
-        "description": "경량 GPT 모델",
-        "endpoint": "/gpt",
-        "in_billing": "0.4",
-        "out_billing": "1.6",
-        "inference": false,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "default",
-        "related_models": ["gpt-4.1-mini:default"],
-        "hidden": "search"
+        "slider": "temperature"
       },
       {
         "model_name": "o4-mini",
@@ -419,13 +187,13 @@
         "endpoint": "/gpt",
         "in_billing": "1.1",
         "out_billing": "4.4",
-        "inference": true,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
+          "inference": true,
           "search": false
         },
-        "type": "reason"
+        "slider": "reason"
       },
       {
         "model_name": "o3",
@@ -434,13 +202,13 @@
         "endpoint": "/gpt",
         "in_billing": "10",
         "out_billing": "40",
-        "inference": true,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
+          "inference": true,
           "search": false
         },
-        "type": "reason"
+        "slider": "reason"
       },
       {
         "model_name": "o1-pro",
@@ -449,13 +217,13 @@
         "endpoint": "/gpt",
         "in_billing": "150",
         "out_billing": "600",
-        "inference": true,
-        "stream": false,
         "capabilities": {
+          "stream": false,
           "image": true,
+          "inference": true,
           "search": false
         },
-        "type": "none"
+        "slider": "none"
       },
       {
         "model_name": "sonar",
@@ -465,32 +233,13 @@
         "in_billing": "1",
         "out_billing": "1",
         "search_billing": "0.005",
-        "inference": false,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
+          "inference": false,
           "search": true
         },
-        "type": "default",
-        "related_models": ["sonar-reasoning"]
-      },
-      {
-        "model_name": "sonar-reasoning",
-        "model_alias": "Perplexity Sonar Reasoning",
-        "description": "표준 Perplexity 모델",
-        "endpoint": "/perplexity",
-        "in_billing": "1",
-        "out_billing": "5",
-        "search_billing": "0.005",
-        "inference": true,
-        "stream": true,
-        "capabilities": {
-          "image": true,
-          "search": true
-        },
-        "type": "default",
-        "related_models": ["sonar"],
-        "hidden": "inference"
+        "slider": "temperature"
       },
       {
         "model_name": "sonar-pro",
@@ -500,32 +249,45 @@
         "in_billing": "3",
         "out_billing": "15",
         "search_billing": "0.015",
-        "inference": false,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
+          "inference": false,
           "search": true
         },
-        "type": "default",
-        "related_models": ["sonar-reasoning-pro"]
+        "slider": "temperature"
+      },
+      {
+        "model_name": "sonar-reasoning",
+        "model_alias": "Perplexity Sonar Reasoning",
+        "description": "추론 Perplexity 모델",
+        "endpoint": "/perplexity",
+        "in_billing": "1",
+        "out_billing": "5",
+        "search_billing": "0.005",
+        "capabilities": {
+          "stream": true,
+          "image": true,
+          "inference": true,
+          "search": true
+        },
+        "slider": "temperature"
       },
       {
         "model_name": "sonar-reasoning-pro",
         "model_alias": "Perplexity Sonar Reasoning Pro",
-        "description": "고성능 Perplexity 모델",
+        "description": "고성능 추론 Perplexity 모델",
         "endpoint": "/perplexity",
         "in_billing": "2",
         "out_billing": "8",
         "search_billing": "0.015",
-        "inference": true,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
+          "inference": true,
           "search": true
         },
-        "type": "default",
-        "related_models": ["sonar-pro"],
-        "hidden": "inference"
+        "slider": "temperature"
       },
       {
         "model_name": "sonar-deep-research",
@@ -535,14 +297,28 @@
         "in_billing": "5",
         "out_billing": "8",
         "search_billing": "0.05",
-        "inference": true,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
+          "inference": true,
           "search": true
         },
-        "type": "default",
-        "related_models": ["sonar"]
+        "slider": "temperature"
+      },
+      {
+        "model_name": "pixtral-large-latest",
+        "model_alias": "Pixtral Large v2",
+        "description": "비전 Mistral 모델",
+        "endpoint": "/mistral",
+        "in_billing": "0",
+        "out_billing": "0",
+        "capabilities": {
+          "stream": true,
+          "image": true,
+          "inference": false,
+          "search": false
+        },
+        "slider": "temperature"
       },
       {
         "model_name": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
@@ -551,13 +327,13 @@
         "endpoint": "/huggingface",
         "in_billing": "0.22",
         "out_billing": "0.88",
-        "inference": false,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": true,
+          "inference": false,
           "search": false
         },
-        "type": "default"
+        "slider": "temperature"
       },
       {
         "model_name": "Qwen/Qwen3-235B-A22B",
@@ -566,13 +342,13 @@
         "endpoint": "/huggingface",
         "in_billing": "0.22",
         "out_billing": "0.88",
-        "inference": true,
-        "stream": true,
         "capabilities": {
+          "stream": true,
           "image": false,
+          "inference": true,
           "search": false
         },
-        "type": "default"
+        "slider": "temperature"
       }
     ]
   }

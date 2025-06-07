@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, constr
 from typing import List, Annotated
 from bson import ObjectId
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from db_util import Database
 
@@ -73,7 +73,8 @@ async def login(user: LoginUser):
         {
             "user_id": str(db_user["_id"]),
             "name": db_user["name"],
-            "email": db_user["email"]
+            "email": db_user["email"],
+            "exp": datetime.now(timezone.utc) + timedelta(days=7)
         },
         AUTH_KEY,
         algorithm=ALGORITHM

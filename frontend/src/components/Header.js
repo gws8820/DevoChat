@@ -1,29 +1,27 @@
 import React, { useState, useContext, useRef, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
 import { RiMenuLine, RiArrowRightSLine, RiShare2Line, RiLightbulbLine, RiEdit2Line } from "react-icons/ri";
-import { GoCopy } from "react-icons/go";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from 'uuid';
 import Tooltip from "./Tooltip";
+import Toast from "./Toast";
 import modelsData from "../models.json";
 import "../styles/Header.css";
 
 function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
   const {
     model,
-    modelType,
+    sliderType,
     alias,
     temperature,
     reason,
     systemMessage,
+    isImage,
     updateModel,
     setTemperature,
     setReason,
-    setSystemMessage,
-    isImage,
-    isSearchButton,
-    isInferenceButton
+    setSystemMessage
   } = useContext(SettingsContext);
 
   const location = useLocation();
@@ -34,7 +32,9 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
   const [isTempSliderOpen, setIsTempSliderOpen] = useState(false);
   const [isReasonSliderOpen, setIsReasonSliderOpen] = useState(false);
   const [isSystemMessageOpen, setIsSystemMessageOpen] = useState(false);
-  const [copyModal, setCopyModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("error");
+  const [showToast, setShowToast] = useState(false);
 
   const modelModalRef = useRef(null);
   const tempSliderRef = useRef(null);
@@ -43,15 +43,6 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
 
   let modelsList = models.filter((m) => {
     if (isImage && !m.capabilities?.image) return false;
-    
-    if ((isSearchButton && !m.capabilities?.search) || 
-        (!isSearchButton && m.hidden === "search")) return false;
-    
-    if ((isInferenceButton && !m.inference) || 
-        (!isInferenceButton && m.hidden === "inference")) return false;
-    
-    if (m.hidden === "all" && (!isSearchButton || !isInferenceButton)) return false;
-    
     return true;
   });
 
@@ -123,8 +114,9 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
 
       try {
         await navigator.clipboard.writeText(`https://share.devochat.com/id/${uniqueId}`);
-        setCopyModal(true);
-        setTimeout(() => setCopyModal(false), 2000);
+        setToastMessage("공유 링크가 복사되었습니다.");
+        setToastType("copy");
+        setShowToast(true);
       } catch (err) {
         console.error("복사 실패:", err);
       }
@@ -240,9 +232,9 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
         <div className="header-icon-wrapper">
           <Tooltip
             content={
-              modelType === "default"
+              sliderType === "temperature"
                 ? "온도 (창의성) 설정"
-                : modelType === "reason"
+                : sliderType === "reason"
                 ? "추론 성능 설정"
                 : "온도/추론 성능 설정"
             }
@@ -252,18 +244,18 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
             <div className="header-icon slider-icon">
               <RiLightbulbLine
                 onClick={() => {
-                  if (modelType === "default") {
+                  if (sliderType === "temperature") {
                     setIsTempSliderOpen(!isTempSliderOpen);
                     setIsSystemMessageOpen(false);
                     setIsReasonSliderOpen(false);
-                  } else if (modelType === "reason") {
+                  } else if (sliderType === "reason") {
                     setIsReasonSliderOpen(!isReasonSliderOpen);
                     setIsSystemMessageOpen(false);
                     setIsTempSliderOpen(false);
                   }
                 }}
                 className={
-                  modelType === "default" || modelType === "reason" ? "" : "disabled"
+                  sliderType === "temperature" || sliderType === "reason" ? "" : "disabled"
                 }
                 style={{ strokeWidth: 0.3 }}
               />
@@ -337,13 +329,13 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
             <div className="header-icon system-message-icon">
               <RiEdit2Line
                 onClick={() => {
-                  if (modelType !== "none") {
+                  if (sliderType !== "none") {
                     setIsSystemMessageOpen(!isSystemMessageOpen);
                     setIsTempSliderOpen(false);
                     setIsReasonSliderOpen(false);
                   }
                 }}
-                className={modelType === "none" ? "disabled" : ""}
+                className={sliderType === "none" ? "disabled" : ""}
                 style={{ fontSize: "20px", strokeWidth: 0.3 }}
               />
             </div>
@@ -403,20 +395,13 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {copyModal && (
-          <motion.div
-            className="copy-modal"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20, }}
-            transition={{ duration: 0.3 }}
-          >
-            <GoCopy style={{ flexShrink: 0, marginRight: "6px", fontSize: "14px" }} />
-            공유 링크가 복사되었습니다.
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Toast
+        type={toastType}
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        duration={2000}
+      />
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { GoPlus, GoGlobe, GoLightBulb, GoUnlock } from "react-icons/go";
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
-import { CiWarning } from "react-icons/ci";
 import { RiVoiceAiFill } from "react-icons/ri";
 import { FiPaperclip, FiMic } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
@@ -14,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useFileUpload } from "../hooks/useFileUpload";
 import axios from "axios";
 import Modal from "../components/Modal";
+import Toast from "../components/Toast";
 import modelsData from "../models.json";
 import "../styles/Common.css";
 
@@ -30,6 +30,8 @@ function Main({ addConversation, isTouch }) {
   const [showMediaOptions, setShowMediaOptions] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [toastMessage, setToastMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
 
   const recognitionRef = useRef(null);
   const textAreaRef = useRef(null);
@@ -40,37 +42,28 @@ function Main({ addConversation, isTouch }) {
 
   const { 
     uploadedFiles, 
-    errorModal, 
-    setErrorModal, 
     processFiles, 
-    removeFile,
-    allowedExtensions
+    removeFile
   } = useFileUpload([]);
 
   const {
     DEFAULT_MODEL,
-    DEFAULT_IMAGE_MODEL,
-    DEFAULT_SEARCH_MODEL,
-    DEFAULT_INFERENCE_MODEL,
-    DEFAULT_SEARCH_INFERENCE_MODEL,
     model,
-    modelType,
-    temperature,
-    reason,
-    systemMessage,
     updateModel,
     isInference,
     isSearch,
     isDAN,
+    canEditSettings,
+    canToggleInference,
+    canToggleSearch,
+    canReadImage,
     setTemperature,
     setReason,
     setSystemMessage,
     setIsImage,
     setIsSearch,
     setIsInference,
-    setIsDAN,
-    setIsSearchButton,
-    setIsInferenceButton
+    setIsDAN
   } = useContext(SettingsContext);
 
   const models = modelsData.models;
@@ -99,8 +92,6 @@ function Main({ addConversation, isTouch }) {
     setIsSearch(false);
     setIsInference(false);
     setIsDAN(false);
-    setIsSearchButton(false);
-    setIsInferenceButton(false);
     updateModel(DEFAULT_MODEL);
     setTemperature(0.5);
     setReason(0);
@@ -134,51 +125,13 @@ function Main({ addConversation, isTouch }) {
     return () => clearInterval(recordingTimerRef.current);
   }, [isRecording]);
 
-  function handleButtonClick(buttonType) {
-    const newIsSearch = buttonType === "search" ? !isSearch : isSearch;
-    const newIsInference = buttonType === "inference" ? !isInference : isInference;
-    
-    if (buttonType === "search") {
-      setIsSearch(newIsSearch);
-      setIsSearchButton(newIsSearch);
-    } else { // buttonType === "inference"
-      setIsInference(newIsInference);
-      setIsInferenceButton(newIsInference);
-    }
-  
-    const currentModel = models.find(m => m.model_name === model);
-    if (currentModel?.related_models && currentModel.related_models.length > 0) {
-      for (const relatedModelName of currentModel.related_models) {
-        const relatedModel = models.find(m => m.model_name === relatedModelName);
-        
-        if (relatedModel && 
-            newIsSearch === relatedModel.capabilities?.search && 
-            newIsInference === relatedModel.inference) {
-          updateModel(relatedModelName);
-          return;
-        }
-      }
-    }
-  
-    if (newIsSearch && newIsInference)
-      updateModel(DEFAULT_SEARCH_INFERENCE_MODEL);
-    else if (newIsSearch)
-      updateModel(DEFAULT_SEARCH_MODEL);
-    else if (newIsInference)
-      updateModel(DEFAULT_INFERENCE_MODEL);
-    else
-      updateModel(DEFAULT_MODEL);
-  }
-
   useEffect(() => {
     if (location.state?.errorModal) {
-      setErrorModal(location.state.errorModal);
-      setTimeout(() => {
-        setErrorModal(null);
-        window.history.replaceState({}, document.title);
-      }, 2000);
+      setToastMessage(location.state.errorModal);
+      setShowToast(true);
+      window.history.replaceState({}, document.title);
     }
-  }, [location.state, setErrorModal]);
+  }, [location.state]);
 
   const sendMessage = useCallback(
     async (message) => {
@@ -191,14 +144,7 @@ function Main({ addConversation, isTouch }) {
         setIsLoading(true);
         
         const response = await axios.post(
-          `${process.env.REACT_APP_FASTAPI_URL}/new_conversation`,
-          {
-            model: selectedModel.model_name,
-            temperature: temperature,
-            reason: reason,
-            system_message: systemMessage,
-            user_message: "",
-          },
+          `${process.env.REACT_APP_FASTAPI_URL}/new_conversation`, {},
           { 
             withCredentials: true
           }
@@ -225,21 +171,17 @@ function Main({ addConversation, isTouch }) {
           replace: false,
         });
       } catch (error) {
-        setErrorModal("새 대화를 시작하는 데 실패했습니다.");
-        setTimeout(() => setErrorModal(null), 2000);
+        setToastMessage("새 대화를 시작하는 데 실패했습니다.");
+        setShowToast(true);
         setIsLoading(false);
       }
     },
     [
       models,
       model,
-      temperature,
-      reason,
-      systemMessage,
       navigate,
       uploadedFiles,
       uploadingFiles,
-      setErrorModal,
       addConversation
     ]
   );
@@ -253,42 +195,12 @@ function Main({ addConversation, isTouch }) {
   
   useEffect(() => {
     const hasUploadedImage = uploadedFiles.some((file) => {
-      if (file.type && (file.type === "image" || file.type.startsWith("image/"))) {
-        return true;
-      }
-      return /\.(jpe?g|png|gif|bmp|webp)$/i.test(file.name);
+      return (file.type && (file.type === "image" || file.type.startsWith("image/"))) || 
+             /\.(jpe?g|png|gif|bmp|webp)$/i.test(file.name);
     });
     setIsImage(hasUploadedImage);
-
-    if (hasUploadedImage) {
-      const currentModel = models.find((m) => m.model_name === model);
-      
-      if (currentModel && currentModel.capabilities?.image) {
-        return;
-      }
-      
-      if (currentModel && currentModel.related_models && currentModel.related_models.length > 0) {
-        for (const relatedModelName of currentModel.related_models) {
-          const relatedModel = models.find((m) => m.model_name === relatedModelName);
-          
-          if (relatedModel && relatedModel.capabilities?.image) {
-            updateModel(relatedModelName);
-            return;
-          }
-        }
-      }
-      
-      updateModel(DEFAULT_IMAGE_MODEL);
-    }
   },
-  [
-    DEFAULT_IMAGE_MODEL,
-    models,
-    model,
-    setIsImage,
-    updateModel,
-    uploadedFiles,
-  ]);
+  [setIsImage, uploadedFiles]);
 
   const handlePlusButtonClick = useCallback((e) => {
     e.stopPropagation();
@@ -318,8 +230,8 @@ function Main({ addConversation, isTouch }) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       
       if (!SpeechRecognition) {
-        setErrorModal("이 브라우저는 음성 인식을 지원하지 않습니다.");
-        setTimeout(() => setErrorModal(null), 2000);
+        setToastMessage("이 브라우저는 음성 인식을 지원하지 않습니다.");
+        setShowToast(true);
         return;
       }
       
@@ -347,8 +259,8 @@ function Main({ addConversation, isTouch }) {
       };
       
       recognition.onerror = (event) => {
-        setErrorModal(`음성 인식 오류가 발생했습니다. ${event.error}`);
-        setTimeout(() => setErrorModal(null), 2000);
+        setToastMessage(`음성 인식 오류가 발생했습니다. ${event.error}`);
+        setShowToast(true);
         handleRecordingStop();
       };
       
@@ -364,10 +276,10 @@ function Main({ addConversation, isTouch }) {
       setIsRecording(true);
       setShowMediaOptions(false);
     } catch (error) {
-      setErrorModal("음성 인식을 시작하는 데 실패했습니다.");
-      setTimeout(() => setErrorModal(null), 2000);
+      setToastMessage("음성 인식을 시작하는 데 실패했습니다.");
+      setShowToast(true);
     }
-  }, [setErrorModal, isRecording, handleRecordingStop, inputText]);
+  }, [isRecording, handleRecordingStop, inputText]);
 
   const handleFileDelete = useCallback((file) => {
     removeFile(file.id);
@@ -388,23 +300,12 @@ function Main({ addConversation, isTouch }) {
       e.preventDefault();
       setIsDragActive(false);
       const files = Array.from(e.dataTransfer.files);
-      const acceptedFiles = files.filter(
-        (file) =>
-          file.type.startsWith("image/") || allowedExtensions.test(file.name)
-      );
-      const rejectedFiles = files.filter(
-        (file) =>
-          !file.type.startsWith("image/") && !allowedExtensions.test(file.name)
-      );
-      if (rejectedFiles.length > 0) {
-        setErrorModal("지원되는 형식이 아닙니다.");
-        setTimeout(() => setErrorModal(null), 3000);
-      }
-      if (acceptedFiles.length > 0) {
-        await processFiles(acceptedFiles);
-      }
+      await processFiles(files, (errorMessage) => {
+        setToastMessage(errorMessage);
+        setShowToast(true);
+      }, canReadImage);
     },
-    [allowedExtensions, processFiles, setErrorModal]
+    [processFiles, canReadImage]
   );
 
   const handlePaste = useCallback(
@@ -415,20 +316,20 @@ function Main({ addConversation, isTouch }) {
         const item = items[i];
         if (item.kind === "file") {
           const file = item.getAsFile();
-          if (
-            file &&
-            (file.type.startsWith("image/") || allowedExtensions.test(file.name))
-          ) {
+          if (file) {
             filesToUpload.push(file);
           }
         }
       }
       if (filesToUpload.length > 0) {
         e.preventDefault();
-        await processFiles(filesToUpload);
+        await processFiles(filesToUpload, (errorMessage) => {
+          setToastMessage(errorMessage);
+          setShowToast(true);
+        }, canReadImage);
       }
     },
-    [allowedExtensions, processFiles]
+    [processFiles, canReadImage]
   );
 
   const handleKeyDown = useCallback(
@@ -599,42 +500,75 @@ function Main({ addConversation, isTouch }) {
                     </div>
                     <div className="media-option" onClick={handleRecordingStart}>
                       <FiMic />
-                      녹음 시작
+                      음성 인식
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
             
-            <div
-              className={`function-button ${
-                isSearch ? "active" : ""
-              }`}
-              onClick={() => handleButtonClick("search")}
-            >
-              <GoGlobe style={{ strokeWidth: 0.5 }} />
-              검색
-            </div>
-            <div
-              className={`function-button ${isInference ? "active" : ""}`}
-              onClick={() => handleButtonClick("inference")}
-            >
-              <GoLightBulb style={{ strokeWidth: 0.5 }} />
-              추론
-            </div>
-            <div
-              className={`function-button ${
-                modelType === "none" ? "disabled" : isDAN ? "active" : ""
-              }`}
-              onClick={() => {
-                if (modelType !== "none") {
-                  setIsDAN(!isDAN);
-                }
-              }}
-            >
-              <GoUnlock style={{ strokeWidth: 0.5 }} />
-              DAN
-            </div>
+            <AnimatePresence initial={false}>
+              {canToggleSearch && (
+                <motion.div
+                  key="search"
+                  className={`function-button ${isSearch ? "active" : ""}`}
+                  onClick={() => setIsSearch(!isSearch)}
+                  initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                  animate={{ x: 0, opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ 
+                    type: "physics",
+                    velocity: 200,
+                    stiffness: 100,
+                    damping: 15
+                  }}
+                  layout
+                >
+                  <GoGlobe style={{ strokeWidth: 0.5 }} />
+                  검색
+                </motion.div>
+              )}
+              {canToggleInference && (
+                <motion.div
+                  key="inference"
+                  className={`function-button ${isInference ? "active" : ""}`}
+                  onClick={() => setIsInference(!isInference)}
+                  initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                  animate={{ x: 0, opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ 
+                    type: "physics",
+                    velocity: 200,
+                    stiffness: 100,
+                    damping: 15
+                  }}
+                  layout
+                >
+                  <GoLightBulb style={{ strokeWidth: 0.5 }} />
+                  추론
+                </motion.div>
+              )}
+              {canEditSettings && (
+                <motion.div
+                  key="dan"
+                  className={`function-button ${isDAN ? "active" : ""}`}
+                  onClick={() => setIsDAN(!isDAN)}
+                  initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                  animate={{ x: 0, opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ 
+                    type: "physics",
+                    velocity: 200,
+                    stiffness: 100,
+                    damping: 15
+                  }}
+                  layout
+                >
+                  <GoUnlock style={{ strokeWidth: 0.5 }} />
+                  DAN
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -667,13 +601,16 @@ function Main({ addConversation, isTouch }) {
 
       <input
         type="file"
-        accept="image/*, .zip, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .flac, .amr, .amr-wb, .mulaw, .alaw, .webm, .m4a, .mp4, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .v, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
+        accept="*/*"
         multiple
         ref={fileInputRef}
         style={{ display: "none" }}
         onChange={async (e) => {
           const files = Array.from(e.target.files);
-          await processFiles(files);
+          await processFiles(files, (errorMessage) => {
+            setToastMessage(errorMessage);
+            setShowToast(true);
+          }, canReadImage);
           e.target.value = "";
         }}
       />
@@ -706,20 +643,12 @@ function Main({ addConversation, isTouch }) {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {errorModal && (
-          <motion.div
-            className="error-modal"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <CiWarning style={{ flexShrink: 0, marginRight: "4px", fontSize: "16px" }} />
-            {errorModal}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Toast
+        type="error"
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+      />
     </div>
   );
 }

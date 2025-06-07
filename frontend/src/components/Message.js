@@ -83,9 +83,7 @@ function Message({
   if (
     (typeof content === "string" && content.trim() === "\u200B") ||
     (Array.isArray(content) && content.length === 0)
-  ) {
-    return null;
-  }
+  ) return null;
 
   if (role === "user") {
     return (
@@ -109,7 +107,7 @@ function Message({
                 <div key={idx} className="image-object">
                   <img
                     src={`${process.env.REACT_APP_FASTAPI_URL}${item.content}`}
-                    alt={item.file_name}
+                    alt={item.name}
                     onLoad={() => setScrollOnSend && setScrollOnSend(true)}
                   />
                 </div>

@@ -96,16 +96,14 @@ def format_message(message):
                 abs_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), file_path.lstrip("/"))
                 with open(abs_path, "rb") as f:
                     file_data = f.read()
-                ext = part.get("name").split(".")[-1]
                 base64_data = base64.b64encode(file_data).decode("utf-8")
             except Exception:
-                base64_data = ""
-                ext = "jpeg"
+                return None
             return {
                 "type": "image",
                 "source": {
                     "type": "base64",
-                    "media_type": f"image/{ext}",
+                    "media_type": "image/jpeg",
                     "data": base64_data,
                 },
             }
@@ -116,7 +114,7 @@ def format_message(message):
     if role == "assistant":
         return {"role": "assistant", "content": content}
     elif role == "user":
-        return {"role": "user", "content": [normalize_content(part) for part in content]}
+        return {"role": "user", "content": [item for item in [normalize_content(part) for part in content] if item is not None]}
         
 def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     async def error_generator(error_message):
@@ -141,7 +139,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
 
     conversation = conversation_collection.find_one(
         {"user_id": user.user_id, "conversation_id": request.conversation_id},
-        {"conversation": {"$slice": -8}}
+        {"conversation": {"$slice": -6}}
     ).get("conversation", [])
     conversation.append(user_message)
 

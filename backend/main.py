@@ -12,7 +12,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Response
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from routes import auth, realtime, conversations, openai_client, responses_client, anthropic_client, huggingface_client
+from routes import auth, realtime, conversations, openai_client, responses_client, anthropic_client, google_client, mistral_client, huggingface_client
 from PIL import Image, ImageOps
 from typing import List
 from bs4 import BeautifulSoup
@@ -55,6 +55,8 @@ app.include_router(conversations.router)
 app.include_router(openai_client.router)
 app.include_router(responses_client.router)
 app.include_router(anthropic_client.router)
+app.include_router(google_client.router)
+app.include_router(mistral_client.router)
 app.include_router(huggingface_client.router)
 
 app.mount("/images", StaticFiles(directory="images"), name="images")
@@ -87,37 +89,57 @@ async def upload_image(file: UploadFile = File(...)):
     buffer = io.BytesIO()
     image.save(buffer, format="JPEG", quality=100, optimize=True)
     
-    filename = f"{uuid.uuid4().hex}.jpeg"
-    file_location = os.path.join(UPLOAD_DIR, filename)
+    # Save with UUID filename but return original filename for display
+    saved_filename = f"{uuid.uuid4().hex}.jpeg"
+    file_location = os.path.join(UPLOAD_DIR, saved_filename)
     with open(file_location, "wb") as f:
         f.write(buffer.getvalue())
     
     return {
         "type": "image",
-        "name": filename,
-        "content": f"/images/{filename}"
+        "name": file.filename,  # Return original filename for display
+        "content": f"/images/{saved_filename}"  # Use UUID filename for actual file path
     }
+
+def is_binary(data: bytes) -> bool:
+    if not data:
+        return False
+    
+    sample_size = min(8192, len(data))
+    sample = data[:sample_size]
+    
+    if b'\x00' in sample:
+        return True
+    
+    binary_signatures = [
+        b'\x89PNG',  # PNG
+        b'\xff\xd8\xff',  # JPEG
+        b'GIF8',  # GIF
+        b'RIFF',  # AVI, WAV
+        b'\x00\x00\x00\x18ftypmp4',  # MP4
+        b'\x00\x00\x00 ftypM4V',  # M4V
+        b'MZ',  # EXE
+        b'\x7fELF',  # ELF (Linux executables)
+        b'\xca\xfe\xba\xbe',  # Mach-O (macOS executables)
+        b'PK\x03\x04',  # ZIP
+        b'Rar!',  # RAR
+        b'\x50\x4b\x03\x04',  # ZIP variant
+    ]
+    
+    for signature in binary_signatures:
+        if sample.startswith(signature):
+            return True
+    
+    try:
+        decoded = sample.decode('utf-8', errors='replace')
+        replacement_ratio = decoded.count('\ufffd') / len(decoded) if decoded else 0
+        return replacement_ratio > 0.1
+    except Exception:
+        return True
 
 @app.post("/upload/file")
 async def upload_file(file: UploadFile = File(...)):
     supported_archives = ['.zip']
-    text_extensions = [
-        '.txt', '.text', '.md', '.markdown',
-        '.json', '.xml', '.html', '.htm',
-        '.csv', '.tsv', '.yaml', '.yml', '.log', '.sql',
-        '.py', '.pyw', '.rb', '.pl',
-        '.java', '.c', '.cpp', '.h', '.hpp', '.v',
-        '.js', '.jsx', '.ts', '.tsx',
-        '.css', '.scss', '.less',
-        '.cs', '.sh', '.bash', '.bat', '.ps1',
-        '.ini', '.conf', '.cfg', '.toml',
-        '.tex',
-        '.r',
-        '.swift', '.scala',
-        '.hs', '.erl', '.ex', '.exs',
-        '.go', '.rs', '.php'
-    ]
-    
     audio_extensions = ['.wav', '.mp3', '.ogg', '.flac', '.amr', '.amr-wb', '.mulaw', '.alaw', '.webm', '.m4a', '.mp4']
     
     file_data = await file.read()
@@ -141,31 +163,39 @@ async def upload_file(file: UploadFile = File(...)):
                     inner_ext = os.path.splitext(inner_filename)[1].lower()
                     inner_file_data = z.read(inner_filename)
 
-                    if inner_ext in text_extensions:
-                        try:
-                            extracted_text = inner_file_data.decode("utf-8", errors="replace")
-                        except Exception as e:
-                            extracted_text = ""
-                    else:
-                        with tempfile.NamedTemporaryFile(suffix=inner_ext, delete=False) as tmp:
-                            tmp.write(inner_file_data)
-                            tmp.flush()
-                            tmp_path = tmp.name
-                        
-                        try:
-                            extracted_bytes = textract.process(tmp_path)
-                            extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
-                        except Exception as e:
-                            extracted_text = ""
-                        finally:
-                            os.remove(tmp_path)
+                    extracted_text = ""
                     
-                    extracted_parts.append(f"[[{inner_filename}]]\n{extracted_text}")
+                    with tempfile.NamedTemporaryFile(suffix=inner_ext, delete=False) as tmp:
+                        tmp.write(inner_file_data)
+                        tmp.flush()
+                        tmp_path = tmp.name
+                    
+                    try:
+                        extracted_bytes = textract.process(tmp_path)
+                        extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
+                    except Exception:
+                        try:
+                            if not is_binary(inner_file_data):
+                                decoded_text = inner_file_data.decode("utf-8", errors="replace")
+                                extracted_text = decoded_text.strip()
+                            else:
+                                extracted_text = ""
+                        except Exception:
+                            extracted_text = ""
+                    finally:
+                        os.remove(tmp_path)
+                    
+                    if extracted_text.strip():
+                        extracted_parts.append(f"[[{inner_filename}]]\n{extracted_text}")
+                    else:
+                        raise HTTPException(status_code=422, detail="Text extraction failed")
             
             final_extracted_text = "\n\n".join(extracted_parts)
         
+        except HTTPException:
+            raise
         except Exception as e:
-            final_extracted_text = ""
+            raise HTTPException(status_code=422, detail="Archive processing failed")
         
         return {
             "type": "file",
@@ -173,13 +203,14 @@ async def upload_file(file: UploadFile = File(...)):
             "content": final_extracted_text
         }
     else:
+        extracted_text = ""
+        
         if ext in audio_extensions:
             with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
                 tmp.write(file_data)
                 tmp.flush()
                 tmp_path = tmp.name
             
-            extracted_text = ""
             try:
                 client = speech.SpeechClient(client_options={"api_key": os.getenv("GOOGLE_STT_API_KEY")})
                 
@@ -206,12 +237,6 @@ async def upload_file(file: UploadFile = File(...)):
             finally:
                 os.remove(tmp_path)
         
-        elif ext in text_extensions:
-            try:
-                extracted_text = file_data.decode("utf-8", errors="replace")
-            except Exception as e:
-                extracted_text = ""
-        
         else:
             with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
                 tmp.write(file_data)
@@ -221,10 +246,20 @@ async def upload_file(file: UploadFile = File(...)):
             try:
                 extracted_bytes = textract.process(tmp_path)
                 extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
-            except Exception as e:
-                extracted_text = ""
+            except Exception:
+                try:
+                    if not is_binary(file_data):
+                        decoded_text = file_data.decode("utf-8", errors="replace")
+                        extracted_text = decoded_text.strip()
+                    else:
+                        extracted_text = ""
+                except Exception:
+                    extracted_text = ""
             finally:
                 os.remove(tmp_path)
+
+        if not extracted_text.strip():
+            raise HTTPException(status_code=422, detail="Text extraction failed")
 
         return {
             "type": "file",
@@ -237,7 +272,7 @@ async def upload_page(content: WebContent):
     try:
         stylesheet_content = ""
         for sheet in content.stylesheets:
-            if sheet.startswith('http'):
+            if sheet.startswith(('http://', 'https://')):
                 stylesheet_content += f'<link rel="stylesheet" href="{sheet}">\n'
             else:
                 stylesheet_content += f'{sheet}\n'
@@ -325,7 +360,7 @@ def visit_url(request: URLRequest):
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    notice_message = 'Deepseek R1 모델이 05-28 버전으로 업데이트 되었습니다.'
+    notice_message = '검색, 추론 기능을 사용해보세요! 😀'
     notice_hash = base64.b64encode(notice_message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(

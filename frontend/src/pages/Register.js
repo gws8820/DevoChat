@@ -2,9 +2,9 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CiWarning } from "react-icons/ci";
 import { AnimatePresence, motion } from "framer-motion";
 import Modal from "../components/Modal";
+import Toast from "../components/Toast";
 import "../styles/Auth.css";
 import logo from "../logo.png";
 
@@ -13,7 +13,8 @@ function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmModal, setConfirmModal] = useState(false);
-  const [errorModal, setErrorModal] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
   const navigate = useNavigate();
 
   function validateEmail(email) {
@@ -23,20 +24,20 @@ function Register() {
 
   async function handleRegister() {
     if (!name || !email || !password) {
-      setErrorModal("모든 필드를 입력해 주세요.");
-      setTimeout(() => setErrorModal(null), 2000);
+      setToastMessage("모든 필드를 입력해 주세요.");
+      setShowToast(true);
       return;
     }
 
     if (!validateEmail(email)) {
-      setErrorModal("올바른 이메일 형식을 입력해 주세요.");
-      setTimeout(() => setErrorModal(null), 2000);
+      setToastMessage("올바른 이메일 형식을 입력해 주세요.");
+      setShowToast(true);
       return;
     }
 
     if (password.length < 8 || password.length > 20) {
-      setErrorModal("비밀번호는 8자리 이상 20자리 이하로 입력해 주세요.");
-      setTimeout(() => setErrorModal(null), 2000);
+      setToastMessage("비밀번호는 8자리 이상 20자리 이하로 입력해 주세요.");
+      setShowToast(true);
       return;
     }
 
@@ -45,12 +46,12 @@ function Register() {
       setConfirmModal(true);
     } catch (error) {
       const detail = error.response?.data?.detail;
-      setErrorModal(
+      setToastMessage(
         Array.isArray(detail)
           ? "잘못된 입력입니다."
           : detail || "알 수 없는 오류가 발생했습니다."
       );
-      setTimeout(() => setErrorModal(null), 2000);
+      setShowToast(true);
     }
   }
 
@@ -123,20 +124,12 @@ function Register() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {errorModal && (
-          <motion.div
-            className="error-modal"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <CiWarning style={{ flexShrink: 0, marginRight: "4px", fontSize: "16px" }} />
-            {errorModal}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Toast
+        type="error"
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+      />
     </motion.div>
   );
 }

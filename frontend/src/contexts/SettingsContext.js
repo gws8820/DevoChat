@@ -4,14 +4,10 @@ import modelsData from '../models.json';
 export const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
-  const DEFAULT_MODEL = "gemini-2.5-flash-preview-05-20:default";
-  const DEFAULT_IMAGE_MODEL = "gemini-2.5-flash-preview-05-20:default";
-  const DEFAULT_SEARCH_MODEL = "sonar";
-  const DEFAULT_INFERENCE_MODEL = "gemini-2.5-flash-preview-05-20:inference";
-  const DEFAULT_SEARCH_INFERENCE_MODEL = "sonar-reasoning"
-
+  const DEFAULT_MODEL = "gemini-2.5-flash-preview-05-20";
+  
   const [model, setModel] = useState(DEFAULT_MODEL);
-  const [modelType, setModelType] = useState("");
+  const [sliderType, setSliderType] = useState("");
   const [alias, setAlias] = useState("");
   const [temperature, setTemperature] = useState(0.5);
   const [reason, setReason] = useState(2);
@@ -20,33 +16,54 @@ export const SettingsProvider = ({ children }) => {
   const [isSearch, setIsSearch] = useState(false);
   const [isInference, setIsInference] = useState(false);
   const [isDAN, setIsDAN] = useState(false);
-  const [isSearchButton, setIsSearchButton] = useState(false);
-  const [isInferenceButton, setIsInferenceButton] = useState(false);
+  const [canEditSettings, setCanEditSettings] = useState(false);
+  const [canToggleInference, setCanToggleInference] = useState(false);
+  const [canToggleSearch, setCanToggleSearch] = useState(false);
+  const [canReadImage, setCanReadImage] = useState(false);
 
   const updateModel = (newModel) => {
-    setModel(newModel);
-
     const selectedModel = modelsData.models.find(m => m.model_name === newModel);
-    const typeOfModel = selectedModel?.type || "";
-    setModelType(typeOfModel);
-    
-    setIsInference(selectedModel?.inference);
-    setIsSearch(selectedModel?.capabilities?.search);
+    const slider = selectedModel?.slider;
+    const inference = selectedModel?.capabilities?.inference;
+    const search = selectedModel?.capabilities?.search;
+    const image = selectedModel?.capabilities?.image;
 
-    if (typeOfModel === "none") {
+    setModel(newModel);
+    setIsInference(inference === true);
+    setIsSearch(search === true);
+    setCanEditSettings(slider !== "none");
+    setCanToggleInference(inference === "toggle");
+    setCanToggleSearch(search === "toggle");
+    setCanReadImage(image);
+    
+    if (slider === "none") {
       setTemperature(1);
+      setReason(0);
       setSystemMessage("");
       setIsDAN(false);
-      setReason(0);
-    } else if (typeOfModel === "reason") {
-      setTemperature(1);
-      setReason((prev) => (prev === 0 ? 2 : prev));
-    } else if (typeOfModel === "think") {
-      setTemperature(1);
-      setReason(2);
-    } else {
+      setSliderType("none");
+    }
+    else if (inference === false || inference === "toggle") {
       setTemperature(0.5);
       setReason(0);
+      setSliderType("temperature");
+    }
+    else if (inference === true) {
+      if (slider === "temperature") {
+        setTemperature(0.5);
+        setReason(0);
+        setSliderType("temperature");
+      }
+      else if (slider === "fixed_reason") {
+        setTemperature(1);
+        setReason(2);
+        setSliderType("temperature");
+      }
+      else if (slider === "reason") {
+        setTemperature(1);
+        setReason((prev) => (prev === 0 ? 2 : prev));
+        setSliderType("reason");
+      }
     }
   };
 
@@ -55,16 +72,36 @@ export const SettingsProvider = ({ children }) => {
     // eslint-disable-next-line
   }, []);
 
+  useEffect(() => {
+    const selectedModel = modelsData.models.find(m => m.model_name === model);
+    const slider = selectedModel?.slider;
+    
+    if (isInference) {
+      if (slider === "fixed_reason") {
+        setTemperature(1);
+        setReason(2);
+        setSliderType("temperature");
+      }
+      else if (slider === "reason") {
+        setTemperature(1);
+        setReason((prev) => (prev === 0 ? 2 : prev));
+        setSliderType("reason");
+      }
+    }
+    else {
+      setTemperature(0.5);
+      setReason(0);
+      setSliderType("temperature");
+    }
+    // eslint-disable-next-line
+  }, [isInference]);
+
   return (
     <SettingsContext.Provider
       value={{
         DEFAULT_MODEL,
-        DEFAULT_IMAGE_MODEL,
-        DEFAULT_SEARCH_MODEL,
-        DEFAULT_INFERENCE_MODEL,
-        DEFAULT_SEARCH_INFERENCE_MODEL,
         model,
-        modelType,
+        sliderType,
         alias,
         temperature,
         reason,
@@ -73,8 +110,10 @@ export const SettingsProvider = ({ children }) => {
         isInference,
         isSearch,
         isDAN,
-        isSearchButton,
-        isInferenceButton,
+        canEditSettings,
+        canToggleInference,
+        canToggleSearch,
+        canReadImage,
         updateModel,
         setAlias,
         setTemperature,
@@ -83,9 +122,7 @@ export const SettingsProvider = ({ children }) => {
         setIsImage,
         setIsInference,
         setIsSearch,
-        setIsDAN,
-        setIsInferenceButton,
-        setIsSearchButton
+        setIsDAN
       }}
     >
       {children}

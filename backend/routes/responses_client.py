@@ -34,13 +34,6 @@ try:
 except FileNotFoundError:
     MARKDOWN_PROMPT = ""
 
-alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'alias_prompt.txt')
-try:
-    with open(alias_prompt_path, 'r', encoding='utf-8') as f:
-        ALIAS_PROMPT = f.read()
-except FileNotFoundError:
-    ALIAS_PROMPT = ""
-
 class ChatRequest(BaseModel):
     conversation_id: str
     model: str
@@ -103,10 +96,9 @@ def format_message(message):
                 abs_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), file_path.lstrip("/"))
                 with open(abs_path, "rb") as f:
                     file_data = f.read()
-                ext = part.get("name").split(".")[-1]
-                base64_data = "data:image/" + ext + ";base64," + base64.b64encode(file_data).decode("utf-8")
+                base64_data = "data:image/jpeg;base64," + base64.b64encode(file_data).decode("utf-8")
             except Exception as e:
-                base64_data = ""
+                return None
             return {
                 "type": "input_image",
                 "image_url": base64_data
@@ -126,7 +118,7 @@ def format_message(message):
     if role == "assistant":
         return {"role": "assistant", "content": content}
     elif role == "user":
-        return {"role": "user", "content": [normalize_content(part) for part in content]}
+        return {"role": "user", "content": [item for item in [normalize_content(part) for part in content] if item is not None]}
 
 def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     async def error_generator(error_message):
@@ -151,7 +143,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
 
     conversation = conversation_collection.find_one(
         {"user_id": user.user_id, "conversation_id": request.conversation_id},
-        {"conversation": {"$slice": -8}}
+        {"conversation": {"$slice": -6}}
     ).get("conversation", [])
     conversation.append(user_message)
 
@@ -282,40 +274,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                 }
             )
     return StreamingResponse(event_generator(), media_type="text/event-stream")
-
-async def get_alias(user_message: str) -> str:
-    async with AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY')) as client:
-        try:
-            response = await client.responses.create(
-                model="gpt-4.1-nano",
-                temperature=0.5,
-                max_output_tokens=16,
-                instructions=ALIAS_PROMPT,
-                input=[{
-                    "role": "user",
-                    "content": f"메세지: {user_message}"
-                }]
-            )
-            return response.output_text
-        except Exception as ex:
-            return "제목 없음"
     
 @router.post("/gpt")
 async def gpt_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     return get_response(chat_request, user, fastapi_request)
-
-class AliasRequest(BaseModel):
-    conversation_id: str
-    text: str
-
-@router.post("/get_alias")
-async def get_alias_endpoint(request: AliasRequest, user: User = Depends(get_current_user)):
-    try:
-        alias = await get_alias(request.text)
-        conversation_collection.update_one(
-            {"user_id": user.user_id, "conversation_id": request.conversation_id},
-            {"$set": {"alias": alias}}
-        )
-        return {"alias": alias}
-    except Exception as e:
-        return {"alias": "새 대화", "error": str(e)}

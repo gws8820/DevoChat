@@ -14,13 +14,6 @@ db = Database.get_db()
 conversations_collection = db.conversations
 
 # Pydantic
-class NewConversationRequest(BaseModel):
-    user_message: str
-    model: str
-    temperature: float
-    reason: int
-    system_message: str
-
 class RenameRequest(BaseModel):
     alias: str
 
@@ -102,17 +95,17 @@ async def get_conversation(conversation_id: str, current_user: User = Depends(ge
     }
 
 @router.post("/new_conversation", response_model=dict)
-async def create_new_conversation(request_data: NewConversationRequest, current_user: User = Depends(get_current_user)):
+async def create_new_conversation(current_user: User = Depends(get_current_user)):
     conversation_id = str(uuid.uuid4())
     user_id = current_user.user_id
     
     new_conversation = {
         "user_id": user_id,
         "conversation_id": conversation_id,
-        "model": request_data.model,
-        "temperature": request_data.temperature,
-        "reason": request_data.reason,
-        "system_message": request_data.system_message,
+        "model": None,
+        "temperature": None,
+        "reason": None,
+        "system_message": None,
         "conversation": [],
         "starred": False,
         "starred_at": None,
@@ -120,7 +113,7 @@ async def create_new_conversation(request_data: NewConversationRequest, current_
     }
     
     try:
-        result = conversations_collection.insert_one(new_conversation)
+        conversations_collection.insert_one(new_conversation)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to create conversation")
         

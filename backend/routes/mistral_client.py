@@ -11,7 +11,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from bson import ObjectId
 from typing import Any, List, Dict, Optional
-from openai import AsyncOpenAI
+from mistralai import Mistral
 from .auth import User, get_current_user
 
 load_dotenv()
@@ -35,13 +35,6 @@ try:
 except FileNotFoundError:
     MARKDOWN_PROMPT = ""
 
-alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'alias_prompt.txt')
-try:
-    with open(alias_prompt_path, 'r', encoding='utf-8') as f:
-        ALIAS_PROMPT = f.read()
-except FileNotFoundError:
-    ALIAS_PROMPT = ""
-
 class ChatRequest(BaseModel):
     conversation_id: str
     model: str
@@ -55,14 +48,6 @@ class ChatRequest(BaseModel):
     search: bool = False
     dan: bool = False
     stream: bool = True
-
-class ApiSettings(BaseModel):
-    api_key: str
-    base_url: str
-    
-class AliasRequest(BaseModel):
-    conversation_id: str
-    text: str
 
 def calculate_billing(request_array, response, in_billing_rate, out_billing_rate, search_billing_rate: Optional[float] = None):
     def count_tokens(message):
@@ -133,7 +118,7 @@ def format_message(message):
     elif role == "user":
         return {"role": "user", "content": [item for item in [normalize_content(part) for part in content] if item is not None]}
         
-def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastapi_request: Request):
+def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     async def error_generator(error_message):
         yield f"data: {json.dumps({'content': error_message})}\n\n"
 
@@ -183,35 +168,27 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
         "content": [{"type": "text", "text": MARKDOWN_PROMPT}]
     })
 
-    mapping = {1: "low", 2: "medium", 3: "high"}
-    reasoning_effort = mapping.get(request.reason) or None
-
     async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
         citation = None
         is_thinking = False
         try:
             if request.stream:
-                stream_result = await client.chat.completions.create(**parameters, timeout=300)
+                stream_result = await client.chat.stream_async(**parameters)
                 
                 async for chunk in stream_result:
                     if await fastapi_request.is_disconnected():
                         return
-                    if hasattr(chunk.choices[0].delta, 'reasoning_content') and chunk.choices[0].delta.reasoning_content:
-                        if not is_thinking:
-                            is_thinking = True
-                            await token_queue.put('<think>\n')
-                        await token_queue.put(chunk.choices[0].delta.reasoning_content)
-                    
-                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+
+                    if hasattr(chunk.data.choices[0].delta, 'content') and chunk.data.choices[0].delta.content:
                         if is_thinking:
                             await token_queue.put('\n</think>\n\n')
                             is_thinking = False
-                        await token_queue.put(chunk.choices[0].delta.content)
+                        await token_queue.put(chunk.data.choices[0].delta.content)
                     
                     if citation is None and hasattr(chunk, "citations"):
                         citation = chunk.citations
             else:
-                single_result = await client.chat.completions.create(**parameters, timeout=300)
+                single_result = await client.chat.complete_async(**parameters)
                 if single_result.choices[0].message.reasoning_content:
                     resoning_text = "<think>\n" + single_result.choices[0].message.reasoning_content + "\n</think>\n\n"
                 else: reasoning_text = ""
@@ -236,17 +213,15 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
                 for idx, item in enumerate(citation):
                     await token_queue.put(f"- [{idx+1}] {item}\n")
 
-            await client.close()
             await token_queue.put(None)
 
     async def event_generator():
         response_text = ""
         try:
-            async with AsyncOpenAI(api_key=settings.api_key, base_url=settings.base_url) as client:
+            async with Mistral(api_key=os.getenv("MISTRAL_API_KEY")) as client:
                 parameters = {
                     "model": request.model.split(':')[0],
                     "temperature": request.temperature,
-                    "reasoning_effort": reasoning_effort,
                     "messages": formatted_messages,
                     "stream": request.stream
                 }
@@ -308,18 +283,6 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
             )
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-@router.post("/perplexity")
-async def perplexity_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('PERPLEXITY_API_KEY'),
-        base_url="https://api.perplexity.ai"
-    )
-    return get_response(chat_request, settings, user, fastapi_request)
-
-@router.post("/grok")
-async def grok_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('XAI_API_KEY'),
-        base_url="https://api.x.ai/v1"
-    )
-    return get_response(chat_request, settings, user, fastapi_request)
+@router.post("/mistral")
+async def mistral_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+    return get_response(chat_request, user, fastapi_request)

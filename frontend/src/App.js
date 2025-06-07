@@ -12,6 +12,7 @@ import Realtime from "./pages/Realtime";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Toast from "./components/Toast";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import logo from "./logo.png";
 
@@ -31,7 +32,8 @@ function AppContent() {
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
   const [conversations, setConversations] = useState([]);
-  const [errorModal, setErrorModal] = useState(null);
+  const [toastMessage, setToastMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
 
   const chatMessageRef = useRef(null);
 
@@ -95,8 +97,8 @@ function AppContent() {
       );
       setConversations(response.data.conversations);
     } catch (error) {
-      setErrorModal("대화를 불러오는 데 실패했습니다.");
-      setTimeout(() => setErrorModal(null), 2000);
+      setToastMessage("대화를 불러오는 데 실패했습니다.");
+      setShowToast(true);
     } finally {
       setIsLoadingChat(false);
     }
@@ -199,12 +201,10 @@ function AppContent() {
           isTouch,
           conversations,
           isLoadingChat,
-          errorModal,
           deleteConversation,
           deleteAllConversation,
           updateConversation,
           toggleStarConversation,
-          setErrorModal,
           isResponsive,
           fetchConversations
         };
@@ -331,6 +331,13 @@ function AppContent() {
           </Routes>
         </AnimatePresence>
       </motion.div>
+
+      <Toast
+        type="error"
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+      />
     </div>
   ) : null;
 }

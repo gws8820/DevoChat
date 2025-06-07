@@ -4,13 +4,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { RiSearchLine, RiMenuLine, RiCloseLine  } from "react-icons/ri";
 import { IoMdStar } from "react-icons/io";
-import { CiWarning } from "react-icons/ci";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Modal from "./Modal";
 import Tooltip from "./Tooltip";
+import Toast from "./Toast";
 import logo from "../logo.png";
 import "../styles/Sidebar.css";
 
@@ -72,12 +72,19 @@ const ConversationItem = React.memo(({
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 handleRename(conv.conversation_id, renameInputValue);
+              } else if (e.key === "Escape") {
+                setRenamingConversationId(null);
+                setRenameInputValue("");
               }
             }}
             enterKeyHint="done"
             onBlur={() => {
-              setRenamingConversationId(null);
-              setRenameInputValue("");
+              if (renameInputValue.trim()) {
+                handleRename(conv.conversation_id, renameInputValue);
+              } else {
+                setRenamingConversationId(null);
+                setRenameInputValue("");
+              }
             }}
             autoFocus
           />
@@ -126,12 +133,10 @@ function Sidebar({
   isTouch,
   conversations,
   isLoadingChat,
-  errorModal,
   deleteConversation,
   deleteAllConversation,
   updateConversation,
   toggleStarConversation,
-  setErrorModal,
   isResponsive,
   fetchConversations,
 }) {
@@ -147,13 +152,14 @@ function Sidebar({
   const [renameInputValue, setRenameInputValue] = useState("");
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
   
   const [contextMenu, setContextMenu] = useState({
     visible: false,
     x: 0,
     y: 0,
   });
-  const hasNavigatedRef = useRef(false);
   const userContainerRef = useRef(null);
   const searchInputRef = useRef(null);
   const longPressTimer = useRef(null);
@@ -199,17 +205,6 @@ function Sidebar({
     };
     fetchUserInfo();
   }, []);
-
-  useEffect(() => {
-    if (errorModal && !hasNavigatedRef.current) {
-      hasNavigatedRef.current = true;
-      fetchConversations();
-      navigate("/");
-      setTimeout(() => {
-        hasNavigatedRef.current = false;
-      }, 2500);
-    }
-  }, [errorModal, fetchConversations, navigate]);
 
   const handleTouchStart = (e, conversation_id) => {
     setContextMenu({ ...contextMenu, visible: false });
@@ -284,10 +279,10 @@ function Sidebar({
       );
     } catch (error) {
       console.error("Failed to rename conversation.", error);
-      setErrorModal("대화 이름 편집에 실패했습니다.");
-      setTimeout(() => setErrorModal(null), 2000);
+      setToastMessage("대화 이름 편집에 실패했습니다.");
+      setShowToast(true);
     }
-  }, [updateConversation, currentConversationId, setAlias, setErrorModal]);
+  }, [updateConversation, currentConversationId, setAlias]);
 
   const handleDelete = async (conversation_id) => {
     try {
@@ -301,8 +296,8 @@ function Sidebar({
       );
     } catch (error) {
       console.error("Failed to delete conversation.", error);
-      setErrorModal("대화 삭제에 실패했습니다.");
-      setTimeout(() => setErrorModal(null), 2000);
+      setToastMessage("대화 삭제에 실패했습니다.");
+      setShowToast(true);
     }
   };
 
@@ -331,8 +326,8 @@ function Sidebar({
         );
       } catch (error) {
         console.error("Failed to delete conversations.", error);
-        setErrorModal("대화 삭제에 실패했습니다.");
-        setTimeout(() => setErrorModal(null), 2000);
+        setToastMessage("대화 삭제에 실패했습니다.");
+        setShowToast(true);
       }
     } else if (modalAction === "logout") {
       try {
@@ -344,12 +339,12 @@ function Sidebar({
         window.location.reload();
       } catch (error) {
         const detail = error.response?.data?.detail;
-        setErrorModal(
+        setToastMessage(
           !Array.isArray(detail) && detail
             ? detail
             : "알 수 없는 오류가 발생했습니다."
         );
-        setTimeout(() => setErrorModal(null), 2000);
+        setShowToast(true);
       }
     }
     setShowModal(false);
@@ -366,13 +361,13 @@ function Sidebar({
       (c) => c.conversation_id === conversation_id
     );
     if (!conversationExists) {
-      setErrorModal("대화가 존재하지 않습니다.");
-      setTimeout(() => setErrorModal(null), 2000);
+      setToastMessage("대화가 존재하지 않습니다.");
+      setShowToast(true);
       return;
     }
     navigate(`/chat/${conversation_id}`);
     if (isResponsive) toggleSidebar();
-  }, [conversations, setErrorModal, navigate, isResponsive, toggleSidebar]);
+  }, [conversations, navigate, isResponsive, toggleSidebar]);
 
   const handleNewConversation = () => {
     navigate("/");
@@ -480,14 +475,14 @@ function Sidebar({
       );
     } catch (error) {
       console.error("Failed to toggle star status:", error);
-      setErrorModal("별표 상태 변경에 실패했습니다.");
+      setToastMessage("별표 상태 변경에 실패했습니다.");
       const conversation = conversations.find(c => c.conversation_id === conversation_id);
       if (conversation) {
         toggleStarConversation(conversation_id, conversation.starred);
       }
-      setTimeout(() => setErrorModal(null), 2000);
+      setShowToast(true);
     }
-  }, [conversations, toggleStarConversation, setErrorModal]);
+  }, [conversations, toggleStarConversation]);
 
   return (
     <>
@@ -668,20 +663,12 @@ function Sidebar({
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {errorModal && (
-          <motion.div
-            className="error-modal"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <CiWarning style={{ flexShrink: 0, marginRight: "4px", fontSize: "16px" }} />
-            {errorModal}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Toast
+        type="error"
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+      />
     </>
   );
 }

@@ -4,7 +4,6 @@ import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { GoPlus, GoGlobe, GoLightBulb, GoUnlock } from "react-icons/go";
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
-import { CiWarning } from "react-icons/ci";
 import { FiPaperclip, FiMic } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
@@ -14,6 +13,7 @@ import axios from "axios";
 import modelsData from "../models.json";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
+import Toast from "../components/Toast";
 import "../styles/Common.css";
 
 function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef }) {
@@ -36,15 +36,14 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
   const [showMediaOptions, setShowMediaOptions] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [toastMessage, setToastMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
   
   const { 
     uploadedFiles, 
     setUploadedFiles,
-    errorModal, 
-    setErrorModal, 
     processFiles, 
-    removeFile, 
-    allowedExtensions 
+    removeFile
   } = useFileUpload([]);
 
   const textAreaRef = useRef(null);
@@ -57,13 +56,7 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
   const recordingTimerRef = useRef(null);
 
   const {
-    DEFAULT_MODEL,
-    DEFAULT_IMAGE_MODEL,
-    DEFAULT_SEARCH_MODEL,
-    DEFAULT_INFERENCE_MODEL,
-    DEFAULT_SEARCH_INFERENCE_MODEL,
     model,
-    modelType,
     temperature,
     reason,
     systemMessage,
@@ -76,11 +69,13 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
     isInference,
     isSearch,
     isDAN,
+    canEditSettings,
+    canToggleInference,
+    canToggleSearch,
+    canReadImage,
     setIsInference,
     setIsSearch,
-    setIsDAN,
-    setIsSearchButton,
-    setIsInferenceButton
+    setIsDAN
   } = useContext(SettingsContext);
 
   const models = modelsData.models;
@@ -118,11 +113,11 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
           { withCredentials: true }
         )
         .catch((err) => {
-          setErrorModal("메세지 삭제 중 오류가 발생했습니다.");
-          setTimeout(() => setErrorModal(null), 2000);
+          setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
+          setShowToast(true);
         });
     },
-    [conversation_id, setErrorModal]
+    [conversation_id]
   );
 
   const sendMessage = useCallback(
@@ -227,9 +222,9 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
               reason,
               system_message: systemMessage,
               user_message: contentParts,
-              search: selectedModel.capabilities?.search,
+              search: isSearch,
               dan: isDAN,
-              stream: selectedModel.stream,
+              stream: selectedModel.capabilities.stream,
             }),
             credentials: "include",
             signal: controller.signal,
@@ -295,6 +290,7 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
       updateAssistantMessage,
       setErrorMessage,
       isInference,
+      isSearch,
       isDAN,
       uploadedFiles,
       uploadingFiles,
@@ -315,11 +311,11 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
         
         sendMessage(textContent, nonTextContent);
       } catch (err) {
-        setErrorModal("메세지 처리 중 오류가 발생했습니다.");
-        setTimeout(() => setErrorModal(null), 2000);
+        setToastMessage("메세지 처리 중 오류가 발생했습니다.");
+        setShowToast(true);
       }
     },
-    [deleteMessages, sendMessage, setErrorModal]
+    [deleteMessages, sendMessage]
   );
 
   const sendEditedMessage = useCallback(
@@ -344,95 +340,60 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
     setConfirmModal(true);
   }, []);
 
-  function handleButtonClick(buttonType) {
-    const newIsSearch = buttonType === "search" ? !isSearch : isSearch;
-    const newIsInference = buttonType === "inference" ? !isInference : isInference;
-    
-    if (buttonType === "search") {
-      setIsSearch(newIsSearch);
-      setIsSearchButton(newIsSearch);
-    } else { // buttonType === "inference"
-      setIsInference(newIsInference);
-      setIsInferenceButton(newIsInference);
-    }
-  
-    const currentModel = models.find(m => m.model_name === model);
-    if (currentModel?.related_models && currentModel.related_models.length > 0) {
-      for (const relatedModelName of currentModel.related_models) {
-        const relatedModel = models.find(m => m.model_name === relatedModelName);
-        
-        if (relatedModel && 
-            newIsSearch === relatedModel.capabilities?.search && 
-            newIsInference === relatedModel.inference) {
-          updateModel(relatedModelName);
-          return;
-        }
-      }
-    }
-  
-    if (newIsSearch && newIsInference)
-      updateModel(DEFAULT_SEARCH_INFERENCE_MODEL);
-    else if (newIsSearch)
-      updateModel(DEFAULT_SEARCH_MODEL);
-    else if (newIsInference)
-      updateModel(DEFAULT_INFERENCE_MODEL);
-    else
-      updateModel(DEFAULT_MODEL);
-  }
-
   useEffect(() => {
     const initializeChat = async () => {
       try {
-        const res = await axios.get(
-          `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
-          { withCredentials: true }
-        );
-        updateModel(res.data.model);
-        setAlias(res.data.alias);
-        setTemperature(res.data.temperature);
-        setReason(res.data.reason);
-        setSystemMessage(res.data.system_message);
+        if (location.state?.initialMessage) {
+          setIsInitialized(true);
 
-        const updatedMessages = res.data.messages.map((m) =>
-          m.role === "assistant" ? { ...m, isComplete: true } : m
-        );
-        setMessages(updatedMessages);
-        
-        setIsInitialized(true);
-
-        if (location.state?.initialMessage && updatedMessages.length === 0) {
           if (location.state.initialFiles && location.state.initialFiles.length > 0) {
             sendMessage(location.state.initialMessage, location.state.initialFiles);
           } else {
             sendMessage(location.state.initialMessage);
           }
           
-          if (!res.data.alias) {
-            (async () => {
-              try {
-                const aliasResponse = await fetch(
-                  `${process.env.REACT_APP_FASTAPI_URL}/get_alias`,
-                  {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                      conversation_id: conversation_id,
-                      text: location.state.initialMessage 
-                    }),
-                    credentials: "include"
-                  }
-                );
-                const aliasData = await aliasResponse.json();
-                if (aliasData && aliasData.alias) {
-                  setAlias(aliasData.alias);
-                  updateConversation(conversation_id, aliasData.alias, false);
+          (async () => {
+            try {
+              const aliasResponse = await fetch(
+                `${process.env.REACT_APP_FASTAPI_URL}/get_alias`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ 
+                    conversation_id: conversation_id,
+                    text: location.state.initialMessage 
+                  }),
+                  credentials: "include"
                 }
-              } catch (err) {
-                console.error("Alias generation failed:", err);
-                updateConversation(conversation_id, "새 대화", false);
+              );
+              const aliasData = await aliasResponse.json();
+              if (aliasData && aliasData.alias) {
+                setAlias(aliasData.alias);
+                updateConversation(conversation_id, aliasData.alias, false);
               }
-            })();
-          }
+            } catch (err) {
+              console.error("Alias generation failed:", err);
+              updateConversation(conversation_id, "새 대화", false);
+            }
+          })();
+        }
+        
+        else {
+          const res = await axios.get(
+            `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
+            { withCredentials: true }
+          );
+          updateModel(res.data.model);
+          setAlias(res.data.alias);
+          setTemperature(res.data.temperature);
+          setReason(res.data.reason);
+          setSystemMessage(res.data.system_message);
+
+          const updatedMessages = res.data.messages.map((m) =>
+            m.role === "assistant" ? { ...m, isComplete: true } : m
+          );
+          setMessages(updatedMessages);
+          setIsInitialized(true);
         }
       } catch (err) {
         if (err.response && err.response.status === 404) {
@@ -452,53 +413,17 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
   }, [conversation_id, location.state]);
 
   useEffect(() => {
+    const hasImageHistory = messages.some((msg) => 
+      Array.isArray(msg.content) && msg.content.some((item) => item.type === "image")
+    );
+
     const hasUploadedImage = uploadedFiles.some((file) => {
-      if (file.type && (file.type === "image" || file.type.startsWith("image/"))) {
-        return true;
-      }
-      return /\.(jpe?g|png|gif|bmp|webp)$/i.test(file.name);
+      return (file.type && (file.type === "image" || file.type.startsWith("image/"))) || 
+             /\.(jpe?g|png|gif|bmp|webp)$/i.test(file.name);
     });
   
-    const hasMessageImage = messages.some((msg) => {
-      if (Array.isArray(msg.content)) {
-        return msg.content.some((item) => item.type === "image");
-      }
-      return false;
-    });
-  
-    const newIsImage = hasUploadedImage || hasMessageImage;
-    setIsImage(newIsImage);
-  
-    if (newIsImage) {
-      const currentModel = models.find((m) => m.model_name === model);
-      
-      if (currentModel && currentModel.capabilities?.image) {
-        return;
-      }
-      
-      if (currentModel && currentModel.related_models && currentModel.related_models.length > 0) {
-        for (const relatedModelName of currentModel.related_models) {
-          const relatedModel = models.find((m) => m.model_name === relatedModelName);
-          
-          if (relatedModel && relatedModel.capabilities?.image) {
-            updateModel(relatedModelName);
-            return;
-          }
-        }
-      }
-      
-      updateModel(DEFAULT_IMAGE_MODEL);
-    }
-  },
-  [
-    DEFAULT_IMAGE_MODEL,
-    model,
-    models,
-    setIsImage,
-    updateModel,
-    uploadedFiles,
-    messages
-  ]);
+    setIsImage(hasImageHistory || hasUploadedImage);
+  }, [messages, setIsImage, uploadedFiles]);
 
   const handlePlusButtonClick = useCallback((e) => {
     e.stopPropagation();
@@ -532,25 +457,12 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
       e.preventDefault();
       setIsDragActive(false);
       const files = Array.from(e.dataTransfer.files);
-      const acceptedFiles = files.filter(
-        (file) =>
-          file.type.startsWith("image/") || allowedExtensions.test(file.name)
-      );
-      const rejectedFiles = files.filter(
-        (file) =>
-          !file.type.startsWith("image/") && !allowedExtensions.test(file.name)
-      );
-
-      if (rejectedFiles.length > 0) {
-        setErrorModal("지원되는 형식이 아닙니다.");
-        setTimeout(() => setErrorModal(null), 2000);
-      }
-
-      if (acceptedFiles.length > 0) {
-        await processFiles(acceptedFiles);
-      }
+      await processFiles(files, (errorMessage) => {
+        setToastMessage(errorMessage);
+        setShowToast(true);
+      }, canReadImage);
     },
-    [allowedExtensions, processFiles, setErrorModal]
+    [processFiles, canReadImage]
   );
 
   const handlePaste = useCallback(
@@ -561,20 +473,20 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
         const item = items[i];
         if (item.kind === "file") {
           const file = item.getAsFile();
-          if (
-            file &&
-            (file.type.startsWith("image/") || allowedExtensions.test(file.name))
-          ) {
+          if (file) {
             filesToUpload.push(file);
           }
         }
       }
       if (filesToUpload.length > 0) {
         e.preventDefault();
-        await processFiles(filesToUpload);
+        await processFiles(filesToUpload, (errorMessage) => {
+          setToastMessage(errorMessage);
+          setShowToast(true);
+        }, canReadImage);
       }
     },
-    [allowedExtensions, processFiles]
+    [processFiles, canReadImage]
   );
 
   useEffect(() => {
@@ -654,8 +566,8 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       
       if (!SpeechRecognition) {
-        setErrorModal("이 브라우저는 음성 인식을 지원하지 않습니다.");
-        setTimeout(() => setErrorModal(null), 2000);
+        setToastMessage("이 브라우저는 음성 인식을 지원하지 않습니다.");
+        setShowToast(true);
         return;
       }
       
@@ -683,8 +595,8 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
       };
       
       recognition.onerror = (event) => {
-        setErrorModal(`음성 인식 오류가 발생했습니다. ${event.error}`);
-        setTimeout(() => setErrorModal(null), 2000);
+        setToastMessage(`음성 인식 오류가 발생했습니다. ${event.error}`);
+        setShowToast(true);
         handleRecordingStop();
       };
       
@@ -700,10 +612,10 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
       setIsRecording(true);
       setShowMediaOptions(false);
     } catch (error) {
-      setErrorModal("음성 인식을 시작하는 데 실패했습니다.");
-      setTimeout(() => setErrorModal(null), 2000);
+      setToastMessage("음성 인식을 시작하는 데 실패했습니다.");
+      setShowToast(true);
     }
-  }, [setErrorModal, isRecording, handleRecordingStop, inputText]);
+  }, [isRecording, handleRecordingStop, inputText]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -884,7 +796,7 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
           <div className="button-area">
             <div className="function-button-container" ref={optionsRef}>
               <div 
-                className="function-button" 
+                className="function-button plus-button" 
                 onClick={handlePlusButtonClick}
               >
                 <GoPlus style={{ strokeWidth: 0.5 }} />
@@ -905,42 +817,75 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
                     </div>
                     <div className="media-option" onClick={handleRecordingStart}>
                       <FiMic />
-                      녹음 시작
+                      음성 인식
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
             
-            <div
-              className={`function-button ${
-                isSearch ? "active" : ""
-              }`}
-              onClick={() => handleButtonClick("search")}
-            >
-              <GoGlobe style={{ strokeWidth: 0.5 }} />
-              검색
-            </div>
-            <div
-              className={`function-button ${isInference ? "active" : ""}`}
-              onClick={() => handleButtonClick("inference")}
-            >
-              <GoLightBulb style={{ strokeWidth: 0.5 }} />
-              추론
-            </div>
-            <div
-              className={`function-button ${
-                modelType === "none" ? "disabled" : isDAN ? "active" : ""
-              }`}
-              onClick={() => {
-                if (modelType !== "none") {
-                  setIsDAN(!isDAN);
-                }
-              }}
-            >
-              <GoUnlock style={{ strokeWidth: 0.5 }} />
-              DAN
-            </div>
+            <AnimatePresence initial={false}>
+              {canToggleSearch && (
+                <motion.div
+                  key="search"
+                  className={`function-button ${isSearch ? "active" : ""}`}
+                  onClick={() => setIsSearch(!isSearch)}
+                  initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                  animate={{ x: 0, opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ 
+                    type: "physics",
+                    velocity: 200,
+                    stiffness: 100,
+                    damping: 15
+                  }}
+                  layout
+                >
+                  <GoGlobe style={{ strokeWidth: 0.5 }} />
+                  검색
+                </motion.div>
+              )}
+              {canToggleInference && (
+                <motion.div
+                  key="inference"
+                  className={`function-button ${isInference ? "active" : ""}`}
+                  onClick={() => setIsInference(!isInference)}
+                  initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                  animate={{ x: 0, opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ 
+                    type: "physics",
+                    velocity: 200,
+                    stiffness: 100,
+                    damping: 15
+                  }}
+                  layout
+                >
+                  <GoLightBulb style={{ strokeWidth: 0.5 }} />
+                  추론
+                </motion.div>
+              )}
+              {canEditSettings && (
+                <motion.div
+                  key="dan"
+                  className={`function-button ${isDAN ? "active" : ""}`}
+                  onClick={() => setIsDAN(!isDAN)}
+                  initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                  animate={{ x: 0, opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ 
+                    type: "physics",
+                    velocity: 200,
+                    stiffness: 100,
+                    damping: 15
+                  }}
+                  layout
+                >
+                  <GoUnlock style={{ strokeWidth: 0.5 }} />
+                  DAN
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -967,13 +912,16 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
 
       <input
         type="file"
-        accept="image/*, .zip, .pdf, .doc, .docx, .pptx, .xlsx, .csv, .txt, .text, .rtf, .html, .htm, .odt, .eml, .epub, .msg, .json, .wav, .mp3, .ogg, .flac, .amr, .amr-wb, .mulaw, .alaw, .webm, .m4a, .mp4, .md, .markdown, .xml, .tsv, .yml, .yaml, .py, .pyw, .rb, .pl, .java, .c, .cpp, .h, .hpp, .v, .js, .jsx, .ts, .tsx, .css, .scss, .less, .cs, .sh, .bash, .bat, .ps1, .ini, .conf, .cfg, .toml, .tex, .r, .swift, .scala, .hs, .erl, .ex, .exs, .go, .rs, .php"
+        accept="*/*"
         multiple
         ref={fileInputRef}
         style={{ display: "none" }}
         onChange={async (e) => {
           const files = Array.from(e.target.files);
-          await processFiles(files);
+          await processFiles(files, (errorMessage) => {
+            setToastMessage(errorMessage);
+            setShowToast(true);
+          }, canReadImage);
           e.target.value = "";
         }}
       />
@@ -993,20 +941,12 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {errorModal && (
-          <motion.div
-            className="error-modal"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <CiWarning style={{ flexShrink: 0, marginRight: "4px", fontSize: "16px" }} />
-            {errorModal}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Toast
+        type="error"
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+      />
     </div>
   );
 }
