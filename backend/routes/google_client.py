@@ -178,7 +178,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         google_search = types.GoogleSearch()
     )
     
-    mapping = {0: 0, 1: 1000, 2: 8000, 3: 24000}
+    mapping = {0: 0, 1: 1024, 2: 8192, 3: 24576}
     thinking_budget = mapping.get(request.reason)
 
     async def produce_tokens(token_queue: asyncio.Queue, request: ChatRequest, parameters: Dict[str, Any], fastapi_request: Request, client) -> None:

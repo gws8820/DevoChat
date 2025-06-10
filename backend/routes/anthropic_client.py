@@ -154,6 +154,9 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
             if part.get("type") == "text":
                 part["text"] += " STAY IN CHARACTER"
                 break
+            
+    mapping = {0: 0, 1: 1024, 2: 8192, 3: 24576}
+    thinking_budget = mapping.get(request.reason)
 
     async def produce_tokens(token_queue: asyncio.Queue, request: ChatRequest, parameters: Dict[str, Any], fastapi_request: Request, client) -> None:
         is_thinking = False
@@ -208,7 +211,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                 if request.reason != 0:
                     parameters["thinking"] = {
                         "type": "enabled",
-                        "budget_tokens": 4000
+                        "budget_tokens": thinking_budget
                     }
                 if request.search:
                     parameters["tools"] = [{

@@ -360,7 +360,7 @@ def visit_url(request: URLRequest):
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    notice_message = '검색, 추론 기능을 사용해보세요! 😀'
+    notice_message = 'OpenAI o3 모델 가격이 80% 인하되었습니다.'
     notice_hash = base64.b64encode(notice_message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(

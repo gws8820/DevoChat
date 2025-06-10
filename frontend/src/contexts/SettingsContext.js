@@ -7,64 +7,52 @@ export const SettingsProvider = ({ children }) => {
   const DEFAULT_MODEL = "gemini-2.5-flash-preview-05-20";
   
   const [model, setModel] = useState(DEFAULT_MODEL);
-  const [sliderType, setSliderType] = useState("");
   const [alias, setAlias] = useState("");
   const [temperature, setTemperature] = useState(0.5);
   const [reason, setReason] = useState(2);
   const [systemMessage, setSystemMessage] = useState("");
   const [isImage, setIsImage] = useState(false);
-  const [isSearch, setIsSearch] = useState(false);
   const [isInference, setIsInference] = useState(false);
+  const [isSearch, setIsSearch] = useState(false);
   const [isDAN, setIsDAN] = useState(false);
-  const [canEditSettings, setCanEditSettings] = useState(false);
+  const [canControlTemp, setCanControlTemp] = useState(false);
+  const [canControlReason, setCanControlReason] = useState(false);
+  const [canControlSystemMessage, setCanControlSystemMessage] = useState(false);
+  const [canReadImage, setCanReadImage] = useState(false);
   const [canToggleInference, setCanToggleInference] = useState(false);
   const [canToggleSearch, setCanToggleSearch] = useState(false);
-  const [canReadImage, setCanReadImage] = useState(false);
 
   const updateModel = (newModel) => {
     const selectedModel = modelsData.models.find(m => m.model_name === newModel);
-    const slider = selectedModel?.slider;
+    const temperature = selectedModel?.controls?.temperature;
+    const reason = selectedModel?.controls?.reason;
+    const system_message = selectedModel?.controls?.system_message;
     const inference = selectedModel?.capabilities?.inference;
     const search = selectedModel?.capabilities?.search;
     const image = selectedModel?.capabilities?.image;
 
     setModel(newModel);
     setIsInference(inference === true);
-    setIsSearch(search === true);
-    setCanEditSettings(slider !== "none");
     setCanToggleInference(inference === "toggle");
-    setCanToggleSearch(search === "toggle");
-    setCanReadImage(image);
     
-    if (slider === "none") {
-      setTemperature(1);
-      setReason(0);
+    setIsSearch(search === true);
+    setCanToggleSearch(search === "toggle");
+
+    const defaultTempCondition = temperature === true || temperature === "conditional"; // No inference as default
+    setCanControlTemp(defaultTempCondition);
+    setTemperature(defaultTempCondition ? 0.5 : 1);
+
+    const defaultReasonCondition = reason === true && inference === true; // For inference-only models
+    setCanControlReason(defaultReasonCondition);
+    setReason(defaultReasonCondition ? 2 : 0);
+
+    setCanControlSystemMessage(system_message);
+    if (!system_message) {
       setSystemMessage("");
       setIsDAN(false);
-      setSliderType("none");
     }
-    else if (inference === false || inference === "toggle") {
-      setTemperature(0.5);
-      setReason(0);
-      setSliderType("temperature");
-    }
-    else if (inference === true) {
-      if (slider === "temperature") {
-        setTemperature(0.5);
-        setReason(0);
-        setSliderType("temperature");
-      }
-      else if (slider === "fixed_reason") {
-        setTemperature(1);
-        setReason(2);
-        setSliderType("temperature");
-      }
-      else if (slider === "reason") {
-        setTemperature(1);
-        setReason((prev) => (prev === 0 ? 2 : prev));
-        setSliderType("reason");
-      }
-    }
+
+    setCanReadImage(image);
   };
 
   useEffect(() => {
@@ -74,24 +62,29 @@ export const SettingsProvider = ({ children }) => {
 
   useEffect(() => {
     const selectedModel = modelsData.models.find(m => m.model_name === model);
-    const slider = selectedModel?.slider;
-    
-    if (isInference) {
-      if (slider === "fixed_reason") {
+    const temperature = selectedModel?.controls?.temperature;
+    const reason = selectedModel?.controls?.reason;
+
+    if (temperature === "conditional") {
+      if(isInference) {
+        setCanControlTemp(false);
         setTemperature(1);
-        setReason(2);
-        setSliderType("temperature");
       }
-      else if (slider === "reason") {
-        setTemperature(1);
-        setReason((prev) => (prev === 0 ? 2 : prev));
-        setSliderType("reason");
+      else if(!isInference) {
+        setCanControlTemp(true);
+        setTemperature(0.5);
       }
     }
-    else {
-      setTemperature(0.5);
-      setReason(0);
-      setSliderType("temperature");
+
+    if (reason) {
+      if(isInference) {
+        setCanControlReason(true);
+        setReason(2);
+      }
+      else if(!isInference) {
+        setCanControlReason(false);
+        setReason(0);
+      }
     }
     // eslint-disable-next-line
   }, [isInference]);
@@ -101,7 +94,6 @@ export const SettingsProvider = ({ children }) => {
       value={{
         DEFAULT_MODEL,
         model,
-        sliderType,
         alias,
         temperature,
         reason,
@@ -110,10 +102,12 @@ export const SettingsProvider = ({ children }) => {
         isInference,
         isSearch,
         isDAN,
-        canEditSettings,
+        canControlTemp,
+        canControlReason,
+        canControlSystemMessage,
+        canReadImage,
         canToggleInference,
         canToggleSearch,
-        canReadImage,
         updateModel,
         setAlias,
         setTemperature,

@@ -69,10 +69,10 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
     isInference,
     isSearch,
     isDAN,
-    canEditSettings,
-    canToggleInference,
-    canToggleSearch,
+    canControlSystemMessage,
     canReadImage,
+    canToggleInference,
+    canToggleSearch,    
     setIsInference,
     setIsSearch,
     setIsDAN
@@ -737,9 +737,9 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
                     <motion.div
                       key={file.id}
                       className="file-wrap"
-                      initial={{ y: 4, opacity: 0 }}
+                      initial={{ y: 5, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: 4, opacity: 0 }}
+                      exit={{ y: 5, opacity: 0 }}
                       transition={{ duration: 0.3 }}
                       style={{ position: "relative" }}
                     >
@@ -766,9 +766,9 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
               {isRecording && (
                 <motion.div 
                   className="recording-indicator"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
+                  initial={{ y: 5, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: 5, opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
                   <div className="recording-dot"></div>
@@ -795,13 +795,21 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
           </div>
           <div className="button-area">
             <div className="function-button-container" ref={optionsRef}>
-              <div 
-                className="function-button plus-button" 
-                onClick={handlePlusButtonClick}
-              >
-                <GoPlus style={{ strokeWidth: 0.5 }} />
-              </div>
-              
+              <AnimatePresence>
+                <motion.div 
+                  className="function-button plus-button" 
+                  onClick={handlePlusButtonClick}
+                  transition={{ 
+                    type: "physics",
+                    velocity: 200,
+                    stiffness: 100,
+                    damping: 15
+                  }}
+                  layout
+                >
+                  <GoPlus style={{ strokeWidth: 0.5 }} />
+                </motion.div>
+              </AnimatePresence>
               <AnimatePresence>
                 {showMediaOptions && (
                   <motion.div 
@@ -865,7 +873,7 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
                   추론
                 </motion.div>
               )}
-              {canEditSettings && (
+              {canControlSystemMessage && (
                 <motion.div
                   key="dan"
                   className={`function-button ${isDAN ? "active" : ""}`}

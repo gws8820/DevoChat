@@ -169,7 +169,11 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
           "inference": "toggle",
           "search": "toggle"
         },
-        "slider": "reason"
+        "controls": {
+          "temperature": true,
+          "reason": true,
+          "system_message": true
+        }
       },
       {
         "model_name": "claude-sonnet-4-20250514",
@@ -184,7 +188,11 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
           "inference": "toggle",
           "search": "toggle"
         },
-        "slider": "fixed_reason"
+        "controls": {
+          "temperature": "conditional",
+          "reason": true,
+          "system_message": true
+        }
       },
       {
         "model_name": "grok-3",
@@ -199,7 +207,11 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
           "inference": false,
           "search": false
         },
-        "slider": "temperature"
+        "controls": {
+          "temperature": true,
+          "reason": false,
+          "system_message": true
+        }
       },
       {
         "model_name": "o1-pro",
@@ -214,7 +226,11 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
           "inference": true,
           "search": false
         },
-        "slider": "none"
+        "controls": {
+          "temperature": false,
+          "reason": false,
+          "system_message": false
+        }
       }
       ...
     ]
@@ -237,14 +253,24 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `capabilities.image` | 이미지 처리 기능 지원 여부입니다. |
 | `capabilities.inference` | 추론 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"` |
 | `capabilities.search` | 웹 검색 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"` |
-| `slider` | 모델이 지원하는 파라미터를 정의합니다. 가능한 값: `temperature`, `reason`, `fixed_reason`, `none` |
+| `controls` | 모델이 지원하는 사용자 제어 옵션들을 정의합니다. |
+| `controls.temperature` | Temperature 조절 가능 여부입니다. 가능한 값: `true`, `false`, `"conditional"` |
+| `controls.reason` | Reasoning Effect 조절 가능 여부입니다. 가능한 값: `true`, `false` |
+| `controls.system_message` | 시스템 메시지 설정 가능 여부입니다. 가능한 값: `true`, `false` |
 
-### 슬라이더 유형 설명
+### 값 설명
 
-- **temperature**: Temperature만 조절할 수 있습니다.
-- **reason**: Temperature와 Reasoning Effect 모두 조절할 수 있습니다.
-- **fixed_reason**: Temperature는 조절 가능하지만 Reasoning Effect는 고정값으로 설정됩니다.
-- **none**: 모든 파라미터 조절이 불가능합니다.
+#### true
+해당 기능이 항상 활성화되어 있습니다.
+
+#### false  
+해당 기능이 지원되지 않습니다.
+
+#### toggle
+사용자가 필요에 따라 해당 기능을 활성화하거나 비활성화할 수 있습니다.
+
+#### conditional  
+표준 모드에서는 사용할 수 있으나, 추론 모드에서는 사용할 수 없습니다.
 
 
 

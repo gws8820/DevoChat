@@ -132,6 +132,7 @@
 }
 
 .share-icon {
+    font-size: 19px;
     margin: 1px 2px 0 0;
 }
 
@@ -142,74 +143,80 @@
 
 .slider-container {
     position: absolute;
-    width: 160px;
+    width: 260px;
     top: 50%;
     right: 100%;
     transform: translateY(-50%);
-    padding: 0 15px;
     margin-right: 10px;
-    border-radius: 10px;
-    background-color: white;
+    padding: 0 20px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(24px);
     z-index: 100;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 
+                0 4px 12px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+}
+
+.slider-section {
+    padding: 18px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.slider-section:not(:last-child) {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.slider-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c2c2c;
+    min-width: 85px;
+    flex-shrink: 0;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
 }
 
 .slider-wrapper {
     position: relative;
+    flex: 1;
     width: 100%;
+    margin-bottom: 5px;
 }
 
-.temperature-slider {
+.slider {
     -webkit-appearance: none;
     appearance: none;
-    margin: 15px 0;
+    margin: 10px 0;
     width: 100%;
-    height: 10px;
-    background: #eeeeee;
-    border-radius: 10px;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
     outline: none;
-    transition: background 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
 }
 
-.temperature-slider::-webkit-slider-thumb {
+.slider:hover {
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 16px;
     height: 16px;
-    background: #777;
+    background: #606060;
     border-radius: 50%;
     cursor: pointer;
-    transition: background 0.2s;
-}
-
-.reason-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    margin: 15px 0;
-    width: 100%;
-    height: 10px;
-    background: #eeeeee;
-    border-radius: 10px;
-    outline: none;
-    transition: background 0.2s;
-    cursor: pointer;
-}
-
-.reason-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: #777;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .slider-value {
     position: absolute;
-    top: 34px;
-    border-radius: 4px;
+    top: 26px;
     font-size: 12px;
     font-weight: 500;
     white-space: nowrap;
@@ -226,9 +233,13 @@
     width: 450px;
     padding: 5px;
     margin-right: 10px;
-    background-color: rgb(248, 248, 248);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(24px);
     z-index: 100;
-    border-radius: 10px;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 
+                0 4px 12px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
 }
 
 .system-message-input {
@@ -237,14 +248,8 @@
     box-sizing: border-box;
     border: none;
     outline: none;
-    font-size: 16px;
+    font-size: 15px;
     background-color: transparent;
-}
-
-.header-icon .disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-    pointer-events: none;
 }
 
 @media (max-width: 840px) {
@@ -259,6 +264,13 @@
     }
     .system-message-container {
         width: calc(100vw - 120px);
+    }
+    .slider-container {
+        width: 220px;
+        margin-right: 12px;
+    }
+    .slider-section {
+        gap: 0;
     }
     .model-box {
         padding: 5px 2px 5px 5.5px;
