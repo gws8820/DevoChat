@@ -11,7 +11,7 @@ import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFileUpload } from "../hooks/useFileUpload";
-import axios from "axios";
+import axios from "../utils/axiosConfig";
 import Modal from "../components/Modal";
 import Toast from "../components/Toast";
 import modelsData from "../models.json";
@@ -467,7 +467,7 @@ function Main({ addConversation, isTouch }) {
             <textarea
               ref={textAreaRef}
               className="message-input"
-              placeholder="답장 입력하기"
+              placeholder="내용 입력하기"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onPaste={handlePaste}

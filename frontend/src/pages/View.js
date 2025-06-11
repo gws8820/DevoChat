@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import { AnimatePresence } from "framer-motion";
-import axios from "axios";
+import axios from "../utils/axiosConfig";
 import Message from "../components/Message";
 import "../styles/Common.css";
 

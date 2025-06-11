@@ -1,5 +1,5 @@
 // Register.js
-import axios from "axios";
+import axios from "../utils/axiosConfig";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";

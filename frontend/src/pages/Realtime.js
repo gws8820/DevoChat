@@ -138,6 +138,13 @@ const Realtime = () => {
         `${process.env.REACT_APP_FASTAPI_URL}/session`,
         { credentials: "include" }
       );
+      
+      if (tokenResponse.status === 401) {
+        if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+          window.location.href = '/login?expired=true';
+        }
+        return;
+      }
       if (!tokenResponse.ok) {
         const errorData = await tokenResponse.json();
         throw new Error(`${errorData.detail}`);

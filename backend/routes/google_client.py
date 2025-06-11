@@ -193,7 +193,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                     
                     if hasattr(chunk, 'candidates') and chunk.candidates:
                         candidate = chunk.candidates[0]
-                        if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                        if hasattr(candidate, 'content') and getattr(candidate.content, 'parts', None):
                             for part in candidate.content.parts:
                                 if hasattr(part, 'text') and part.text:
                                     if hasattr(part, 'thought') and part.thought and not is_thinking:
@@ -210,7 +210,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                 full_response_text = ""
                 if hasattr(single_result, 'candidates') and single_result.candidates:
                     candidate = single_result.candidates[0]
-                    if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                    if hasattr(candidate, 'content') and getattr(candidate.content, 'parts', None):
                         thinking_parts = []
                         content_parts = []
                         

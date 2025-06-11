@@ -21,6 +21,13 @@ export const useFileUpload = (initialFiles = []) => {
             }
           );
           
+          if (res.status === 401) {
+            if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+              window.location.href = '/login?expired=true';
+            }
+            return;
+          }
+          
           if (!res.ok) {
             if (res.status === 422) {
               throw new Error(`${file.name}는 업로드할 수 없는 파일입니다.`);
@@ -48,6 +55,13 @@ export const useFileUpload = (initialFiles = []) => {
               body: formData,
             }
           );
+          
+          if (res.status === 401) {
+            if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+              window.location.href = '/login?expired=true';
+            }
+            return;
+          }
           
           if (!res.ok) {
             if (res.status === 422) {

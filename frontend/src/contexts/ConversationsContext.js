@@ -1,6 +1,6 @@
 // src/contexts/ConversationsContext.js
 import React, { createContext, useState, useEffect } from "react";
-import axios from "axios";
+import axios from "../utils/axiosConfig";
 
 export const ConversationsContext = createContext();
 
@@ -20,7 +20,7 @@ export function ConversationsProvider({ children }) {
             setError(null);
         } catch (error) {
             console.error("Failed to fetch conversations.", error);
-            setError("대화를 불러오는 데 실패했습니다.");
+            setError("대화 목록을 불러오는 중 오류가 발생했습니다.");
         } finally {
             setLoading(false);
         }

@@ -96,101 +96,6 @@
         }
       },
       {
-        "model_name": "deepseek-ai/DeepSeek-V3-0324",
-        "model_alias": "Deepseek V3",
-        "description": "표준 Deepseek 모델",
-        "endpoint": "/huggingface",
-        "in_billing": "0.9",
-        "out_billing": "0.9",
-        "capabilities": {
-          "stream": true,
-          "image": false,
-          "inference": false,
-          "search": false
-        },
-        "controls": {
-          "temperature": true,
-          "reason": false,
-          "system_message": true
-        }
-      },
-      {
-        "model_name": "deepseek-ai/DeepSeek-R1-0528",
-        "model_alias": "Deepseek R1",
-        "description": "추론 Deepseek 모델",
-        "endpoint": "/huggingface",
-        "in_billing": "3",
-        "out_billing": "8",
-        "capabilities": {
-          "stream": true,
-          "image": false,
-          "inference": true,
-          "search": false
-        },
-        "controls": {
-          "temperature": true,
-          "reason": false,
-          "system_message": true
-        }
-      },
-      {
-        "model_name": "grok-3",
-        "model_alias": "Grok 3",
-        "description": "표준 Grok 모델",
-        "endpoint": "/grok",
-        "in_billing": "3",
-        "out_billing": "15",
-        "capabilities": {
-          "stream": true,
-          "image": false,
-          "inference": false,
-          "search": false
-        },
-        "controls": {
-          "temperature": true,
-          "reason": false,
-          "system_message": true
-        }
-      },
-      {
-        "model_name": "grok-3-mini",
-        "model_alias": "Grok 3 mini",
-        "description": "경량 추론 Grok 모델",
-        "endpoint": "/grok",
-        "in_billing": "0.3",
-        "out_billing": "0.5",
-        "capabilities": {
-          "stream": true,
-          "image": false,
-          "inference": true,
-          "search": false
-        },
-        "controls": {
-          "temperature": true,
-          "reason": true,
-          "system_message": true
-        }
-      },
-      {
-        "model_name": "grok-2-vision-1212",
-        "model_alias": "Grok 2 Vision",
-        "description": "비전 Grok 모델",
-        "endpoint": "/grok",
-        "in_billing": "2",
-        "out_billing": "10",
-        "capabilities": {
-          "stream": true,
-          "image": true,
-          "inference": false,
-          "search": false
-        },
-        "controls": {
-          "temperature": true,
-          "reason": false,
-          "system_message": true
-        }
-      },
-      {
         "model_name": "gpt-4.1",
         "model_alias": "GPT 4.1",
         "description": "표준 GPT 모델",
@@ -267,12 +172,12 @@
         }
       },
       {
-        "model_name": "o1-pro",
-        "model_alias": "OpenAI o1 Pro",
+        "model_name": "o3-pro",
+        "model_alias": "OpenAI o3 Pro",
         "description": "최고 성능 추론 GPT 모델",
         "endpoint": "/gpt",
-        "in_billing": "150",
-        "out_billing": "600",
+        "in_billing": "20",
+        "out_billing": "80",
         "capabilities": {
           "stream": false,
           "image": true,
@@ -281,8 +186,103 @@
         },
         "controls": {
           "temperature": false,
+          "reason": true,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "grok-3",
+        "model_alias": "Grok 3",
+        "description": "표준 Grok 모델",
+        "endpoint": "/grok",
+        "in_billing": "3",
+        "out_billing": "15",
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": false,
+          "search": false
+        },
+        "controls": {
+          "temperature": true,
           "reason": false,
-          "system_message": false
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "grok-3-mini",
+        "model_alias": "Grok 3 mini",
+        "description": "경량 추론 Grok 모델",
+        "endpoint": "/grok",
+        "in_billing": "0.3",
+        "out_billing": "0.5",
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": true,
+          "search": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": true,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "grok-2-vision-1212",
+        "model_alias": "Grok 2 Vision",
+        "description": "비전 Grok 모델",
+        "endpoint": "/grok",
+        "in_billing": "2",
+        "out_billing": "10",
+        "capabilities": {
+          "stream": true,
+          "image": true,
+          "inference": false,
+          "search": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": false,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "deepseek-ai/DeepSeek-V3-0324",
+        "model_alias": "Deepseek V3",
+        "description": "표준 Deepseek 모델",
+        "endpoint": "/huggingface",
+        "in_billing": "0.9",
+        "out_billing": "0.9",
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": false,
+          "search": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": false,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "deepseek-ai/DeepSeek-R1-0528",
+        "model_alias": "Deepseek R1",
+        "description": "추론 Deepseek 모델",
+        "endpoint": "/huggingface",
+        "in_billing": "3",
+        "out_billing": "8",
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": true,
+          "search": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": false,
+          "system_message": true
         }
       },
       {

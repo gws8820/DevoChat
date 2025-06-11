@@ -203,7 +203,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                 parameters = {
                     "model": request.model.split(':')[0],
                     "temperature": request.temperature,
-                    "max_tokens": 4096,
+                    "max_tokens": thinking_budget + 4096,
                     "system": system_text,
                     "messages": formatted_messages,
                     "stream": request.stream,

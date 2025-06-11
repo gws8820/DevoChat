@@ -114,14 +114,19 @@ async def get_auth_status(access_token: str = Cookie(None)):
             "email": payload["email"]
         }
     except (ExpiredSignatureError, InvalidTokenError):
-        return {"logged_in": False, "error": "Invalid or expired token"}
+        response = JSONResponse(
+            content={"logged_in": False, "error": "Invalid or expired token"},
+            headers={"set-cookie": "access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax; Path=/"}
+        )
+        return response
 
 @router.get("/auth/user")
 async def get_current_user(access_token: str = Cookie(None)) -> User:
     if not access_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
+            detail="Not authenticated",
+            headers={"set-cookie": "access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax; Path=/"}
         )
     
     try:
@@ -130,14 +135,16 @@ async def get_current_user(access_token: str = Cookie(None)) -> User:
     except (ExpiredSignatureError, InvalidTokenError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token"
+            detail="Invalid token",
+            headers={"set-cookie": "access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax; Path=/"}
         )
     
     db_user = collection.find_one({"_id": ObjectId(user_id)})
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
+            detail="User not found",
+            headers={"set-cookie": "access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax; Path=/"}
         )
     
     return User(

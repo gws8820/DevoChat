@@ -1,6 +1,6 @@
 // Login.js
-import axios from "axios";
-import { useState } from "react";
+import axios from "../utils/axiosConfig";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Toast from "../components/Toast";
@@ -13,6 +13,15 @@ function Login() {
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('expired') === 'true') {
+      setToastMessage("다시 로그인해 주세요.");
+      setShowToast(true);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   function validateEmail(email) {
     const re = /\S+@\S+\.\S+/;

@@ -1,9 +1,10 @@
-import React, { useState, useContext, useRef, useEffect, useMemo } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
 import { RiMenuLine, RiArrowRightSLine, RiShare2Line, RiLightbulbLine, RiEdit2Line } from "react-icons/ri";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from 'uuid';
+
 import Tooltip from "./Tooltip";
 import Toast from "./Toast";
 import modelsData from "../models.json";
@@ -47,45 +48,6 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
   });
 
   const currentModelAlias = models.find((m) => m.model_name === model)?.model_alias || "모델 선택";
-
-  const tempPosition = useMemo(() => {
-    const percent = temperature * 100;
-    if (percent < 10) {
-      return {
-        left: "3%",
-        transform: "translateX(-3%)",
-      };
-    } else if (percent > 90) {
-      return {
-        left: "97%",
-        transform: "translateX(-97%)",
-      };
-    } else {
-      return {
-        left: `${percent}%`,
-        transform: `translateX(-${percent}%)`,
-      };
-    }
-  }, [temperature]);
-
-  const reasonPosition = useMemo(() => {
-    if (reason === 1) {
-      return {
-        color: "rgb(214, 70, 70)",
-        left: "calc(0% - 2px)",
-        transform: "translateX(0)",
-      };
-    } else if (reason === 2) {
-      return { left: "50%", transform: "translateX(-50%)" };
-    } else if (reason === 3) {
-      return {
-        color: "rgb(2, 133, 255)",
-        left: "calc(100% + 4px)",
-        transform: "translateX(-100%)",
-      };
-    }
-    return {};
-  }, [reason]);
   const reasonLabels = ["low", "medium", "high"];
 
   const handleShare = async () => {
@@ -135,8 +97,15 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
             title: alias
           })
         }
-      );
-
+            );
+      
+      if (res.status === 401) {
+        if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+          window.location.href = '/login?expired=true';
+        }
+        return;
+      }
+  
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.detail || res.status);
@@ -253,48 +222,42 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
                   >
                     {canControlReason && (
                       <div className="slider-section">
-                        <div className="slider-label">추론 성능</div>
-                        <div className="slider-wrapper">
-                          <input
-                            type="range"
-                            min="1"
-                            max="3"
-                            step="1"
-                            value={reason}
-                            onChange={(e) => setReason(parseInt(e.target.value))}
-                            className="slider"
-                          />
-                          <div
-                            className="slider-value"
-                            style={reasonPosition}
-                          >
+                        <div className="slider-label">
+                          <span>추론 성능</span>
+                          <span className="slider-value">
                             {reasonLabels[reason - 1]}
-                          </div>
+                          </span>
                         </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="3"
+                          step="1"
+                          value={reason}
+                          onChange={(e) => setReason(parseInt(e.target.value))}
+                          className="slider"
+                        />
                       </div>
                     )}
                     {canControlTemp && (
                       <div className="slider-section">
-                        <div className="slider-label">창의성 (온도)</div>
-                        <div className="slider-wrapper">
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.1"
-                            value={temperature}
-                            onChange={(e) =>
-                              setTemperature(parseFloat(e.target.value))
-                            }
-                            className="slider"
-                          />
-                          <div
-                            className="slider-value"
-                            style={tempPosition}
-                          >
+                        <div className="slider-label">
+                          <span>창의성 (온도)</span>
+                          <span className="slider-value">
                             {temperature}
-                          </div>
+                          </span>
                         </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.1"
+                          value={temperature}
+                          onChange={(e) =>
+                            setTemperature(parseFloat(e.target.value))
+                          }
+                          className="slider"
+                        />
                       </div>
                     )}
                   </motion.div>
@@ -332,12 +295,15 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <input
-                      type="text"
+                    <div className="system-message-label">
+                      <span>시스템 지시어 설정</span>
+                    </div>
+                    <textarea
                       value={systemMessage}
                       onChange={(e) => setSystemMessage(e.target.value)}
                       className="system-message-input"
-                      placeholder="지시어를 입력하세요."
+                      placeholder="내용을 입력하세요."
+                      rows={4}
                     />
                   </motion.div>
                 )}

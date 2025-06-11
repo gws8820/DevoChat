@@ -25,6 +25,13 @@ function Admin() {
             'Content-Type': 'application/json',
           },
         });
+        
+        if (response.status === 401) {
+          if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+            window.location.href = '/login?expired=true';
+          }
+          return;
+        }
 
         if (!response.ok) {
           navigate("/", { state: { errorModal: "권한이 없습니다." } });
@@ -68,6 +75,13 @@ function Admin() {
           'Content-Type': 'application/json',
         },
       });
+      
+      if (response.status === 401) {
+        if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+          window.location.href = '/login?expired=true';
+        }
+        return;
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -96,6 +110,13 @@ function Admin() {
           trial: !currentStatus
         }),
       });
+      
+      if (response.status === 401) {
+        if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+          window.location.href = '/login?expired=true';
+        }
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('상태 변경에 실패했습니다.');

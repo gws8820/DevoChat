@@ -7,7 +7,7 @@ import { IoMdStar } from "react-icons/io";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
+import axios from "../utils/axiosConfig";
 import Modal from "./Modal";
 import Tooltip from "./Tooltip";
 import Toast from "./Toast";
@@ -279,7 +279,7 @@ function Sidebar({
       );
     } catch (error) {
       console.error("Failed to rename conversation.", error);
-      setToastMessage("대화 이름 편집에 실패했습니다.");
+      setToastMessage("대화 이름 편집을 실패했습니다.");
       setShowToast(true);
     }
   }, [updateConversation, currentConversationId, setAlias]);
@@ -296,7 +296,7 @@ function Sidebar({
       );
     } catch (error) {
       console.error("Failed to delete conversation.", error);
-      setToastMessage("대화 삭제에 실패했습니다.");
+      setToastMessage("대화 삭제를 실패했습니다.");
       setShowToast(true);
     }
   };

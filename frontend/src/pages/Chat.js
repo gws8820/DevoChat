@@ -9,7 +9,7 @@ import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFileUpload } from "../hooks/useFileUpload";
-import axios from "axios";
+import axios from "../utils/axiosConfig";
 import modelsData from "../models.json";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
@@ -167,6 +167,13 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
                 body: JSON.stringify({ url }),
               }
             );
+            
+            if (res.status === 401) {
+              if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+                window.location.href = '/login?expired=true';
+              }
+              return;
+            }
             if (res.ok) {
               const data = await res.json();
               if (data.content) {
@@ -230,6 +237,13 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
             signal: controller.signal,
           }
         );
+        
+        if (response.status === 401) {
+          if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+            window.location.href = '/login?expired=true';
+          }
+          return;
+        }
   
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
@@ -366,6 +380,13 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
                   credentials: "include"
                 }
               );
+              
+              if (aliasResponse.status === 401) {
+                if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+                  window.location.href = '/login?expired=true';
+                }
+                return;
+              }
               const aliasData = await aliasResponse.json();
               if (aliasData && aliasData.alias) {
                 setAlias(aliasData.alias);
@@ -401,7 +422,7 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
           navigate("/", { state: { errorModal: "대화를 찾을 수 없습니다." } });
         } else {
           fetchConversations();
-          navigate("/", { state: { errorModal: "데이터를 불러오는 중 오류가 발생했습니다." } });
+          navigate("/", { state: { errorModal: "대화를 불러오는 중 오류가 발생했습니다." } });
         }
       } finally {
         setIsInitialized(true);
@@ -841,7 +862,7 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
                   initial={{ x: -20, opacity: 0, scale: 0.8 }}
                   animate={{ x: 0, opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ 
+                  transition={{
                     type: "physics",
                     velocity: 200,
                     stiffness: 100,

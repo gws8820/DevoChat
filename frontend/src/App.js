@@ -1,5 +1,6 @@
 // src/App.js
-import axios from "axios";
+import "./utils/axiosConfig";
+import axios from "./utils/axiosConfig";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
