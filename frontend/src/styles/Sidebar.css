@@ -177,12 +177,16 @@ input:focus {
     transition: opacity 0.1s ease-in-out, color 0.1s ease-in-out;
 }
 
-.star-icon.disabled {
+.star-icon.no-click {
+    pointer-events: none;
+}
+
+.star-icon.hidden {
     opacity: 0;
     pointer-events: none;
 }
 
-.no-search-results {
+.no-result {
     display: flex;
     flex-grow: 1;
     height: 100%;

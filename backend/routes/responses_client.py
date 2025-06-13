@@ -160,7 +160,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                 break
 
     mapping = {1: "low", 2: "medium", 3: "high"}
-    reasoning_effort = mapping.get(request.reason) or None
+    reasoning_effort = mapping.get(request.reason)
 
     async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
         citation = None
@@ -211,7 +211,8 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                     },
                     "instructions": instructions,
                     "input": formatted_messages,
-                    "stream": request.stream
+                    "stream": request.stream,
+                    "background": True if request.reason else False
                 }
 
                 if request.search:

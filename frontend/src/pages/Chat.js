@@ -7,6 +7,7 @@ import { BiX } from "react-icons/bi";
 import { FiPaperclip, FiMic } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
+import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFileUpload } from "../hooks/useFileUpload";
 import axios from "../utils/axiosConfig";
@@ -16,7 +17,7 @@ import Modal from "../components/Modal";
 import Toast from "../components/Toast";
 import "../styles/Common.css";
 
-function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef }) {
+function Chat({ isTouch, chatMessageRef }) {
   const { conversation_id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -77,6 +78,8 @@ function Chat({ fetchConversations, updateConversation, isTouch, chatMessageRef 
     setIsSearch,
     setIsDAN
   } = useContext(SettingsContext);
+
+  const { fetchConversations, updateConversation } = useContext(ConversationsContext);
 
   const models = modelsData.models;
   const uploadingFiles = uploadedFiles.some((file) => !file.content);

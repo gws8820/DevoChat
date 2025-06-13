@@ -9,6 +9,7 @@ import { RiVoiceAiFill } from "react-icons/ri";
 import { FiPaperclip, FiMic } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
+import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFileUpload } from "../hooks/useFileUpload";
 import axios from "../utils/axiosConfig";
@@ -17,7 +18,7 @@ import Toast from "../components/Toast";
 import modelsData from "../models.json";
 import "../styles/Common.css";
 
-function Main({ addConversation, isTouch }) {
+function Main({ isTouch }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [notice, setNotice] = useState("");
@@ -65,6 +66,8 @@ function Main({ addConversation, isTouch }) {
     setIsInference,
     setIsDAN
   } = useContext(SettingsContext);
+
+  const { addConversation } = useContext(ConversationsContext);
 
   const models = modelsData.models;
   const uploadingFiles = uploadedFiles.some((file) => !file.content);

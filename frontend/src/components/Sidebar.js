@@ -6,6 +6,7 @@ import { RiSearchLine, RiMenuLine, RiCloseLine  } from "react-icons/ri";
 import { IoMdStar } from "react-icons/io";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
+import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "../utils/axiosConfig";
 import Modal from "./Modal";
@@ -117,8 +118,8 @@ const ConversationItem = React.memo(({
         )}
 
         <motion.div 
-          className={`star-icon ${conv.starred ? 'starred' : ''} ${isTouch && !conv.starred ? 'disabled' : ''}`}  
-          onClick={(e) => {toggleStar(conv.conversation_id, e)}}
+          className={`star-icon ${conv.starred ? `starred ${isTouch ? 'no-click' : ''}` : isTouch ? 'no-click hidden' : ''}`}  
+          onClick={isTouch ? undefined : (e) => {toggleStar(conv.conversation_id, e)}}
         >
           <IoMdStar />
         </motion.div>
@@ -131,14 +132,7 @@ function Sidebar({
   toggleSidebar,
   isSidebarVisible,
   isTouch,
-  conversations,
-  isLoadingChat,
-  deleteConversation,
-  deleteAllConversation,
-  updateConversation,
-  toggleStarConversation,
   isResponsive,
-  fetchConversations,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -166,6 +160,14 @@ function Sidebar({
   const contextMenuProtected = useRef(false);
 
   const { setAlias } = useContext(SettingsContext); 
+  const { 
+    conversations, 
+    isLoadingChat, 
+    deleteConversation, 
+    deleteAllConversation, 
+    updateConversation, 
+    toggleStarConversation 
+  } = useContext(ConversationsContext);
 
   const sortedConversations = useMemo(() => {
     return [...conversations].sort((a, b) => {
@@ -279,7 +281,7 @@ function Sidebar({
       );
     } catch (error) {
       console.error("Failed to rename conversation.", error);
-      setToastMessage("대화 이름 편집을 실패했습니다.");
+      setToastMessage("대화 이름 편집에 실패했습니다.");
       setShowToast(true);
     }
   }, [updateConversation, currentConversationId, setAlias]);
@@ -296,7 +298,7 @@ function Sidebar({
       );
     } catch (error) {
       console.error("Failed to delete conversation.", error);
-      setToastMessage("대화 삭제를 실패했습니다.");
+      setToastMessage("대화 삭제에 실패했습니다.");
       setShowToast(true);
     }
   };
@@ -336,7 +338,7 @@ function Sidebar({
           {},
           { withCredentials: true }
         );
-        window.location.reload();
+        window.location.href = '/login';
       } catch (error) {
         const detail = error.response?.data?.detail;
         setToastMessage(
@@ -475,7 +477,7 @@ function Sidebar({
       );
     } catch (error) {
       console.error("Failed to toggle star status:", error);
-      setToastMessage("별표 상태 변경에 실패했습니다.");
+      setToastMessage("즐겨찾기 토글이 실패했습니다.");
       const conversation = conversations.find(c => c.conversation_id === conversation_id);
       if (conversation) {
         toggleStarConversation(conversation_id, conversation.starred);
@@ -580,8 +582,8 @@ function Sidebar({
                       />
                     ))
                 ) : (
-                  <div className="no-search-results">
-                    검색 결과가 없습니다.
+                  <div className="no-result">
+                    {conversations.length === 0 ? "대화 내역이 없습니다." : "검색 결과가 없습니다."}
                   </div>
                 )}
               </motion.div>

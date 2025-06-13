@@ -1,7 +1,7 @@
 // src/App.js
 import "./utils/axiosConfig";
 import axios from "./utils/axiosConfig";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "./components/Sidebar";
@@ -15,13 +15,16 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Toast from "./components/Toast";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { ConversationsProvider, ConversationsContext } from "./contexts/ConversationsContext";
 import logo from "./logo.png";
 
 function App() {
   return (
     <Router>
       <SettingsProvider>
-        <AppContent />
+        <ConversationsProvider>
+          <AppContent />
+        </ConversationsProvider>
       </SettingsProvider>
     </Router>
   );
@@ -30,13 +33,13 @@ function App() {
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(null);
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
-  const [isLoadingChat, setIsLoadingChat] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
-  const [conversations, setConversations] = useState([]);
-  const [toastMessage, setToastMessage] = useState("");
+  const [toastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
   const chatMessageRef = useRef(null);
+
+  const { fetchConversations } = useContext(ConversationsContext);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -45,65 +48,6 @@ function AppContent() {
   const shouldShowLogo = location.pathname.startsWith("/view");
   const isResponsive = window.innerWidth <= 768;
   const marginLeft = shouldShowLayout && !isResponsive && isSidebarVisible ? 260 : 0;
-  
-  const addConversation = (newConversation) => {
-    setConversations((prevConversations) => [
-      ...prevConversations,
-      newConversation,
-    ]);
-  };
-
-  const deleteConversation = (conversation_id) => {
-    setConversations((prevConversations) =>
-      prevConversations.filter(
-        (conv) => conv.conversation_id !== conversation_id
-      )
-    );
-  };
-
-  const deleteAllConversation = () => {
-    setConversations([]);
-  };
-
-  const updateConversation = (conversation_id, newAlias, isLoading = undefined) => {
-    setConversations((prevConversations) =>
-      prevConversations.map((conv) =>
-        conv.conversation_id === conversation_id
-          ? { 
-              ...conv, 
-              alias: newAlias,
-              ...(isLoading !== undefined && { isLoading })
-            }
-          : conv
-      )
-    );
-  };
-
-  const toggleStarConversation = (conversation_id, starred) => {
-    setConversations(prevConversations => 
-      prevConversations.map(conv => 
-        conv.conversation_id === conversation_id 
-          ? { ...conv, starred, starred_at: starred ? new Date().toISOString() : null }
-          : conv
-      )
-    );
-  };
-
-  const fetchConversations = async () => {
-    setIsLoadingChat(true);
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_FASTAPI_URL}/conversations`,
-        { withCredentials: true }
-      );
-      setConversations(response.data.conversations);
-    } catch (error) {
-      setToastMessage("대화를 불러오는 데 실패했습니다.");
-      setShowToast(true);
-    } finally {
-      setIsLoadingChat(false);
-    }
-  };
 
   useEffect(() => {
     async function checkLoginStatus() {
@@ -121,6 +65,7 @@ function AppContent() {
       }
     }
     checkLoginStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -200,14 +145,7 @@ function AppContent() {
           toggleSidebar,
           isSidebarVisible,
           isTouch,
-          conversations,
-          isLoadingChat,
-          deleteConversation,
-          deleteAllConversation,
-          updateConversation,
-          toggleStarConversation,
-          isResponsive,
-          fetchConversations
+          isResponsive
         };
         
         return !isResponsive ? (
@@ -288,7 +226,7 @@ function AppContent() {
               path="/"
               element={
                 isLoggedIn ? (
-                  <Main addConversation={addConversation} isTouch={isTouch} />
+                  <Main isTouch={isTouch} />
                 ) : (
                   <Navigate to="/login" />
                 )
@@ -299,8 +237,6 @@ function AppContent() {
               element={
                 isLoggedIn ? (
                   <Chat 
-                    fetchConversations={fetchConversations} 
-                    updateConversation={updateConversation}
                     isTouch={isTouch} 
                     chatMessageRef={chatMessageRef} 
                   />
