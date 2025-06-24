@@ -4,7 +4,7 @@ import modelsData from '../models.json';
 export const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
-  const DEFAULT_MODEL = "gemini-2.5-flash-preview-05-20";
+  const DEFAULT_MODEL = "gemini-2.5-flash";
   
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [alias, setAlias] = useState("");

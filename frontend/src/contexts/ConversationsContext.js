@@ -1,5 +1,5 @@
 // src/contexts/ConversationsContext.js
-import React, { createContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useState, useCallback } from "react";
 import axios from "../utils/axiosConfig";
 
 export const ConversationsContext = createContext();
@@ -68,11 +68,6 @@ export function ConversationsProvider({ children }) {
             )
         );
     };
-
-    useEffect(() => {
-        fetchConversations();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     return (
         <ConversationsContext.Provider value={{

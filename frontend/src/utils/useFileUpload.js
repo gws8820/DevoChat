@@ -32,7 +32,7 @@ export const useFileUpload = (initialFiles = []) => {
             if (res.status === 422) {
               throw new Error(`${file.name}는 업로드할 수 없는 파일입니다.`);
             }
-            throw new Error(`${file.name} 파일을 처리 중 오류가 발생했습니다.`);
+            throw new Error(`${file.name} 처리 중 오류가 발생했습니다.`);
           }
           
           const data = await res.json();
@@ -67,7 +67,10 @@ export const useFileUpload = (initialFiles = []) => {
             if (res.status === 422) {
               throw new Error(`${file.name}는 업로드할 수 없는 파일입니다.`);
             }
-            throw new Error(`${file.name} 파일을 처리 중 오류가 발생했습니다.`);
+            if (res.status === 413) {
+              throw new Error(`${file.name}는 파일 크기 제한을 초과하여 업로드할 수 없습니다.`);
+            }
+            throw new Error(`${file.name} 처리 중 오류가 발생했습니다.`);
           }
           
           const data = await res.json();
@@ -79,6 +82,7 @@ export const useFileUpload = (initialFiles = []) => {
             type: data.type,
             name: data.name,
             content: data.content,
+            file_path: data.file_path
           };
         }
       } catch (error) {

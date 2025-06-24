@@ -11,7 +11,7 @@ import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { useFileUpload } from "../hooks/useFileUpload";
+import { useFileUpload } from "../utils/useFileUpload";
 import axios from "../utils/axiosConfig";
 import Modal from "../components/Modal";
 import Toast from "../components/Toast";
@@ -370,11 +370,15 @@ function Main({ isTouch }) {
       return;
     }
     
-    if (inputText.trim())
+    if (inputText.trim()) {
       sendMessage(inputText);
-    else
+    } else if (uploadedFiles.length !== 0) {
+      setToastMessage("내용을 입력해주세요.");
+      setShowToast(true);
+    } else {
       navigate("/realtime");
-  }, [inputText, sendMessage, navigate, isLoading, cancelRequest]);
+    }
+  }, [inputText, uploadedFiles, sendMessage, navigate, isLoading, cancelRequest]);
 
   const formatRecordingTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -585,7 +589,7 @@ function Main({ isTouch }) {
 
         <button
           className={`send-button ${
-            inputText.trim() || uploadedFiles.length > 0  ? "" : "realtime"
+            inputText.trim() || uploadedFiles.length > 0 ? "" : "realtime"
           }`}
           onClick={handleSendButtonClick}
           disabled={uploadingFiles || isRecording}

@@ -97,7 +97,7 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
             title: alias
           })
         }
-            );
+      );
       
       if (res.status === 401) {
         if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {

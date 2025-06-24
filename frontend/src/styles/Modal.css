@@ -20,7 +20,7 @@
     justify-content: center;
     max-width: 500px;
     margin: 0 10px;
-    padding: 40px;
+    padding: 40px 50px;
     gap: 10px;
     background: #fff;
     border-radius: 10px;
@@ -28,14 +28,28 @@
 }
 
 .modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
     margin: 20px 0;
     font-size: 20px;
     word-break: break-all;
 }
 
+.modal-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
 .modal-button button {
-    margin: 0 5px;
-    padding: 15px 50px;
+    flex: 1;
+    padding: 15px;
+    max-width: 120px;
     font-size: 16px;
     border: 1px solid rgb(240, 240, 240);
     border-radius: 5px;

@@ -1,5 +1,6 @@
 .env
 .venv
 images
+files
 shared_pages
 __pycache__

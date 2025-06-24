@@ -90,7 +90,7 @@ async def login(user: LoginUser):
         value=token,
         httponly=True,
         samesite='Lax',
-        max_age=60 * 60 * 24 * 7
+        max_age=60 * 60 * 24 * 30
     )
     return response
 

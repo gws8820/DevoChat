@@ -98,7 +98,12 @@ function Message({
             if (item.type === "file") {
               return (
                 <div key={idx} className="file-object">
-                  <span className="file-name">{item.name}</span>
+                  <a
+                    href={item.file_path ? `${process.env.REACT_APP_FASTAPI_URL}${item.file_path}` : undefined}
+                    className={`file-name ${item.file_path ? 'downloadable' : ''}`}
+                  >
+                    {item.name}
+                  </a>
                 </div>
               );
             }

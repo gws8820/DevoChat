@@ -1,12 +1,12 @@
 {
     "models": [
       {
-        "model_name": "gemini-2.5-flash-preview-05-20",
+        "model_name": "gemini-2.5-flash",
         "model_alias": "Gemini 2.5 Flash",
         "description": "표준 Gemini 모델",
         "endpoint": "/gemini",
-        "in_billing": "0.15",
-        "out_billing": "0.6",
+        "in_billing": "0.3",
+        "out_billing": "2.5",
         "capabilities": {
           "stream": true,
           "image": true,
@@ -20,7 +20,7 @@
         }
       },
       {
-        "model_name": "gemini-2.5-pro-preview-06-05",
+        "model_name": "gemini-2.5-pro",
         "model_alias": "Gemini 2.5 Pro",
         "description": "고성능 Gemini 모델",
         "endpoint": "/gemini",

@@ -104,6 +104,11 @@
     text-overflow: ellipsis;
 }
 
+.file-name.downloadable {
+    all: unset;
+    cursor: pointer;
+}
+
 .file-upload-overlay {
     position: absolute;
     top: 0;
@@ -126,7 +131,7 @@
     border-radius: 50%;
     color: white;
     background-color: black;
-    z-index: 100;
+    z-index: 2;
     cursor: pointer;
 }
 

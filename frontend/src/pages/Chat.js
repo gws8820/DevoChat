@@ -9,7 +9,7 @@ import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { useFileUpload } from "../hooks/useFileUpload";
+import { useFileUpload } from "../utils/useFileUpload";
 import axios from "../utils/axiosConfig";
 import modelsData from "../models.json";
 import Message from "../components/Message";
@@ -125,7 +125,11 @@ function Chat({ isTouch, chatMessageRef }) {
 
   const sendMessage = useCallback(
     async (message, files = uploadedFiles) => {
-      if (!message.trim() || uploadingFiles) return;
+      if (!message.trim()) {
+        setToastMessage("내용을 입력해주세요.");
+        setShowToast(true);
+        return;
+      }
 
       const contentParts = [];
       contentParts.push({ type: "text", text: message });
@@ -310,7 +314,6 @@ function Chat({ isTouch, chatMessageRef }) {
       isSearch,
       isDAN,
       uploadedFiles,
-      uploadingFiles,
       setUploadedFiles
     ]
   );

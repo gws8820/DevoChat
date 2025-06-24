@@ -1,5 +1,4 @@
 // src/App.js
-import "./utils/axiosConfig";
 import axios from "./utils/axiosConfig";
 import { useEffect, useState, useCallback, useRef, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";

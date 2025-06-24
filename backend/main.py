@@ -22,8 +22,11 @@ import base64
 load_dotenv()
 app = FastAPI()
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "images")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+IMAGE_DIR = os.path.join(os.path.dirname(__file__), "images")
+os.makedirs(IMAGE_DIR, exist_ok=True)
+
+FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
+os.makedirs(FILES_DIR, exist_ok=True)
 
 class URLRequest(BaseModel):
     url: str
@@ -60,6 +63,7 @@ app.include_router(mistral_client.router)
 app.include_router(huggingface_client.router)
 
 app.mount("/images", StaticFiles(directory="images"), name="images")
+app.mount("/files", StaticFiles(directory="files"), name="files")
 
 @app.post("/upload/image")
 async def upload_image(file: UploadFile = File(...)):
@@ -70,7 +74,7 @@ async def upload_image(file: UploadFile = File(...)):
     try:
         image = Image.open(io.BytesIO(file_data))
     except Exception:
-        return {"error": "Can't Read Image File"}
+        raise HTTPException(status_code=400, detail="Can't Read Image File")
 
     image = ImageOps.exif_transpose(image)
 
@@ -91,14 +95,14 @@ async def upload_image(file: UploadFile = File(...)):
     
     # Save with UUID filename but return original filename for display
     saved_filename = f"{uuid.uuid4().hex}.jpeg"
-    file_location = os.path.join(UPLOAD_DIR, saved_filename)
+    file_location = os.path.join(IMAGE_DIR, saved_filename)
     with open(file_location, "wb") as f:
         f.write(buffer.getvalue())
     
     return {
         "type": "image",
-        "name": file.filename,  # Return original filename for display
-        "content": f"/images/{saved_filename}"  # Use UUID filename for actual file path
+        "name": file.filename,
+        "content": f"/images/{saved_filename}"
     }
 
 def is_binary(data: bytes) -> bool:
@@ -150,6 +154,8 @@ async def upload_file(file: UploadFile = File(...)):
     _, ext = os.path.splitext(filename)
     ext = ext.lower()
 
+    extracted_text = ""
+
     if ext in supported_archives:
         extracted_parts = []
         try:
@@ -163,7 +169,7 @@ async def upload_file(file: UploadFile = File(...)):
                     inner_ext = os.path.splitext(inner_filename)[1].lower()
                     inner_file_data = z.read(inner_filename)
 
-                    extracted_text = ""
+                    inner_extracted_text = ""
                     
                     with tempfile.NamedTemporaryFile(suffix=inner_ext, delete=False) as tmp:
                         tmp.write(inner_file_data)
@@ -172,39 +178,32 @@ async def upload_file(file: UploadFile = File(...)):
                     
                     try:
                         extracted_bytes = textract.process(tmp_path)
-                        extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
+                        inner_extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
                     except Exception:
                         try:
                             if not is_binary(inner_file_data):
                                 decoded_text = inner_file_data.decode("utf-8", errors="replace")
-                                extracted_text = decoded_text.strip()
+                                inner_extracted_text = decoded_text.strip()
                             else:
-                                extracted_text = ""
+                                inner_extracted_text = ""
                         except Exception:
-                            extracted_text = ""
+                            inner_extracted_text = ""
                     finally:
                         os.remove(tmp_path)
                     
-                    if extracted_text.strip():
-                        extracted_parts.append(f"[[{inner_filename}]]\n{extracted_text}")
+                    if inner_extracted_text.strip():
+                        extracted_parts.append(f"[[{inner_filename}]]\n{inner_extracted_text}")
                     else:
                         raise HTTPException(status_code=422, detail="Text extraction failed")
             
-            final_extracted_text = "\n\n".join(extracted_parts)
+            extracted_text = "\n\n".join(extracted_parts)
         
         except HTTPException:
             raise
         except Exception as e:
             raise HTTPException(status_code=422, detail="Archive processing failed")
         
-        return {
-            "type": "file",
-            "name": filename,
-            "content": final_extracted_text
-        }
     else:
-        extracted_text = ""
-        
         if ext in audio_extensions:
             with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
                 tmp.write(file_data)
@@ -258,14 +257,24 @@ async def upload_file(file: UploadFile = File(...)):
             finally:
                 os.remove(tmp_path)
 
-        if not extracted_text.strip():
-            raise HTTPException(status_code=422, detail="Text extraction failed")
+    if not extracted_text.strip():
+        raise HTTPException(status_code=422, detail="Text extraction failed")
 
-        return {
-            "type": "file",
-            "name": filename,
-            "content": f"[[{filename}]]\n{extracted_text}"
-        }
+    if len(extracted_text) > 20000:
+        raise HTTPException(status_code=413, detail="Extracted text exceeds 20000 character limit.")
+
+    # Save with UUID filename but return original filename for display
+    saved_filename = f"{uuid.uuid4().hex}{ext}"
+    file_location = os.path.join(FILES_DIR, saved_filename)
+    with open(file_location, "wb") as f:
+        f.write(file_data)
+
+    return {
+        "type": "file",
+        "name": filename,
+        "content": f"[[{filename}]]\n{extracted_text}",
+        "file_path": f"/files/{saved_filename}"
+    }
 
 @app.post("/upload_page")
 async def upload_page(content: WebContent):
@@ -360,7 +369,7 @@ def visit_url(request: URLRequest):
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    notice_message = 'OpenAI o3를 사용해보세요!'
+    notice_message = 'Gemini 모델이 정식 버전으로 업데이트 되었습니다!'
     notice_hash = base64.b64encode(notice_message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(
