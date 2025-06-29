@@ -45,6 +45,7 @@ class ChatRequest(BaseModel):
     system_message: Optional[str] = None
     user_message: List[Dict[str, Any]]
     search: bool = False
+    deep_research: bool = False
     dan: bool = False
     stream: bool = True
 
@@ -201,7 +202,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     async def event_generator():
         response_text = ""
         try:
-            async with AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY')) as client:
+            async with AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'), timeout=3600) as client:
                 parameters = {
                     "model": request.model.split(':')[0],
                     "temperature": request.temperature,
@@ -212,12 +213,18 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                     "instructions": instructions,
                     "input": formatted_messages,
                     "stream": request.stream,
-                    "background": True if request.reason else False
+                    "background": True if request.reason or request.deep_research else False
                 }
 
                 if request.search:
                     parameters["tools"] = [{"type": "web_search_preview"}]
-
+                    
+                if request.deep_research:
+                    parameters["tools"] = [
+                        {"type": "web_search_preview"}, 
+                        {"type": "code_interpreter", "container": {"type": "auto"}}
+                    ]
+                    
                 token_queue = asyncio.Queue()
                 producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))
                 while True:

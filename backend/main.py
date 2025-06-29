@@ -65,6 +65,16 @@ app.include_router(huggingface_client.router)
 app.mount("/images", StaticFiles(directory="images"), name="images")
 app.mount("/files", StaticFiles(directory="files"), name="files")
 
+@app.get("/notice", response_model=NoticeResponse)
+async def get_notice():
+    notice_message = '이제 OpenAI o3, o4-mini 모델이 심층 연구를 지원합니다.'
+    notice_hash = base64.b64encode(notice_message.encode('utf-8')).decode('utf-8')
+    
+    return NoticeResponse(
+        message=notice_message,
+        hash=notice_hash
+    )
+
 @app.post("/upload/image")
 async def upload_image(file: UploadFile = File(...)):
     file_data = await file.read()
@@ -366,16 +376,6 @@ def visit_url(request: URLRequest):
         return {"content": f"[[{request.url}]]\n{content}"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error occured while visiting URL: {str(e)}")
-
-@app.get("/notice", response_model=NoticeResponse)
-async def get_notice():
-    notice_message = 'Gemini 모델이 정식 버전으로 업데이트 되었습니다!'
-    notice_hash = base64.b64encode(notice_message.encode('utf-8')).decode('utf-8')
-    
-    return NoticeResponse(
-        message=notice_message,
-        hash=notice_hash
-    )
 
 @app.get("/og")
 async def get_opengraph_page():

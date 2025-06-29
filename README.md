@@ -72,10 +72,12 @@ DevoChat은 여러 AI 모델을 단일 인터페이스에서 사용할 수 있�
   - 스트리밍 응답
   - 추론 과정 시각화
   - 웹 검색 통합
+  - Deep Research 모드
   - 이미지 업로드 및 분석
   - 다양한 파일 형식 업로드 및 텍스트 추출
   - 마크다운, 수식(LaTeX), 코드 블록 렌더링
   - 시스템 프롬프트, DAN 모드, Temperature, Reasoning Effect 조절
+  - 모델 변형 간 동적 전환 (기본 ↔ 추론 ↔ Deep Research)
 
 - **대화 관리**
   - 대화 내역 저장 및 조회
@@ -157,25 +159,6 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 {
     "models": [
       {
-        "model_name": "gemini-2.5-flash-preview-05-20",
-        "model_alias": "Gemini 2.5 Flash",
-        "description": "표준 Gemini 모델",
-        "endpoint": "/gemini",
-        "in_billing": "0.15",
-        "out_billing": "0.6",
-        "capabilities": {
-          "stream": true,
-          "image": true,
-          "inference": "toggle",
-          "search": "toggle"
-        },
-        "controls": {
-          "temperature": true,
-          "reason": true,
-          "system_message": true
-        }
-      },
-      {
         "model_name": "claude-sonnet-4-20250514",
         "model_alias": "Claude 4 Sonnet",
         "description": "고성능 Claude 모델",
@@ -186,7 +169,8 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
           "stream": true,
           "image": true,
           "inference": "toggle",
-          "search": "toggle"
+          "search": "toggle",
+          "deep_research": false
         },
         "controls": {
           "temperature": "conditional",
@@ -205,7 +189,8 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
           "stream": true,
           "image": false,
           "inference": false,
-          "search": false
+          "search": false,
+          "deep_research": false
         },
         "controls": {
           "temperature": true,
@@ -214,22 +199,26 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         }
       },
       {
-        "model_name": "o1-pro",
-        "model_alias": "OpenAI o1 Pro",
-        "description": "최고 성능 추론 GPT 모델",
+        "model_name": "o3",
+        "model_alias": "OpenAI o3",
+        "description": "고성능 추론 GPT 모델",
         "endpoint": "/gpt",
-        "in_billing": "150",
-        "out_billing": "600",
+        "in_billing": "2",
+        "out_billing": "8",
+        "variants": {
+          "deep_research": "o3-deep-research"
+        },
         "capabilities": {
-          "stream": false,
+          "stream": true,
           "image": true,
           "inference": true,
-          "search": false
+          "search": false,
+          "deep_research": "switch"
         },
         "controls": {
           "temperature": false,
-          "reason": false,
-          "system_message": false
+          "reason": true,
+          "system_message": true
         }
       }
       ...
@@ -248,11 +237,13 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `in_billing` | 입력 토큰(프롬프트)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
 | `out_billing` | 출력 토큰(응답)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
 | `search_billing` | (선택 사항) 검색 기능 사용 시 추가되는 청구 비용입니다. |
+| `variants` | `"switch"` 타입일 때 전환할 모델을 정의합니다. |
 | `capabilities` | 모델이 지원하는 기능들을 정의합니다. |
 | `capabilities.stream` | 스트리밍 응답 지원 여부입니다. |
 | `capabilities.image` | 이미지 처리 기능 지원 여부입니다. |
-| `capabilities.inference` | 추론 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"` |
-| `capabilities.search` | 웹 검색 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"` |
+| `capabilities.inference` | 추론 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
+| `capabilities.search` | 웹 검색 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
+| `capabilities.deep_research` | Deep Research 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
 | `controls` | 모델이 지원하는 사용자 제어 옵션들을 정의합니다. |
 | `controls.temperature` | Temperature 조절 가능 여부입니다. 가능한 값: `true`, `false`, `"conditional"` |
 | `controls.reason` | Reasoning Effect 조절 가능 여부입니다. 가능한 값: `true`, `false` |
@@ -267,12 +258,41 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 해당 기능이 지원되지 않습니다.
 
 #### toggle
-사용자가 필요에 따라 해당 기능을 활성화하거나 비활성화할 수 있습니다.
+하이브리드 모델일 때, 사용자 필요에 따라 해당 기능을 켜거나 끌 수 있습니다.
+
+#### switch
+사용자가 해당 기능을 토글할 때 다른 개별 모델로 전환됩니다. `variants` 객체에 정의된 모델로 동적 전환이 이루어집니다.
 
 #### conditional  
 표준 모드에서는 사용할 수 있으나, 추론 모드에서는 사용할 수 없습니다.
 
+### 모델 전환 시스템 (Variants)
 
+`variants` 객체를 통해 모델의 다양한 변형을 정의할 수 있습니다.
+
+#### 예시
+```json
+{
+  "model_name": "sonar",
+  "variants": {
+    "inference": "sonar-reasoning",
+    "deep_research": "sonar-deep-research"
+  },
+  "capabilities": {
+    "inference": "switch",
+    "deep_research": "switch"
+  }
+},
+{
+  "model_name": "sonar-reasoning",
+  "variants": {
+    "base": "sonar"
+  },
+  "capabilities": {
+    "inference": "switch"
+  }
+}
+```
 
 ## 향후 계획
 

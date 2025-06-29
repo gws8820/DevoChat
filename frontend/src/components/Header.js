@@ -44,6 +44,7 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
 
   let modelsList = models.filter((m) => {
     if (isImage && !m.capabilities?.image) return false;
+    if (m.variants?.base) return false;
     return true;
   });
 

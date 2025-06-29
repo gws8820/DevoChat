@@ -14,6 +14,7 @@ export const SettingsProvider = ({ children }) => {
   const [isImage, setIsImage] = useState(false);
   const [isInference, setIsInference] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
+  const [isDeepResearch, setIsDeepResearch] = useState(false);
   const [isDAN, setIsDAN] = useState(false);
   const [canControlTemp, setCanControlTemp] = useState(false);
   const [canControlReason, setCanControlReason] = useState(false);
@@ -21,6 +22,7 @@ export const SettingsProvider = ({ children }) => {
   const [canReadImage, setCanReadImage] = useState(false);
   const [canToggleInference, setCanToggleInference] = useState(false);
   const [canToggleSearch, setCanToggleSearch] = useState(false);
+  const [canToggleDeepResearch, setCanToggleDeepResearch] = useState(false);
 
   const updateModel = (newModel) => {
     const selectedModel = modelsData.models.find(m => m.model_name === newModel);
@@ -29,14 +31,18 @@ export const SettingsProvider = ({ children }) => {
     const system_message = selectedModel?.controls?.system_message;
     const inference = selectedModel?.capabilities?.inference;
     const search = selectedModel?.capabilities?.search;
+    const deep_research = selectedModel?.capabilities?.deep_research;
     const image = selectedModel?.capabilities?.image;
 
     setModel(newModel);
     setIsInference(inference === true);
-    setCanToggleInference(inference === "toggle");
-    
+    setCanToggleInference(inference === "toggle" || inference === "switch");
+
     setIsSearch(search === true);
-    setCanToggleSearch(search === "toggle");
+    setCanToggleSearch(search === "toggle" || search === "switch");
+
+    setIsDeepResearch(deep_research === true);
+    setCanToggleDeepResearch(deep_research === "toggle" || deep_research === "switch");
 
     const defaultTempCondition = temperature === true || temperature === "conditional"; // No inference as default
     setCanControlTemp(defaultTempCondition);
@@ -53,6 +59,51 @@ export const SettingsProvider = ({ children }) => {
     }
 
     setCanReadImage(image);
+  };
+
+  const toggleInference = () => {
+    const selectedModel = modelsData.models.find(m => m.model_name === model);
+    const inference = selectedModel?.capabilities?.inference;
+    
+    if (inference === "switch") {
+      const variants = selectedModel?.variants;
+      const targetModel = isInference ? variants?.base : variants?.inference;
+      if (targetModel) {
+        updateModel(targetModel);
+      }
+    }
+
+    setIsInference(!isInference);
+  };
+
+  const toggleSearch = () => {
+    const selectedModel = modelsData.models.find(m => m.model_name === model);
+    const search = selectedModel?.capabilities?.search;
+    
+    if (search === "switch") {
+      const variants = selectedModel?.variants;
+      const targetModel = isSearch ? variants?.base : variants?.search;
+      if (targetModel) {
+        updateModel(targetModel);
+      }
+    }
+    
+    setIsSearch(!isSearch);
+  };
+
+  const toggleDeepResearch = () => {
+    const selectedModel = modelsData.models.find(m => m.model_name === model);
+    const deep_research = selectedModel?.capabilities?.deep_research;
+    
+    if (deep_research === "switch") {
+      const variants = selectedModel?.variants;
+      const targetModel = isDeepResearch ? variants?.base : variants?.deep_research;
+      if (targetModel) {
+        updateModel(targetModel);
+      }
+    }
+    
+    setIsDeepResearch(!isDeepResearch);
   };
 
   useEffect(() => {
@@ -101,13 +152,15 @@ export const SettingsProvider = ({ children }) => {
         isImage,
         isInference,
         isSearch,
+        isDeepResearch,
         isDAN,
         canControlTemp,
         canControlReason,
         canControlSystemMessage,
         canReadImage,
-        canToggleInference,
+        canToggleInference, 
         canToggleSearch,
+        canToggleDeepResearch,
         updateModel,
         setAlias,
         setTemperature,
@@ -116,7 +169,11 @@ export const SettingsProvider = ({ children }) => {
         setIsImage,
         setIsInference,
         setIsSearch,
-        setIsDAN
+        setIsDeepResearch,
+        setIsDAN,
+        toggleInference,
+        toggleSearch,
+        toggleDeepResearch
       }}
     >
       {children}

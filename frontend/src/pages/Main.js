@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaPaperPlane, FaStop } from "react-icons/fa";
-import { GoPlus, GoGlobe, GoLightBulb, GoUnlock } from "react-icons/go";
+import { GoPlus, GoGlobe, GoLightBulb, GoTelescope, GoUnlock } from "react-icons/go";
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
 import { RiVoiceAiFill } from "react-icons/ri";
@@ -53,18 +53,23 @@ function Main({ isTouch }) {
     updateModel,
     isInference,
     isSearch,
+    isDeepResearch,
     isDAN,
     canControlSystemMessage,
     canReadImage,
     canToggleInference,
     canToggleSearch,
+    canToggleDeepResearch,
     setTemperature,
     setReason,
     setSystemMessage,
     setIsImage,
     setIsSearch,
     setIsInference,
-    setIsDAN
+    setIsDAN,
+    toggleInference,
+    toggleSearch,
+    toggleDeepResearch
   } = useContext(SettingsContext);
 
   const { addConversation } = useContext(ConversationsContext);
@@ -527,7 +532,7 @@ function Main({ isTouch }) {
                 <motion.div
                   key="search"
                   className={`function-button ${isSearch ? "active" : ""}`}
-                  onClick={() => setIsSearch(!isSearch)}
+                  onClick={toggleSearch}
                   initial={{ x: -20, opacity: 0, scale: 0.8 }}
                   animate={{ x: 0, opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
@@ -547,7 +552,7 @@ function Main({ isTouch }) {
                 <motion.div
                   key="inference"
                   className={`function-button ${isInference ? "active" : ""}`}
-                  onClick={() => setIsInference(!isInference)}
+                  onClick={toggleInference}
                   initial={{ x: -20, opacity: 0, scale: 0.8 }}
                   animate={{ x: 0, opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
@@ -561,6 +566,26 @@ function Main({ isTouch }) {
                 >
                   <GoLightBulb style={{ strokeWidth: 0.5 }} />
                   추론
+                </motion.div>
+              )}
+              {canToggleDeepResearch && (
+                <motion.div
+                  key="deep-research"
+                  className={`function-button ${isDeepResearch ? "active" : ""}`}
+                  onClick={toggleDeepResearch}
+                  initial={{ x: -20, opacity: 0, scale: 0.8 }}
+                  animate={{ x: 0, opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ 
+                    type: "physics",
+                    velocity: 200,
+                    stiffness: 100,
+                    damping: 15
+                  }}
+                  layout
+                >
+                  <GoTelescope style={{ strokeWidth: 0.5 }} />
+                  심층 연구
                 </motion.div>
               )}
               {canControlSystemMessage && (

@@ -45,6 +45,7 @@ class ChatRequest(BaseModel):
     system_message: Optional[str] = None
     user_message: List[Dict[str, Any]]
     search: bool = False
+    deep_research: bool = False
     dan: bool = False
     stream: bool = True
 
