@@ -73,6 +73,7 @@ function AppContent() {
     const isMobile = /android|iphone|ipod/i.test(
       (navigator.userAgent || navigator.vendor || window.opera).toLowerCase()
     );
+    
     if (!isMobile) {
       const handleResize = () => setIsSidebarVisible(window.innerWidth > 768);
       window.addEventListener("resize", handleResize);

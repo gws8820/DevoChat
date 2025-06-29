@@ -11,6 +11,10 @@
     width: 100%;
     background: white;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .audio-bars-container {
@@ -41,16 +45,16 @@
     flex-direction: row;
     position: fixed;
     bottom: 4%;
-    gap: 24px;
+    gap: 18px;
 }
 
 .realtime-function {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 65px;
-    height: 65px;
-    font-size: 28px;
+    width: 60px;
+    height: 60px;
+    font-size: 25px;
     background-color: rgba(242, 242, 242);
     transition: background-color 0.3s;
     border-radius: 50%;

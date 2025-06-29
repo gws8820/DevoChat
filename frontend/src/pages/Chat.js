@@ -882,7 +882,7 @@ function Chat({ isTouch, chatMessageRef }) {
                   layout
                 >
                   <GoGlobe style={{ strokeWidth: 0.5 }} />
-                  검색
+                  <span className="button-text">검색</span>
                 </motion.div>
               )}
               {canToggleInference && (
@@ -902,7 +902,7 @@ function Chat({ isTouch, chatMessageRef }) {
                   layout
                 >
                   <GoLightBulb style={{ strokeWidth: 0.5 }} />
-                  추론
+                  <span className="button-text">추론</span>
                 </motion.div>
               )}
               {canToggleDeepResearch && (
@@ -922,7 +922,7 @@ function Chat({ isTouch, chatMessageRef }) {
                   layout
                 >
                   <GoTelescope style={{ strokeWidth: 0.5 }} />
-                  심층 연구
+                  <span className="button-text">딥 리서치</span>
                 </motion.div>
               )}
               {canControlSystemMessage && (
@@ -942,7 +942,7 @@ function Chat({ isTouch, chatMessageRef }) {
                   layout
                 >
                   <GoUnlock style={{ strokeWidth: 0.5 }} />
-                  DAN
+                  <span className="button-text">DAN</span>
                 </motion.div>
               )}
             </AnimatePresence>

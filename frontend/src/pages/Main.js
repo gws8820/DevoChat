@@ -545,7 +545,7 @@ function Main({ isTouch }) {
                   layout
                 >
                   <GoGlobe style={{ strokeWidth: 0.5 }} />
-                  검색
+                  <span className="button-text">검색</span>
                 </motion.div>
               )}
               {canToggleInference && (
@@ -565,7 +565,7 @@ function Main({ isTouch }) {
                   layout
                 >
                   <GoLightBulb style={{ strokeWidth: 0.5 }} />
-                  추론
+                  <span className="button-text">추론</span>
                 </motion.div>
               )}
               {canToggleDeepResearch && (
@@ -585,7 +585,7 @@ function Main({ isTouch }) {
                   layout
                 >
                   <GoTelescope style={{ strokeWidth: 0.5 }} />
-                  심층 연구
+                  <span className="button-text">딥 리서치</span>
                 </motion.div>
               )}
               {canControlSystemMessage && (
@@ -605,7 +605,7 @@ function Main({ isTouch }) {
                   layout
                 >
                   <GoUnlock style={{ strokeWidth: 0.5 }} />
-                  DAN
+                  <span className="button-text">DAN</span>
                 </motion.div>
               )}
             </AnimatePresence>

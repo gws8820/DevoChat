@@ -251,6 +251,7 @@
     justify-content: center;
     position: relative;
     padding: 10px;
+    min-width: 18px;
     height: 17px;
     gap: 5px;
     border-radius: 20px;
@@ -258,10 +259,6 @@
     color: black;
     transition: color 0.2s ease, background-color 0.2s ease;
     cursor: pointer;
-}
-
-.button-area .function-button.plus-button {
-    width: 17px;
 }
 
 .button-area .function-button:hover {
@@ -395,5 +392,11 @@
     }
     .message-input {
         font-size: 15px;
+    }
+}
+
+@media (max-width: 388px) {
+    .button-text {
+        display: none;
     }
 }

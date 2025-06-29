@@ -282,16 +282,17 @@ const Realtime = () => {
                   <motion.div
                     key="realtime-function-container"
                     className="realtime-function-container"
+                    onClick={(e) => e.stopPropagation()}
                     initial={{ y: 10 }}
                     animate={{ y: 0 }}
                     exit={{ y: 10 }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
                   >
                     <div onClick={handleRefresh} className="realtime-function new">
-                      <LuRefreshCcw strokeWidth={"2.5"} />
+                      <LuRefreshCcw strokeWidth={"2"} />
                     </div>
                     <div onClick={handleNavigate} className="realtime-function stop">
-                      <LuX strokeWidth={"3"} />
+                      <LuX strokeWidth={"2.5"} />
                     </div>
                   </motion.div>
                 )}
