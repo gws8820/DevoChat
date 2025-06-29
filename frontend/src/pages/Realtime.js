@@ -10,6 +10,8 @@ const Realtime = () => {
   const [isMicEnabled, setIsMicEnabled] = useState(true);
   const [showFunctions, setShowFunctions] = useState(true);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [transcript, setTranscript] = useState("");
+  const [isModelSpeaking, setIsModelSpeaking] = useState(false);
 
   const peerConnection = useRef(null);
   const dataChannel = useRef(null);
@@ -118,19 +120,7 @@ const Realtime = () => {
     }
   }, []);
 
-  const sendUpdateInstructions = useCallback((instruction) => {
-    const event = {
-      type: "session.update",
-      session: {
-        instructions: instruction,
-      },
-    };
 
-    if (dataChannel.current && dataChannel.current.readyState === 'open')
-      dataChannel.current.send(JSON.stringify(event));
-    else
-      console.error("데이터 채널이 열리지 않았습니다.");
-  }, []);
 
   const connectToSession = useCallback(async () => {
     try {
@@ -177,8 +167,44 @@ const Realtime = () => {
       };
 
       dataChannel.current = peerConnection.current.createDataChannel('oai-events');
+      
+      dataChannel.current.onmessage = (event) => {
+        try {
+          const realtimeEvent = JSON.parse(event.data);
+
+          if (realtimeEvent.type === 'response.created') {
+            setTranscript("");
+          }
+
+          if (realtimeEvent.type === 'response.output_item.added') {
+            setIsModelSpeaking(true);
+          }
+
+          if (realtimeEvent.type === 'response.audio_transcript.delta') {
+            setTranscript(prev => prev + (realtimeEvent.delta || ''));
+          }
+
+          if (realtimeEvent.type === 'response.audio_transcript.done') {
+            setTranscript(realtimeEvent.transcript);
+          }
+
+          if (realtimeEvent.type === 'output_audio_buffer.stopped') {
+            setIsModelSpeaking(false);
+            setTimeout(() => setTranscript(""), 3000);
+          }
+        } catch (error) {
+          console.error('이벤트 파싱 오류:', error);
+        }
+      };
+      
       dataChannel.current.onopen = () => {
-        sendUpdateInstructions("한국어, 반말을 사용해. 상냥, 발랄하고 애교섞인 목소리를 사용해.");
+        const sessionUpdateEvent = {
+          type: "session.update",
+          session: {
+            instructions: "한국어, 반말을 사용해. 상냥, 발랄하고 애교섞인 목소리를 사용해."
+          }
+        };
+        dataChannel.current.send(JSON.stringify(sessionUpdateEvent));
       };
 
       const offer = await peerConnection.current.createOffer();
@@ -203,7 +229,7 @@ const Realtime = () => {
       cleanup();
       navigate("/", { state: { errorModal: err.message } });
     }
-  }, [navigate, addAudioTrack, sendUpdateInstructions, cleanup]);
+  }, [navigate, addAudioTrack, cleanup]);
 
   useEffect(() => {
     connectToSession();
@@ -277,26 +303,43 @@ const Realtime = () => {
                 )}
               </AnimatePresence>
 
-              <AnimatePresence>
-                {showFunctions && (
-                  <motion.div
-                    key="realtime-function-container"
-                    className="realtime-function-container"
-                    onClick={(e) => e.stopPropagation()}
-                    initial={{ y: 10 }}
-                    animate={{ y: 0 }}
-                    exit={{ y: 10 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                  >
-                    <div onClick={handleRefresh} className="realtime-function new">
-                      <LuRefreshCcw strokeWidth={"2"} />
-                    </div>
-                    <div onClick={handleNavigate} className="realtime-function stop">
-                      <LuX strokeWidth={"2.5"} />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div className="bottom-ui-container">
+                <AnimatePresence>
+                  {isModelSpeaking && transcript && (
+                    <motion.div
+                      key="transcript-container"
+                      className="transcript-container"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {transcript}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                  {showFunctions && (
+                    <motion.div
+                      key="realtime-function-container"
+                      className="realtime-function-container"
+                      onClick={(e) => e.stopPropagation()}
+                      initial={{ y: 10 }}
+                      animate={{ y: 0 }}
+                      exit={{ y: 10 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    >
+                      <div onClick={handleRefresh} className="realtime-function new">
+                        <LuRefreshCcw strokeWidth={"2"} />
+                      </div>
+                      <div onClick={handleNavigate} className="realtime-function stop">
+                        <LuX strokeWidth={"2.5"} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </>
           )}
         </motion.div>

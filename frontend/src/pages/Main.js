@@ -5,7 +5,7 @@ import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { GoPlus, GoGlobe, GoLightBulb, GoTelescope, GoUnlock } from "react-icons/go";
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
-import { RiVoiceAiFill } from "react-icons/ri";
+import { LuAudioLines } from "react-icons/lu";
 import { FiPaperclip, FiMic } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
@@ -634,7 +634,7 @@ function Main({ isTouch }) {
           ) : inputText.trim() || uploadedFiles.length > 0 ? (
             <FaPaperPlane />
           ) : (
-            <RiVoiceAiFill style={{ fontSize: "23px", strokeWidth: 0.3 }}/>
+            <LuAudioLines style={{ fontSize: "20px", strokeWidth: 2.5 }}/>
           )}
         </button>
       </motion.div>

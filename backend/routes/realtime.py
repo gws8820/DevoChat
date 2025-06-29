@@ -16,7 +16,6 @@ async def create_ephemeral_token(user: User = Depends(get_current_user)):
     url = "https://api.openai.com/v1/realtime/sessions"
     
     payload = {
-        "model": "gpt-4o-mini-realtime-preview",
         "voice": "sage"
     }
     
