@@ -10,7 +10,7 @@ import Toast from "./Toast";
 import modelsData from "../models.json";
 import "../styles/Header.css";
 
-function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
+function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   const {
     model,
     alias,
@@ -157,7 +157,7 @@ function Header({ toggleSidebar, isSidebarVisible, isTouch, chatMessageRef }) {
   return (
     <div className="header">
       <div className="header-left">
-        {!isSidebarVisible && (
+        {!isSidebarOpen && (
           <Tooltip content="사이드바 열기" position="right" isTouch={isTouch}>
             <div className="header-icon menu-icon">
               <RiMenuLine onClick={toggleSidebar} />

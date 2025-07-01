@@ -31,22 +31,25 @@ function App() {
 
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(null);
-  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
   const [toastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
-  const chatMessageRef = useRef(null);
-
-  const { fetchConversations } = useContext(ConversationsContext);
-
   const location = useLocation();
   const navigate = useNavigate();
-  
-  const shouldShowLayout = location.pathname === "/" || location.pathname.startsWith("/chat");
+
+  const shouldShowSidebar = isLoggedIn && !['/login', '/register'].includes(location.pathname);
+  const shouldShowHeader = isLoggedIn && !['/login', '/register', '/view'].some(path => 
+    location.pathname === path || location.pathname.startsWith(path + '/')
+  );
   const shouldShowLogo = location.pathname.startsWith("/view");
+  
   const isResponsive = window.innerWidth <= 768;
-  const marginLeft = shouldShowLayout && !isResponsive && isSidebarVisible ? 260 : 0;
+  const marginLeft = (isResponsive || !shouldShowSidebar) ? 0 : (isSidebarOpen ? 260 : 0);
+
+  const chatMessageRef = useRef(null);
+  const { fetchConversations } = useContext(ConversationsContext);
 
   useEffect(() => {
     async function checkLoginStatus() {
@@ -68,32 +71,41 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    setIsSidebarVisible(window.innerWidth > 768);
-
-    const isMobile = /android|iphone|ipod/i.test(
-      (navigator.userAgent || navigator.vendor || window.opera).toLowerCase()
-    );
-    
-    if (!isMobile) {
-      const handleResize = () => setIsSidebarVisible(window.innerWidth > 768);
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
+    if (window.innerWidth <= 768) {
+      setIsSidebarOpen(false);
+    } else {
+      setIsSidebarOpen(true);
     }
     
-    return undefined;
+    const handleResize = () => {
+      const isMobile = /android|iphone|ipod/i.test(
+        (navigator.userAgent || navigator.vendor || window.opera).toLowerCase()
+      );
+      
+      if (!isMobile) {
+        if (window.innerWidth <= 768) 
+          setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const toggleSidebar = useCallback(() => {
-    setIsSidebarVisible((prev) => !prev);
+    setIsSidebarOpen((prev) => !prev);
   }, []);
   
   useEffect(() => {
-    window.addEventListener('pointerdown', (event) => {
-      if (event.pointerType === 'touch')
+    const handlePointerDown = (event) => {
+      if (event.pointerType === 'touch') 
         setIsTouch(true);
       else
         setIsTouch(false);
-    });
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    return () => window.removeEventListener('pointerdown', handlePointerDown);
   }, []);
 
   useEffect(() => {
@@ -120,11 +132,11 @@ function AppContent() {
       if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
         const isExcluded = excludedClasses.some(cls => touchStartTarget && touchStartTarget.closest(cls));
         if (!isExcluded) {
-            if (diffX > 0 && !isSidebarVisible) {
-                toggleSidebar();
-            } else if (diffX < 0 && isSidebarVisible) {
-                toggleSidebar();
-            }
+          if (diffX > 0 && !isSidebarOpen) {
+            toggleSidebar();
+          } else if (diffX < 0 && isSidebarOpen) {
+            toggleSidebar();
+          }
         }
       }
     };
@@ -136,52 +148,39 @@ function AppContent() {
       document.removeEventListener("touchstart", handleTouchStart);
       document.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isTouch, isSidebarVisible, toggleSidebar]);
+  }, [isTouch, isSidebarOpen, toggleSidebar]);
 
-  return isLoggedIn !== null ? (
-    <div style={{ display: "flex", position: "relative", margin: "0", overflow: "hidden" }}>
-      {shouldShowLayout && (() => {
-        const sidebarProps = {
-          toggleSidebar,
-          isSidebarVisible,
-          isTouch,
-          isResponsive
-        };
-        
-        return !isResponsive ? (
+  if (isLoggedIn === null) return null;
+
+  return (
+    <div style={{ display: "flex", position: "relative", margin: "0", overflow: "hidden", minHeight: "100vh" }}>
+      <AnimatePresence>
+        {shouldShowSidebar && (
           <motion.div
-            initial={{ x: isSidebarVisible ? 0 : -260 }}
-            animate={{ x: isSidebarVisible ? 0 : -260 }}
+            initial={{ x: -260 }}
+            animate={{ x: isSidebarOpen ? 0 : -260 }}
+            exit={{ x: -260 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
             style={{
+              width: "260px",
               position: "fixed",
               left: 0,
               top: 0,
-              bottom: 0,
-              width: 260,
-              zIndex: 20,
+              height: "100vh",
+              zIndex: 1000,
             }}
           >
-            <Sidebar {...sidebarProps} />
+            <Sidebar
+              toggleSidebar={toggleSidebar}
+              isSidebarOpen={isSidebarOpen}
+              isResponsive={isResponsive}
+              isTouch={isTouch}
+            />
           </motion.div>
-        ) : (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: isSidebarVisible ? 0 : -260,
-              width: 260,
-              height: "100%",
-              transition: "left 0.3s ease-in-out",
-              zIndex: 20,
-            }}
-          >
-            <Sidebar {...sidebarProps} />
-          </div>
-        );
-      })()}
+        )}
+      </AnimatePresence>
 
-      {isResponsive && isSidebarVisible && shouldShowLayout && (
+      {isResponsive && isSidebarOpen && (
         <div
           onClick={toggleSidebar}
           style={{
@@ -197,74 +196,45 @@ function AppContent() {
       )}
 
       <motion.div
-        style={{
-          flex: 1,
+        style={{ 
+          flex: 1, 
           position: "relative",
+          minHeight: "100vh",
         }}
         initial={{ marginLeft }}
         animate={{ marginLeft }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        {shouldShowLayout && (
+        {shouldShowLogo && (
+          <div className="header" style={{ padding: "0 20px" }}>
+            <img
+              src={logo}
+              alt="DEVOCHAT"
+              width="143.5px"
+              onClick={() => navigate("/")}
+              style={{ cursor: "pointer" }}
+            />
+          </div>
+        )}
+
+        {shouldShowHeader && (
           <Header
             toggleSidebar={toggleSidebar}
-            isSidebarVisible={isSidebarVisible}
+            isSidebarOpen={isSidebarOpen}
             isTouch={isTouch}
             chatMessageRef={chatMessageRef}
           />
         )}
 
-        {shouldShowLogo && (
-            <div className="header" style={{ padding: "0 20px" }}>
-              <img src={logo} alt="DEVOCHAT" width="143.5px" onClick={() => navigate("/")} style={{ cursor: "pointer" }} />
-            </div>
-        )}
-
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            <Route
-              path="/"
-              element={
-                isLoggedIn ? (
-                  <Main isTouch={isTouch} />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
-            <Route
-              path="/chat/:conversation_id"
-              element={
-                isLoggedIn ? (
-                  <Chat 
-                    isTouch={isTouch} 
-                    chatMessageRef={chatMessageRef} 
-                  />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
-            <Route
-              path="/view/:conversation_id"
-              element={<View />}
-            />
-            <Route
-              path="/realtime"
-              element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/admin"
-              element={isLoggedIn ? <Admin /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/login"
-              element={isLoggedIn ? <Navigate to="/" /> : <Login />}
-            />
-            <Route
-              path="/register"
-              element={isLoggedIn ? <Navigate to="/" /> : <Register />}
-            />
+            <Route path="/" element={isLoggedIn ? <Main isTouch={isTouch} /> : <Navigate to="/login" />} />
+            <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
+            <Route path="/view/:conversation_id" element={<View />} />
+            <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
+            <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />
+            <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <Login />} />
+            <Route path="/register" element={isLoggedIn ? <Navigate to="/" /> : <Register />} />
           </Routes>
         </AnimatePresence>
       </motion.div>
@@ -276,7 +246,7 @@ function AppContent() {
         onClose={() => setShowToast(false)}
       />
     </div>
-  ) : null;
+  );
 }
 
 export default App;

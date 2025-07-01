@@ -305,16 +305,6 @@ input:focus {
 .dropdown-button:hover {
     background-color: #f0f0f0;
 }
-  
-@media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
-    }
-    .sidebar.visible {
-        transform: translateX(0);
-    }
-}
 
 @media (hover: hover) {
     .conversation-item:hover .delete-icon {

@@ -292,7 +292,7 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    margin-right: 12px;
+    margin-right: 4px;
     padding: 0;
     width: 42px;
     height: 42px;
@@ -306,9 +306,9 @@
 }
 
 .send-button.realtime {
-    margin-right: 12px;
     width: 38px;
     height: 38px;
+    margin-right: 6px;
     background-color: #f0f0f0;
     color: rgb(80, 80, 80);
 }

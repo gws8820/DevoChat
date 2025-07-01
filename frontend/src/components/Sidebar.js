@@ -130,9 +130,9 @@ const ConversationItem = React.memo(({
 
 function Sidebar({
   toggleSidebar,
-  isSidebarVisible,
-  isTouch,
+  isSidebarOpen,
   isResponsive,
+  isTouch,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -419,7 +419,7 @@ function Sidebar({
   useEffect(() => {
       setIsSearchVisible(false);
       setSearchQuery("");
-  }, [isSidebarVisible]);
+  }, [isSidebarOpen]);
 
   useEffect(() => {
     if (isSearchVisible && searchInputRef.current) {
@@ -488,9 +488,7 @@ function Sidebar({
 
   return (
     <>
-      <div
-        className={`sidebar ${isResponsive && isSidebarVisible ? "visible" : ""}`}
-      >
+      <div className="sidebar">
         <div className="header sidebar-header">
           <div className="header-left">
             <div className="logo">
