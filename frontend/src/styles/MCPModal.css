@@ -1,0 +1,158 @@
+.mcp-modal-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.mcp-modal-content {
+  display: flex;
+  flex-direction: column;
+  width: 90%;
+  height: 90%;
+  max-width: 500px;
+  max-height: 800px;
+  background: white;
+  border-radius: 10px;
+}
+
+.mcp-modal-header {
+  padding: 24px 30px 20px 30px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.mcp-modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  gap: 12px;
+}
+
+.mcp-modal-body::-webkit-scrollbar {
+  width: 10px;
+}
+
+.mcp-modal-body::-webkit-scrollbar-thumb {
+  background: rgb(230, 230, 230);
+  border-radius: 10px;
+}
+
+.mcp-server-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.mcp-server-item:hover {
+  background: #fafafa;
+}
+
+.mcp-server-item.selected {
+  background: #f4f4f4;
+}
+
+.mcp-server-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 35px;
+  height: 35px;
+}
+
+.mcp-modal-body .mcp-server-name {
+  padding: 0 15px;
+  font-weight: 500;
+  font-size: 14px;
+  color: #1a1a1a;
+  word-break: break-word;
+  flex: 1;
+}
+
+.mcp-server-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+.mcp-server-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  appearance: none;
+  border: 1.5px solid #ddd;
+  border-radius: 3px;
+  background: white;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.mcp-server-checkbox input[type="checkbox"]:checked {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+}
+
+.mcp-server-checkbox input[type="checkbox"]:checked::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  content: '✓';
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.mcp-modal-footer {
+  padding: 16px 24px 24px 24px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.mcp-modal-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.mcp-modal-button.cancel {
+  background: #fafafa;
+  border: 1px solid #eaeaea;
+}
+
+.mcp-modal-button.cancel:hover {
+  background: #f4f4f4;
+}
+
+.mcp-modal-button.confirm {
+  background: #1a1a1a;
+  color: white;
+  border: 1px solid #1a1a1a;
+}
+
+.mcp-modal-button.confirm:hover {
+  background: #252525;
+}

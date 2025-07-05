@@ -1,0 +1,3 @@
+[submodule "mcp-proxy"]
+	path = mcp-proxy
+	url = https://github.com/gws8820/secure-mcp-proxy

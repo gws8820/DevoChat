@@ -44,10 +44,41 @@ class ChatRequest(BaseModel):
     reason: int = 0
     system_message: Optional[str] = None
     user_message: List[Dict[str, Any]]
+    inference: bool = False
     search: bool = False
     deep_research: bool = False
     dan: bool = False
+    mcp: List[str] = []
     stream: bool = True
+
+def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dict[str, Any]], Optional[str]]:
+    try:
+        with open("mcp_config.json", "r", encoding="utf-8") as f:
+            mcp_server_configs = json.load(f)
+    except Exception:
+        return [], "서버 오류가 발생했습니다."
+    
+    server_list = []
+    
+    for server_id in server_ids:
+        if server_id not in mcp_server_configs:
+            return [], "잘못된 접근입니다."
+        
+        server_config = mcp_server_configs[server_id]
+        
+        if server_config.get("admin") and not current_user.admin:
+            return [], "잘못된 접근입니다."
+        
+        mcp_server = {
+            "type": "url",
+            "url": server_config["url"],
+            "name": server_config["name"],
+            "authorization_token": server_config["authorization_token"]
+        }
+        
+        server_list.append(mcp_server)
+    
+    return server_list, None
 
 def calculate_billing(request_array, response, in_billing_rate, out_billing_rate, search_billing_rate: Optional[float] = None):
     def count_tokens(message):
@@ -161,6 +192,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
 
     async def produce_tokens(token_queue: asyncio.Queue, request: ChatRequest, parameters: Dict[str, Any], fastapi_request: Request, client) -> None:
         is_thinking = False
+        mcp_tool_info = {}
         try:
             if request.stream:
                 stream_result = await client.beta.messages.create(**parameters, timeout=300)
@@ -172,6 +204,32 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                             if getattr(chunk.content_block, "type", "") == "thinking":
                                 is_thinking = True
                                 await token_queue.put('<think>\n')
+                            elif getattr(chunk.content_block, "type", "") == "mcp_tool_use":
+                                tool_id = getattr(chunk.content_block, "id")
+                                server_name = getattr(chunk.content_block, "server_name")
+                                tool_name = getattr(chunk.content_block, "name")
+                                
+                                mcp_tool_info[tool_id] = {
+                                    "server_name": server_name,
+                                    "tool_name": tool_name
+                                }
+                                
+                                await token_queue.put(f"\n\n<mcp_tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name})}\n</mcp_tool_use>\n")
+                            elif getattr(chunk.content_block, "type", "") == "mcp_tool_result":
+                                tool_use_id = getattr(chunk.content_block, "tool_use_id")
+                                tool_info = mcp_tool_info.get(tool_use_id)
+                                
+                                server_name = tool_info.get("server_name")
+                                tool_name = tool_info.get("tool_name")
+                                
+                                is_error = getattr(chunk.content_block, "is_error")
+                                result_block = getattr(chunk.content_block, "content")
+                                
+                                tool_result = ""
+                                for result in result_block:
+                                    tool_result += result.text or str(result)
+                                
+                                await token_queue.put(f"\n<mcp_tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': tool_result})}\n</mcp_tool_result>\n\n")
                         elif chunk.type == "content_block_stop":
                             if is_thinking:
                                 await token_queue.put('\n</think>\n\n')
@@ -219,6 +277,13 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                         "name": "web_search",
                         "type": "web_search_20250305"
                     }]
+                if len(request.mcp) > 0:
+                    mcp_servers, error = get_mcp_servers(request.mcp, user)
+                    if error:
+                        yield f"data: {json.dumps({'error': error})}\n\n"
+                        return
+                    parameters["mcp_servers"] = mcp_servers
+                    parameters["betas"] = ["mcp-client-2025-04-04"]
 
                 token_queue = asyncio.Queue()
                 producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))
@@ -243,7 +308,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         finally:
             formatted_messages.insert(0, {"role": "system", "content": system_text})
             formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
-            
+
             if user.trial:
                 user_collection.update_one(
                     {"_id": ObjectId(user.user_id)},
@@ -272,7 +337,12 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                         "model": request.model,
                         "temperature": request.temperature,
                         "reason": request.reason,
-                        "system_message": request.system_message
+                        "system_message": request.system_message,
+                        "inference": request.inference,
+                        "search": request.search,
+                        "deep_research": request.deep_research,
+                        "dan": request.dan,
+                        "mcp": request.mcp
                     }
                 }
             )

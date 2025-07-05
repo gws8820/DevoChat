@@ -237,6 +237,15 @@
     background-color: rgba(0, 0, 0, 0.05);
 }
 
+.media-option .mcp-text {
+    background: linear-gradient(90deg, #615bff 0%, #e55d87 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    font-weight: 600;
+}
+
 .button-area {
     display: flex;
     flex-direction: row;

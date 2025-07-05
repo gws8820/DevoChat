@@ -44,10 +44,44 @@ class ChatRequest(BaseModel):
     reason: int = 0
     system_message: Optional[str] = None
     user_message: List[Dict[str, Any]]
+    inference: bool = False
     search: bool = False
     deep_research: bool = False
     dan: bool = False
+    mcp: List[str] = []
     stream: bool = True
+
+def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dict[str, Any]], Optional[str]]:
+    try:
+        with open("mcp_config.json", "r", encoding="utf-8") as f:
+            mcp_server_configs = json.load(f)
+    except Exception:
+        return [], "서버 오류가 발생했습니다."
+    
+    server_list = []
+    
+    for server_id in server_ids:
+        if server_id not in mcp_server_configs:
+            return [], "잘못된 접근입니다."
+        
+        server_config = mcp_server_configs[server_id]
+        
+        if server_config.get("admin") and not current_user.admin:
+            return [], "잘못된 접근입니다."
+        
+        mcp_server = {
+            "type": "mcp",
+            "server_label": server_config["name"],
+            "server_url": server_config["url"],
+            "require_approval": "never",
+            "headers": {
+                "Authorization": f"Bearer {server_config['authorization_token']}"
+            }
+        }
+        
+        server_list.append(mcp_server)
+    
+    return server_list, None
 
 def calculate_billing(request_array, response, in_billing_rate, out_billing_rate, search_billing_rate: Optional[float] = None):
     def count_tokens(message):
@@ -166,6 +200,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
         citation = None
         is_thinking = False
+        mcp_tools = {}
         try:
             if request.stream:
                 stream_result = await client.responses.create(**parameters, timeout=300)
@@ -177,11 +212,44 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                             is_thinking = True
                             await token_queue.put('<think>\n')
                         await token_queue.put(chunk.delta)
-                    if hasattr(chunk, "type") and chunk.type == "response.output_text.delta":
+                    elif hasattr(chunk, "type") and chunk.type == "response.output_text.delta":
                         if is_thinking:
                             await token_queue.put('\n</think>\n\n')
                             is_thinking = False
                         await token_queue.put(chunk.delta)
+                    elif hasattr(chunk, "type") and chunk.type == "response.output_item.added":
+                        if hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "mcp_call":
+                            tool_id = getattr(chunk.item, "id")
+                            tool_name = getattr(chunk.item, "name")
+                            server_name = getattr(chunk.item, "server_label")
+                            
+                            mcp_tools[tool_id] = {
+                                "server_name": server_name,
+                                "tool_name": tool_name
+                            }
+                            
+                            await token_queue.put(f"\n\n<mcp_tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name})}\n</mcp_tool_use>\n")
+                    elif hasattr(chunk, "type") and chunk.type == "response.output_item.done":
+                        if hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "mcp_call":
+                            tool_id = getattr(chunk.item, "id")
+                            tool_info = mcp_tools.get(tool_id)
+                            
+                            if tool_info:
+                                server_name = tool_info["server_name"]
+                                tool_name = tool_info["tool_name"]
+                                
+                                is_error = getattr(chunk.item, "error") is not None
+                                
+                                if is_error:
+                                    error_obj = getattr(chunk.item, "error")
+                                    if isinstance(error_obj, dict) and "content" in error_obj:
+                                        result = error_obj["content"][0]["text"]
+                                    else:
+                                        result = "Unknown error"
+                                else:
+                                    result = getattr(chunk.item, "output", "")
+                                
+                                await token_queue.put(f"\n<mcp_tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': result})}\n</mcp_tool_result>\n\n")
             else:
                 single_result = await client.responses.create(**parameters, timeout=300)
                 full_response_text = single_result.output_text
@@ -213,17 +281,22 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                     "instructions": instructions,
                     "input": formatted_messages,
                     "stream": request.stream,
-                    "background": True if request.reason or request.deep_research else False
+                    "background": len(request.mcp) == 0 and (request.reason or request.deep_research)
                 }
 
                 if request.search:
                     parameters["tools"] = [{"type": "web_search_preview"}]
-                    
                 if request.deep_research:
                     parameters["tools"] = [
                         {"type": "web_search_preview"}, 
                         {"type": "code_interpreter", "container": {"type": "auto"}}
                     ]
+                if len(request.mcp) > 0:
+                    mcp_servers, error = get_mcp_servers(request.mcp, user)
+                    if error:
+                        yield f"data: {json.dumps({'error': error})}\n\n"
+                        return
+                    parameters["tools"] = mcp_servers
                     
                 token_queue = asyncio.Queue()
                 producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))
@@ -277,7 +350,12 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                         "model": request.model,
                         "temperature": request.temperature,
                         "reason": request.reason,
-                        "system_message": request.system_message
+                        "system_message": request.system_message,
+                        "inference": request.inference,
+                        "search": request.search,
+                        "deep_research": request.deep_research,
+                        "dan": request.dan,
+                        "mcp": request.mcp
                     }
                 }
             )

@@ -334,7 +334,12 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                       setIsModelModalOpen(false);
                     }}
                   >
-                    <div className="model-alias">{m.model_alias}</div>
+                    <div className="model-alias">
+                      {m.model_alias}
+                      {m.capabilities?.mcp && (
+                        <span className="mcp-badge">MCP</span>
+                      )}
+                    </div>
                     <div className="model-description">{m.description}</div>
                     <div className="model-pricing">In {m.in_billing}$ / Out {m.out_billing}$</div>
                   </div>

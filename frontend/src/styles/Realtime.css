@@ -35,7 +35,7 @@
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, 80px);
+    transform: translate(-50%, 100px);
     font-size: 40px;
     color: rgb(230, 55, 55);
     z-index: 1000;
@@ -95,5 +95,9 @@
     
     .transcript-container {
         width: 250px;
+    }
+
+    .mic-disabled {
+        transform: translate(-50%, 90px);
     }
 }

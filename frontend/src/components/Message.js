@@ -67,16 +67,22 @@ function Message({
 
   const handleCopy = async () => {
     try {
-      const textToCopy = Array.isArray(content)
-        ? content.map((item) =>
-            item.type === "text" ? item.text : item.name
-          ).join(" ")
-        : String(content).replace(/\n$/, "");
+      let textToCopy;
+      if (Array.isArray(content)) {
+        textToCopy = content.map((item) =>
+          item.type === "text" ? item.text : item.name
+        ).join(" ");
+      } else {
+        textToCopy = String(content)
+          .replace(/\n\n<mcp_tool_use>\n.*?\n<\/mcp_tool_use>\n/gi, '')
+          .replace(/\n<mcp_tool_result>\n.*?\n<\/mcp_tool_result>\n\n/gi, '')
+          .replace(/\n$/, "");
+      }
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
     } catch (err) {
-      console.error("복사 실패:", err);
+      console.error("복사에 실패했습니다.", err);
     }
   };
 
@@ -227,6 +233,7 @@ function Message({
 }
 
 Message.propTypes = {
+  messageIndex: PropTypes.number.isRequired,
   role: PropTypes.string.isRequired,
   content: PropTypes.oneOfType([PropTypes.string, PropTypes.array]).isRequired,
   isComplete: PropTypes.bool,

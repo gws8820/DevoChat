@@ -16,13 +16,15 @@ export const SettingsProvider = ({ children }) => {
   const [isSearch, setIsSearch] = useState(false);
   const [isDeepResearch, setIsDeepResearch] = useState(false);
   const [isDAN, setIsDAN] = useState(false);
+  const [mcpList, setMCPList] = useState([]);
+  const [canReadImage, setCanReadImage] = useState(false);
   const [canControlTemp, setCanControlTemp] = useState(false);
   const [canControlReason, setCanControlReason] = useState(false);
   const [canControlSystemMessage, setCanControlSystemMessage] = useState(false);
-  const [canReadImage, setCanReadImage] = useState(false);
   const [canToggleInference, setCanToggleInference] = useState(false);
   const [canToggleSearch, setCanToggleSearch] = useState(false);
   const [canToggleDeepResearch, setCanToggleDeepResearch] = useState(false);
+  const [canToggleMCP, setCanToggleMCP] = useState(false);
 
   const updateModel = (newModel) => {
     const selectedModel = modelsData.models.find(m => m.model_name === newModel);
@@ -33,6 +35,7 @@ export const SettingsProvider = ({ children }) => {
     const search = selectedModel?.capabilities?.search;
     const deep_research = selectedModel?.capabilities?.deep_research;
     const image = selectedModel?.capabilities?.image;
+    const mcp = selectedModel?.capabilities?.mcp;
 
     setModel(newModel);
     setIsInference(inference === true);
@@ -59,6 +62,9 @@ export const SettingsProvider = ({ children }) => {
     }
 
     setCanReadImage(image);
+    
+    setCanToggleMCP(mcp);
+    setMCPList(mcp ? mcpList : []);
   };
 
   const toggleInference = () => {
@@ -154,13 +160,15 @@ export const SettingsProvider = ({ children }) => {
         isSearch,
         isDeepResearch,
         isDAN,
+        mcpList,
+        canReadImage,
         canControlTemp,
         canControlReason,
         canControlSystemMessage,
-        canReadImage,
         canToggleInference, 
         canToggleSearch,
-        canToggleDeepResearch,
+        canToggleDeepResearch, 
+        canToggleMCP,
         updateModel,
         setAlias,
         setTemperature,
@@ -171,6 +179,7 @@ export const SettingsProvider = ({ children }) => {
         setIsSearch,
         setIsDeepResearch,
         setIsDAN,
+        setMCPList,
         toggleInference,
         toggleSearch,
         toggleDeepResearch

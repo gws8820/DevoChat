@@ -119,7 +119,24 @@
 }
 
 .model-alias {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
+    gap: 5px;
+}
+
+.mcp-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #615bff 0%, #e55d87 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    white-space: nowrap;
 }
 
 .model-description {

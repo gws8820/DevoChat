@@ -45,9 +45,11 @@ class ChatRequest(BaseModel):
     reason: int = 0
     system_message: Optional[str] = None
     user_message: List[Dict[str, Any]]
+    inference: bool = False
     search: bool = False
     deep_research: bool = False
     dan: bool = False
+    mcp: List[str] = []
     stream: bool = True
 
 def calculate_billing(request_array, response, in_billing_rate, out_billing_rate, search_billing_rate: Optional[float] = None):
@@ -278,7 +280,12 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                         "model": request.model,
                         "temperature": request.temperature,
                         "reason": request.reason,
-                        "system_message": request.system_message
+                        "system_message": request.system_message,
+                        "inference": request.inference,
+                        "search": request.search,
+                        "deep_research": request.deep_research,
+                        "dan": request.dan,
+                        "mcp": request.mcp
                     }
                 }
             )

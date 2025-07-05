@@ -87,11 +87,16 @@ async def get_conversation(conversation_id: str, current_user: User = Depends(ge
     return {
         "conversation_id": doc["conversation_id"],
         "alias": doc.get("alias", ""),
-        "model": doc["model"],
-        "temperature": doc["temperature"],
-        "reason": doc["reason"],
-        "system_message": doc["system_message"],
-        "messages": doc["conversation"]
+        "model": doc.get("model", ""),
+        "temperature": doc.get("temperature", 0.5),
+        "reason": doc.get("reason", 0),
+        "system_message": doc.get("system_message", ""),
+        "inference": doc.get("inference", False),
+        "search": doc.get("search", False),
+        "deep_research": doc.get("deep_research", False),
+        "dan": doc.get("dan", False),
+        "mcp": doc.get("mcp", []),
+        "messages": doc.get("conversation", [])
     }
 
 @router.post("/new_conversation", response_model=dict)
@@ -102,10 +107,16 @@ async def create_new_conversation(current_user: User = Depends(get_current_user)
     new_conversation = {
         "user_id": user_id,
         "conversation_id": conversation_id,
+        "alias": None,
         "model": None,
         "temperature": None,
         "reason": None,
         "system_message": None,
+        "inference": None,
+        "search": None,
+        "deep_research": None,
+        "dan": None,
+        "mcp": None,
         "conversation": [],
         "starred": False,
         "starred_at": None,

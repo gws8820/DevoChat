@@ -4,3 +4,5 @@ images
 files
 shared_pages
 __pycache__
+
+mcp_config.json

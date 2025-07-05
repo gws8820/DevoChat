@@ -67,7 +67,7 @@ app.mount("/files", StaticFiles(directory="files"), name="files")
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    notice_message = '이제 OpenAI o3, o4-mini 모델이 딥 리서치를 지원합니다!'
+    notice_message = 'MCP 서버 지원이 추가되었습니다! + 버튼을 눌러 확인해보세요.'
     notice_hash = base64.b64encode(notice_message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(

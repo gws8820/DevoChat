@@ -12,7 +12,8 @@
         "image": true,
         "inference": "toggle",
         "search": "toggle",
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -32,7 +33,8 @@
         "image": true,
         "inference": true,
         "search": "toggle",
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -52,7 +54,8 @@
         "image": true,
         "inference": "toggle",
         "search": "toggle",
-        "deep_research": false
+        "deep_research": false,
+        "mcp": true
       },
       "controls": {
         "temperature": "conditional",
@@ -72,7 +75,8 @@
         "image": true,
         "inference": "toggle",
         "search": "toggle",
-        "deep_research": false
+        "deep_research": false,
+        "mcp": true
       },
       "controls": {
         "temperature": "conditional",
@@ -92,7 +96,8 @@
         "image": true,
         "inference": false,
         "search": "toggle",
-        "deep_research": false
+        "deep_research": false,
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -112,7 +117,8 @@
         "image": true,
         "inference": false,
         "search": "toggle",
-        "deep_research": false
+        "deep_research": false,
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -132,7 +138,8 @@
         "image": true,
         "inference": false,
         "search": "toggle",
-        "deep_research": false
+        "deep_research": false,
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -155,7 +162,8 @@
         "image": true,
         "inference": true,
         "search": false,
-        "deep_research": "switch"
+        "deep_research": "switch",
+        "mcp": true
       },
       "controls": {
         "temperature": false,
@@ -178,7 +186,8 @@
         "image": true,
         "inference": true,
         "search": false,
-        "deep_research": "switch"
+        "deep_research": "switch",
+        "mcp": true
       },
       "controls": {
         "temperature": false,
@@ -201,7 +210,8 @@
         "image": true,
         "inference": true,
         "search": false,
-        "deep_research": "switch"
+        "deep_research": "switch",
+        "mcp": true
       },
       "controls": {
         "temperature": false,
@@ -224,7 +234,8 @@
         "image": true,
         "inference": true,
         "search": false,
-        "deep_research": "switch"
+        "deep_research": "switch",
+        "mcp": true
       },
       "controls": {
         "temperature": false,
@@ -244,7 +255,8 @@
         "image": true,
         "inference": true,
         "search": false,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": true
       },
       "controls": {
         "temperature": false,
@@ -264,7 +276,8 @@
         "image": false,
         "inference": false,
         "search": false,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -284,7 +297,8 @@
         "image": false,
         "inference": true,
         "search": false,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -304,7 +318,8 @@
         "image": true,
         "inference": false,
         "search": false,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -324,7 +339,8 @@
         "image": false,
         "inference": false,
         "search": false,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -344,7 +360,8 @@
         "image": false,
         "inference": true,
         "search": false,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -369,7 +386,8 @@
         "image": true,
         "inference": "switch",
         "search": true,
-        "deep_research": "switch"
+        "deep_research": "switch",
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -393,7 +411,8 @@
         "image": true,
         "inference": "switch",
         "search": true,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -417,7 +436,8 @@
         "image": true,
         "inference": true,
         "search": true,
-        "deep_research": "switch"
+        "deep_research": "switch",
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -441,7 +461,8 @@
         "image": true,
         "inference": "switch",
         "search": true,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -465,7 +486,8 @@
         "image": true,
         "inference": "switch",
         "search": true,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -485,7 +507,8 @@
         "image": true,
         "inference": false,
         "search": false,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -505,7 +528,8 @@
         "image": false,
         "inference": true,
         "search": false,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -525,7 +549,8 @@
         "image": true,
         "inference": false,
         "search": false,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,
@@ -545,7 +570,8 @@
         "image": false,
         "inference": true,
         "search": false,
-        "deep_research": false
+        "deep_research": false,
+        "mcp": false
       },
       "controls": {
         "temperature": true,

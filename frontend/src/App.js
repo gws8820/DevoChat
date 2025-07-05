@@ -1,6 +1,6 @@
 // src/App.js
 import axios from "./utils/axiosConfig";
-import { useEffect, useState, useCallback, useRef, useContext } from "react";
+import { useEffect, useState, useCallback, useRef, useContext, useMemo } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "./components/Sidebar";
@@ -31,22 +31,37 @@ function App() {
 
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
   const [toastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  const shouldShowSidebar = isLoggedIn && !['/login', '/register'].includes(location.pathname);
-  const shouldShowHeader = isLoggedIn && !['/login', '/register', '/view'].some(path => 
-    location.pathname === path || location.pathname.startsWith(path + '/')
-  );
-  const shouldShowLogo = location.pathname.startsWith("/view");
+  const shouldShowSidebar = useMemo(() => {
+    return isLoggedIn && !['/login', '/register'].includes(location.pathname);
+  }, [isLoggedIn, location.pathname]);
+
+  const shouldShowHeader = useMemo(() => {
+    return isLoggedIn && !['/login', '/register', '/view'].some(path => 
+      location.pathname === path || location.pathname.startsWith(path + '/')
+    );
+  }, [isLoggedIn, location.pathname]);
+
+  const shouldShowLogo = useMemo(() => {
+    return location.pathname.startsWith("/view");
+  }, [location.pathname]);
   
-  const isResponsive = window.innerWidth <= 768;
-  const marginLeft = (isResponsive || !shouldShowSidebar) ? 0 : (isSidebarOpen ? 260 : 0);
+  const isResponsive = useMemo(() => {
+    return windowWidth <= 768;
+  }, [windowWidth]);
+
+  const marginLeft = useMemo(() => {
+    return (isResponsive || !shouldShowSidebar) ? 0 : (isSidebarOpen ? 260 : 0);
+  }, [isResponsive, shouldShowSidebar, isSidebarOpen]);
 
   const chatMessageRef = useRef(null);
   const { fetchConversations } = useContext(ConversationsContext);
@@ -61,9 +76,19 @@ function AppContent() {
         setIsLoggedIn(response.data.logged_in);
         if (response.data.logged_in) {
           fetchConversations();
+          try {
+            const userResponse = await axios.get(
+              `${process.env.REACT_APP_FASTAPI_URL}/auth/user`,
+              { withCredentials: true }
+            );
+            setUserInfo(userResponse.data);
+          } catch (error) {
+            console.error("Failed to fetch user info.", error);
+          }
         }
       } catch (error) {
         setIsLoggedIn(false);
+        setUserInfo(null);
       }
     }
     checkLoginStatus();
@@ -77,19 +102,29 @@ function AppContent() {
       setIsSidebarOpen(true);
     }
     
-    const handleResize = () => {
-      const isMobile = /android|iphone|ipod/i.test(
-        (navigator.userAgent || navigator.vendor || window.opera).toLowerCase()
-      );
-      
-      if (!isMobile) {
-        if (window.innerWidth <= 768) 
-          setIsSidebarOpen(false);
-      }
-    };
+    const isMobile = /android|iphone|ipod/i.test(
+      (navigator.userAgent || navigator.vendor || window.opera).toLowerCase()
+    );
+    
+    if (!isMobile) {
+      let resizeTimeout;
+      const handleResize = () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          const newWidth = window.innerWidth;
+          setWindowWidth(newWidth);
+          
+          if (newWidth <= 768) 
+            setIsSidebarOpen(false);
+        }, 100); // 100ms debounce
+      };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+      window.addEventListener('resize', handleResize);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        clearTimeout(resizeTimeout);
+      };
+    }
   }, []);
 
   const toggleSidebar = useCallback(() => {
@@ -153,14 +188,14 @@ function AppContent() {
   if (isLoggedIn === null) return null;
 
   return (
-    <div style={{ display: "flex", position: "relative", margin: "0", overflow: "hidden", minHeight: "100vh" }}>
+    <div style={{ display: "flex", margin: "0" }}>
       <AnimatePresence>
         {shouldShowSidebar && (
           <motion.div
             initial={{ x: -260 }}
             animate={{ x: isSidebarOpen ? 0 : -260 }}
             exit={{ x: -260 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: isResponsive ? 0.25 : 0.3, ease: "easeInOut" }}
             style={{
               width: "260px",
               position: "fixed",
@@ -175,6 +210,7 @@ function AppContent() {
               isSidebarOpen={isSidebarOpen}
               isResponsive={isResponsive}
               isTouch={isTouch}
+              userInfo={userInfo}
             />
           </motion.div>
         )}
@@ -199,7 +235,7 @@ function AppContent() {
         style={{ 
           flex: 1, 
           position: "relative",
-          minHeight: "100vh",
+          Height: "100dvh",
         }}
         initial={{ marginLeft }}
         animate={{ marginLeft }}
@@ -228,8 +264,8 @@ function AppContent() {
 
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            <Route path="/" element={isLoggedIn ? <Main isTouch={isTouch} /> : <Navigate to="/login" />} />
-            <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
+            <Route path="/" element={isLoggedIn ? <Main isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
+            <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} userInfo={userInfo} /> : <Navigate to="/login" />} />
             <Route path="/view/:conversation_id" element={<View />} />
             <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
             <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />

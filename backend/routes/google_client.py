@@ -52,9 +52,11 @@ class ChatRequest(BaseModel):
     reason: int = 0
     system_message: Optional[str] = None
     user_message: List[Dict[str, Any]]
+    inference: bool = False
     search: bool = False
     deep_research: bool = False
     dan: bool = False
+    mcp: List[str] = []
     stream: bool = True
 
 class AliasRequest(BaseModel):
@@ -314,7 +316,12 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                         "model": request.model,
                         "temperature": request.temperature,
                         "reason": request.reason,
-                        "system_message": request.system_message
+                        "system_message": request.system_message,
+                        "inference": request.inference,
+                        "search": request.search,
+                        "deep_research": request.deep_research,
+                        "dan": request.dan,
+                        "mcp": request.mcp
                     }
                 }
             )
@@ -337,7 +344,7 @@ async def get_alias(request: AliasRequest, user: User = Depends(get_current_user
                 max_output_tokens=10
             )
         )
-        alias = response.text
+        alias = response.text.strip()
         
         conversation_collection.update_one(
             {"user_id": user.user_id, "conversation_id": request.conversation_id},

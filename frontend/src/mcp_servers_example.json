@@ -1,0 +1,26 @@
+[
+  {
+    "id": "home-assistant",
+    "name": "Home Assistant",
+    "icon": "/icons/home-assistant.png",
+    "admin": true
+  },
+  {
+    "id": "google-workspace",
+    "name": "Google Workspace",
+    "icon": "/icons/google-workspace.png",
+    "admin": true
+  },
+  {
+    "id": "text-editor",
+    "name": "Text Editor",
+    "icon": "/icons/text-editor.png",
+    "admin": false
+  },
+  {
+    "id": "time",
+    "name": "Time",
+    "icon": "/icons/time.png",
+    "admin": false
+  }
+]

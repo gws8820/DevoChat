@@ -52,9 +52,11 @@ class ChatRequest(BaseModel):
     reason: int = 0
     system_message: Optional[str] = None
     user_message: List[Dict[str, Any]]
+    inference: bool = False
     search: bool = False
     deep_research: bool = False
     dan: bool = False
+    mcp: List[str] = []
     stream: bool = True
 
 class ApiSettings(BaseModel):
@@ -303,7 +305,12 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
                         "model": request.model,
                         "temperature": request.temperature,
                         "reason": request.reason,
-                        "system_message": request.system_message
+                        "system_message": request.system_message,
+                        "inference": request.inference,
+                        "search": request.search,
+                        "deep_research": request.deep_research,
+                        "dan": request.dan,
+                        "mcp": request.mcp
                     }
                 }
             )

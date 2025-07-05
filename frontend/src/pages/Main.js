@@ -6,7 +6,7 @@ import { GoPlus, GoGlobe, GoLightBulb, GoTelescope, GoUnlock } from "react-icons
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
 import { LuAudioLines } from "react-icons/lu";
-import { FiPaperclip, FiMic } from "react-icons/fi";
+import { FiPaperclip, FiMic, FiServer } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
@@ -14,11 +14,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useFileUpload } from "../utils/useFileUpload";
 import axios from "../utils/axiosConfig";
 import Modal from "../components/Modal";
+import MCPModal from "../components/MCPModal";
 import Toast from "../components/Toast";
 import modelsData from "../models.json";
 import "../styles/Common.css";
 
-function Main({ isTouch }) {
+function Main({ isTouch, userInfo }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [notice, setNotice] = useState("");
@@ -26,13 +27,14 @@ function Main({ isTouch }) {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
-  const [isDragActive, setIsDragActive] = useState(false);
-  const [confirmModal, setConfirmModal] = useState(false);
-  const [showMediaOptions, setShowMediaOptions] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [showMediaOptions, setShowMediaOptions] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
 
   const recognitionRef = useRef(null);
   const textAreaRef = useRef(null);
@@ -55,11 +57,13 @@ function Main({ isTouch }) {
     isSearch,
     isDeepResearch,
     isDAN,
+    mcpList,
     canControlSystemMessage,
     canReadImage,
     canToggleInference,
     canToggleSearch,
     canToggleDeepResearch,
+    canToggleMCP,
     setTemperature,
     setReason,
     setSystemMessage,
@@ -67,6 +71,7 @@ function Main({ isTouch }) {
     setIsSearch,
     setIsInference,
     setIsDAN,
+    setMCPList,
     toggleInference,
     toggleSearch,
     toggleDeepResearch
@@ -106,32 +111,6 @@ function Main({ isTouch }) {
     setSystemMessage("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
-        setShowMediaOptions(false);
-      }
-    }
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isRecording) {
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-    } else {
-      clearInterval(recordingTimerRef.current);
-      setRecordingTime(0);
-    }
-    
-    return () => clearInterval(recordingTimerRef.current);
-  }, [isRecording]);
 
   useEffect(() => {
     if (location.state?.errorModal) {
@@ -200,6 +179,22 @@ function Main({ isTouch }) {
       abortControllerRef.current = null;
     }
   }, []);
+
+  const handleSendButtonClick = useCallback(() => {
+    if (isLoading) {
+      cancelRequest();
+      return;
+    }
+    
+    if (inputText.trim()) {
+      sendMessage(inputText);
+    } else if (uploadedFiles.length !== 0) {
+      setToastMessage("내용을 입력해주세요.");
+      setShowToast(true);
+    } else {
+      navigate("/realtime");
+    }
+  }, [inputText, uploadedFiles, sendMessage, navigate, isLoading, cancelRequest]);
   
   useEffect(() => {
     const hasUploadedImage = uploadedFiles.some((file) => {
@@ -209,6 +204,48 @@ function Main({ isTouch }) {
     setIsImage(hasUploadedImage);
   },
   [setIsImage, uploadedFiles]);
+  
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey &&
+        !isComposing &&
+        !isTouch &&
+        !uploadingFiles
+      ) {
+        event.preventDefault();
+        sendMessage(inputText);
+      }
+    },
+    [inputText, isComposing, isTouch, uploadingFiles, sendMessage]
+  );
+
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = textAreaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      const newHeight = Math.min(textarea.scrollHeight, 250);
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, []);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [inputText, adjustTextareaHeight]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
+        setShowMediaOptions(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handlePlusButtonClick = useCallback((e) => {
     e.stopPropagation();
@@ -222,6 +259,57 @@ function Main({ isTouch }) {
     }
     setShowMediaOptions(false);
   }, []);
+
+  const handleFileDelete = useCallback((file) => {
+    removeFile(file.id);
+  }, [removeFile]);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    setIsDragActive(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    setIsDragActive(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setIsDragActive(false);
+      const files = Array.from(e.dataTransfer.files);
+      await processFiles(files, (errorMessage) => {
+        setToastMessage(errorMessage);
+        setShowToast(true);
+      }, canReadImage);
+    },
+    [processFiles, canReadImage]
+  );
+
+  const handlePaste = useCallback(
+    async (e) => {
+      const items = e.clipboardData.items;
+      const filesToUpload = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file) {
+            filesToUpload.push(file);
+          }
+        }
+      }
+      if (filesToUpload.length > 0) {
+        e.preventDefault();
+        await processFiles(filesToUpload, (errorMessage) => {
+          setToastMessage(errorMessage);
+          setShowToast(true);
+        }, canReadImage);
+      }
+    },
+    [processFiles, canReadImage]
+  );
 
   const handleRecordingStop = useCallback(() => {
     if (recognitionRef.current && isRecording) {
@@ -289,107 +377,37 @@ function Main({ isTouch }) {
     }
   }, [isRecording, handleRecordingStop, inputText]);
 
-  const handleFileDelete = useCallback((file) => {
-    removeFile(file.id);
-  }, [removeFile]);
-
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-    setIsDragActive(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e) => {
-    e.preventDefault();
-    setIsDragActive(false);
-  }, []);
-
-  const handleDrop = useCallback(
-    async (e) => {
-      e.preventDefault();
-      setIsDragActive(false);
-      const files = Array.from(e.dataTransfer.files);
-      await processFiles(files, (errorMessage) => {
-        setToastMessage(errorMessage);
-        setShowToast(true);
-      }, canReadImage);
-    },
-    [processFiles, canReadImage]
-  );
-
-  const handlePaste = useCallback(
-    async (e) => {
-      const items = e.clipboardData.items;
-      const filesToUpload = [];
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (item.kind === "file") {
-          const file = item.getAsFile();
-          if (file) {
-            filesToUpload.push(file);
-          }
-        }
-      }
-      if (filesToUpload.length > 0) {
-        e.preventDefault();
-        await processFiles(filesToUpload, (errorMessage) => {
-          setToastMessage(errorMessage);
-          setShowToast(true);
-        }, canReadImage);
-      }
-    },
-    [processFiles, canReadImage]
-  );
-
-  const handleKeyDown = useCallback(
-    (event) => {
-      if (
-        event.key === "Enter" &&
-        !event.shiftKey &&
-        !isComposing &&
-        !isTouch &&
-        !uploadingFiles
-      ) {
-        event.preventDefault();
-        sendMessage(inputText);
-      }
-    },
-    [inputText, isComposing, isTouch, uploadingFiles, sendMessage]
-  );
-
-  const adjustTextareaHeight = useCallback(() => {
-    const textarea = textAreaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      const newHeight = Math.min(textarea.scrollHeight, 250);
-      textarea.style.height = `${newHeight}px`;
-    }
-  }, []);
-
   useEffect(() => {
-    adjustTextareaHeight();
-  }, [inputText, adjustTextareaHeight]);
-
-  const handleSendButtonClick = useCallback(() => {
-    if (isLoading) {
-      cancelRequest();
-      return;
+    if (isRecording) {
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(recordingTimerRef.current);
+      setRecordingTime(0);
     }
     
-    if (inputText.trim()) {
-      sendMessage(inputText);
-    } else if (uploadedFiles.length !== 0) {
-      setToastMessage("내용을 입력해주세요.");
-      setShowToast(true);
-    } else {
-      navigate("/realtime");
-    }
-  }, [inputText, uploadedFiles, sendMessage, navigate, isLoading, cancelRequest]);
+    return () => clearInterval(recordingTimerRef.current);
+  }, [isRecording]);
 
   const formatRecordingTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
+
+  const handleMCPClick = useCallback(() => {
+    setIsMCPModalOpen(true);
+    setShowMediaOptions(false);
+  }, []);
+
+  const handleMCPModalClose = useCallback(() => {
+    setIsMCPModalOpen(false);
+  }, []);
+
+  const handleMCPModalConfirm = useCallback((selectedServers) => {
+    setMCPList(selectedServers);
+  }, [setMCPList]);
 
   return (
     <div
@@ -522,6 +540,12 @@ function Main({ isTouch }) {
                       <FiMic />
                       음성 인식
                     </div>
+                    {canToggleMCP && (
+                      <div className="media-option" onClick={handleMCPClick}>
+                        <FiServer style={{ paddingLeft: "0.5px", color: "#5e5bff", strokeWidth: 2.5 }} />
+                        <span className="mcp-text">MCP 서버</span>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -682,6 +706,14 @@ function Main({ isTouch }) {
           />
         )}
       </AnimatePresence>
+
+      <MCPModal
+        isOpen={isMCPModalOpen}
+        onClose={handleMCPModalClose}
+        onConfirm={handleMCPModalConfirm}
+        currentMCPList={mcpList}
+        userInfo={userInfo}
+      />
 
       <Toast
         type="error"

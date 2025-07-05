@@ -1,10 +1,11 @@
+// src/pages/Chat.js
 import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { GoPlus, GoGlobe, GoLightBulb, GoTelescope, GoUnlock } from "react-icons/go";
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
-import { FiPaperclip, FiMic } from "react-icons/fi";
+import { FiPaperclip, FiMic, FiServer } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
@@ -14,10 +15,11 @@ import axios from "../utils/axiosConfig";
 import modelsData from "../models.json";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
+import MCPModal from "../components/MCPModal";
 import Toast from "../components/Toast";
 import "../styles/Common.css";
 
-function Chat({ isTouch, chatMessageRef }) {
+function Chat({ isTouch, chatMessageRef, userInfo }) {
   const { conversation_id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,18 +29,19 @@ function Chat({ isTouch, chatMessageRef }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
   const [thinkingText, setThinkingText] = useState("");
   const [scrollOnSend, setScrollOnSend] = useState(false);
-  const [isAtBottom, setIsAtBottom] = useState(true);
   const [deleteIndex, setdeleteIndex] = useState(null);
-  const [isDragActive, setIsDragActive] = useState(false);
   const [confirmModal, setConfirmModal] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const [showMediaOptions, setShowMediaOptions] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
   
   const { 
     uploadedFiles, 
@@ -61,22 +64,25 @@ function Chat({ isTouch, chatMessageRef }) {
     temperature,
     reason,
     systemMessage,
+    isInference,
+    isSearch,
+    isDeepResearch,
+    isDAN,
+    mcpList,
+    canControlSystemMessage,
+    canReadImage,
+    canToggleInference,
+    canToggleSearch,
+    canToggleDeepResearch,
+    canToggleMCP,
     updateModel,
     setAlias,
     setTemperature,
     setReason,
     setSystemMessage,
     setIsImage,
-    isInference,
-    isSearch,
-    isDeepResearch,
-    isDAN,
-    canControlSystemMessage,
-    canReadImage,
-    canToggleInference,
-    canToggleSearch,
-    canToggleDeepResearch,
-    setIsDAN,
+    setIsDAN, 
+    setMCPList,
     toggleInference,
     toggleSearch,
     toggleDeepResearch
@@ -239,9 +245,11 @@ function Chat({ isTouch, chatMessageRef }) {
               reason,
               system_message: systemMessage,
               user_message: contentParts,
+              inference: isInference,
               search: isSearch,
               deep_research: isDeepResearch,
               dan: isDAN,
+              mcp: mcpList,
               stream: selectedModel.capabilities.stream,
             }),
             credentials: "include",
@@ -318,6 +326,7 @@ function Chat({ isTouch, chatMessageRef }) {
       isSearch,
       isDeepResearch,
       isDAN,
+      mcpList,
       uploadedFiles,
       setUploadedFiles
     ]
@@ -420,6 +429,12 @@ function Chat({ isTouch, chatMessageRef }) {
           setTemperature(res.data.temperature);
           setReason(res.data.reason);
           setSystemMessage(res.data.system_message);
+          
+          if (res.data.inference) toggleInference();
+          if (res.data.search) toggleSearch();
+          if (res.data.deep_research) toggleDeepResearch();
+          setIsDAN(res.data.dan);
+          setMCPList(res.data.mcp);
 
           const updatedMessages = res.data.messages.map((m) =>
             m.role === "assistant" ? { ...m, isComplete: true } : m
@@ -456,6 +471,81 @@ function Chat({ isTouch, chatMessageRef }) {
   
     setIsImage(hasImageHistory || hasUploadedImage);
   }, [messages, setIsImage, uploadedFiles]);
+
+  useEffect(() => {
+    const chatContainer = messagesEndRef.current?.parentElement;
+    if (!chatContainer) return;
+    const handleScroll = () => {
+      const { scrollTop, clientHeight, scrollHeight } = chatContainer;
+      if (scrollHeight - scrollTop - clientHeight > 50) {
+        setIsAtBottom(false);
+      } else {
+        setIsAtBottom(true);
+      }
+    };
+    chatContainer.addEventListener("scroll", handleScroll);
+    handleScroll();
+    return () => chatContainer.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (scrollOnSend) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
+      setScrollOnSend(false);
+    }
+  }, [messages, scrollOnSend]);
+
+  useEffect(() => {
+    if (isAtBottom) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      });
+    }
+  }, [messages, isAtBottom]);
+
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey &&
+        !isComposing &&
+        !isTouch &&
+        !uploadingFiles
+      ) {
+        event.preventDefault();
+        sendMessage(inputText);
+      }
+    },
+    [inputText, isComposing, isTouch, uploadingFiles, sendMessage]
+  );
+
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = textAreaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      const newHeight = Math.min(textarea.scrollHeight, 250);
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, []);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [inputText, adjustTextareaHeight]);
+  
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
+        setShowMediaOptions(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handlePlusButtonClick = useCallback((e) => {
     e.stopPropagation();
@@ -521,68 +611,6 @@ function Chat({ isTouch, chatMessageRef }) {
     [processFiles, canReadImage]
   );
 
-  useEffect(() => {
-    const chatContainer = messagesEndRef.current?.parentElement;
-    if (!chatContainer) return;
-    const handleScroll = () => {
-      const { scrollTop, clientHeight, scrollHeight } = chatContainer;
-      if (scrollHeight - scrollTop - clientHeight > 50) {
-        setIsAtBottom(false);
-      } else {
-        setIsAtBottom(true);
-      }
-    };
-    chatContainer.addEventListener("scroll", handleScroll);
-    handleScroll();
-    return () => chatContainer.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    if (scrollOnSend) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      });
-      setScrollOnSend(false);
-    }
-  }, [messages, scrollOnSend]);
-
-  useEffect(() => {
-    if (isAtBottom) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-      });
-    }
-  }, [messages, isAtBottom]);
-
-  const handleKeyDown = useCallback(
-    (event) => {
-      if (
-        event.key === "Enter" &&
-        !event.shiftKey &&
-        !isComposing &&
-        !isTouch &&
-        !uploadingFiles
-      ) {
-        event.preventDefault();
-        sendMessage(inputText);
-      }
-    },
-    [inputText, isComposing, isTouch, uploadingFiles, sendMessage]
-  );
-
-  const adjustTextareaHeight = useCallback(() => {
-    const textarea = textAreaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      const newHeight = Math.min(textarea.scrollHeight, 250);
-      textarea.style.height = `${newHeight}px`;
-    }
-  }, []);
-
-  useEffect(() => {
-    adjustTextareaHeight();
-  }, [inputText, adjustTextareaHeight]);
-  
   const handleRecordingStop = useCallback(() => {
     if (recognitionRef.current && isRecording) {
       recognitionRef.current.stop();
@@ -650,19 +678,6 @@ function Chat({ isTouch, chatMessageRef }) {
   }, [isRecording, handleRecordingStop, inputText]);
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
-        setShowMediaOptions(false);
-      }
-    }
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  useEffect(() => {
     if (isRecording) {
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
@@ -681,6 +696,19 @@ function Chat({ isTouch, chatMessageRef }) {
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  const handleMCPClick = useCallback(() => {
+    setIsMCPModalOpen(true);
+    setShowMediaOptions(false);
+  }, []);
+
+  const handleMCPModalClose = useCallback(() => {
+    setIsMCPModalOpen(false);
+  }, []);
+
+  const handleMCPModalConfirm = useCallback((selectedServers) => {
+    setMCPList(selectedServers);
+  }, [setMCPList]);
+  
   return (
     <div
       className="container"
@@ -859,6 +887,12 @@ function Chat({ isTouch, chatMessageRef }) {
                       <FiMic />
                       음성 인식
                     </div>
+                    {canToggleMCP && (
+                      <div className="media-option" onClick={handleMCPClick}>
+                        <FiServer style={{ paddingLeft: "0.5px", color: "#5e5bff", strokeWidth: 2.5 }} />
+                        <span className="mcp-text">MCP 서버</span>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1000,6 +1034,14 @@ function Chat({ isTouch, chatMessageRef }) {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      <MCPModal
+        isOpen={isMCPModalOpen}
+        onClose={handleMCPModalClose}
+        onConfirm={handleMCPModalConfirm}
+        currentMCPList={mcpList}
+        userInfo={userInfo}
+      />
 
       <Toast
         type="error"

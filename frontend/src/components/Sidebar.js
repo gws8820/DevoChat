@@ -133,10 +133,10 @@ function Sidebar({
   isSidebarOpen,
   isResponsive,
   isTouch,
+  userInfo,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [userInfo, setUserInfo] = useState(null);
   const [isDropdown, setIsDropdown] = useState(false);
   const [modalMessage, setModalMessage] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -193,23 +193,45 @@ function Sidebar({
     );
   }, [sortedConversations, searchQuery]);
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_FASTAPI_URL}/auth/user`,
-          { withCredentials: true }
-        );
-        setUserInfo(response.data);
-      } catch (error) {
-        console.error("Failed to fetch user info.", error);
-      }
-    };
-    fetchUserInfo();
-  }, []);
+  const handleNavigate = useCallback((conversation_id) => {
+    const conversationExists = conversations.find(
+      (c) => c.conversation_id === conversation_id
+    );
+    if (!conversationExists) {
+      setToastMessage("대화가 존재하지 않습니다.");
+      setShowToast(true);
+      return;
+    }
+    navigate(`/chat/${conversation_id}`);
+    if (isResponsive) toggleSidebar();
+  }, [conversations, navigate, isResponsive, toggleSidebar]);
 
-  const handleTouchStart = (e, conversation_id) => {
-    setContextMenu({ ...contextMenu, visible: false });
+  const toggleStar = useCallback(async (conversation_id, e) => {
+    e.stopPropagation();
+    try {
+      const conversation = conversations.find(c => c.conversation_id === conversation_id);
+      if (!conversation) return;
+
+      toggleStarConversation(conversation_id, !conversation.starred);
+      
+      await axios.put(
+        `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/star`,
+        { starred: !conversation.starred },
+        { withCredentials: true }
+      );
+    } catch (error) {
+      console.error("Failed to toggle star status:", error);
+      setToastMessage("즐겨찾기 토글이 실패했습니다.");
+      const conversation = conversations.find(c => c.conversation_id === conversation_id);
+      if (conversation) {
+        toggleStarConversation(conversation_id, conversation.starred);
+      }
+      setShowToast(true);
+    }
+  }, [conversations, toggleStarConversation]);
+
+  const handleTouchStart = useCallback((e, conversation_id) => {
+    setContextMenu(prev => ({ ...prev, visible: false }));
     
     longPressTimer.current = setTimeout(() => {
       setSelectedConversationId(conversation_id);
@@ -234,9 +256,9 @@ function Sidebar({
       };
       document.addEventListener('contextmenu', preventDefaultOnce);
     }, 500);
-  };
+  }, []);
 
-  const handleTouchEnd = (e, conversation_id) => {
+  const handleTouchEnd = useCallback((e, conversation_id) => {
     if (contextMenu.visible) {
       e.preventDefault();
       e.stopPropagation();
@@ -251,14 +273,14 @@ function Sidebar({
         handleNavigate(conversation_id);
       }
     }
-  };
+  }, [contextMenu.visible, renamingConversationId, handleNavigate]);
 
-  const handleTouchMove = (e) => {
+  const handleTouchMove = useCallback((e) => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-  };
+  }, []);
 
   const currentConversationId = location.pathname.startsWith("/chat/")
     ? location.pathname.split("/chat/")[1]
@@ -286,7 +308,7 @@ function Sidebar({
     }
   }, [updateConversation, currentConversationId, setAlias]);
 
-  const handleDelete = async (conversation_id) => {
+  const handleDelete = useCallback(async (conversation_id) => {
     try {
       deleteConversation(conversation_id);
       if (currentConversationId === conversation_id)
@@ -301,22 +323,22 @@ function Sidebar({
       setToastMessage("대화 삭제에 실패했습니다.");
       setShowToast(true);
     }
-  };
+  }, [deleteConversation, currentConversationId, navigate]);
 
-  const handleDeleteAll = () => {
+  const handleDeleteAll = useCallback(() => {
     setModalMessage("정말 모든 대화를 삭제하시겠습니까?");
     setModalAction("deleteAll");
     setShowModal(true);
     setIsDropdown(false);
-  };
+  }, []);
 
-  const handleLogoutClick = () => {
+  const handleLogoutClick = useCallback(() => {
     setModalMessage("정말 로그아웃 하시겠습니까?");
     setModalAction("logout");
     setShowModal(true);
-  };
+  }, []);
 
-  const confirmDelete = async () => {
+  const confirmDelete = useCallback(async () => {
     if (modalAction === "deleteAll") {
       try {
         deleteAllConversation();
@@ -351,30 +373,17 @@ function Sidebar({
     }
     setShowModal(false);
     setModalAction(null);
-  };
+  }, [modalAction, deleteAllConversation, navigate]);
 
-  const cancelDelete = () => {
+  const cancelDelete = useCallback(() => {
     setShowModal(false);
     setModalAction(null);
-  };
+  }, []);
 
-  const handleNavigate = useCallback((conversation_id) => {
-    const conversationExists = conversations.find(
-      (c) => c.conversation_id === conversation_id
-    );
-    if (!conversationExists) {
-      setToastMessage("대화가 존재하지 않습니다.");
-      setShowToast(true);
-      return;
-    }
-    navigate(`/chat/${conversation_id}`);
-    if (isResponsive) toggleSidebar();
-  }, [conversations, navigate, isResponsive, toggleSidebar]);
-
-  const handleNewConversation = () => {
+  const handleNewConversation = useCallback(() => {
     navigate("/");
     if (isResponsive) toggleSidebar();
-  };
+  }, [navigate, isResponsive, toggleSidebar]);
 
   const handleConversationContextMenu = useCallback((e, conversation_id) => {
     e.preventDefault();
@@ -391,13 +400,13 @@ function Sidebar({
   useEffect(() => {
     const handleClickOutsideContextMenu = () => {
       if (contextMenu.visible && !contextMenuProtected.current) {
-        setContextMenu({ ...contextMenu, visible: false });
+        setContextMenu(prev => ({ ...prev, visible: false }));
       }
     };
     document.addEventListener("click", handleClickOutsideContextMenu);
     return () =>
       document.removeEventListener("click", handleClickOutsideContextMenu);
-  }, [contextMenu]);
+  }, [contextMenu.visible]);
 
   useEffect(() => {
     const handleClickOutsideDropdown = (e) => {
@@ -427,7 +436,7 @@ function Sidebar({
     }
   }, [isSearchVisible]);
 
-  const handleCustomAction = (action) => {
+  const handleCustomAction = useCallback((action) => {
     if (action === "star") {
       if (selectedConversationId) {
         const conv = conversations.find(
@@ -452,39 +461,15 @@ function Sidebar({
         handleDelete(selectedConversationId);
       }
     }
-    setContextMenu({ ...contextMenu, visible: false });
-  };
+    setContextMenu(prev => ({ ...prev, visible: false }));
+  }, [selectedConversationId, conversations, toggleStar, handleDelete]);
 
-  const toggleSearch = () => {
+  const toggleSearch = useCallback(() => {
     setIsSearchVisible(!isSearchVisible);
     if (isSearchVisible) {
       setSearchQuery("");
     }
-  };
-
-  const toggleStar = useCallback(async (conversation_id, e) => {
-    e.stopPropagation();
-    try {
-      const conversation = conversations.find(c => c.conversation_id === conversation_id);
-      if (!conversation) return;
-
-      toggleStarConversation(conversation_id, !conversation.starred);
-      
-      await axios.put(
-        `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/star`,
-        { starred: !conversation.starred },
-        { withCredentials: true }
-      );
-    } catch (error) {
-      console.error("Failed to toggle star status:", error);
-      setToastMessage("즐겨찾기 토글이 실패했습니다.");
-      const conversation = conversations.find(c => c.conversation_id === conversation_id);
-      if (conversation) {
-        toggleStarConversation(conversation_id, conversation.starred);
-      }
-      setShowToast(true);
-    }
-  }, [conversations, toggleStarConversation]);
+  }, [isSearchVisible]);
 
   return (
     <>
