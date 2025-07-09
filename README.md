@@ -1,7 +1,7 @@
 # DevoChat
 
 ### AI 모델을 위한 통합 대화 플랫폼
-DevoChat은 여러 AI 모델을 단일 인터페이스에서 사용할 수 있는 웹 애플리케이션입니다. 다양한 AI 서비스 API를 통합하여 일관된 사용자 경험을 제공합니다.
+DevoChat은 다양한 AI 모델과 MCP (Model Context Protocol) 서버를 단일 인터페이스에서 사용할 수 있는 웹 애플리케이션입니다.
 
 ## 데모
 
@@ -24,31 +24,48 @@ DevoChat은 여러 AI 모델을 단일 인터페이스에서 사용할 수 있�
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/code-sample.png" alt="Code Block 샘플">
+      <img src="samples/code.png" alt="코드 블록">
       <br>
       <em>코드 하이라이팅</em>
     </td>
     <td align="center" width="50%">
-      <img src="samples/latex-sample.png" alt="LaTeX 샘플">
+      <img src="samples/latex.png" alt="LaTeX 수식">
       <br>
       <em>수식 렌더링</em>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/image-sample.png" alt="이미지 샘플">
+      <img src="samples/image.png" alt="이미지 업로드">
       <br>
-      <em>이미지 업로드</em>
+      <em>이미지 업로드 및 분석</em>
     </td>
     <td align="center" width="50%">
-      <img src="samples/doc-sample.png" alt="문서 샘플">
+      <img src="samples/docs.png" alt="파일 업로드">
       <br>
-      <em>문서 파일 업로드</em>
+      <em>파일 업로드</em>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/realtime.png" alt="실시간 대화 화면">
+      <img src="samples/url.png" alt="URL 링크 처리">
+      <br>
+      <em>URL 처리</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="samples/mcp-select.png" alt="MCP 서버 선택">
+      <br>
+      <em>MCP 서버 선택</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="samples/mcp-use.png" alt="MCP 서버 사용">
+      <br>
+      <em>MCP 서버 사용</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="samples/realtime.png" alt="실시간 대화">
       <br>
       <em>실시간 대화</em>
     </td>
@@ -77,7 +94,12 @@ DevoChat은 여러 AI 모델을 단일 인터페이스에서 사용할 수 있�
   - 다양한 파일 형식 업로드 및 텍스트 추출
   - 마크다운, 수식(LaTeX), 코드 블록 렌더링
   - 시스템 프롬프트, DAN 모드, Temperature, Reasoning Effect 조절
-  - 모델 변형 간 동적 전환 (기본 ↔ 추론 ↔ Deep Research)
+  - 모델 동적 전환
+
+- **MCP(Model Context Protocol) 클라이언트**
+  - 모든 형태의 MCP 서버 연동 가능
+  - secure-mcp-proxy를 통한 로컬 MCP 서버 연동
+  - 실시간 도구 호출 및 결과 시각화
 
 - **대화 관리**
   - 대화 내역 저장 및 조회
@@ -294,11 +316,43 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 }
 ```
 
-## 향후 계획
+## MCP 서버 설정
 
-- **다국어 지원**: 영어 인터페이스 추가 예정
-- **모바일 앱 개발**: iOS 및 Android 네이티브 앱 출시 예정
+DevoChat은 웹 기반 MCP(Model Context Protocol) 클라이언트입니다.
+`mcp_servers.json` 파일에서 연결할 외부 서버들을 정의할 수 있습니다.
 
+### mcp_servers.json
+
+```json
+{
+  "server-id": {
+    "url": "https://example.com/mcp/endpoint",
+    "authorization_token": "your_authorization_token", 
+    "name": "Server_Display_Name",
+    "admin": false
+  }
+}
+```
+
+### 추천 MCP 서버
+
+- **[github](https://github.com/modelcontextprotocol/servers/tree/main/src/github)**
+- **[spotify](https://github.com/varunneal/spotify-mcp)** 
+- **[arxiv](https://github.com/blazickjp/arxiv-mcp-server)**
+- **[perplexity](https://github.com/jsonallen/perplexity-mcp)**
+- **[apple-mcp](https://github.com/peakmojo/applescript-mcp)**
+- **[desktop-commander](https://github.com/wonderwhy-er/DesktopCommanderMCP)**
+- ...
+
+### 로컬 MCP 서버 연동
+
+로컬 MCP 서버를 연결하려면 [secure-mcp-proxy](https://github.com/gws8820/secure-mcp-proxy)를 사용하세요:
+
+```bash
+git clone https://github.com/gws8820/secure-mcp-proxy
+cd secure-mcp-proxy
+uv run python -m secure_mcp_proxy --named-server-config servers.json --port 3000
+```
 ## 기여하기
 
 1. 이 저장소를 포크합니다

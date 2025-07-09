@@ -93,6 +93,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   const models = modelsData.models;
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
 
+  const generateMessageId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
   const updateAssistantMessage = useCallback((message, isComplete = false) => {
     if (thinkingIntervalRef.current) {
       clearInterval(thinkingIntervalRef.current);
@@ -106,13 +108,24 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           i === prev.length - 1 ? { ...msg, content: message, isComplete } : msg
         );
       } else {
-        return [...prev, { role: "assistant", content: message, isComplete }];
+        const newMessage = { 
+          role: "assistant", 
+          content: message, 
+          isComplete,
+          id: generateMessageId()
+        };
+        return [...prev, newMessage];
       }
     });
   }, []);
 
   const setErrorMessage = useCallback((message) => {
-    setMessages((prev) => [...prev, { role: "error", content: message }]);
+    const errorMessage = { 
+      role: "error", 
+      content: message,
+      id: generateMessageId()
+    };
+    setMessages((prev) => [...prev, errorMessage]);
   }, []);
 
   const deleteMessages = useCallback(
@@ -146,10 +159,13 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         contentParts.push(...files);
       }
   
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", content: contentParts },
-      ]);
+      const userMessage = { 
+        role: "user", 
+        content: contentParts,
+        id: generateMessageId()
+      };
+      
+      setMessages((prev) => [...prev, userMessage]);
       setInputText("");
       setUploadedFiles([]);
       setIsLoading(true);
@@ -377,13 +393,17 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   useEffect(() => {
     const initializeChat = async () => {
       try {
-        if (location.state?.initialMessage) {
+        if (location.state?.initialMessage && messages.length === 0) {
           setIsInitialized(true);
+          const initialMessage = location.state.initialMessage;
+          const initialFiles = location.state.initialFiles;
+          
+          window.history.replaceState({}, '', location.pathname);
 
-          if (location.state.initialFiles && location.state.initialFiles.length > 0) {
-            sendMessage(location.state.initialMessage, location.state.initialFiles);
+          if (initialFiles && initialFiles.length > 0) {
+            sendMessage(initialMessage, initialFiles);
           } else {
-            sendMessage(location.state.initialMessage);
+            sendMessage(initialMessage);
           }
           
           (async () => {
@@ -395,7 +415,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ 
                     conversation_id: conversation_id,
-                    text: location.state.initialMessage 
+                    text: initialMessage
                   }),
                   credentials: "include"
                 }
@@ -436,9 +456,10 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           setIsDAN(res.data.dan);
           setMCPList(res.data.mcp);
 
-          const updatedMessages = res.data.messages.map((m) =>
-            m.role === "assistant" ? { ...m, isComplete: true } : m
-          );
+          const updatedMessages = res.data.messages.map((m) => {
+            const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
+            return m.role === "assistant" ? { ...messageWithId, isComplete: true } : messageWithId;
+          });
           setMessages(updatedMessages);
           setIsInitialized(true);
         }
@@ -733,7 +754,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         <AnimatePresence>
           {messages.map((msg, idx) => (
             <Message
-              key={idx}
+              key={msg.id}
               messageIndex={idx}
               role={msg.role}
               content={msg.content}
@@ -743,6 +764,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
               onSendEditedMessage={sendEditedMessage}
               setScrollOnSend={setScrollOnSend}
               isTouch={isTouch}
+              isLoading={isLoading}
+              isLastMessage={idx === messages.length - 1}
             />
           ))}
         </AnimatePresence>

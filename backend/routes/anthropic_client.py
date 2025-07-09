@@ -53,7 +53,7 @@ class ChatRequest(BaseModel):
 
 def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dict[str, Any]], Optional[str]]:
     try:
-        with open("mcp_config.json", "r", encoding="utf-8") as f:
+        with open("mcp_servers.json", "r", encoding="utf-8") as f:
             mcp_server_configs = json.load(f)
     except Exception:
         return [], "서버 오류가 발생했습니다."
@@ -227,7 +227,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                                 
                                 tool_result = ""
                                 for result in result_block:
-                                    tool_result += result.text or str(result)
+                                    tool_result += result.text
                                 
                                 await token_queue.put(f"\n<mcp_tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': tool_result})}\n</mcp_tool_result>\n\n")
                         elif chunk.type == "content_block_stop":

@@ -2,7 +2,8 @@
 .venv
 images
 files
+icons
 shared_pages
 __pycache__
 
-mcp_config.json
+mcp_servers.json

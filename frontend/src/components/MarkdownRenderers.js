@@ -1,5 +1,5 @@
 // src/components/markdownrenderers.js
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, createContext, useContext, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -13,7 +13,34 @@ import MCPBlock from "./MCPBlock";
 import "../styles/Message.css";
 import "katex/dist/katex.min.css";
 
-export const InlineCode = React.memo(({ node, children, ...props }) => {
+const MCPBlockStateContext = createContext();
+
+export const MCPBlockStateProvider = ({ children }) => {
+  const [expandedBlocks, setExpandedBlocks] = useState({});
+  
+  const toggleExpanded = (toolId) => {
+    setExpandedBlocks(prev => ({
+      ...prev,
+      [toolId]: !prev[toolId]
+    }));
+  };
+  
+  return (
+    <MCPBlockStateContext.Provider value={{ expandedBlocks, toggleExpanded }}>
+      {children}
+    </MCPBlockStateContext.Provider>
+  );
+};
+
+export const useMCPBlockState = () => {
+  const context = useContext(MCPBlockStateContext);
+  if (!context) {
+    throw new Error('useMCPBlockState must be used within MCPBlockStateProvider');
+  }
+  return context;
+};
+
+export const InlineCode = React.memo(({ children, ...props }) => {
   return (
     <code className="inline-code" {...props}>
       {children}
@@ -21,7 +48,7 @@ export const InlineCode = React.memo(({ node, children, ...props }) => {
   );
 });
 
-export const TempCodeBlock = React.memo(({ node, className, children, ...props }) => {
+export const TempCodeBlock = React.memo(({ className, children, ...props }) => {
   const [copied, setCopied] = React.useState(false);
   const match = /language-(\w+)/.exec(className || "");
   const language = match ? match[1] : "javascript";
@@ -61,7 +88,7 @@ export const TempCodeBlock = React.memo(({ node, className, children, ...props }
   );
 });
 
-export const CodeBlock = React.memo(({ node, className, children, ...props }) => {
+export const CodeBlock = React.memo(({ className, children, ...props }) => {
   const [copied, setCopied] = React.useState(false);
   const match = /language-(\w+)/.exec(className || "");
   const language = match ? match[1] : "text";
@@ -113,22 +140,22 @@ export const CompletedPre = React.memo((preProps) => {
   return <CodeBlock {...codeProps} />;
 });
 
-export const Table = React.memo(({ node, ...props }) => (
+export const Table = React.memo((props) => (
   <table className="markdown-table" {...props} />
 ));
-export const Thead = React.memo(({ node, ...props }) => (
+export const Thead = React.memo((props) => (
   <thead className="markdown-thead" {...props} />
 ));
-export const Tbody = React.memo(({ node, ...props }) => (
+export const Tbody = React.memo((props) => (
   <tbody className="markdown-tbody" {...props} />
 ));
-export const Tr = React.memo(({ node, ...props }) => (
+export const Tr = React.memo((props) => (
   <tr className="markdown-tr" {...props} />
 ));
-export const Th = React.memo(({ node, ...props }) => (
+export const Th = React.memo((props) => (
   <th className="markdown-th" {...props} />
 ));
-export const Td = React.memo(({ node, ...props }) => (
+export const Td = React.memo((props) => (
   <td className="markdown-td" {...props} />
 ));
 
@@ -144,32 +171,74 @@ function parseThinkBlocks(rawContent) {
   );
 }
 
-function parseMCPBlocks(rawContent) {
+function parseMCPBlocks(rawContent, isLoading, isLastMessage) {
   const mcpData = {};
   const processedToolIds = new Set();
+  const toolSequence = [];
+  const mcpMatches = [...rawContent.matchAll(/<mcp_tool_(use|result)>\n(.*?)\n<\/mcp_tool_\1>/gi)];
   
-  rawContent = rawContent.replace(
+  mcpMatches.forEach((match) => {
+    const tagType = match[1];
+    const jsonData = match[2];
+    
+    try {
+      const data = JSON.parse(jsonData);
+      const toolId = data.tool_id;
+      
+      toolSequence.push({ type: tagType, toolId, data });
+    } catch (e) {
+      console.error('Error parsing MCP tag:', e);
+    }
+  });
+  
+  const validResults = new Set();
+  for (let i = 0; i < toolSequence.length; i++) {
+    const current = toolSequence[i];
+    
+    if (current.type === 'use') {
+      const next = toolSequence[i + 1];
+      if (next && next.type === 'result' && next.toolId === current.toolId) {
+        validResults.add(current.toolId);
+      } else {
+        const toolUsePattern = new RegExp(`<mcp_tool_use>\\n.*?"tool_id"\\s*:\\s*"${current.toolId}".*?\\n</mcp_tool_use>`, 'g');
+        const match = toolUsePattern.exec(rawContent);
+        if (match) {
+          const afterToolUse = rawContent.substring(match.index + match[0].length);
+          if (afterToolUse.trim() === '' && isLoading && isLastMessage) {
+            validResults.add(current.toolId);
+          }
+        }
+      }
+    }
+  }
+  
+  toolSequence.forEach(({ type, toolId, data }) => {
+    if (type === 'use') {
+      mcpData[toolId] = {
+        type: 'mcp_tool_use',
+        tool_id: toolId,
+        server_name: data.server_name,
+        tool_name: data.tool_name,
+        isValid: validResults.has(toolId)
+      };
+    } else {
+      mcpData[toolId] = {
+        type: 'mcp_tool_result',
+        tool_id: toolId,
+        server_name: data.server_name,
+        tool_name: data.tool_name,
+        is_error: data.is_error,
+        result: data.result
+      };
+    }
+  });
+  
+  const processedContent = rawContent.replace(
     /<mcp_tool_(use|result)>\n(.*?)\n<\/mcp_tool_\1>/gi,
     (match, tagType, jsonData) => {
       try {
         const data = JSON.parse(jsonData);
         const toolId = data.tool_id;
-        
-        if (tagType === 'use') {
-          mcpData[toolId] = {
-            type: 'mcp_tool_use',
-            server_name: data.server_name,
-            tool_name: data.tool_name
-          };
-        } else {
-          mcpData[toolId] = {
-            type: 'mcp_tool_result',
-            server_name: data.server_name,
-            tool_name: data.tool_name,
-            is_error: data.is_error,
-            result: data.result
-          };
-        }
         
         if (!processedToolIds.has(toolId)) {
           processedToolIds.add(toolId);
@@ -184,82 +253,97 @@ function parseMCPBlocks(rawContent) {
     }
   );
   
-  return { content: rawContent, mcpData };
+  return { content: processedContent, mcpData };
 }
 
-const MCPToolBlock = React.memo(({ node, ...props }) => {
-  const toolId = props['data-tool-id'];
-  const mcpData = props.mcpData;
-  
-  if (!toolId || !mcpData || !mcpData[toolId]) {
-    return null;
-  }
-  
-  const toolData = mcpData[toolId];
-  
-  return <MCPBlock toolData={toolData} />;
-});
-
-export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content, isComplete }) {
+const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = false, isLastMessage = false }) => {
   const { finalContent, mcpData } = useMemo(() => {
     let parsedContent = content.replace(/\\\[/g, "$$").replace(/\\\]/g, "$$");
     parsedContent = parseThinkBlocks(parsedContent);
-    const { content: finalContent, mcpData } = parseMCPBlocks(parsedContent);
+    const { content: finalContent, mcpData } = parseMCPBlocks(parsedContent, isLoading, isLastMessage);
     return { finalContent, mcpData };
-  }, [content]);
+  }, [content, isLoading, isLastMessage]);
+
+  const dynamicDataRef = useRef({ isComplete, mcpData, isLoading, isLastMessage });
+  dynamicDataRef.current = { isComplete, mcpData, isLoading, isLastMessage };
+
+  const components = useMemo(() => {
+    return {
+      a: ({ children, ...props }) => (
+        <a target="_blank" rel="noopener noreferrer" {...props}>
+          {children}
+        </a>
+      ),
+      code: InlineCode,
+      pre: ({ children, ...props }) => {
+        const { isComplete: currentIsComplete } = dynamicDataRef.current;
+        return currentIsComplete ? <CompletedPre {...props}>{children}</CompletedPre> : <TempPre {...props}>{children}</TempPre>;
+      },
+      table: Table,
+      thead: Thead,
+      tbody: Tbody,
+      tr: Tr,
+      th: Th,
+      td: Td,
+      hr: () => null,
+      div: ({ className, ...props }) => {
+        if (className === "mcp-tool-block") {
+          const toolId = props['data-tool-id'];
+          const { mcpData: currentMcpData, isLoading: currentIsLoading, isLastMessage: currentIsLastMessage } = dynamicDataRef.current;
+          
+          if (!toolId || !currentMcpData || !currentMcpData[toolId]) {
+            return null;
+          }
+          const toolData = currentMcpData[toolId];
+          return <MCPBlock toolData={toolData} isLoading={currentIsLoading} isLastMessage={currentIsLastMessage} />;
+        }
+        return <div className={className} {...props} />;
+      },
+    };
+  }, []);
   
   return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm, remarkMath]}
-      rehypePlugins={[
-        rehypeRaw,
-        [
-          rehypeSanitize,
-          {
-            ...defaultSchema,
-            attributes: {
-              ...defaultSchema.attributes,
-              div: [
-                ...(defaultSchema.attributes?.div || []),
-                ["className", "think-block", "mcp-tool-block"],
-                ["dataToolId"],
-                ["data-tool-id"],
-                /^data-/,
-              ],
-              code: [
-                ...(defaultSchema.attributes?.code || []),
-                ["className", /^language-/, "math-inline", "math-display"],
-              ],
+    <MCPBlockStateProvider>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[
+          rehypeRaw,
+          [
+            rehypeSanitize,
+            {
+              ...defaultSchema,
+              attributes: {
+                ...defaultSchema.attributes,
+                div: [
+                  ...(defaultSchema.attributes?.div || []),
+                  ["className", "think-block", "mcp-tool-block"],
+                  ["dataToolId"],
+                  ["data-tool-id"],
+                  /^data-/,
+                ],
+                code: [
+                  ...(defaultSchema.attributes?.code || []),
+                  ["className", /^language-/, "math-inline", "math-display"],
+                ],
+              },
             },
-          },
-        ],
-        [rehypeKatex, { strict: "ignore" }],
-      ]}
-      skipHtml={false}
-      components={{
-        a: ({ node, children, ...props }) => (
-          <a target="_blank" rel="noopener noreferrer" {...props}>
-            {children}
-          </a>
-        ),
-        code: InlineCode,
-        pre: isComplete ? CompletedPre : TempPre,
-        table: Table,
-        thead: Thead,
-        tbody: Tbody,
-        tr: Tr,
-        th: Th,
-        td: Td,
-        hr: () => null,
-        div: ({ node, className, ...props }) => {
-          if (className === "mcp-tool-block") {
-            return <MCPToolBlock {...props} mcpData={mcpData} />;
-          }
-          return <div className={className} {...props} />;
-        },
-      }}
-    >
-      {finalContent}
-    </ReactMarkdown>
+          ],
+          [rehypeKatex, { strict: "ignore" }],
+        ]}
+        skipHtml={false}
+        components={components}
+      >
+        {finalContent}
+      </ReactMarkdown>
+    </MCPBlockStateProvider>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.content === nextProps.content &&
+    prevProps.isComplete === nextProps.isComplete &&
+    prevProps.isLoading === nextProps.isLoading &&
+    prevProps.isLastMessage === nextProps.isLastMessage
   );
 });
+
+export { MarkdownRenderer };

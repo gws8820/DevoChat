@@ -47,6 +47,24 @@
   border-radius: 10px;
 }
 
+.mcp-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.mcp-error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 20px;
+  color: #666;
+  font-size: 15px;
+}
+
 .mcp-server-item {
   display: flex;
   align-items: center;
@@ -63,7 +81,7 @@
 }
 
 .mcp-server-item.selected {
-  background: #f4f4f4;
+  background: #f5f5f5;
 }
 
 .mcp-server-icon {
@@ -139,20 +157,20 @@
 }
 
 .mcp-modal-button.cancel {
-  background: #fafafa;
+  background: white;
   border: 1px solid #eaeaea;
 }
 
 .mcp-modal-button.cancel:hover {
-  background: #f4f4f4;
+  background: #f5f5f5;
 }
 
 .mcp-modal-button.confirm {
-  background: #1a1a1a;
+  background: #202020;
   color: white;
   border: 1px solid #1a1a1a;
 }
 
 .mcp-modal-button.confirm:hover {
-  background: #252525;
+  background: #303030;
 }

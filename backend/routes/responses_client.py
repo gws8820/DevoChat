@@ -53,7 +53,7 @@ class ChatRequest(BaseModel):
 
 def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dict[str, Any]], Optional[str]]:
     try:
-        with open("mcp_config.json", "r", encoding="utf-8") as f:
+        with open("mcp_servers.json", "r", encoding="utf-8") as f:
             mcp_server_configs = json.load(f)
     except Exception:
         return [], "서버 오류가 발생했습니다."

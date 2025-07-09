@@ -1,10 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import mcpServers from '../mcp_servers.json';
+import { ClipLoader } from "react-spinners";
 import '../styles/MCPModal.css';
 
 const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList, userInfo }) => {
   const [selectedServers, setSelectedServers] = useState([]);
+  const [availableServers, setAvailableServers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchMCPServers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/mcp-servers`);
+      if (!response.ok) {
+        throw new Error('서버 목록을 불러올 수 없습니다.');
+      }
+      
+      const servers = await response.json();
+      
+      const filteredServers = servers.filter(server => {
+        if (userInfo?.admin) {
+          return true;
+        }
+        return !server.admin;
+      });
+      
+      setAvailableServers(filteredServers);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [userInfo?.admin]);
 
   useEffect(() => {
     if (isOpen && currentMCPList) {
@@ -12,12 +42,11 @@ const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList, userInfo }) => {
     }
   }, [isOpen, currentMCPList]);
 
-  const availableServers = mcpServers.filter(server => {
-    if (userInfo?.admin) {
-      return true;
+  useEffect(() => {
+    if (isOpen) {
+      fetchMCPServers();
     }
-    return !server.admin;
-  });
+  }, [isOpen, fetchMCPServers]);
 
   const handleServerToggle = (serverId) => {
     setSelectedServers(prev => {
@@ -63,7 +92,19 @@ const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList, userInfo }) => {
             </div>
 
             <div className="mcp-modal-body">
-              {availableServers.map((server) => (
+              {loading && (
+                <div className="mcp-loading-container">
+                  <ClipLoader loading={true} size={40} />
+                </div>
+              )}
+              
+              {error && (
+                <div className="mcp-error-container">
+                  <div className="mcp-error-text">{error}</div>
+                </div>
+              )}
+              
+              {!loading && !error && availableServers.map((server) => (
                 <div
                     key={server.id}
                     className={`mcp-server-item ${selectedServers.includes(server.id) ? 'selected' : ''}`}
@@ -71,14 +112,14 @@ const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList, userInfo }) => {
                 >
                   <div className="mcp-server-icon">
                     <img 
-                      src={server.icon} 
-                      alt={server.name}
+                      src={`${process.env.REACT_APP_FASTAPI_URL}${server.icon}`} 
+                      alt=""
                       height={35}
                     />
                   </div>
                   
                   <div className="mcp-server-name">
-                    {server.name}
+                    {server.name.replace(/_/g, ' ')}
                   </div>
                   <div className="mcp-server-checkbox">
                     <input
@@ -102,6 +143,7 @@ const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList, userInfo }) => {
               <button 
                 className="mcp-modal-button confirm"
                 onClick={handleConfirm}
+                disabled={loading}
               >
                 확인
               </button>

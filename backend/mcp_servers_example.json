@@ -1,27 +1,23 @@
 {
   "home-assistant": {
-    "type": "url",
     "url": "https://your-home-assistant-server/mcp_server/mcp/",
     "authorization_token": "HOME_ASSISTANT_TOKEN",
-    "name": "Home Assistant",
+    "name": "Home_Assistant",
     "admin": true
   },
   "google-workspace": {
-    "type": "url",
     "url": "https://your-proxy-server/servers/google-workspace/mcp/",
     "authorization_token": "PROXY_SERVER_TOKEN",
-    "name": "Google Workspace",
+    "name": "Google_Workspace",
     "admin": true
   },
   "text-editor": {
-    "type": "url",
     "url": "https://your-proxy-server/servers/text-editor/mcp/",
     "authorization_token": "PROXY_SERVER_TOKEN",
-    "name": "Text Editor",
+    "name": "Text_Editor",
     "admin": false
   },
   "time": {
-    "type": "url",
     "url": "https://your-proxy-server/servers/time/mcp/",
     "authorization_token": "PROXY_SERVER_TOKEN",
     "name": "Time",

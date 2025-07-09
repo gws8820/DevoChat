@@ -19,6 +19,8 @@ function Message({
   onSendEditedMessage,
   setScrollOnSend,
   isTouch,
+  isLoading,
+  isLastMessage,
 }) {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -194,6 +196,8 @@ function Message({
           <MarkdownRenderer
             content={content}
             isComplete={isComplete !== undefined ? isComplete : true}
+            isLoading={isLoading}
+            isLastMessage={isLastMessage}
           />
         </div>
         <div className="message-function">
@@ -243,6 +247,8 @@ Message.propTypes = {
   onSendEditedMessage: PropTypes.func,
   setScrollOnSend: PropTypes.func,
   isTouch: PropTypes.bool,
+  isLoading: PropTypes.bool,
+  isLastMessage: PropTypes.bool,
 };
 
 Message.defaultProps = {

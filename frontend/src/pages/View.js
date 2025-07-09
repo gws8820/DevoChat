@@ -15,6 +15,8 @@ function View() {
     const [isInitialized, setIsInitialized] = useState(false);
     const messagesEndRef = useRef(null);
 
+    const generateMessageId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     useEffect(() => {
         const initializeChat = async () => {
         try {
@@ -22,9 +24,10 @@ function View() {
                 `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
                 { withCredentials: true }
             );
-            const updatedMessages = res.data.messages.map((m) =>
-                m.role === "assistant" ? { ...m, isComplete: true } : m
-            );
+            const updatedMessages = res.data.messages.map((m) => {
+                const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
+                return m.role === "assistant" ? { ...messageWithId, isComplete: true } : messageWithId;
+            });
             setMessages(updatedMessages);
         } catch (err) {
             if (err.response && err.response.status === 404) {
@@ -60,7 +63,7 @@ function View() {
                 <AnimatePresence>
                     {messages.map((msg, idx) => (
                         <Message
-                            key={idx}
+                            key={msg.id}
                             messageIndex={idx}
                             role={msg.role}
                             content={msg.content}
