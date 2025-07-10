@@ -265,16 +265,16 @@
       }
     },
     {
-      "model_name": "grok-3",
-      "model_alias": "Grok 3",
-      "description": "표준 Grok 모델",
+      "model_name": "grok-4",
+      "model_alias": "Grok 4",
+      "description": "최신 Grok 모델",
       "endpoint": "/grok",
       "in_billing": "3",
       "out_billing": "15",
       "capabilities": {
         "stream": true,
-        "image": false,
-        "inference": false,
+        "image": true,
+        "inference": true,
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -288,7 +288,7 @@
     {
       "model_name": "grok-3-mini",
       "model_alias": "Grok 3 mini",
-      "description": "경량 추론 Grok 모델",
+      "description": "경량 Grok 모델",
       "endpoint": "/grok",
       "in_billing": "0.3",
       "out_billing": "0.5",
@@ -303,27 +303,6 @@
       "controls": {
         "temperature": true,
         "reason": true,
-        "system_message": true
-      }
-    },
-    {
-      "model_name": "grok-2-vision-1212",
-      "model_alias": "Grok 2 Vision",
-      "description": "비전 Grok 모델",
-      "endpoint": "/grok",
-      "in_billing": "2",
-      "out_billing": "10",
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": false,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
         "system_message": true
       }
     },

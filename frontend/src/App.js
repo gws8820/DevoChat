@@ -41,14 +41,8 @@ function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const shouldShowSidebar = useMemo(() => {
-    return isLoggedIn && !['/login', '/register'].includes(location.pathname);
-  }, [isLoggedIn, location.pathname]);
-
-  const shouldShowHeader = useMemo(() => {
-    return isLoggedIn && !['/login', '/register', '/view'].some(path => 
-      location.pathname === path || location.pathname.startsWith(path + '/')
-    );
+  const shouldShowLayout = useMemo(() => {
+    return isLoggedIn && (location.pathname === '/' || location.pathname.startsWith('/chat/'));
   }, [isLoggedIn, location.pathname]);
 
   const shouldShowLogo = useMemo(() => {
@@ -60,8 +54,8 @@ function AppContent() {
   }, [windowWidth]);
 
   const marginLeft = useMemo(() => {
-    return (isResponsive || !shouldShowSidebar) ? 0 : (isSidebarOpen ? 260 : 0);
-  }, [isResponsive, shouldShowSidebar, isSidebarOpen]);
+    return (isResponsive || !shouldShowLayout) ? 0 : (isSidebarOpen ? 260 : 0);
+  }, [isResponsive, shouldShowLayout, isSidebarOpen]);
 
   const chatMessageRef = useRef(null);
   const { fetchConversations } = useContext(ConversationsContext);
@@ -149,24 +143,31 @@ function AppContent() {
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTarget = null;
+    let hadTextSelectionAtStart = false;
+
     const threshold = 50;
-    const excludedClasses = ['.header', '.context-menu', '.message-edit', '.input-container', '.katex-display', '.code-block'];
+    const excludedClasses = ['.header', '.context-menu', '.message-edit', '.input-container', '.katex-display', '.code-block', '.mcp-modal-overlay', '.modal-overlay'];
   
     const handleTouchStart = (e) => {
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
       touchStartTarget = e.touches[0].target;
+      hadTextSelectionAtStart = window.getSelection && window.getSelection().toString().length > 0;
     };
   
     const handleTouchEnd = (e) => {
       const touchEndX = e.changedTouches[0].clientX;
       const touchEndY = e.changedTouches[0].clientY;
+      const touchEndTarget = e.changedTouches[0].target;
       const diffX = touchEndX - touchStartX;
       const diffY = touchEndY - touchStartY;
   
       if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
-        const isExcluded = excludedClasses.some(cls => touchStartTarget && touchStartTarget.closest(cls));
-        if (!isExcluded) {
+        const hasTextSelectionNow = window.getSelection && window.getSelection().toString().length > 0;
+        const isStartExcluded = excludedClasses.some(cls => touchStartTarget && touchStartTarget.closest(cls));
+        const isEndExcluded = excludedClasses.some(cls => touchEndTarget && touchEndTarget.closest(cls));
+        
+        if (!hadTextSelectionAtStart && !hasTextSelectionNow && !isStartExcluded && !isEndExcluded) {
           if (diffX > 0 && !isSidebarOpen) {
             toggleSidebar();
           } else if (diffX < 0 && isSidebarOpen) {
@@ -190,7 +191,7 @@ function AppContent() {
   return (
     <div style={{ display: "flex", margin: "0" }}>
       <AnimatePresence>
-        {shouldShowSidebar && (
+        {shouldShowLayout && (
           <motion.div
             initial={{ x: -260 }}
             animate={{ x: isSidebarOpen ? 0 : -260 }}
@@ -253,7 +254,7 @@ function AppContent() {
           </div>
         )}
 
-        {shouldShowHeader && (
+        {shouldShowLayout && (
           <Header
             toggleSidebar={toggleSidebar}
             isSidebarOpen={isSidebarOpen}

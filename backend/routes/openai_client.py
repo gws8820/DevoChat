@@ -194,12 +194,15 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
         is_thinking = False
         try:
             if request.stream:
-                stream_result = await client.chat.completions.create(**parameters, timeout=300)
+                stream_result = await client.chat.completions.create(**parameters)
                 
                 async for chunk in stream_result:
+                    print(chunk, flush=True)
                     if await fastapi_request.is_disconnected():
                         return
                     if hasattr(chunk.choices[0].delta, 'reasoning_content') and chunk.choices[0].delta.reasoning_content:
+                        if chunk.choices[0].delta.reasoning_content.strip() == "Thinking...":
+                            continue
                         if not is_thinking:
                             is_thinking = True
                             await token_queue.put('<think>\n')
@@ -214,10 +217,11 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
                     if citation is None and hasattr(chunk, "citations"):
                         citation = chunk.citations
             else:
-                single_result = await client.chat.completions.create(**parameters, timeout=300)
+                single_result = await client.chat.completions.create(**parameters)
                 if single_result.choices[0].message.reasoning_content:
-                    resoning_text = "<think>\n" + single_result.choices[0].message.reasoning_content + "\n</think>\n\n"
-                else: reasoning_text = ""
+                    reasoning_text = "<think>\n" + single_result.choices[0].message.reasoning_content + "\n</think>\n\n"
+                else: 
+                    reasoning_text = ""
                 full_response_text = reasoning_text + single_result.choices[0].message.content
 
                 if hasattr(single_result, "citations"):

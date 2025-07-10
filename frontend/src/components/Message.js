@@ -76,8 +76,8 @@ function Message({
         ).join(" ");
       } else {
         textToCopy = String(content)
-          .replace(/\n\n<mcp_tool_use>\n.*?\n<\/mcp_tool_use>\n/gi, '')
-          .replace(/\n<mcp_tool_result>\n.*?\n<\/mcp_tool_result>\n\n/gi, '')
+          .replace(/\n\n<tool_use>\n.*?\n<\/tool_use>\n/gi, '')
+          .replace(/\n<tool_result>\n.*?\n<\/tool_result>\n\n/gi, '')
           .replace(/\n$/, "");
       }
       await navigator.clipboard.writeText(textToCopy);
@@ -221,7 +221,7 @@ function Message({
         className="chat-message error"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0, x: 20 }}
+        exit={{ opacity: 0, x: 20, transition: { duration: 0 } }}
         transition={{ duration: 0.3, delay: 0.8, ease: "easeOut" }}
       >
         <div style={{ marginRight: "7px" }}>{content}</div>

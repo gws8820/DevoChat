@@ -193,7 +193,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
             else:
                 single_result = await client.chat.complete_async(**parameters)
                 if single_result.choices[0].message.reasoning_content:
-                    resoning_text = "<think>\n" + single_result.choices[0].message.reasoning_content + "\n</think>\n\n"
+                    reasoning_text = "<think>\n" + single_result.choices[0].message.reasoning_content + "\n</think>\n\n"
                 else: reasoning_text = ""
                 full_response_text = reasoning_text + single_result.choices[0].message.content
 

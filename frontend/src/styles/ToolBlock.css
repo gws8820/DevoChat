@@ -1,4 +1,4 @@
-.mcp-block {
+.tool-block {
   width: 100%;
   margin: 5px 0 10px 0;
   padding: 12px;
@@ -7,60 +7,60 @@
   box-sizing: border-box;
 }
 
-.mcp-header {
+.tool-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.mcp-content {
+.tool-content {
   display: flex;
   align-items: center;
   gap: 12px;
   flex: 1;
 }
 
-.mcp-info {
+.tool-info {
   display: flex;
   flex-direction: column;
 }
 
-.mcp-info .mcp-server-name {
+.tool-server-name {
   font-size: 12px;
   color: #6c757d;
   font-weight: 500;
 }
 
-.mcp-tool-name {
+.tool-tool-name {
   font-size: 14px;
   color: #343a40;
   font-weight: 600;
 }
 
-.mcp-icon {
+.tool-icon {
   margin: 3px;
   font-size: 14px;
   flex-shrink: 0;
   stroke-width: 0.8;
 }
 
-.mcp-icon.loading {
+.tool-icon.loading {
   color: #888;
   animation: spin 1s linear infinite;
   filter: drop-shadow(0 0 0.5px #888);
 }
 
-.mcp-icon.success {
+.tool-icon.success {
   color: #28a745;
 }
 
-.mcp-icon.error {
+.tool-icon.error {
   margin: 3px 1.5px;
   font-size: 17px;
   color: #dc3545;
 }
 
-.mcp-expand-btn {
+.tool-expand-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,15 +73,11 @@
   transition: background-color 0.2s;
 }
 
-.mcp-expand-btn:hover {
-  background-color: rgb(240, 240, 240);
-}
-
-.mcp-result {
+.tool-result {
   margin-top: 15px;
 }
 
-.mcp-result-content {
+.tool-result-content {
   max-height: 300px;
   margin: 0;
   padding: 12px;
@@ -95,11 +91,11 @@
   overflow-y: auto;
 }
 
-.mcp-result-content::-webkit-scrollbar {
+.tool-result-content::-webkit-scrollbar {
   width: 10px;
 }
 
-.mcp-result-content::-webkit-scrollbar-thumb {
+.tool-result-content::-webkit-scrollbar-thumb {
   background: rgb(230, 230, 230);
   border-radius: 10px;
 }

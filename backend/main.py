@@ -56,7 +56,7 @@ app.mount("/icons", StaticFiles(directory="icons"), name="icons")
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    notice_message = 'MCP 서버 지원이 추가되었습니다! + 버튼을 눌러 확인해보세요.'
+    notice_message = 'Grok 4 모델이 추가되었습니다!'
     notice_hash = base64.b64encode(notice_message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(

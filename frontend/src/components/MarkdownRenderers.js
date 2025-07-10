@@ -9,13 +9,13 @@ import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { GoCopy, GoCheck } from "react-icons/go";
-import MCPBlock from "./MCPBlock";
+import ToolBlock from "./ToolBlock";
 import "../styles/Message.css";
 import "katex/dist/katex.min.css";
 
-const MCPBlockStateContext = createContext();
+const ToolBlockStateContext = createContext();
 
-export const MCPBlockStateProvider = ({ children }) => {
+export const ToolBlockStateProvider = ({ children }) => {
   const [expandedBlocks, setExpandedBlocks] = useState({});
   
   const toggleExpanded = (toolId) => {
@@ -26,16 +26,16 @@ export const MCPBlockStateProvider = ({ children }) => {
   };
   
   return (
-    <MCPBlockStateContext.Provider value={{ expandedBlocks, toggleExpanded }}>
+    <ToolBlockStateContext.Provider value={{ expandedBlocks, toggleExpanded }}>
       {children}
-    </MCPBlockStateContext.Provider>
+    </ToolBlockStateContext.Provider>
   );
 };
 
-export const useMCPBlockState = () => {
-  const context = useContext(MCPBlockStateContext);
+export const useToolBlockState = () => {
+  const context = useContext(ToolBlockStateContext);
   if (!context) {
-    throw new Error('useMCPBlockState must be used within MCPBlockStateProvider');
+    throw new Error('useToolBlockState must be used within ToolBlockStateProvider');
   }
   return context;
 };
@@ -171,13 +171,13 @@ function parseThinkBlocks(rawContent) {
   );
 }
 
-function parseMCPBlocks(rawContent, isLoading, isLastMessage) {
-  const mcpData = {};
+function parseToolBlocks(rawContent, isLoading, isLastMessage) {
+  const toolData = {};
   const processedToolIds = new Set();
   const toolSequence = [];
-  const mcpMatches = [...rawContent.matchAll(/<mcp_tool_(use|result)>\n(.*?)\n<\/mcp_tool_\1>/gi)];
+  const toolMatches = [...rawContent.matchAll(/<tool_(use|result)>\n(.*?)\n<\/tool_\1>/gi)];
   
-  mcpMatches.forEach((match) => {
+  toolMatches.forEach((match) => {
     const tagType = match[1];
     const jsonData = match[2];
     
@@ -187,7 +187,7 @@ function parseMCPBlocks(rawContent, isLoading, isLastMessage) {
       
       toolSequence.push({ type: tagType, toolId, data });
     } catch (e) {
-      console.error('Error parsing MCP tag:', e);
+      console.error('Error parsing Tool tag:', e);
     }
   });
   
@@ -200,7 +200,7 @@ function parseMCPBlocks(rawContent, isLoading, isLastMessage) {
       if (next && next.type === 'result' && next.toolId === current.toolId) {
         validResults.add(current.toolId);
       } else {
-        const toolUsePattern = new RegExp(`<mcp_tool_use>\\n.*?"tool_id"\\s*:\\s*"${current.toolId}".*?\\n</mcp_tool_use>`, 'g');
+        const toolUsePattern = new RegExp(`<tool_use>\\n.*?"tool_id"\\s*:\\s*"${current.toolId}".*?\\n</tool_use>`, 'g');
         const match = toolUsePattern.exec(rawContent);
         if (match) {
           const afterToolUse = rawContent.substring(match.index + match[0].length);
@@ -214,16 +214,16 @@ function parseMCPBlocks(rawContent, isLoading, isLastMessage) {
   
   toolSequence.forEach(({ type, toolId, data }) => {
     if (type === 'use') {
-      mcpData[toolId] = {
-        type: 'mcp_tool_use',
+      toolData[toolId] = {
+        type: 'tool_use',
         tool_id: toolId,
         server_name: data.server_name,
         tool_name: data.tool_name,
         isValid: validResults.has(toolId)
       };
     } else {
-      mcpData[toolId] = {
-        type: 'mcp_tool_result',
+      toolData[toolId] = {
+        type: 'tool_result',
         tool_id: toolId,
         server_name: data.server_name,
         tool_name: data.tool_name,
@@ -234,7 +234,7 @@ function parseMCPBlocks(rawContent, isLoading, isLastMessage) {
   });
   
   const processedContent = rawContent.replace(
-    /<mcp_tool_(use|result)>\n(.*?)\n<\/mcp_tool_\1>/gi,
+    /<tool_(use|result)>\n(.*?)\n<\/tool_\1>/gi,
     (match, tagType, jsonData) => {
       try {
         const data = JSON.parse(jsonData);
@@ -242,30 +242,30 @@ function parseMCPBlocks(rawContent, isLoading, isLastMessage) {
         
         if (!processedToolIds.has(toolId)) {
           processedToolIds.add(toolId);
-          return `<div class="mcp-tool-block" data-tool-id="${toolId}"></div>`;
+          return `<div class="tool-block" data-tool-id="${toolId}"></div>`;
         }
         
         return '';
       } catch (e) {
-        console.error('Error parsing MCP tag:', e);
+        console.error('Error parsing Tool tag:', e);
         return '';
       }
     }
   );
   
-  return { content: processedContent, mcpData };
+  return { content: processedContent, toolData };
 }
 
 const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = false, isLastMessage = false }) => {
-  const { finalContent, mcpData } = useMemo(() => {
+  const { finalContent, toolData } = useMemo(() => {
     let parsedContent = content.replace(/\\\[/g, "$$").replace(/\\\]/g, "$$");
     parsedContent = parseThinkBlocks(parsedContent);
-    const { content: finalContent, mcpData } = parseMCPBlocks(parsedContent, isLoading, isLastMessage);
-    return { finalContent, mcpData };
+    const { content: finalContent, toolData } = parseToolBlocks(parsedContent, isLoading, isLastMessage);
+    return { finalContent, toolData };
   }, [content, isLoading, isLastMessage]);
 
-  const dynamicDataRef = useRef({ isComplete, mcpData, isLoading, isLastMessage });
-  dynamicDataRef.current = { isComplete, mcpData, isLoading, isLastMessage };
+  const dynamicDataRef = useRef({ isComplete, toolData, isLoading, isLastMessage });
+  dynamicDataRef.current = { isComplete, toolData, isLoading, isLastMessage };
 
   const components = useMemo(() => {
     return {
@@ -287,15 +287,15 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
       td: Td,
       hr: () => null,
       div: ({ className, ...props }) => {
-        if (className === "mcp-tool-block") {
+        if (className === "tool-block") {
           const toolId = props['data-tool-id'];
-          const { mcpData: currentMcpData, isLoading: currentIsLoading, isLastMessage: currentIsLastMessage } = dynamicDataRef.current;
+          const { toolData: currentToolData, isLoading: currentIsLoading, isLastMessage: currentIsLastMessage } = dynamicDataRef.current;
           
-          if (!toolId || !currentMcpData || !currentMcpData[toolId]) {
+          if (!toolId || !currentToolData || !currentToolData[toolId]) {
             return null;
           }
-          const toolData = currentMcpData[toolId];
-          return <MCPBlock toolData={toolData} isLoading={currentIsLoading} isLastMessage={currentIsLastMessage} />;
+          const toolData = currentToolData[toolId];
+          return <ToolBlock toolData={toolData} isLoading={currentIsLoading} isLastMessage={currentIsLastMessage} />;
         }
         return <div className={className} {...props} />;
       },
@@ -303,7 +303,7 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
   }, []);
   
   return (
-    <MCPBlockStateProvider>
+    <ToolBlockStateProvider>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[
@@ -316,7 +316,7 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
                 ...defaultSchema.attributes,
                 div: [
                   ...(defaultSchema.attributes?.div || []),
-                  ["className", "think-block", "mcp-tool-block"],
+                  ["className", "think-block", "tool-block"],
                   ["dataToolId"],
                   ["data-tool-id"],
                   /^data-/,
@@ -335,7 +335,7 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
       >
         {finalContent}
       </ReactMarkdown>
-    </MCPBlockStateProvider>
+    </ToolBlockStateProvider>
   );
 }, (prevProps, nextProps) => {
   return (

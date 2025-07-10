@@ -2,11 +2,11 @@ import React from 'react';
 import { GoCheck, GoX, GoChevronDown, GoChevronUp } from 'react-icons/go';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMCPBlockState } from './MarkdownRenderers';
-import '../styles/MCPBlock.css';
+import { useToolBlockState } from './MarkdownRenderers';
+import '../styles/ToolBlock.css';
 
-const MCPBlock = React.memo(({ toolData }) => {
-  const { expandedBlocks, toggleExpanded } = useMCPBlockState();
+const ToolBlock = React.memo(({ toolData }) => {
+  const { expandedBlocks, toggleExpanded } = useToolBlockState();
   const toolId = toolData.tool_id;
   const isExpanded = expandedBlocks[toolId] || false;
 
@@ -15,37 +15,37 @@ const MCPBlock = React.memo(({ toolData }) => {
   };
 
   const renderIcon = () => {
-    if (toolData.type === 'mcp_tool_use') {
+    if (toolData.type === 'tool_use') {
       return toolData.isValid ? 
-        <AiOutlineLoading3Quarters className="mcp-icon loading" /> :
-        <GoX className="mcp-icon error" />;
+        <AiOutlineLoading3Quarters className="tool-icon loading" /> :
+        <GoX className="tool-icon error" />;
     }
     
-    if (toolData.type === 'mcp_tool_result') {
+    if (toolData.type === 'tool_result') {
       return toolData.is_error ? 
-        <GoX className="mcp-icon error" /> : 
-        <GoCheck className="mcp-icon success" />;
+        <GoX className="tool-icon error" /> : 
+        <GoCheck className="tool-icon success" />;
     }
     
     return null;
   };
 
-  const hasResult = toolData.type === 'mcp_tool_result';
+  const hasResult = toolData.type === 'tool_result' && toolData.result.trim();
 
   return (
-    <div className="mcp-block">
-      <div className="mcp-header">
-        <div className="mcp-content">
+    <div className="tool-block">
+      <div className="tool-header">
+        <div className="tool-content">
           {renderIcon()}
-          <div className="mcp-info">
-            <span className="mcp-server-name">{toolData.server_name.replace(/_/g, ' ')}</span>
-            <span className="mcp-tool-name">{toolData.tool_name}</span>
+          <div className="tool-info">
+            <span className="tool-server-name">{toolData.server_name.replace(/_/g, ' ')}</span>
+            <span className="tool-tool-name">{toolData.tool_name}</span>
           </div>
         </div>
         
         {hasResult && (
           <button 
-            className="mcp-expand-btn"
+            className="tool-expand-btn"
             onClick={handleToggleExpanded}
           >
             {isExpanded ? <GoChevronUp /> : <GoChevronDown />}
@@ -56,13 +56,13 @@ const MCPBlock = React.memo(({ toolData }) => {
       <AnimatePresence>
         {hasResult && isExpanded && (
           <motion.div
-            className="mcp-result"
+            className="tool-result"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, ease: 'easeInOut' }}
           >
-            <pre className="mcp-result-content">{toolData.result}</pre>
+            <pre className="tool-result-content">{toolData.result}</pre>
           </motion.div>
         )}
       </AnimatePresence>
@@ -84,4 +84,4 @@ const MCPBlock = React.memo(({ toolData }) => {
   );
 });
 
-export default MCPBlock; 
+export default ToolBlock; 

@@ -195,7 +195,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         mcp_tool_info = {}
         try:
             if request.stream:
-                stream_result = await client.beta.messages.create(**parameters, timeout=300)
+                stream_result = await client.beta.messages.create(**parameters)
                 async for chunk in stream_result:
                     if await fastapi_request.is_disconnected():
                         return
@@ -214,7 +214,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                                     "tool_name": tool_name
                                 }
                                 
-                                await token_queue.put(f"\n\n<mcp_tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name})}\n</mcp_tool_use>\n")
+                                await token_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
                             elif getattr(chunk.content_block, "type", "") == "mcp_tool_result":
                                 tool_use_id = getattr(chunk.content_block, "tool_use_id")
                                 tool_info = mcp_tool_info.get(tool_use_id)
@@ -229,7 +229,35 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                                 for result in result_block:
                                     tool_result += result.text
                                 
-                                await token_queue.put(f"\n<mcp_tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': tool_result})}\n</mcp_tool_result>\n\n")
+                                await token_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': tool_result}, ensure_ascii=False)}\n</tool_result>\n\n")
+                            elif getattr(chunk.content_block, "type", "") == "server_tool_use":
+                                tool_id = getattr(chunk.content_block, "id")
+                                tool_name = getattr(chunk.content_block, "name")
+                                server_name = "Claude"
+                                
+                                mcp_tool_info[tool_id] = {
+                                    "server_name": server_name,
+                                    "tool_name": tool_name
+                                }
+                                
+                                await token_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
+                            elif getattr(chunk.content_block, "type", "") == "web_search_tool_result":
+                                tool_use_id = getattr(chunk.content_block, "tool_use_id")
+                                tool_info = mcp_tool_info.get(tool_use_id)
+                                
+                                server_name = tool_info.get("server_name", "Claude")
+                                tool_name = tool_info.get("tool_name", "web_search")
+                                
+                                result_content = getattr(chunk.content_block, "content", [])
+                                formatted_results = []
+                                for i, item in enumerate(result_content, 1):
+                                    title = item.title if hasattr(item, 'title') else "제목 없음"
+                                    url = item.url if hasattr(item, 'url') else ""
+                                    formatted_results.append(f"{i}. {title}\n{url}")
+                                
+                                tool_result = "\n\n".join(formatted_results)
+                                
+                                await token_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': False, 'result': tool_result}, ensure_ascii=False)}\n</tool_result>\n\n")
                         elif chunk.type == "content_block_stop":
                             if is_thinking:
                                 await token_queue.put('\n</think>\n\n')
@@ -240,7 +268,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                         elif hasattr(chunk.delta, "text"):
                             await token_queue.put(chunk.delta.text)
             else:
-                single_result = await client.beta.messages.create(**parameters, timeout=300)
+                single_result = await client.beta.messages.create(**parameters)
                 full_response_text = single_result.completion if hasattr(single_result, "completion") else ""
                 chunk_size = 10
                 for i in range(0, len(full_response_text), chunk_size):

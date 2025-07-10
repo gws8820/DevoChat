@@ -203,7 +203,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         mcp_tools = {}
         try:
             if request.stream:
-                stream_result = await client.responses.create(**parameters, timeout=300)
+                stream_result = await client.responses.create(**parameters)
                 async for chunk in stream_result:
                     if await fastapi_request.is_disconnected():
                         return
@@ -228,7 +228,18 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                                 "tool_name": tool_name
                             }
                             
-                            await token_queue.put(f"\n\n<mcp_tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name})}\n</mcp_tool_use>\n")
+                            await token_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
+                        elif hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "web_search_call":
+                            tool_id = getattr(chunk.item, "id")
+                            tool_name = "web_search"
+                            server_name = "OpenAI"
+                            
+                            mcp_tools[tool_id] = {
+                                "server_name": server_name,
+                                "tool_name": tool_name
+                            }
+                            
+                            await token_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
                     elif hasattr(chunk, "type") and chunk.type == "response.output_item.done":
                         if hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "mcp_call":
                             tool_id = getattr(chunk.item, "id")
@@ -245,13 +256,24 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                                     if isinstance(error_obj, dict) and "content" in error_obj:
                                         result = error_obj["content"][0]["text"]
                                     else:
-                                        result = "Unknown error"
+                                        result = ""
                                 else:
                                     result = getattr(chunk.item, "output", "")
                                 
-                                await token_queue.put(f"\n<mcp_tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': result})}\n</mcp_tool_result>\n\n")
+                                await token_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n")
+                        elif hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "web_search_call":
+                            tool_id = getattr(chunk.item, "id")
+                            tool_info = mcp_tools.get(tool_id)
+                            
+                            if tool_info:
+                                server_name = tool_info["server_name"]
+                                tool_name = tool_info["tool_name"]
+                                
+                                is_error = getattr(chunk.item, "status", "") != "completed"
+                                
+                                await token_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': ''}, ensure_ascii=False)}\n</tool_result>\n\n")
             else:
-                single_result = await client.responses.create(**parameters, timeout=300)
+                single_result = await client.responses.create(**parameters)
                 full_response_text = single_result.output_text
 
                 chunk_size = 10 
@@ -270,7 +292,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     async def event_generator():
         response_text = ""
         try:
-            async with AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'), timeout=3600) as client:
+            async with AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY')) as client:
                 parameters = {
                     "model": request.model.split(':')[0],
                     "temperature": request.temperature,
@@ -281,7 +303,7 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                     "instructions": instructions,
                     "input": formatted_messages,
                     "stream": request.stream,
-                    "background": len(request.mcp) == 0 and (request.reason or request.deep_research)
+                    "background": bool(not request.mcp and (request.reason or request.deep_research))
                 }
 
                 if request.search:
