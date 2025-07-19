@@ -2,18 +2,97 @@ import os
 import re
 import json
 import requests
+import time
+import datetime
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Request
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from routes import auth, realtime, conversations, openai_client, grok_client, responses_client, anthropic_client, google_client, mistral_client, huggingface_client, uploads
+from routes import auth, realtime, conversations, uploads
+from routes.clients import openai_client, grok_client, responses_client, anthropic_client, google_client, mistral_client, huggingface_client
 from bs4 import BeautifulSoup
 import base64
 
 load_dotenv()
 app = FastAPI()
+
+def log_with_timestamp(message, level="INFO"):
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    print(f"[{timestamp}] {level}: {message}")
+
+async def get_request_body(request: Request):
+    try:
+        body = await request.body()
+        if body:
+            request._body = body
+            content_type = request.headers.get("content-type", "")
+            
+            if "application/json" in content_type:
+                try:
+                    return json.loads(body.decode())
+                except:
+                    return body.decode()[:500] + "..." if len(body) > 500 else body.decode()
+            elif "multipart/form-data" in content_type:
+                return f"FILE_UPLOAD: {len(body)} bytes"
+            else:
+                body_str = body.decode()[:500]
+                return body_str + "..." if len(body) > 500 else body_str
+        return None
+    except Exception as e:
+        return f"ERROR_READING_BODY: {str(e)}"
+
+@app.middleware("http")
+async def detailed_logging_middleware(request: Request, call_next):
+    start_time = time.time()
+    
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
+    
+    request_body = await get_request_body(request)
+    
+    log_data = {
+        "method": request.method,
+        "path": str(request.url.path),
+        "client_ip": client_ip,
+        "user_agent": user_agent[:100] + "..." if len(user_agent) > 100 else user_agent,
+    }
+    
+    if request_body:
+        log_data["body"] = request_body
+    
+    log_with_timestamp(f"REQUEST: {json.dumps(log_data, ensure_ascii=False, indent=2)}")
+    
+    try:
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        
+        response_data = {
+            "method": request.method,
+            "path": str(request.url.path),
+            "status_code": response.status_code,
+            "process_time_ms": round(process_time * 1000, 2),
+            "client_ip": client_ip
+        }
+        
+        log_with_timestamp(f"RESPONSE: {json.dumps(response_data, ensure_ascii=False)}")
+        
+        return response
+        
+    except Exception as e:
+        process_time = time.time() - start_time
+        
+        error_data = {
+            "method": request.method,
+            "path": str(request.url.path),
+            "error": str(e),
+            "process_time_ms": round(process_time * 1000, 2),
+            "client_ip": client_ip
+        }
+        
+        log_with_timestamp(f"ERROR: {json.dumps(error_data, ensure_ascii=False, indent=2)}", "ERROR")
+        raise
 
 class URLRequest(BaseModel):
     url: str
