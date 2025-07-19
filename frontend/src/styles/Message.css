@@ -86,6 +86,14 @@
   background-color: white;
 }
 
+.message-file-area .file-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
 .message-file-area .image-object {
   width: 400px;
   margin: 0 14px 3px 14px;
@@ -120,6 +128,17 @@
 .chat-message.assistant {
   align-items: flex-start;
   text-align: left;
+}
+
+.chat-message.think {
+  width: 150px;
+  font-size: 14px;
+  color: transparent;
+  background: linear-gradient(90deg, rgb(90, 90, 90) 0%, rgb(90, 90, 90) 30%, rgb(200 200 200) 50%, rgb(90, 90, 90) 70%, rgb(90, 90, 90) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: think-shimmer 4s infinite;
+  background-repeat: repeat-x;
 }
 
 .chat-message.error {
@@ -310,6 +329,15 @@ textarea:focus {
 
 .edit-button.save:hover {
   background-color: #303030;
+}
+
+@keyframes think-shimmer {
+  0% {
+    background-position: -100px 0;
+  }
+  100% {
+    background-position: 50px 0;
+  }
 }
 
 @container (max-width: 768px) {

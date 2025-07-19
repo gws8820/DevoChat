@@ -3,14 +3,14 @@ import json
 import asyncio
 import base64
 import copy
-import tiktoken
+import re
 from dotenv import load_dotenv
 from db_util import Database
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from bson import ObjectId
-from typing import Any, Union, List, Dict, Optional
+from typing import Any, List, Dict, Optional
 from huggingface_hub import AsyncInferenceClient
 from .auth import User, get_current_user
 
@@ -39,7 +39,6 @@ class ChatRequest(BaseModel):
     model: str
     in_billing: float
     out_billing: float
-    search_billing: Optional[float] = None
     temperature: float = 1.0
     reason: int = 0
     system_message: Optional[str] = None
@@ -51,69 +50,51 @@ class ChatRequest(BaseModel):
     mcp: List[str] = []
     stream: bool = True
 
-def calculate_billing(request_array, response, in_billing_rate, out_billing_rate, search_billing_rate: Optional[float] = None):
-    def count_tokens(message):
-        encoding = tiktoken.get_encoding("cl100k_base")
-        tokens = 4
-        tokens += len(encoding.encode(message.get("role", "")))
-        
-        content = message.get("content", "")
-        if isinstance(content, list):
-            for part in content:
-                if part.get("type") == "text":
-                    content_str = "text " + part.get("text", "") + " "
-                elif part.get("type") == "image_url":
-                    content_str = "image_url "
-                    tokens += 1024
-        else:
-            content_str = content
-        tokens += len(encoding.encode(content_str))
-        return tokens
-
-    input_tokens = output_tokens = 0
-    for req in request_array:
-        input_tokens += count_tokens(req)
-    output_tokens = count_tokens(response)
+def calculate_billing(in_billing_rate, out_billing_rate, token_usage):
+    input_tokens = token_usage['input_tokens']
+    output_tokens = token_usage['output_tokens']
 
     input_cost = input_tokens * (in_billing_rate / 1000000)
     output_cost = output_tokens * (out_billing_rate / 1000000)
-
-    if search_billing_rate is not None:
-        total_tokens = input_tokens + output_tokens
-        search_cost = total_tokens * (search_billing_rate / 1000000)
-    else:
-        search_cost = 0
-    total_cost = input_cost + output_cost + search_cost
+    total_cost = input_cost + output_cost
+    
     return total_cost
 
-def format_message(message):
-    def normalize_content(part):
-        if part.get("type") in ["file", "url"]:
-            return {
-                "type": "text",
-                "text": part.get("content")
-            }
-        elif part.get("type") == "image":
-            file_path = part.get("content")
-            try:
-                abs_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), file_path.lstrip("/"))
-                with open(abs_path, "rb") as f:
-                    file_data = f.read()
-                base64_data = "data:image/jpeg;base64," + base64.b64encode(file_data).decode("utf-8")
-            except Exception as e:
-                return None
-            return {
-                "type": "image_url",
-                "image_url": {"url": base64_data}
-            }
-        return part
+def normalize_user_content(part):
+    if part.get("type") in ["file", "url"]:
+        return {
+            "type": "text",
+            "text": part.get("content")
+        }
+    elif part.get("type") == "image":
+        file_path = part.get("content")
+        try:
+            abs_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), file_path.lstrip("/"))
+            with open(abs_path, "rb") as f:
+                file_data = f.read()
+            base64_data = "data:image/jpeg;base64," + base64.b64encode(file_data).decode("utf-8")
+        except Exception as e:
+            return None
+        return {
+            "type": "image_url",
+            "image_url": {"url": base64_data}
+        }
+    return part
 
+def normalize_assistant_content(content):
+    content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<tool_use>.*?</tool_use>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<tool_result>.*?</tool_result>', '', content, flags=re.DOTALL)
+    
+    return content.strip()
+
+def format_message(message):
     role = message.get("role")
     content = message.get("content")
     if role == "assistant":
-        return {"role": "assistant", "content": content}
+        return {"role": "assistant", "content": normalize_assistant_content(content)}
     elif role == "user":
-        return {"role": "user", "content": [item for item in [normalize_content(part) for part in content] if item is not None]}
+        return {"role": "user", "content": [item for item in [normalize_user_content(part) for part in content] if item is not None]}
         
 def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     async def error_generator(error_message):
@@ -169,11 +150,21 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
         try:
             if request.stream:
                 stream_result = await client.chat.completions.create(**parameters)
+                
                 async for chunk in stream_result:
                     if await fastapi_request.is_disconnected():
                         return
                     if chunk.choices[0].delta.content:
                         await token_queue.put(chunk.choices[0].delta.content)
+                    if chunk.usage:
+                        input_tokens = chunk.usage.prompt_tokens or 0
+                        output_tokens = chunk.usage.completion_tokens or 0
+                        
+                        await token_queue.put({
+                            "type": "token_usage",
+                            "input_tokens": input_tokens,
+                            "output_tokens": output_tokens
+                        })
             else:
                 single_result = await client.chat.completions.create(**parameters)
                 full_response_text = single_result.choices[0].message.content
@@ -184,6 +175,15 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                         return
                     await token_queue.put(full_response_text[i:i+chunk_size])
                     await asyncio.sleep(0.03)
+                
+                input_tokens = single_result.usage.prompt_tokens or 0
+                output_tokens = single_result.usage.completion_tokens or 0
+                
+                await token_queue.put({
+                    "type": "token_usage",
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens
+                })
         except Exception as ex:
             print(f"Produce tokens exception: {ex}")
             await token_queue.put({"error": str(ex)})
@@ -193,8 +193,10 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
 
     async def event_generator():
         response_text = ""
+        token_usage = {"input_tokens": 0, "output_tokens": 0}
+        
         try:
-            async with AsyncInferenceClient(api_key=os.getenv('HUGGINGFACE_API_KEY'), provider="fireworks-ai") as client:
+            async with AsyncInferenceClient(api_key=os.getenv('HUGGINGFACE_API_KEY'), provider="auto") as client:
                 parameters = {
                     "model": request.model.split(':')[0],
                     "temperature": request.temperature,
@@ -211,9 +213,12 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
                         break
                     if await fastapi_request.is_disconnected():
                         break
-                    if isinstance(token, dict) and "error" in token:
-                        yield f"data: {json.dumps(token)}\n\n"
-                        break
+                    if isinstance(token, dict):
+                        if "error" in token:
+                            yield f"data: {json.dumps(token)}\n\n"
+                            break
+                        elif token.get("type") == "token_usage":
+                            token_usage = token
                     else:
                         response_text += token
                         yield f"data: {json.dumps({'content': token})}\n\n"
@@ -225,23 +230,19 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
             yield f"data: {json.dumps({'error': str(ex)})}\n\n"
         finally:
             formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
+            billing = calculate_billing(request.in_billing, request.out_billing, token_usage)
             
             if user.trial:
                 user_collection.update_one(
                     {"_id": ObjectId(user.user_id)},
                     {"$inc": {"trial_remaining": -1}}
                 )
-            billing = calculate_billing(
-                formatted_messages,
-                formatted_response,
-                request.in_billing,
-                request.out_billing,
-                request.search_billing
-            )
-            user_collection.update_one(
-                {"_id": ObjectId(user.user_id)},
-                {"$inc": {"billing": billing}}
-            )
+            else:
+                user_collection.update_one(
+                    {"_id": ObjectId(user.user_id)},
+                    {"$inc": {"billing": billing}}
+                )
+                
             conversation_collection.update_one(
                 {"user_id": user.user_id, "conversation_id": request.conversation_id},
                 {
@@ -266,5 +267,5 @@ def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @router.post("/huggingface")
-async def deepseek_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+async def huggingface_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     return get_response(chat_request, user, fastapi_request)

@@ -34,7 +34,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
-  const [thinkingText, setThinkingText] = useState("");
   const [scrollOnSend, setScrollOnSend] = useState(false);
   const [deleteIndex, setdeleteIndex] = useState(null);
   const [confirmModal, setConfirmModal] = useState(false);
@@ -54,7 +53,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
-  const thinkingIntervalRef = useRef(null);
   const optionsRef = useRef(null);
   const recognitionRef = useRef(null);
   const recordingTimerRef = useRef(null);
@@ -96,11 +94,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   const generateMessageId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   const updateAssistantMessage = useCallback((message, isComplete = false) => {
-    if (thinkingIntervalRef.current) {
-      clearInterval(thinkingIntervalRef.current);
-      thinkingIntervalRef.current = null;
-      setIsThinking(false);
-    }
+    setIsThinking(prev => prev ? false : prev);
+    
     setMessages((prev) => {
       const lastMsg = prev[prev.length - 1];
       if (lastMsg && lastMsg.role === "assistant") {
@@ -234,13 +229,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         }
         if (isInference) {
           setIsThinking(true);
-          setThinkingText("생각 중");
-          let dotCount = 0;
-          thinkingIntervalRef.current = setInterval(() => {
-            dotCount++;
-            const dots = ".".repeat(dotCount % 6);
-            setThinkingText(`생각 중${dots}`);
-          }, 1000);
           setScrollOnSend(true);
         }
   
@@ -254,9 +242,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
               model: selectedModel.model_name,
               in_billing: selectedModel.in_billing,
               out_billing: selectedModel.out_billing,
-              ...(selectedModel.search_billing && {
-                search_billing: selectedModel.search_billing,
-              }),
               temperature,
               reason,
               system_message: systemMessage,
@@ -320,11 +305,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         if (err.name === "AbortError") return;
         setErrorMessage("메시지 전송 중 오류가 발생했습니다: " + err.message);
       } finally {
-        if (thinkingIntervalRef.current) {
-          clearInterval(thinkingIntervalRef.current);
-          thinkingIntervalRef.current = null;
-          setIsThinking(false);
-        }
+        setIsThinking(prev => prev ? false : prev);
         setIsLoading(false);
         abortControllerRef.current = null;
       }
@@ -793,7 +774,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
             exit={{ opacity: 0, transition: { duration: 0 } }}
             transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}
           >
-            {thinkingText}
+            생각하는 중...
           </motion.div>
         )}
         <div ref={messagesEndRef} />

@@ -4,11 +4,12 @@ import tempfile
 import zipfile
 import textract
 import io
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
 from pydantic import BaseModel
 from PIL import Image, ImageOps
 from typing import List
 from google.cloud import speech
+from .auth import User, get_current_user
 
 router = APIRouter()
 
@@ -61,10 +62,10 @@ def is_binary(data: bytes) -> bool:
         return True
 
 @router.post("/upload/image")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
     file_data = await file.read()
-    if len(file_data) > 100 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File size exceeds size limit.")
+    if not current_user.admin and len(file_data) > 100 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File size exceeds 100MB limit.")
 
     try:
         image = Image.open(io.BytesIO(file_data))
@@ -101,13 +102,13 @@ async def upload_image(file: UploadFile = File(...)):
     }
 
 @router.post("/upload/file")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
     supported_archives = ['.zip']
     audio_extensions = ['.wav', '.mp3', '.ogg', '.flac', '.amr', '.amr-wb', '.mulaw', '.alaw', '.webm', '.m4a', '.mp4']
     
     file_data = await file.read()
-    if len(file_data) > 100 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File size exceeds size limit.")
+    if not current_user.admin and len(file_data) > 100 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File size exceeds 100MB limit.")
 
     filename = file.filename
     _, ext = os.path.splitext(filename)
@@ -219,7 +220,7 @@ async def upload_file(file: UploadFile = File(...)):
     if not extracted_text.strip():
         raise HTTPException(status_code=422, detail="Text extraction failed")
 
-    if len(extracted_text) > 20000:
+    if not current_user.admin and len(extracted_text) > 20000:
         raise HTTPException(status_code=413, detail="Extracted text exceeds 20000 character limit.")
 
     # Save with UUID filename but return original filename for display

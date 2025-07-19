@@ -106,6 +106,48 @@
       }
     },
     {
+      "model_name": "grok-4",
+      "model_alias": "Grok 4",
+      "description": "고성능 Grok 모델",
+      "endpoint": "/grok",
+      "in_billing": "3",
+      "out_billing": "15",
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": true,
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "system_message": true
+      }
+    },
+    {
+      "model_name": "grok-3-mini",
+      "model_alias": "Grok 3 mini",
+      "description": "경량 Grok 모델",
+      "endpoint": "/grok",
+      "in_billing": "0.3",
+      "out_billing": "0.5",
+      "capabilities": {
+        "stream": true,
+        "image": false,
+        "inference": true,
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": true,
+        "system_message": true
+      }
+    },
+    {
       "model_name": "gpt-4.1",
       "model_alias": "GPT 4.1",
       "description": "표준 GPT 모델",
@@ -265,48 +307,6 @@
       }
     },
     {
-      "model_name": "grok-4",
-      "model_alias": "Grok 4",
-      "description": "최신 Grok 모델",
-      "endpoint": "/grok",
-      "in_billing": "3",
-      "out_billing": "15",
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": true,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "system_message": true
-      }
-    },
-    {
-      "model_name": "grok-3-mini",
-      "model_alias": "Grok 3 mini",
-      "description": "경량 Grok 모델",
-      "endpoint": "/grok",
-      "in_billing": "0.3",
-      "out_billing": "0.5",
-      "capabilities": {
-        "stream": true,
-        "image": false,
-        "inference": true,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": true,
-        "system_message": true
-      }
-    },
-    {
       "model_name": "deepseek-ai/DeepSeek-V3-0324",
       "model_alias": "Deepseek V3",
       "description": "표준 Deepseek 모델",
@@ -355,7 +355,6 @@
       "endpoint": "/perplexity",
       "in_billing": "1",
       "out_billing": "1",
-      "search_billing": "0.005",
       "variants": {
         "inference": "sonar-reasoning",
         "deep_research": "sonar-deep-research"
@@ -381,7 +380,6 @@
       "endpoint": "/perplexity",
       "in_billing": "1",
       "out_billing": "5",
-      "search_billing": "0.005",
       "variants": {
         "base": "sonar"
       },
@@ -406,7 +404,6 @@
       "endpoint": "/perplexity",
       "in_billing": "5",
       "out_billing": "8",
-      "search_billing": "0.05",
       "variants": {
         "base": "sonar"
       },
@@ -431,7 +428,6 @@
       "endpoint": "/perplexity",
       "in_billing": "3",
       "out_billing": "15",
-      "search_billing": "0.015",
       "variants": {
         "inference": "sonar-reasoning-pro"
       },
@@ -456,7 +452,6 @@
       "endpoint": "/perplexity",
       "in_billing": "2",
       "out_billing": "8",
-      "search_billing": "0.015",
       "variants": {
         "base": "sonar-pro"
       },
@@ -475,12 +470,12 @@
       }
     },
     {
-      "model_name": "pixtral-large-latest",
-      "model_alias": "Pixtral Large v2",
-      "description": "비전 Mistral 모델",
+      "model_name": "mistral-medium-2505",
+      "model_alias": "Mistral Medium",
+      "description": "표준 Mistral 모델",
       "endpoint": "/mistral",
-      "in_billing": "2",
-      "out_billing": "6",
+      "in_billing": "0.4",
+      "out_billing": "2",
       "capabilities": {
         "stream": true,
         "image": true,
@@ -548,6 +543,48 @@
         "stream": true,
         "image": false,
         "inference": true,
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "system_message": true
+      }
+    },
+    {
+      "model_name": "moonshotai/Kimi-K2-Instruct",
+      "model_alias": "Kimi K2",
+      "description": "최신 Kimi 모델",
+      "endpoint": "/huggingface",
+      "in_billing": "0.57",
+      "out_billing": "2.3",
+      "capabilities": {
+        "stream": true,
+        "image": false,
+        "inference": false,
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "system_message": true
+      }
+    },
+    {
+      "model_name": "ax4",
+      "model_alias": "SKT A.X 4.0",
+      "description": "최신 에이닷X 모델",
+      "endpoint": "/adotx",
+      "in_billing": "0",
+      "out_billing": "0",
+      "capabilities": {
+        "stream": true,
+        "image": false,
+        "inference": false,
         "search": false,
         "deep_research": false,
         "mcp": false

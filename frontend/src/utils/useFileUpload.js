@@ -18,6 +18,7 @@ export const useFileUpload = (initialFiles = []) => {
             {
               method: "POST",
               body: formData,
+              credentials: 'include',
             }
           );
           
@@ -53,6 +54,7 @@ export const useFileUpload = (initialFiles = []) => {
             {
               method: "POST",
               body: formData,
+              credentials: 'include',
             }
           );
           
@@ -105,19 +107,11 @@ export const useFileUpload = (initialFiles = []) => {
         return;
       }
       
-      const sizeAcceptedFiles = files.filter((file) => file.size <= maxFileSize);
-      const rejectedSizeFiles = files.filter((file) => file.size > maxFileSize);
-
-      if (sizeAcceptedFiles.length > remaining) {
+      if (files.length > remaining) {
         onError?.("최대 업로드 가능한 파일 개수를 초과했습니다.");
-        acceptedFiles = sizeAcceptedFiles.slice(0, remaining);
-      }
-      else if (rejectedSizeFiles.length > 0) {
-        onError?.("10MB를 초과하는 파일은 업로드할 수 없습니다.");
-        acceptedFiles = sizeAcceptedFiles;
-      }
-      else {
-        acceptedFiles = sizeAcceptedFiles;
+        acceptedFiles = files.slice(0, remaining);
+      } else {
+        acceptedFiles = files;
       }
       
       const filePairs = acceptedFiles.map((file) => {
@@ -153,7 +147,7 @@ export const useFileUpload = (initialFiles = []) => {
       
       return uploadedFiles;
     },
-    [uploadedFiles, maxFileSize, uploadFiles, setUploadedFiles]
+    [uploadedFiles, uploadFiles, setUploadedFiles]
   );
   
   const removeFile = useCallback((fileId) => {

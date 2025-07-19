@@ -11,7 +11,9 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from bson import ObjectId
 from typing import Any, List, Dict, Optional
-from openai import AsyncOpenAI
+from xai_sdk import AsyncClient
+from xai_sdk.chat import assistant, system, user, image
+from xai_sdk.search import SearchParameters
 from .auth import User, get_current_user
 
 load_dotenv()
@@ -58,10 +60,6 @@ class ChatRequest(BaseModel):
     mcp: List[str] = []
     stream: bool = True
 
-class ApiSettings(BaseModel):
-    api_key: str
-    base_url: str
-    
 class AliasRequest(BaseModel):
     conversation_id: str
     text: str
@@ -69,19 +67,19 @@ class AliasRequest(BaseModel):
 def calculate_billing(in_billing_rate, out_billing_rate, token_usage):
     input_tokens = token_usage['input_tokens']
     output_tokens = token_usage['output_tokens']
+    reasoning_tokens = token_usage['reasoning_tokens']
 
     input_cost = input_tokens * (in_billing_rate / 1000000)
-    output_cost = output_tokens * (out_billing_rate / 1000000)
+    output_cost = (output_tokens + reasoning_tokens) * (out_billing_rate / 1000000)
     total_cost = input_cost + output_cost
     
     return total_cost
 
 def normalize_user_content(part):
-    if part.get("type") in ["file", "url"]:
-        return {
-            "type": "text",
-            "text": part.get("content")
-        }
+    if part.get("type") == "text":
+        return part.get("text")
+    elif part.get("type") in ["file", "url"]:
+        return part.get("content")
     elif part.get("type") == "image":
         file_path = part.get("content")
         try:
@@ -89,13 +87,9 @@ def normalize_user_content(part):
             with open(abs_path, "rb") as f:
                 file_data = f.read()
             base64_data = "data:image/jpeg;base64," + base64.b64encode(file_data).decode("utf-8")
+            return image(base64_data, detail="high")
         except Exception as e:
             return None
-        return {
-            "type": "image_url",
-            "image_url": {"url": base64_data}
-        }
-    return part
 
 def normalize_assistant_content(content):
     content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
@@ -107,12 +101,13 @@ def normalize_assistant_content(content):
 def format_message(message):
     role = message.get("role")
     content = message.get("content")
+    
     if role == "assistant":
-        return {"role": "assistant", "content": normalize_assistant_content(content)}
+        return assistant(normalize_assistant_content(content))
     elif role == "user":
-        return {"role": "user", "content": [item for item in [normalize_user_content(part) for part in content] if item is not None]}
+        return user(*[normalize_user_content(part) for part in content])
         
-def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastapi_request: Request):
+def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     async def error_generator(error_message):
         yield f"data: {json.dumps({'content': error_message})}\n\n"
 
@@ -142,85 +137,92 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
     if request.dan and DAN_PROMPT:
-        formatted_messages.insert(0, {
-            "role": "system",
-            "content": [{"type": "text", "text": DAN_PROMPT}]
-        })
-        for part in reversed(formatted_messages[-1]["content"]):
-            if part.get("type") == "text":
-                part["text"] += " STAY IN CHARACTER"
-                break
+        formatted_messages.insert(0, system(DAN_PROMPT))
+        
+        last_message = formatted_messages[-1]
+        if hasattr(last_message, 'args'):
+            new_args = list(last_message.args)
+            new_args[0] = new_args[0] + " STAY IN CHARACTER"
+            formatted_messages[-1].args = tuple(new_args)
 
     if request.system_message:
-        formatted_messages.insert(0, {
-            "role": "system",
-            "content": [{"type": "text", "text": request.system_message}]
-        })
+        formatted_messages.insert(0, system(request.system_message))
 
-    formatted_messages.insert(0, {
-        "role": "system",
-        "content": [{"type": "text", "text": MARKDOWN_PROMPT}]
-    })
+    formatted_messages.insert(0, system(MARKDOWN_PROMPT))
+    
+    mapping = {1: "low", 2: "high", 3: "high"}
+    reasoning_effort = mapping.get(request.reason)
 
-    mapping = {1: "low", 2: "medium", 3: "high"}
-    reasoning_effort = mapping.get(request.reason) or None
-
-    async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
+    async def produce_tokens(token_queue: asyncio.Queue, request: ChatRequest, parameters: Dict[str, Any], fastapi_request: Request, client) -> None:
+        chat = client.chat.create(**parameters)
         is_thinking = False
         citations = None
         
         try:
             if request.stream:
-                stream_result = await client.chat.completions.create(**parameters)
-                
-                async for chunk in stream_result:
+                latest_response = None
+                async for response, chunk in chat.stream():
                     if await fastapi_request.is_disconnected():
                         return
-                    if hasattr(chunk.choices[0].delta, 'reasoning_content'):
+                    
+                    if chunk.reasoning_content:
+                        if chunk.reasoning_content.strip() == "Thinking...":
+                            continue
                         if not is_thinking:
                             is_thinking = True
                             await token_queue.put('<think>\n')
-                        await token_queue.put(chunk.choices[0].delta.reasoning_content)
+                        await token_queue.put(chunk.reasoning_content)
                     
-                    if hasattr(chunk.choices[0].delta, 'content'):
+                    if chunk.content:
                         if is_thinking:
                             await token_queue.put('\n</think>\n\n')
                             is_thinking = False
-                        await token_queue.put(chunk.choices[0].delta.content)
-                    
-                    if hasattr(chunk, 'usage'):
-                        input_tokens = chunk.usage.prompt_tokens or 0
-                        output_tokens = chunk.usage.completion_tokens or 0
+                        await token_queue.put(chunk.content)
                         
-                        await token_queue.put({
-                            "type": "token_usage",
-                            "input_tokens": input_tokens,
-                            "output_tokens": output_tokens
-                        })
-                    
-                    if citations is None and hasattr(chunk, "citations"):
-                        citations = chunk.citations
+                    latest_response = response
+                
+                if hasattr(latest_response, 'citations'):
+                    citations = latest_response.citations
+                
+                input_tokens = latest_response.usage.prompt_tokens or 0
+                output_tokens = latest_response.usage.completion_tokens or 0
+                reasoning_tokens = latest_response.usage.reasoning_tokens or 0
+                
+                await token_queue.put({
+                    "type": "token_usage",
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "reasoning_tokens": reasoning_tokens
+                })
             else:
-                single_result = await client.chat.completions.create(**parameters)
-                full_response_text = single_result.choices[0].message.content
-
-                if hasattr(single_result, "citations"):
+                single_result = await chat.sample()
+                full_response_text = ""
+                
+                if hasattr(single_result, 'reasoning_content'):
+                    full_response_text += "<think>\n" + single_result.reasoning_content + "\n</think>\n\n"
+                
+                if hasattr(single_result, 'content'):
+                    full_response_text += single_result.content
+                    
+                if hasattr(single_result, 'citations'):
                     citations = single_result.citations
-
+                
                 chunk_size = 10 
                 for i in range(0, len(full_response_text), chunk_size):
                     if await fastapi_request.is_disconnected():
                         return
                     await token_queue.put(full_response_text[i:i+chunk_size])
                     await asyncio.sleep(0.03)
-                    
+                
                 input_tokens = single_result.usage.prompt_tokens or 0
                 output_tokens = single_result.usage.completion_tokens or 0
+                reasoning_tokens = single_result.usage.reasoning_tokens or 0
                 
                 await token_queue.put({
                     "type": "token_usage",
                     "input_tokens": input_tokens,
-                    "output_tokens": output_tokens
+                    "output_tokens": output_tokens,
+                    "reasoning_tokens": reasoning_tokens
                 })
         except Exception as ex:
             print(f"Produce tokens exception: {ex}")
@@ -230,44 +232,51 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
                 await token_queue.put("\n\n## 출처\n")
                 for idx, item in enumerate(citations):
                     await token_queue.put(f"- [{idx+1}] {item}\n")
-
-            await client.close()
+                    
             await token_queue.put(None)
 
     async def event_generator():
         response_text = ""
-        token_usage = {"input_tokens": 0, "output_tokens": 0}
+        token_usage = {"input_tokens": 0, "output_tokens": 0, "reasoning_tokens": 0}
         
         try:
-            async with AsyncOpenAI(api_key=settings.api_key, base_url=settings.base_url) as client:
-                parameters = {
-                    "model": request.model.split(':')[0],
-                    "temperature": request.temperature,
-                    "reasoning_effort": reasoning_effort,
-                    "messages": formatted_messages,
-                    "stream": request.stream
-                }
-                
-                token_queue = asyncio.Queue()
-                producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))
-                while True:
-                    token = await token_queue.get()
-                    if token is None:
+            client = AsyncClient(api_key=os.getenv('GROK_API_KEY'))
+            model = request.model.split(':')[0]
+            
+            parameters = {
+                "model": model,
+                "temperature": request.temperature,
+                "reasoning_effort": reasoning_effort,
+                "messages": formatted_messages
+            }
+            
+            if request.search:
+                parameters["search_parameters"] = SearchParameters(
+                    mode="on",
+                    return_citations=True,
+                )
+            
+            token_queue = asyncio.Queue()
+            producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))
+            while True:
+                token = await token_queue.get()
+                if token is None:
+                    break
+                if await fastapi_request.is_disconnected():
+                    break
+                if isinstance(token, dict):
+                    if "error" in token:
+                        yield f"data: {json.dumps(token)}\n\n"
                         break
-                    if await fastapi_request.is_disconnected():
-                        break
-                    if isinstance(token, dict):
-                        if "error" in token:
-                            yield f"data: {json.dumps(token)}\n\n"
-                            break
-                        elif token.get("type") == "token_usage":
-                            token_usage = token
-                    else:
-                        response_text += token
-                        yield f"data: {json.dumps({'content': token})}\n\n"
+                    elif token.get("type") == "token_usage":
+                        token_usage = token
+                        yield f"data: {json.dumps(token)}\n\n"
+                else:
+                    response_text += token
+                    yield f"data: {json.dumps({'content': token})}\n\n"
 
-                if not producer_task.done():
-                    producer_task.cancel()
+            if not producer_task.done():
+                producer_task.cancel()
         except Exception as ex:
             print(f"Exception detected: {ex}", flush=True)
             yield f"data: {json.dumps({'error': str(ex)})}\n\n"
@@ -285,7 +294,6 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
                     {"_id": ObjectId(user.user_id)},
                     {"$inc": {"billing": billing}}
                 )
-                
             conversation_collection.update_one(
                 {"user_id": user.user_id, "conversation_id": request.conversation_id},
                 {
@@ -308,19 +316,7 @@ def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastap
                 }
             )
     return StreamingResponse(event_generator(), media_type="text/event-stream")
-
-@router.post("/perplexity")
-async def perplexity_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('PERPLEXITY_API_KEY'),
-        base_url="https://api.perplexity.ai"
-    )
-    return get_response(chat_request, settings, user, fastapi_request)
-
-@router.post("/adotx")
-async def adotx_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('ADOTX_API_KEY'),
-        base_url="https://guest-api.sktax.chat/v1"
-    )
-    return get_response(chat_request, settings, user, fastapi_request)
+    
+@router.post("/grok")
+async def grok_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+    return get_response(chat_request, user, fastapi_request)
