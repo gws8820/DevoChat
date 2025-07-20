@@ -51,7 +51,7 @@ def format_message(message):
     elif role == "assistant":
         return types.Content(role="model", parts=[types.Part(text=normalize_assistant_content(content))])
 
-async def produce_tokens(token_queue: asyncio.Queue, request: ChatRequest, parameters, fastapi_request: Request, client) -> None:
+async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, parameters, fastapi_request: Request, client) -> None:
     is_thinking = False
     try:
         if request.stream:
@@ -68,24 +68,24 @@ async def produce_tokens(token_queue: asyncio.Queue, request: ChatRequest, param
                             if hasattr(part, 'text'):
                                 if hasattr(part, 'thought') and part.thought and not is_thinking:
                                     is_thinking = True
-                                    await token_queue.put('<think>\n')
+                                    await chunk_queue.put('<think>\n')
                                 elif hasattr(part, 'thought') and not part.thought and is_thinking:
                                     is_thinking = False
-                                    await token_queue.put('\n</think>\n\n')
+                                    await chunk_queue.put('\n</think>\n\n')
                                 
-                                await token_queue.put(part.text)
+                                await chunk_queue.put(part.text)
                                 
                 if hasattr(chunk, 'usage_metadata'):
                     usage_metadata = chunk.usage_metadata
                     input_tokens = usage_metadata.prompt_token_count or 0
                     output_tokens = usage_metadata.candidates_token_count or 0
-                    thinking_tokens = usage_metadata.thoughts_token_count or 0
+                    reasoning_tokens = usage_metadata.thoughts_token_count or 0
                     
-                    await token_queue.put({
+                    await chunk_queue.put({
                         "type": "token_usage",
                         "input_tokens": input_tokens,
                         "output_tokens": output_tokens, 
-                        "thinking_tokens": thinking_tokens
+                        "reasoning_tokens": reasoning_tokens
                     })
         else:
             single_result = client.models.generate_content(**parameters)
@@ -112,24 +112,24 @@ async def produce_tokens(token_queue: asyncio.Queue, request: ChatRequest, param
             for i in range(0, len(full_response_text), chunk_size):
                 if await fastapi_request.is_disconnected():
                     return
-                await token_queue.put(full_response_text[i:i+chunk_size])
+                await chunk_queue.put(full_response_text[i:i+chunk_size])
                 await asyncio.sleep(0.03)
                 
             input_tokens = single_result.usage_metadata.prompt_token_count or 0
             output_tokens = single_result.usage_metadata.candidates_token_count or 0
-            thinking_tokens = single_result.usage_metadata.thoughts_token_count or 0
+            reasoning_tokens = single_result.usage_metadata.thoughts_token_count or 0
             
-            await token_queue.put({
+            await chunk_queue.put({
                 "type": "token_usage",
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
-                "thinking_tokens": thinking_tokens
+                "reasoning_tokens": reasoning_tokens
             })
     except Exception as ex:
-        print(f"Produce tokens exception: {ex}")
-        await token_queue.put({"error": str(ex)})
+        print(f"Exception occured while processing stream: {ex}", flush=True)
+        await chunk_queue.put({"error": str(ex)})
     finally:
-        await token_queue.put(None)
+        await chunk_queue.put(None)
 
 async def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     permission_error = check_user_permissions(user, request)
@@ -157,7 +157,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     thinking_budget = mapping.get(request.reason)
 
     response_text = ""
-    token_usage = {"input_tokens": 0, "output_tokens": 0, "thinking_tokens": 0}
+    token_usage = None
     
     try:
         client = Client(api_key=os.getenv('GEMINI_API_KEY'))
@@ -181,27 +181,28 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             "config": types.GenerateContentConfig(**config_params)
         }
         
-        token_queue = asyncio.Queue()
-        producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))
+        chunk_queue = asyncio.Queue()
+        stream_task = asyncio.create_task(process_stream(chunk_queue, request, parameters, fastapi_request, client))
         while True:
-            token = await token_queue.get()
-            if token is None:
+            chunk = await chunk_queue.get()
+            if chunk is None:
                 break
             if await fastapi_request.is_disconnected():
                 break
-            if isinstance(token, dict) and "error" in token:
-                yield f"data: {json.dumps(token)}\n\n"
-                break
-            if isinstance(token, dict) and token.get("type") == "token_usage":
-                token_usage = token
+            if isinstance(chunk, dict):
+                if "error" in chunk:
+                    yield f"data: {json.dumps(chunk)}\n\n"
+                    break
+                elif chunk.get("type") == "token_usage":
+                    token_usage = chunk
             else:
-                response_text += token
-                yield f"data: {json.dumps({'content': token})}\n\n"
+                response_text += chunk
+                yield f"data: {json.dumps({'content': chunk})}\n\n"
 
-        if not producer_task.done():
-            producer_task.cancel()
+        if not stream_task.done():
+            stream_task.cancel()
     except Exception as ex:
-        print(f"Exception detected: {ex}", flush=True)
+        print(f"Exception occured while getting response: {ex}", flush=True)
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
         save_conversation(user, user_message, response_text, token_usage, request)

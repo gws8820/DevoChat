@@ -119,14 +119,15 @@ def save_alias(user, conversation_id, alias):
     )
     
 def calculate_billing(in_billing_rate, out_billing_rate, token_usage):
-    input_tokens = token_usage['input_tokens']
+    input_tokens = token_usage.get('input_tokens', 0)
     output_tokens = token_usage.get('output_tokens', 0)
     reasoning_tokens = token_usage.get('reasoning_tokens', 0)
-    thinking_tokens = token_usage.get('thinking_tokens', 0)
 
     input_cost = input_tokens * (in_billing_rate / 1000000)
-    output_cost = (output_tokens + reasoning_tokens + thinking_tokens) * (out_billing_rate / 1000000)
+    output_cost = (output_tokens + reasoning_tokens) * (out_billing_rate / 1000000)
     total_cost = input_cost + output_cost
+    
+    print(f"input_tokens: {input_tokens}, output_tokens: {output_tokens}, reasoning_tokens: {reasoning_tokens}, total_cost: {total_cost}", flush=True)
     
     return total_cost
 

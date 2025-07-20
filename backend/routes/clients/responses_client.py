@@ -83,7 +83,7 @@ def format_message(message):
     elif role == "assistant":
         return {"role": "assistant", "content": normalize_assistant_content(content)}
 
-async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
+async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
     is_thinking = False
     mcp_tools = {}
     try:
@@ -95,19 +95,19 @@ async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastap
                 if chunk.type == "response.reasoning_summary_text.delta":
                     if not is_thinking:
                         is_thinking = True
-                        await token_queue.put('<think>\n')
-                    await token_queue.put(chunk.delta)
+                        await chunk_queue.put('<think>\n')
+                    await chunk_queue.put(chunk.delta)
                 elif chunk.type == "response.output_text.delta":
                     if is_thinking:
-                        await token_queue.put('\n</think>\n\n')
+                        await chunk_queue.put('\n</think>\n\n')
                         is_thinking = False
-                    await token_queue.put(chunk.delta)
+                    await chunk_queue.put(chunk.delta)
                 elif chunk.type == "response.completed":
-                    if hasattr(chunk, 'response') and hasattr(chunk.response, 'usage') and chunk.response.usage:
+                    if chunk.response.usage:
                         input_tokens = chunk.response.usage.input_tokens or 0
                         output_tokens = chunk.response.usage.output_tokens or 0
                         
-                        await token_queue.put({
+                        await chunk_queue.put({
                             "type": "token_usage",
                             "input_tokens": input_tokens,
                             "output_tokens": output_tokens
@@ -123,7 +123,7 @@ async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastap
                             "tool_name": tool_name
                         }
                         
-                        await token_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
+                        await chunk_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
                     elif hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "web_search_call":
                         tool_id = getattr(chunk.item, "id")
                         tool_name = "web_search"
@@ -134,7 +134,7 @@ async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastap
                             "tool_name": tool_name
                         }
                         
-                        await token_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
+                        await chunk_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
                 elif hasattr(chunk, "type") and chunk.type == "response.output_item.done":
                     if hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "mcp_call":
                         tool_id = getattr(chunk.item, "id")
@@ -155,7 +155,7 @@ async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastap
                             else:
                                 result = getattr(chunk.item, "output", "")
                             
-                            await token_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n")
+                            await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n")
                     elif hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "web_search_call":
                         tool_id = getattr(chunk.item, "id")
                         tool_info = mcp_tools.get(tool_id)
@@ -166,7 +166,7 @@ async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastap
                             
                             is_error = getattr(chunk.item, "status", "") != "completed"
                             
-                            await token_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': ''}, ensure_ascii=False)}\n</tool_result>\n\n")
+                            await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': ''}, ensure_ascii=False)}\n</tool_result>\n\n")
         else:
             single_result = await client.responses.create(**parameters)
             full_response_text = single_result.output_text
@@ -175,23 +175,23 @@ async def produce_tokens(token_queue: asyncio.Queue, request, parameters, fastap
             for i in range(0, len(full_response_text), chunk_size):
                 if await fastapi_request.is_disconnected():
                     return
-                await token_queue.put(full_response_text[i:i+chunk_size])
+                await chunk_queue.put(full_response_text[i:i+chunk_size])
                 await asyncio.sleep(0.03)
             
             input_tokens = single_result.usage.input_tokens or 0
             output_tokens = single_result.usage.output_tokens or 0
             
-            await token_queue.put({
+            await chunk_queue.put({
                 "type": "token_usage",
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens
             })
     except Exception as ex:
-        print(f"Produce tokens exception: {ex}")
-        await token_queue.put({"error": str(ex)})
+        print(f"Exception occured while processing stream: {ex}", flush=True)
+        await chunk_queue.put({"error": str(ex)})
     finally:
         await client.close()
-        await token_queue.put(None)
+        await chunk_queue.put(None)
 
 async def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     permission_error = check_user_permissions(user, request)
@@ -220,7 +220,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     reasoning_effort = mapping.get(request.reason)
 
     response_text = ""
-    token_usage = {"input_tokens": 0, "output_tokens": 0}
+    token_usage = None
     
     try:
         async with AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY')) as client:
@@ -251,29 +251,28 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                     return
                 parameters["tools"] = mcp_servers
                 
-            token_queue = asyncio.Queue()
-            producer_task = asyncio.create_task(produce_tokens(token_queue, request, parameters, fastapi_request, client))
+            chunk_queue = asyncio.Queue()
+            stream_task = asyncio.create_task(process_stream(chunk_queue, request, parameters, fastapi_request, client))
             while True:
-                token = await token_queue.get()
-                if token is None:
+                chunk = await chunk_queue.get()
+                if chunk is None:
                     break
                 if await fastapi_request.is_disconnected():
                     break
-                if isinstance(token, dict):
-                    if "error" in token:
-                        yield f"data: {json.dumps(token)}\n\n"
+                if isinstance(chunk, dict):
+                    if "error" in chunk:
+                        yield f"data: {json.dumps(chunk)}\n\n"
                         break
-                    elif token.get("type") == "token_usage":
-                        token_usage = token
-                        yield f"data: {json.dumps(token)}\n\n"
+                    elif chunk.get("type") == "token_usage":
+                        token_usage = chunk
                 else:
-                    response_text += token
-                    yield f"data: {json.dumps({'content': token})}\n\n"
+                    response_text += chunk
+                    yield f"data: {json.dumps({'content': chunk})}\n\n"
 
-            if not producer_task.done():
-                producer_task.cancel()
+            if not stream_task.done():
+                stream_task.cancel()
     except Exception as ex:
-        print(f"Exception detected: {ex}", flush=True)
+        print(f"Exception occured while getting response: {ex}", flush=True)
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
         save_conversation(user, user_message, response_text, token_usage, request)
