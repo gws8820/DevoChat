@@ -26,7 +26,7 @@ def normalize_user_content(part):
     elif part.get("type") == "image":
         file_path = part.get("content")
         try:
-            abs_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), file_path.lstrip("/"))
+            abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", file_path.lstrip("/")))
             with open(abs_path, "rb") as f:
                 file_data = f.read()
             base64_data = "data:image/jpeg;base64," + base64.b64encode(file_data).decode("utf-8")

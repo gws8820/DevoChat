@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { FaPaperPlane, FaStop } from "react-icons/fa";
+import { IoImageOutline } from "react-icons/io5";
 import { GoPlus, GoGlobe, GoLightBulb, GoTelescope, GoUnlock } from "react-icons/go";
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
@@ -1032,9 +1033,12 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.1 }}
           >
-            여기에 파일을 끌어서 추가하세요
+            <div className="drag-container">
+              <IoImageOutline style={{ fontSize: "40px" }} />
+              <div className="drag-text">여기에 파일을 추가하세요</div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
