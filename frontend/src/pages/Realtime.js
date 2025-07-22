@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from "react-router-dom";
-import { LuX, LuRefreshCcw } from "react-icons/lu";
-import { IoMicOff } from "react-icons/io5";
+import { IoMic, IoMicOff, IoClose } from "react-icons/io5";
 import { ClipLoader } from "react-spinners";
 import { motion, AnimatePresence } from "framer-motion";
 import "../styles/Realtime.css";
 
 const Realtime = () => {
   const [isMicEnabled, setIsMicEnabled] = useState(true);
-  const [showFunctions, setShowFunctions] = useState(true);
   const [isConnecting, setIsConnecting] = useState(true);
   const [transcript, setTranscript] = useState("");
   const [isModelSpeaking, setIsModelSpeaking] = useState(false);
@@ -120,8 +118,6 @@ const Realtime = () => {
     }
   }, []);
 
-
-
   const connectToSession = useCallback(async () => {
     try {
       const tokenResponse = await fetch(
@@ -156,7 +152,7 @@ const Realtime = () => {
           try {
             await audioInputRef.current.play();
           } catch (err) {
-            throw new Error("자동재생에 실패했습니다. 브라우저 설정을 확인하세요.");
+            throw new Error("오류가 발생했습니다. 다시 시도해주세요.");
           }
 
           if (!combinedAudioRef.current) {
@@ -201,7 +197,7 @@ const Realtime = () => {
         const sessionUpdateEvent = {
           type: "session.update",
           session: {
-            instructions: "한국어, 반말을 사용해. 상냥, 발랄하고 애교섞인 목소리를 사용해."
+            instructions: "한국어로 응답해."
           }
         };
         dataChannel.current.send(JSON.stringify(sessionUpdateEvent));
@@ -252,17 +248,10 @@ const Realtime = () => {
     }
   }, [navigate, isMicEnabled, cleanup]);
 
-  const handleNavigate = useCallback((e) => {
-    e.stopPropagation();
-    setShowFunctions(false);
+  const handleGoBack = useCallback((e) => {
     cleanup();
-    setTimeout(() => navigate("/"), 300);
+    setTimeout(() => navigate(-1), 300);
   }, [navigate, cleanup]);
-
-  const handleRefresh = useCallback((e) => {
-    e.stopPropagation();
-    window.location.reload();
-  }, []);
 
   return (
     <>
@@ -270,7 +259,6 @@ const Realtime = () => {
         <motion.div
           key="realtime-container"
           className="realtime-container"
-          onClick={toggleMicrophone}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
@@ -287,21 +275,6 @@ const Realtime = () => {
                 <div className="audio-bar"></div>
                 <div className="audio-bar"></div>
               </div>
-
-              <AnimatePresence>
-                {!isMicEnabled && (
-                  <motion.div
-                    key="mic-disabled"
-                    className="mic-disabled"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <IoMicOff />
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               <div className="bottom-ui-container">
                 <AnimatePresence>
@@ -320,24 +293,21 @@ const Realtime = () => {
                 </AnimatePresence>
 
                 <AnimatePresence>
-                  {showFunctions && (
-                    <motion.div
-                      key="realtime-function-container"
-                      className="realtime-function-container"
-                      onClick={(e) => e.stopPropagation()}
-                      initial={{ y: 10 }}
-                      animate={{ y: 0 }}
-                      exit={{ y: 10 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
-                    >
-                      <div onClick={handleRefresh} className="realtime-function new">
-                        <LuRefreshCcw strokeWidth={"2"} />
-                      </div>
-                      <div onClick={handleNavigate} className="realtime-function stop">
-                        <LuX strokeWidth={"2.5"} />
-                      </div>
-                    </motion.div>
-                  )}
+                  <motion.div
+                    key="realtime-function-container"
+                    className="realtime-function-container"
+                    initial={{ y: 10 }}
+                    animate={{ y: 0 }}
+                    exit={{ y: 10 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  >
+                    <div onClick={toggleMicrophone} className={`realtime-function ${isMicEnabled ? 'mic-enabled' : 'mic-disabled'}`}>
+                      {isMicEnabled ? <IoMic /> : <IoMicOff />}
+                    </div>
+                    <div onClick={handleGoBack} className="realtime-function stop">
+                      <IoClose />
+                    </div>
+                  </motion.div>
                 </AnimatePresence>
               </div>
             </>

@@ -111,7 +111,6 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
         return
     
     user_message = {"role": "user", "content": request.user_message}
-    
     conversation = get_conversation(user, request.conversation_id)
     conversation.append(user_message)
 

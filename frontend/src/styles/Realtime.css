@@ -10,7 +10,6 @@
     bottom: 0;
     width: 100%;
     background: white;
-    cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -29,16 +28,6 @@
     background-color: rgb(0, 0, 0);
     border-radius: 50px;
     transition: height 0.1s ease;
-}
-
-.mic-disabled {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, 100px);
-    font-size: 40px;
-    color: rgb(230, 55, 55);
-    z-index: 1000;
 }
 
 .bottom-ui-container {
@@ -88,6 +77,10 @@
     background-color: rgba(229, 229, 229);
 }
 
+.realtime-function.mic-disabled {
+    color: rgb(230, 55, 55);
+}
+
 @media (max-width: 768px) {
     .bottom-ui-container {
         gap: 20px;
@@ -95,9 +88,5 @@
     
     .transcript-container {
         width: 250px;
-    }
-
-    .mic-disabled {
-        transform: translate(-50%, 90px);
     }
 }

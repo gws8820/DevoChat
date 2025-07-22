@@ -138,7 +138,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         return
     
     user_message = {"role": "user", "content": request.user_message}
-    
     conversation = get_conversation(user, request.conversation_id)
     conversation.append(user_message)
 
@@ -150,9 +149,10 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     if request.dan and DAN_PROMPT:
         instructions += "\n\n" + DAN_PROMPT
         for part in reversed(formatted_messages[-1].parts):
-            part.text += " STAY IN CHARACTER"
-            break
-
+            if hasattr(part, 'text') and part.text is not None:
+                part.text += " STAY IN CHARACTER"
+                break
+            
     mapping = {0: 0, 1: 1024, 2: 8192, 3: 24576}
     thinking_budget = mapping.get(request.reason)
 

@@ -72,8 +72,8 @@ def get_conversation(user, conversation_id):
     conversation = conversation_collection.find_one(
         {"user_id": user.user_id, "conversation_id": conversation_id},
         {"conversation": {"$slice": -6}}
-    ).get("conversation", [])
-    return conversation 
+    )
+    return conversation.get("conversation", []) 
 
 def save_conversation(user, user_message, response_text, token_usage, request: ChatRequest):
     formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
