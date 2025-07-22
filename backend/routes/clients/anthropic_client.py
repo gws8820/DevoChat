@@ -14,7 +14,7 @@ from ..common import (
     MARKDOWN_PROMPT, DAN_PROMPT,
     check_user_permissions,
     get_conversation, save_conversation,
-    normalize_assistant_content
+    normalize_assistant_content,
 )
 
 def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dict[str, Any]], Optional[str]]:
@@ -209,9 +209,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
         await chunk_queue.put(None)
 
 async def get_response(request: ChatRequest, user: User, fastapi_request: Request):
-    permission_error = check_user_permissions(user, request)
-    if permission_error:
-        yield f"data: {json.dumps({'content': permission_error})}\n\n"
+    error_message, in_billing, out_billing = check_user_permissions(user, request)
+    if error_message:
+        yield f"data: {json.dumps({'content': error_message})}\n\n"
         return
     
     user_message = {"role": "user", "content": request.user_message}
@@ -230,9 +230,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 part["text"] += " STAY IN CHARACTER"
                 break
             
-    mapping = {0: 0, 1: 1024, 2: 8192, 3: 24576}
-    thinking_budget = mapping.get(request.reason)
-
     response_text = ""
     token_usage = None
     
@@ -241,12 +238,16 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             parameters = {
                 "model": request.model.split(':')[0],
                 "temperature": request.temperature,
-                "max_tokens": thinking_budget + 4096,
+                "max_tokens": 4096,
                 "system": instructions,
                 "messages": formatted_messages,
                 "stream": request.stream,
             }
-            if request.reason != 0:
+
+            if request.reason > 0:
+                mapping = {1: 1024, 2: 8192, 3: 24576}
+                thinking_budget = mapping.get(request.reason)
+                parameters["max_tokens"] = thinking_budget + 4096
                 parameters["thinking"] = {
                     "type": "enabled",
                     "budget_tokens": thinking_budget
@@ -288,7 +289,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         print(f"Exception occured while getting response: {ex}", flush=True)
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
-        save_conversation(user, user_message, response_text, token_usage, request)
+        save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
 
 @router.post("/claude")
 async def claude_endpoint(request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):

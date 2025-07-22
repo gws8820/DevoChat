@@ -126,9 +126,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
         await chunk_queue.put(None)
 
 async def get_response(request: ChatRequest, user: User, fastapi_request: Request):
-    permission_error = check_user_permissions(user, request)
-    if permission_error:
-        yield f"data: {json.dumps({'content': permission_error})}\n\n"
+    error_message, in_billing, out_billing = check_user_permissions(user, request)
+    if error_message:
+        yield f"data: {json.dumps({'content': error_message})}\n\n"
         return
     
     user_message = {"role": "user", "content": request.user_message}
@@ -151,9 +151,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             
     formatted_messages.insert(0, system(instructions))
     
-    mapping = {1: "low", 2: "high", 3: "high"}
-    reasoning_effort = mapping.get(request.reason)
-
     response_text = ""
     token_usage = None
     
@@ -164,9 +161,13 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         parameters = {
             "model": model,
             "temperature": request.temperature,
-            "reasoning_effort": reasoning_effort,
             "messages": formatted_messages
         }
+
+        if request.reason > 0:
+            mapping = {1: "low", 2: "high", 3: "high"}
+            reasoning_effort = mapping.get(request.reason)
+            parameters["reasoning_effort"] = reasoning_effort
         if request.search:
             parameters["search_parameters"] = SearchParameters(
                 mode="on",
@@ -197,7 +198,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         print(f"Exception occured while getting response: {ex}", flush=True)
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
-        save_conversation(user, user_message, response_text, token_usage, request)
+        save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
     
 @router.post("/grok")
 async def grok_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):

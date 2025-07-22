@@ -1,39 +1,12 @@
 import os
 import re
+import json
 from dotenv import load_dotenv
-from db_util import Database
+from pymongo import MongoClient
 from fastapi import APIRouter
 from pydantic import BaseModel
 from bson import ObjectId
 from typing import Any, List, Dict, Optional
-
-load_dotenv()
-router = APIRouter()
-
-db = Database.get_db()
-user_collection = db.users
-conversation_collection = db.conversations
-
-dan_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'dan_prompt.txt')
-try:
-    with open(dan_prompt_path, 'r', encoding='utf-8') as f:
-        DAN_PROMPT = f.read()
-except FileNotFoundError:
-    DAN_PROMPT = ""
-
-markdown_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'markdown_prompt.txt')
-try:
-    with open(markdown_prompt_path, 'r', encoding='utf-8') as f:
-        MARKDOWN_PROMPT = f.read()
-except FileNotFoundError:
-    MARKDOWN_PROMPT = ""
-
-alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'alias_prompt.txt')
-try:
-    with open(alias_prompt_path, 'r', encoding='utf-8') as f:
-        ALIAS_PROMPT = f.read()
-except FileNotFoundError:
-    ALIAS_PROMPT = ""
 
 class ChatRequest(BaseModel):
     conversation_id: str
@@ -58,15 +31,52 @@ class AliasRequest(BaseModel):
 class ApiSettings(BaseModel):
     api_key: str
     base_url: str
+    
+load_dotenv()
+router = APIRouter()
+
+mongo_client = MongoClient(os.getenv('MONGODB_URI'))
+db = mongo_client.chat_db
+user_collection = db.users
+conversation_collection = db.conversations
+
+dan_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'dan_prompt.txt')
+try:
+    with open(dan_prompt_path, 'r', encoding='utf-8') as f:
+        DAN_PROMPT = f.read()
+except FileNotFoundError:
+    DAN_PROMPT = ""
+
+markdown_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'markdown_prompt.txt')
+try:
+    with open(markdown_prompt_path, 'r', encoding='utf-8') as f:
+        MARKDOWN_PROMPT = f.read()
+except FileNotFoundError:
+    MARKDOWN_PROMPT = ""
+
+alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'alias_prompt.txt')
+try:
+    with open(alias_prompt_path, 'r', encoding='utf-8') as f:
+        ALIAS_PROMPT = f.read()
+except FileNotFoundError:
+    ALIAS_PROMPT = ""
 
 def check_user_permissions(user, request: ChatRequest):
+    billing_result = get_model_billing(request.model)
+    if not billing_result:
+        return "잘못된 모델입니다.", None, None
+    else:
+        in_billing, out_billing = billing_result
+    
     if user.trial and user.trial_remaining <= 0:
-        return "체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."
-    if not user.admin and request.in_billing >= 10:
-        return "해당 모델을 사용할 권한이 없습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요."
+        return "체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요.", None, None
+    if not user.admin and in_billing >= 10:
+        return "해당 모델을 사용할 권한이 없습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요.", None, None
+    if not user.admin and len(request.mcp) > 3:
+        return "MCP 서버는 최대 3개까지 선택할 수 있습니다.", None, None
     if not request.user_message:
-        return "메시지 내용이 비어 있습니다. 내용을 입력해 주세요."
-    return None
+        return "메시지 내용이 비어 있습니다. 내용을 입력해 주세요.", None, None
+    return None, in_billing, out_billing
 
 def get_conversation(user, conversation_id):
     conversation = conversation_collection.find_one(
@@ -75,9 +85,9 @@ def get_conversation(user, conversation_id):
     )
     return conversation.get("conversation", []) 
 
-def save_conversation(user, user_message, response_text, token_usage, request: ChatRequest):
+def save_conversation(user, user_message, response_text, token_usage, request: ChatRequest, in_billing: float, out_billing: float):
     formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
-    billing = calculate_billing(request.in_billing, request.out_billing, token_usage)
+    billing = calculate_billing(request.model, token_usage, in_billing, out_billing)
     
     if user.trial:
         user_collection.update_one(
@@ -117,8 +127,24 @@ def save_alias(user, conversation_id, alias):
         {"user_id": user.user_id, "conversation_id": conversation_id},
         {"$set": {"alias": alias}}
     )
+
+def get_model_billing(model_name):
+    try:
+        models_path = os.path.join(os.path.dirname(__file__), '..', 'models.json')
+        with open(models_path, 'r', encoding='utf-8') as f:
+            models_data = json.load(f)
+        
+        for model in models_data['models']:
+            if model['model_name'] == model_name:
+                return float(model['in_billing']), float(model['out_billing'])
+        
+        print(f"Warning: Model {model_name} not found in models.json", flush=True)
+        return None
+    except Exception as e:
+        print(f"Error reading models.json: {str(e)}", flush=True)
+        return None
     
-def calculate_billing(in_billing_rate, out_billing_rate, token_usage):
+def calculate_billing(model_name, token_usage, in_billing_rate: float, out_billing_rate: float):
     if token_usage:
         input_tokens = token_usage.get('input_tokens', 0)
         output_tokens = token_usage.get('output_tokens', 0)
@@ -128,9 +154,9 @@ def calculate_billing(in_billing_rate, out_billing_rate, token_usage):
         output_cost = (output_tokens + reasoning_tokens) * (out_billing_rate / 1000000)
         total_cost = input_cost + output_cost
         
-        print(f"input_tokens: {input_tokens}, output_tokens: {output_tokens}, reasoning_tokens: {reasoning_tokens}, total_cost: {total_cost}", flush=True)
+        print(f"Model: {model_name}, input_tokens: {input_tokens}, output_tokens: {output_tokens}, reasoning_tokens: {reasoning_tokens}, total_cost: {total_cost}", flush=True)
     else:
-        print("Error occured: No token usage.", flush=True)
+        print("Error occurred: No token usage.", flush=True)
         total_cost = 0
         
     return total_cost

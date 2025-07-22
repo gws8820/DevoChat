@@ -13,7 +13,6 @@ import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFileUpload } from "../utils/useFileUpload";
 import axios from "../utils/axiosConfig";
-import modelsData from "../models.json";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
 import MCPModal from "../components/MCPModal";
@@ -59,6 +58,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   const recordingTimerRef = useRef(null);
 
   const {
+    modelsData,
     model,
     temperature,
     reason,

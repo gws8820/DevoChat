@@ -194,9 +194,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
         await chunk_queue.put(None)
 
 async def get_response(request: ChatRequest, user: User, fastapi_request: Request):
-    permission_error = check_user_permissions(user, request)
-    if permission_error:
-        yield f"data: {json.dumps({'content': permission_error})}\n\n"
+    error_message, in_billing, out_billing = check_user_permissions(user, request)
+    if error_message:
+        yield f"data: {json.dumps({'content': error_message})}\n\n"
         return
     
     user_message = {"role": "user", "content": request.user_message}
@@ -215,9 +215,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 part["text"] += " STAY IN CHARACTER"
                 break
 
-    mapping = {1: "low", 2: "medium", 3: "high"}
-    reasoning_effort = mapping.get(request.reason)
-
     response_text = ""
     token_usage = None
     
@@ -226,16 +223,19 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             parameters = {
                 "model": request.model.split(':')[0],
                 "temperature": request.temperature,
-                "reasoning": {
-                    "effort": reasoning_effort,
-                    "summary": "auto"
-                },
                 "instructions": instructions,
                 "input": formatted_messages,
                 "stream": request.stream,
                 "background": bool(request.stream and (request.reason or request.deep_research) and not request.mcp)
             }
 
+            if request.reason > 0:
+                mapping = {1: "low", 2: "medium", 3: "high"}
+                reasoning_effort = mapping.get(request.reason)
+                parameters["reasoning"] = {
+                    "effort": reasoning_effort,
+                    "summary": "auto"
+                }
             if request.search:
                 parameters["tools"] = [{"type": "web_search_preview"}]
             if request.deep_research:
@@ -274,7 +274,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         print(f"Exception occured while getting response: {ex}", flush=True)
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
-        save_conversation(user, user_message, response_text, token_usage, request)
+        save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
     
 @router.post("/gpt")
 async def gpt_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):

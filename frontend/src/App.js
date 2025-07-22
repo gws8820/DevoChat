@@ -18,9 +18,28 @@ import { ConversationsProvider, ConversationsContext } from "./contexts/Conversa
 import logo from "./logo.png";
 
 function App() {
+  const [modelsData, setModelsData] = useState(null);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const modelsResponse = await axios.get(
+          `${process.env.REACT_APP_FASTAPI_URL}/models`
+        );
+        setModelsData(modelsResponse.data);
+      } catch (error) {
+        console.error("Failed to fetch models:", error);
+        setModelsData({ models: [] });
+      }
+    };
+    fetchModels();
+  }, []);
+
+  if (modelsData === null) return null;
+
   return (
     <Router>
-      <SettingsProvider>
+      <SettingsProvider modelsData={modelsData}>
         <ConversationsProvider>
           <AppContent />
         </ConversationsProvider>

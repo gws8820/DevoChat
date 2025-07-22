@@ -7,11 +7,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import Tooltip from "./Tooltip";
 import Toast from "./Toast";
-import modelsData from "../models.json";
 import "../styles/Header.css";
 
 function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   const {
+    modelsData,
     model,
     alias,
     temperature,

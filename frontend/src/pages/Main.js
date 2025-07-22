@@ -17,7 +17,6 @@ import axios from "../utils/axiosConfig";
 import Modal from "../components/Modal";
 import MCPModal from "../components/MCPModal";
 import Toast from "../components/Toast";
-import modelsData from "../models.json";
 import "../styles/Common.css";
 
 function Main({ isTouch, userInfo }) {
@@ -51,7 +50,8 @@ function Main({ isTouch, userInfo }) {
   } = useFileUpload([]);
 
   const {
-    DEFAULT_MODEL,
+    modelsData,
+    defaultModel,
     model,
     updateModel,
     isInference,
@@ -86,8 +86,8 @@ function Main({ isTouch, userInfo }) {
   useEffect(() => {
     const fetchNotice = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_FASTAPI_URL}/notice`);
-        const { message, hash } = response.data;
+        const noticeResponse = await axios.get(`${process.env.REACT_APP_FASTAPI_URL}/notice`);
+        const { message, hash } = noticeResponse.data;
         setNotice(message);
         setNoticeHash(hash);
         
@@ -106,7 +106,7 @@ function Main({ isTouch, userInfo }) {
     setIsSearch(false);
     setIsInference(false);
     setIsDAN(false);
-    updateModel(DEFAULT_MODEL);
+    updateModel(defaultModel);
     setTemperature(0.5);
     setReason(0);
     setSystemMessage("");

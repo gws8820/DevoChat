@@ -2,6 +2,7 @@ import os
 import jwt
 import bcrypt
 from dotenv import load_dotenv
+from pymongo import MongoClient
 from fastapi import APIRouter, HTTPException, Cookie, Depends, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, constr
@@ -9,18 +10,17 @@ from typing import List, Annotated
 from bson import ObjectId
 from datetime import datetime, timezone, timedelta
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from db_util import Database
 
 load_dotenv()
 router = APIRouter()
-db = Database.get_db()
+
+mongo_client = MongoClient(os.getenv('MONGODB_URI'))
+db = mongo_client.chat_db
 collection = db.users
 
-# JWT
 AUTH_KEY = os.getenv('AUTH_KEY')
 ALGORITHM = 'HS256'
 
-# Pydantic Model
 class RegisterUser(BaseModel):
     name: Annotated[str, constr(strip_whitespace=True, min_length=1)]
     email: EmailStr

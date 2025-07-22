@@ -1,12 +1,11 @@
 import React, { createContext, useState, useEffect } from "react";
-import modelsData from '../models.json';
 
 export const SettingsContext = createContext();
 
-export const SettingsProvider = ({ children }) => {
-  const DEFAULT_MODEL = "gemini-2.5-flash";
+export const SettingsProvider = ({ children, modelsData }) => {
+  const defaultModel = "gemini-2.5-flash";
   
-  const [model, setModel] = useState(DEFAULT_MODEL);
+  const [model, setModel] = useState(defaultModel);
   const [alias, setAlias] = useState("");
   const [temperature, setTemperature] = useState(0.5);
   const [reason, setReason] = useState(2);
@@ -149,7 +148,8 @@ export const SettingsProvider = ({ children }) => {
   return (
     <SettingsContext.Provider
       value={{
-        DEFAULT_MODEL,
+        modelsData,
+        defaultModel,
         model,
         alias,
         temperature,

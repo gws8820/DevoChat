@@ -1,19 +1,20 @@
 import os
 import uuid
 from dotenv import load_dotenv
+from pymongo import MongoClient
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from bson import ObjectId
 from datetime import datetime, timezone
 from .auth import User, get_current_user, check_admin
-from db_util import Database
 
 load_dotenv()
 router = APIRouter()
-db = Database.get_db()
+
+mongo_client = MongoClient(os.getenv('MONGODB_URI'))
+db = mongo_client.chat_db
 conversations_collection = db.conversations
 
-# Pydantic
 class RenameRequest(BaseModel):
     alias: str
 
