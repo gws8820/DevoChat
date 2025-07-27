@@ -182,6 +182,14 @@ async def perplexity_endpoint(chat_request: ChatRequest, fastapi_request: Reques
     )
     return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
 
+@router.post("/friendli")
+async def friendli_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+    settings = ApiSettings(
+        api_key=os.getenv('FRIENDLI_API_KEY'),
+        base_url="https://api.friendli.ai/serverless/v1"
+    )
+    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
+
 @router.post("/adotx")
 async def adotx_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     settings = ApiSettings(

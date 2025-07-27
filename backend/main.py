@@ -61,7 +61,7 @@ app.mount("/icons", StaticFiles(directory="icons"), name="icons")
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    notice_message = '이제 Grok 모델이 검색 기능을 지원합니다!'
+    notice_message = 'Qwen 3 모델이 Qwen3-235B-A22B-Instruct-2507로 업데이트 되었습니다!'
     notice_hash = base64.b64encode(notice_message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(

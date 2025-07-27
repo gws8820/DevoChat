@@ -122,7 +122,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     token_usage = None
     
     try:
-        async with AsyncInferenceClient(api_key=os.getenv('HUGGINGFACE_API_KEY'), provider="auto") as client:
+        async with AsyncInferenceClient(api_key=os.getenv('HUGGINGFACE_API_KEY'), provider="fireworks-ai") as client:
             parameters = {
                 "model": request.model.split(':')[0],
                 "temperature": request.temperature,

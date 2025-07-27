@@ -97,9 +97,8 @@ function Message({
     return (
       <motion.div
         className={`user-wrap ${isEditing ? "editing" : ""}`}
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }}
-        exit={{ opacity: 0, x: 20, transition: { duration: 0.3 } }}
       >
         <div className="message-file-area">
           {content.map((item, idx) => {
@@ -185,13 +184,7 @@ function Message({
     );
   } else if (role === "assistant") {
     return (
-      <motion.div
-        className="assistant-wrap"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, x: 20 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div className="assistant-wrap">
         <div className="chat-message assistant">
           <MarkdownRenderer
             content={content}
@@ -213,7 +206,7 @@ function Message({
             />
           )}
         </div>
-      </motion.div>
+      </div>
     );
   } else if (role === "error") {
     return (
@@ -221,7 +214,6 @@ function Message({
         className="chat-message error"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0, x: 20, transition: { duration: 0 } }}
         transition={{ duration: 0.3, delay: 0.8, ease: "easeOut" }}
       >
         <div style={{ marginRight: "7px" }}>{content}</div>
@@ -248,7 +240,7 @@ Message.propTypes = {
   setScrollOnSend: PropTypes.func,
   isTouch: PropTypes.bool,
   isLoading: PropTypes.bool,
-  isLastMessage: PropTypes.bool,
+  isLastMessage: PropTypes.bool
 };
 
 Message.defaultProps = {

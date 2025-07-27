@@ -151,7 +151,7 @@
         "model_name": "gpt-4.1",
         "model_alias": "GPT 4.1",
         "description": "표준 GPT 모델",
-        "endpoint": "/gpt",
+        "endpoint": "/openai",
         "in_billing": "2",
         "out_billing": "8",
         "capabilities": {
@@ -172,7 +172,7 @@
         "model_name": "gpt-4.1-mini",
         "model_alias": "GPT 4.1 mini",
         "description": "경량 GPT 모델",
-        "endpoint": "/gpt",
+        "endpoint": "/openai",
         "in_billing": "0.4",
         "out_billing": "1.6",
         "capabilities": {
@@ -193,7 +193,7 @@
         "model_name": "o4-mini",
         "model_alias": "OpenAI o4 mini",
         "description": "추론 GPT 모델",
-        "endpoint": "/gpt",
+        "endpoint": "/openai",
         "in_billing": "1.1",
         "out_billing": "4.4",
         "variants": {
@@ -217,7 +217,7 @@
         "model_name": "o4-mini-deep-research",
         "model_alias": "OpenAI o4 mini",
         "description": "추론 GPT 모델",
-        "endpoint": "/gpt",
+        "endpoint": "/openai",
         "in_billing": "2",
         "out_billing": "8",
         "variants": {
@@ -241,7 +241,7 @@
         "model_name": "o3",
         "model_alias": "OpenAI o3",
         "description": "고성능 추론 GPT 모델",
-        "endpoint": "/gpt",
+        "endpoint": "/openai",
         "in_billing": "2",
         "out_billing": "8",
         "variants": {
@@ -265,7 +265,7 @@
         "model_name": "o3-deep-research",
         "model_alias": "OpenAI o3",
         "description": "고성능 추론 GPT 모델",
-        "endpoint": "/gpt",
+        "endpoint": "/openai",
         "in_billing": "10",
         "out_billing": "40",
         "variants": {
@@ -289,7 +289,7 @@
         "model_name": "o3-pro",
         "model_alias": "OpenAI o3 Pro",
         "description": "최고 성능 추론 GPT 모델",
-        "endpoint": "/gpt",
+        "endpoint": "/openai",
         "in_billing": "20",
         "out_billing": "80",
         "capabilities": {
@@ -533,16 +533,16 @@
         }
       },
       {
-        "model_name": "Qwen/Qwen3-235B-A22B",
-        "model_alias": "Qwen 3 235B",
-        "description": "추론 Qwen 모델",
+        "model_name": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "model_alias": "Qwen 3",
+        "description": "최신 Qwen 모델",
         "endpoint": "/huggingface",
         "in_billing": "0.22",
         "out_billing": "0.88",
         "capabilities": {
           "stream": true,
           "image": false,
-          "inference": true,
+          "inference": false,
           "search": false,
           "deep_research": false,
           "mcp": false
@@ -560,6 +560,27 @@
         "endpoint": "/huggingface",
         "in_billing": "0.57",
         "out_billing": "2.3",
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": false,
+          "search": false,
+          "deep_research": false,
+          "mcp": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": false,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "LGAI-EXAONE/EXAONE-4.0-32B",
+        "model_alias": "LG EXAONE 4.0",
+        "description": "최신 EXAONE 모델",
+        "endpoint": "/friendli",
+        "in_billing": "1",
+        "out_billing": "1",
         "capabilities": {
           "stream": true,
           "image": false,

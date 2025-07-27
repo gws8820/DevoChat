@@ -51,11 +51,12 @@ function App() {
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
+  const [isResponsive, setIsResponsive] = useState(window.innerWidth <= 768);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [userSidebarOpen, setUserSidebarOpen] = useState(null);
   const [isTouch, setIsTouch] = useState(false);
   const [toastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,17 +68,18 @@ function AppContent() {
   const shouldShowLogo = useMemo(() => {
     return location.pathname.startsWith("/view");
   }, [location.pathname]);
-  
-  const isResponsive = useMemo(() => {
-    return windowWidth <= 768;
-  }, [windowWidth]);
-
-  const marginLeft = useMemo(() => {
-    return (isResponsive || !shouldShowLayout) ? 0 : (isSidebarOpen ? 260 : 0);
-  }, [isResponsive, shouldShowLayout, isSidebarOpen]);
 
   const chatMessageRef = useRef(null);
   const { fetchConversations } = useContext(ConversationsContext);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsResponsive(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     async function checkLoginStatus() {
@@ -109,40 +111,24 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    if (window.innerWidth <= 768) {
+    if (isResponsive) {
       setIsSidebarOpen(false);
     } else {
-      setIsSidebarOpen(true);
+      if (userSidebarOpen !== null) {
+        setIsSidebarOpen(userSidebarOpen);
+      } else {
+        setIsSidebarOpen(true);
+      }
     }
-    
-    const isMobile = /android|iphone|ipod/i.test(
-      (navigator.userAgent || navigator.vendor || window.opera).toLowerCase()
-    );
-    
-    if (!isMobile) {
-      let resizeTimeout;
-      const handleResize = () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          const newWidth = window.innerWidth;
-          setWindowWidth(newWidth);
-          
-          if (newWidth <= 768) 
-            setIsSidebarOpen(false);
-        }, 100); // 100ms debounce
-      };
-
-      window.addEventListener('resize', handleResize);
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        clearTimeout(resizeTimeout);
-      };
-    }
-  }, []);
+  }, [isResponsive, userSidebarOpen]);
 
   const toggleSidebar = useCallback(() => {
-    setIsSidebarOpen((prev) => !prev);
-  }, []);
+    setIsSidebarOpen(prev => {
+      const newState = !prev;
+      if (!isResponsive) setUserSidebarOpen(newState);
+      return newState;
+    });
+  }, [isResponsive]);
   
   useEffect(() => {
     const handlePointerDown = (event) => {
@@ -212,10 +198,6 @@ function AppContent() {
       <AnimatePresence>
         {shouldShowLayout && (
           <motion.div
-            initial={{ x: -260 }}
-            animate={{ x: isSidebarOpen ? 0 : -260 }}
-            exit={{ x: -260 }}
-            transition={{ duration: isResponsive ? 0.25 : 0.3, ease: "easeInOut" }}
             style={{
               width: "260px",
               position: "fixed",
@@ -223,6 +205,8 @@ function AppContent() {
               top: 0,
               height: "100vh",
               zIndex: 1000,
+              transform: isSidebarOpen ? "translateX(0)" : "translateX(-100%)",
+              transition: "transform 0.3s ease",
             }}
           >
             <Sidebar
@@ -255,11 +239,10 @@ function AppContent() {
         style={{ 
           flex: 1, 
           position: "relative",
-          Height: "100dvh",
+          height: "100dvh",
+          marginLeft: (!isResponsive && isSidebarOpen) ? "260px" : "0",
+          transition: "margin-left 0.3s ease",
         }}
-        initial={{ marginLeft }}
-        animate={{ marginLeft }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
         {shouldShowLogo && (
           <div className="header" style={{ padding: "0 20px" }}>

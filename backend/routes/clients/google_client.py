@@ -65,6 +65,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                     candidate = chunk.candidates[0]
                     if hasattr(candidate, 'content') and candidate.content.parts:
                         for part in candidate.content.parts:
+                            print(part)
                             if hasattr(part, 'text'):
                                 if hasattr(part, 'thought') and part.thought and not is_thinking:
                                     is_thinking = True
