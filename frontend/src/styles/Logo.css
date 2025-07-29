@@ -1,6 +1,6 @@
 .logo-header {
     display: flex;
-    justify-content: space-between; /* 왼쪽과 오른쪽을 분리 */
+    justify-content: space-between;
     align-items: center;
     box-sizing: border-box;
     width: 100%;

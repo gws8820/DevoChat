@@ -7,6 +7,25 @@
   box-sizing: border-box;
 }
 
+.admin-header {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.back-button {
+  position: absolute;
+  padding: 8px 16px;
+  background-color: #f9f9f9;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.back-button:hover {
+  background-color: #eeeeee;
+}
+
 .admin-title {
   color: #333;
   font-size: 28px;
@@ -100,6 +119,45 @@
   color: #666;
 }
 
+.user-info-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-info-item {
+  margin-bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.user-info-item:last-child {
+  margin-bottom: 0;
+}
+
+.user-info-item .label {
+  font-weight: 600;
+  width: 100px;
+  min-width: 80px;
+}
+
+.user-name-link {
+  color: #007bff;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: left;
+}
+
+.user-name-link:hover {
+  text-decoration: underline;
+}
+
 .status-container {
   display: flex;
   align-items: center;
@@ -164,69 +222,6 @@ input:checked + .toggle-slider:before {
 
 .toggle-switch.disabled .toggle-slider {
   cursor: not-allowed;
-}
-
-.user-name-link {
-  color: #007bff;
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  cursor: pointer;
-  text-decoration: none;
-  text-align: left;
-}
-
-.user-name-link:hover {
-  text-decoration: underline;
-}
-
-.back-button {
-  position: absolute;
-  padding: 8px 16px;
-  background-color: #f9f9f9;
-  border: 1px solid #f0f0f0;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.back-button:hover {
-  background-color: #eeeeee;
-}
-
-.user-info-card {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.user-info-item {
-  margin-bottom: 10px;
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.user-info-item:last-child {
-  margin-bottom: 0;
-}
-
-.user-info-item .label {
-  font-weight: 600;
-  width: 100px;
-  min-width: 80px;
-}
-
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  overflow-y: auto;
 }
 
 @media (max-width: 768px) {

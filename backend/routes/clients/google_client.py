@@ -55,9 +55,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
     is_thinking = False
     try:
         if request.stream:
-            stream_result = client.models.generate_content_stream(**parameters)
+            stream_result = await client.aio.models.generate_content_stream(**parameters)
             
-            for chunk in stream_result:
+            async for chunk in stream_result:
                 if await fastapi_request.is_disconnected():
                     return
                 
@@ -89,7 +89,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                         "reasoning_tokens": reasoning_tokens
                     })
         else:
-            single_result = client.models.generate_content(**parameters)
+            single_result = await client.aio.models.generate_content(**parameters)
             full_response_text = ""
             
             if hasattr(single_result, 'candidates'):
@@ -216,7 +216,7 @@ async def gemini_endpoint(chat_request: ChatRequest, fastapi_request: Request, u
 async def get_alias(request: AliasRequest, user: User = Depends(get_current_user)):
     try:
         client = Client(api_key=os.getenv('GEMINI_API_KEY'))
-        response = client.models.generate_content(
+        response = await client.aio.models.generate_content(
             model="gemini-2.0-flash",
             contents=[request.text],
             config=types.GenerateContentConfig(

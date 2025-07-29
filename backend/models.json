@@ -307,6 +307,75 @@
         }
       },
       {
+        "model_name": "moonshotai/Kimi-K2-Instruct",
+        "model_alias": "Kimi K2",
+        "description": "최신 Kimi 모델",
+        "endpoint": "/huggingface",
+        "in_billing": "0.57",
+        "out_billing": "2.3",
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": false,
+          "search": false,
+          "deep_research": false,
+          "mcp": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": false,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "model_alias": "Qwen 3",
+        "description": "최신 Qwen 모델",
+        "endpoint": "/huggingface",
+        "in_billing": "0.22",
+        "out_billing": "0.88",
+        "variants": {
+          "inference": "Qwen/Qwen3-235B-A22B-Thinking-2507"
+        },
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": "switch",
+          "search": false,
+          "deep_research": false,
+          "mcp": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": false,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "Qwen/Qwen3-235B-A22B-Thinking-2507",
+        "model_alias": "Qwen 3",
+        "description": "최신 Qwen 모델",
+        "endpoint": "/huggingface",
+        "in_billing": "0.22",
+        "out_billing": "0.88",
+        "variants": {
+          "base": "Qwen/Qwen3-235B-A22B-Instruct-2507"
+        },
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": "switch",
+          "search": false,
+          "deep_research": false,
+          "mcp": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": false,
+          "system_message": true
+        }
+      },
+      {
         "model_name": "deepseek-ai/DeepSeek-V3-0324",
         "model_alias": "Deepseek V3",
         "description": "표준 Deepseek 모델",
@@ -521,48 +590,6 @@
         "capabilities": {
           "stream": true,
           "image": true,
-          "inference": false,
-          "search": false,
-          "deep_research": false,
-          "mcp": false
-        },
-        "controls": {
-          "temperature": true,
-          "reason": false,
-          "system_message": true
-        }
-      },
-      {
-        "model_name": "Qwen/Qwen3-235B-A22B-Instruct-2507",
-        "model_alias": "Qwen 3",
-        "description": "최신 Qwen 모델",
-        "endpoint": "/huggingface",
-        "in_billing": "0.22",
-        "out_billing": "0.88",
-        "capabilities": {
-          "stream": true,
-          "image": false,
-          "inference": false,
-          "search": false,
-          "deep_research": false,
-          "mcp": false
-        },
-        "controls": {
-          "temperature": true,
-          "reason": false,
-          "system_message": true
-        }
-      },
-      {
-        "model_name": "moonshotai/Kimi-K2-Instruct",
-        "model_alias": "Kimi K2",
-        "description": "최신 Kimi 모델",
-        "endpoint": "/huggingface",
-        "in_billing": "0.57",
-        "out_billing": "2.3",
-        "capabilities": {
-          "stream": true,
-          "image": false,
           "inference": false,
           "search": false,
           "deep_research": false,

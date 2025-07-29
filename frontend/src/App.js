@@ -116,8 +116,8 @@ function AppContent() {
     } else {
       if (userSidebarOpen !== null) {
         setIsSidebarOpen(userSidebarOpen);
-      } else {
-        setIsSidebarOpen(true);
+    } else {
+      setIsSidebarOpen(true);
       }
     }
   }, [isResponsive, userSidebarOpen]);
@@ -194,7 +194,7 @@ function AppContent() {
   if (isLoggedIn === null) return null;
 
   return (
-    <div style={{ display: "flex", margin: "0" }}>
+    <div style={{ display: "flex", margin: "0", overflow: "hidden" }}>
       <AnimatePresence>
         {shouldShowLayout && (
           <motion.div
@@ -237,10 +237,9 @@ function AppContent() {
 
       <motion.div
         style={{ 
-          flex: 1, 
-          position: "relative",
+          flex: 1,
           height: "100dvh",
-          marginLeft: (!isResponsive && isSidebarOpen) ? "260px" : "0",
+          marginLeft: (shouldShowLayout && !isResponsive && isSidebarOpen) ? "260px" : "0",
           transition: "margin-left 0.3s ease",
         }}
       >

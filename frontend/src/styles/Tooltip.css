@@ -1,6 +1,6 @@
 .tooltip-wrapper {
   position: relative;
-  display: inline-block; /* 인라인 아이콘이나 텍스트 감싸기 용 */
+  display: inline-block;
 }
 
 .tooltip-box {
