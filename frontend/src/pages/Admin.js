@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ClipLoader } from "react-spinners";
+import { motion } from "framer-motion";
 import '../styles/Admin.css';
 
 function Admin() {
@@ -188,9 +189,14 @@ function Admin() {
 
   if (loading) {
     return (
-      <div className="admin-loading-container">
+      <motion.div
+        className="admin-loading-container"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
         <ClipLoader loading={true} size={50} />
-      </div>
+      </motion.div>
     );
   }
 
@@ -218,9 +224,14 @@ function Admin() {
         </div>
         
         {loadingConversations ? (
-          <div className="admin-loading-container">
+          <motion.div
+            className="admin-loading-container"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
             <ClipLoader loading={true} size={50} />
-          </div>
+          </motion.div>
         ) : (
           <div className="admin-table-container">
             <table className="admin-table">

@@ -602,6 +602,27 @@
         }
       },
       {
+        "model_name": "zai-org/GLM-4.5",
+        "model_alias": "GLM 4.5",
+        "description": "표준 ZAI 모델",
+        "endpoint": "/huggingface",
+        "in_billing": "0.6",
+        "out_billing": "2.2",
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": true,
+          "search": false,
+          "deep_research": false,
+          "mcp": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": false,
+          "system_message": true
+        }
+      },
+      {
         "model_name": "LGAI-EXAONE/EXAONE-4.0-32B",
         "model_alias": "LG EXAONE 4.0",
         "description": "최신 EXAONE 모델",

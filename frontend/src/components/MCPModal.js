@@ -93,9 +93,14 @@ const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList, userInfo }) => {
 
             <div className="mcp-modal-body">
               {loading && (
-                <div className="mcp-loading-container">
+                <motion.div
+                  className="mcp-loading-container"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
                   <ClipLoader loading={true} size={40} />
-                </div>
+                </motion.div>
               )}
               
               {error && (

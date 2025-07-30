@@ -27,6 +27,13 @@ class MCPServer(BaseModel):
     icon: str
     admin: bool
 
+notice_path = os.path.join(os.path.dirname(__file__), 'notice.txt')
+try:
+    with open(notice_path, 'r', encoding='utf-8') as f:
+        NOTICE_MESSAGE = f.read()
+except FileNotFoundError:
+    NOTICE_MESSAGE = ""
+
 load_dotenv()
 app = FastAPI()
 
@@ -61,12 +68,11 @@ app.mount("/icons", StaticFiles(directory="icons"), name="icons")
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    notice_message = 'Qwen 3 모델이 이제 추론 기능을 지원합니다!'
-    notice_hash = base64.b64encode(notice_message.encode('utf-8')).decode('utf-8')
+    message_hash = base64.b64encode(NOTICE_MESSAGE.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(
-        message=notice_message,
-        hash=notice_hash
+        message=NOTICE_MESSAGE,
+        hash=message_hash
     )
 
 @app.get("/models", response_model=dict)

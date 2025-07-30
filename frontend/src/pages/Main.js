@@ -422,7 +422,6 @@ function Main({ isTouch, userInfo }) {
           className="welcome-message"
           initial={{ y: 5 }}
           animate={{ y: 0 }}
-          exit={{ y: 5 }}
           transition={{ duration: 0.3 }}
         >
           무엇을 도와드릴까요?
@@ -433,7 +432,6 @@ function Main({ isTouch, userInfo }) {
         className="input-container main-input-container"
         initial={{ y: 8, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 8, opacity: 0 }}
         transition={{ duration: 0.3 }}
       >
         <div className="content-container">
@@ -509,21 +507,19 @@ function Main({ isTouch, userInfo }) {
           </div>
           <div className="button-area">
             <div className="function-button-container" ref={optionsRef}>
-              <AnimatePresence>
-                <motion.div 
-                  className="function-button plus-button" 
-                  onClick={handlePlusButtonClick}
-                  transition={{ 
-                    type: "physics",
-                    velocity: 200,
-                    stiffness: 100,
-                    damping: 15
-                  }}
-                  layout
-                >
-                  <GoPlus style={{ strokeWidth: 0.5 }} />
-                </motion.div>
-              </AnimatePresence>
+              <motion.div 
+                className="function-button plus-button" 
+                onClick={handlePlusButtonClick}
+                transition={{ 
+                  type: "physics",
+                  velocity: 200,
+                  stiffness: 100,
+                  damping: 15
+                }}
+                layout
+              >
+                <GoPlus style={{ strokeWidth: 0.5 }} />
+              </motion.div>
               <AnimatePresence>
                 {showMediaOptions && (
                   <motion.div 

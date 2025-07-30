@@ -55,7 +55,7 @@ const ConversationItem = React.memo(({
       onTouchMove={handleTouchMove}
       onTouchCancel={(e) => handleTouchEnd(e, conv.conversation_id)}
     >
-      <motion.div
+      <div
         className={`conversation-item ${isActive ? "active-conversation" : ""}`}
         layout
         onClick={!isTouch ? () => {
@@ -90,15 +90,14 @@ const ConversationItem = React.memo(({
             autoFocus
           />
         ) : (
-          <AnimatePresence mode="wait">
+          <>
             {conv.isLoading ? (
               <motion.span
                 key="loading"
                 className="loading-text"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.5 }}
               >
                 로딩 중...
               </motion.span>
@@ -108,22 +107,21 @@ const ConversationItem = React.memo(({
                 className="conversation-text"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.5 }}
               >
                 {conv.alias}
               </motion.span>
             )}
-          </AnimatePresence>
+          </>
         )}
 
-        <motion.div 
+        <div 
           className={`star-icon ${conv.starred ? `starred ${isTouch ? 'no-click' : ''}` : isTouch ? 'no-click hidden' : ''}`}  
           onClick={isTouch ? undefined : (e) => {toggleStar(conv.conversation_id, e)}}
         >
           <IoMdStar />
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </motion.li>
   );
 });
@@ -528,49 +526,53 @@ function Sidebar({
 
         <div className={`conversation-container ${isLoadingChat ? "loading" : ""}`}>
           {isLoadingChat ? (
-            <ClipLoader loading={true} size={40} />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <ClipLoader loading={true} size={40} />
+            </motion.div>
           ) : (
-            <AnimatePresence>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-                style={{ 
-                  height: '100%', 
-                  display: 'flex', 
-                  flexDirection: 'column'
-                }}
-              >
-                {filteredConversations.length > 0 ? (
-                  filteredConversations
-                    .slice()
-                    .map((conv) => (
-                      <ConversationItem
-                        key={conv.conversation_id}
-                        conv={conv}
-                        currentConversationId={currentConversationId}
-                        renamingConversationId={renamingConversationId}
-                        renameInputValue={renameInputValue}
-                        setRenameInputValue={setRenameInputValue}
-                        handleRename={handleRename}
-                        setRenamingConversationId={setRenamingConversationId}
-                        handleNavigate={handleNavigate}
-                        handleConversationContextMenu={handleConversationContextMenu}
-                        handleTouchStart={handleTouchStart}
-                        handleTouchEnd={handleTouchEnd}
-                        handleTouchMove={handleTouchMove}
-                        toggleStar={toggleStar}
-                        isTouch={isTouch}
-                      />
-                    ))
-                ) : (
-                  <div className="no-result">
-                    {conversations.length === 0 ? "대화 내역이 없습니다." : "검색 결과가 없습니다."}
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+              style={{ 
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column'
+              }}
+            >
+              {filteredConversations.length > 0 ? (
+                filteredConversations
+                  .slice()
+                  .map((conv) => (
+                    <ConversationItem
+                      key={conv.conversation_id}
+                      conv={conv}
+                      currentConversationId={currentConversationId}
+                      renamingConversationId={renamingConversationId}
+                      renameInputValue={renameInputValue}
+                      setRenameInputValue={setRenameInputValue}
+                      handleRename={handleRename}
+                      setRenamingConversationId={setRenamingConversationId}
+                      handleNavigate={handleNavigate}
+                      handleConversationContextMenu={handleConversationContextMenu}
+                      handleTouchStart={handleTouchStart}
+                      handleTouchEnd={handleTouchEnd}
+                      handleTouchMove={handleTouchMove}
+                      toggleStar={toggleStar}
+                      isTouch={isTouch}
+                    />
+                  ))
+              ) : (
+                <div className="no-result">
+                  {conversations.length === 0 ? "대화 내역이 없습니다." : "검색 결과가 없습니다."}
+                </div>
+              )}
+            </motion.div>
           )}
         </div>
 

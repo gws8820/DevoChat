@@ -2,7 +2,6 @@
 import axios from "./utils/axiosConfig";
 import { useEffect, useState, useCallback, useRef, useContext, useMemo } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import Main from "./pages/Main";
@@ -132,10 +131,8 @@ function AppContent() {
   
   useEffect(() => {
     const handlePointerDown = (event) => {
-      if (event.pointerType === 'touch') 
-        setIsTouch(true);
-      else
-        setIsTouch(false);
+      const newIsTouch = event.pointerType === 'touch';
+      setIsTouch(prev => prev !== newIsTouch ? newIsTouch : prev);
     };
 
     window.addEventListener('pointerdown', handlePointerDown);
@@ -173,11 +170,15 @@ function AppContent() {
         const isEndExcluded = excludedClasses.some(cls => touchEndTarget && touchEndTarget.closest(cls));
         
         if (!hadTextSelectionAtStart && !hasTextSelectionNow && !isStartExcluded && !isEndExcluded) {
-          if (diffX > 0 && !isSidebarOpen) {
-            toggleSidebar();
-          } else if (diffX < 0 && isSidebarOpen) {
-            toggleSidebar();
-          }
+          setIsSidebarOpen(currentOpen => {
+            if ((diffX > 0 && !currentOpen) || (diffX < 0 && currentOpen)) {
+              const newState = !currentOpen;
+              const currentIsResponsive = window.innerWidth <= 768;
+              if (!currentIsResponsive) setUserSidebarOpen(newState);
+              return newState;
+            }
+            return currentOpen;
+          });
         }
       }
     };
@@ -189,38 +190,38 @@ function AppContent() {
       document.removeEventListener("touchstart", handleTouchStart);
       document.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isTouch, isSidebarOpen, toggleSidebar]);
+  }, [isTouch]);
 
   if (isLoggedIn === null) return null;
 
   return (
     <div style={{ display: "flex", margin: "0", overflow: "hidden" }}>
-      <AnimatePresence>
-        {shouldShowLayout && (
-          <motion.div
-            style={{
-              width: "260px",
-              position: "fixed",
-              left: 0,
-              top: 0,
-              height: "100vh",
-              zIndex: 1000,
-              transform: isSidebarOpen ? "translateX(0)" : "translateX(-100%)",
-              transition: "transform 0.3s ease",
-            }}
-          >
-            <Sidebar
-              toggleSidebar={toggleSidebar}
-              isSidebarOpen={isSidebarOpen}
-              isResponsive={isResponsive}
-              isTouch={isTouch}
-              userInfo={userInfo}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {shouldShowLayout && (
+        <div
+          style={{
+            width: "260px",
+            position: "fixed",
+            left: 0,
+            top: 0,
+            height: "100vh",
+            zIndex: 1000,
+            transform: isSidebarOpen ? "translateX(0)" : "translateX(-100%)",
+            transition: "transform 0.3s ease",
+            willChange: "transform",
+            backfaceVisibility: "hidden",
+          }}
+        >
+          <Sidebar
+            toggleSidebar={toggleSidebar}
+            isSidebarOpen={isSidebarOpen}
+            isResponsive={isResponsive}
+            isTouch={isTouch}
+            userInfo={userInfo}
+          />
+        </div>
+      )}
 
-      {isResponsive && isSidebarOpen && (
+      {shouldShowLayout && isSidebarOpen && isResponsive && (
         <div
           onClick={toggleSidebar}
           style={{
@@ -235,12 +236,14 @@ function AppContent() {
         />
       )}
 
-      <motion.div
+      <div
         style={{ 
-          flex: 1,
+          width: (shouldShowLayout && isSidebarOpen && !isResponsive) ? "calc(100% - 260px)" : "100%",
           height: "100dvh",
-          marginLeft: (shouldShowLayout && !isResponsive && isSidebarOpen) ? "260px" : "0",
-          transition: "margin-left 0.3s ease",
+          transform: (shouldShowLayout && isSidebarOpen && !isResponsive) ? "translateX(260px)" : "translateX(0)",
+          transition: "transform 0.3s ease, width 0.3s ease",
+          willChange: "transform",
+          backfaceVisibility: "hidden",
         }}
       >
         {shouldShowLogo && (
@@ -264,18 +267,16 @@ function AppContent() {
           />
         )}
 
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={isLoggedIn ? <Main isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
-            <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} userInfo={userInfo} /> : <Navigate to="/login" />} />
-            <Route path="/view/:conversation_id" element={<View />} />
-            <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
-            <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />
-            <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <Login />} />
-            <Route path="/register" element={isLoggedIn ? <Navigate to="/" /> : <Register />} />
-          </Routes>
-        </AnimatePresence>
-      </motion.div>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={isLoggedIn ? <Main isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
+          <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} userInfo={userInfo} /> : <Navigate to="/login" />} />
+          <Route path="/view/:conversation_id" element={<View />} />
+          <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
+          <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />
+          <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <Login />} />
+          <Route path="/register" element={isLoggedIn ? <Navigate to="/" /> : <Register />} />
+        </Routes>
+      </div>
 
       <Toast
         type="error"

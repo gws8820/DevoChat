@@ -1,5 +1,5 @@
 // src/pages/Chat.js
-import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
+import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { IoImageOutline } from "react-icons/io5";
@@ -720,7 +720,10 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       onDrop={handleDrop}
     >
       {!isInitialized && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
           style={{
             display: "flex",
             justifyContent: "center",
@@ -730,11 +733,11 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           }}
         >
           <ClipLoader loading={true} size={50} />
-        </div>
+        </motion.div>
       )}
       <div className="chat-messages" ref={chatMessageRef}>
-        <AnimatePresence>
-          {messages.map((msg, idx) => (
+        {useMemo(() => 
+          messages.map((msg, idx) => (
             <Message
               key={msg.id}
               messageIndex={idx}
@@ -749,8 +752,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
               isLoading={isLoading}
               isLastMessage={idx === messages.length - 1}
             />
-          ))}
-        </AnimatePresence>
+          )), [messages, handleDelete, handleRegenerate, sendEditedMessage, isTouch, isLoading]
+        )}
         <AnimatePresence>
           {confirmModal && (
             <Modal
@@ -772,7 +775,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
             className="chat-message think"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0 } }}
             transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}
           >
             생각하는 중...
@@ -784,7 +786,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         className="input-container"
         initial={{ y: 8, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 8, opacity: 0 }}
         transition={{ duration: 0.3 }}
       >
         <div className="content-container">
