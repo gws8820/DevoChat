@@ -1,7 +1,7 @@
 # DevoChat
 
-### AI 모델을 위한 통합 대화 플랫폼
-DevoChat은 다양한 AI 모델과 MCP (Model Context Protocol) 서버를 단일 인터페이스에서 사용할 수 있는 웹 애플리케이션입니다.
+### 통합 인공지능 대화 플랫폼
+DevoChat은 다양한 AI 모델과 MCP (Model Context Protocol) 서버를 하나의 인터페이스에서 사용할 수 있는 웹 애플리케이션입니다.
 
 ## 데모
 
