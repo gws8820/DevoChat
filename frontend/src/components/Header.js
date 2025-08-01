@@ -321,7 +321,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2 }}
           >
             <div className="hmodal" ref={modelModalRef}>
               <div className="model-list">

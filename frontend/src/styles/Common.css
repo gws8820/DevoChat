@@ -221,7 +221,7 @@
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     width: 150px;
-    z-index: 999;
+    z-index: 3;
 }
 
 .media-option {
@@ -386,7 +386,7 @@
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(4px);
     pointer-events: none;
-    z-index: 999;
+    z-index: 1000;
 }
 
 .drag-container {
