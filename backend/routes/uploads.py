@@ -4,12 +4,14 @@ import tempfile
 import zipfile
 import textract
 import io
+import json
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
 from pydantic import BaseModel
 from PIL import Image, ImageOps
 from typing import List
 from google.cloud import speech
 from .auth import User, get_current_user
+from logging_util import logger
 
 router = APIRouter()
 
@@ -139,14 +141,16 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
                     try:
                         extracted_bytes = textract.process(tmp_path)
                         inner_extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
-                    except Exception:
+                    except Exception as ex:
+                        logger.info(f"TEXTRACT_FAILED_ARCHIVE: {json.dumps({'file': inner_filename, 'error': str(ex), 'fallback': 'direct_decode'}, ensure_ascii=False, indent=2)}")
                         try:
                             if not is_binary(inner_file_data):
                                 decoded_text = inner_file_data.decode("utf-8", errors="replace")
                                 inner_extracted_text = decoded_text.strip()
                             else:
                                 inner_extracted_text = ""
-                        except Exception:
+                        except Exception as ex2:
+                            logger.info(f"DIRECT_DECODE_FAILED_ARCHIVE: {json.dumps({'file': inner_filename, 'error': str(ex2)}, ensure_ascii=False, indent=2)}")
                             inner_extracted_text = ""
                     finally:
                         os.remove(tmp_path)
@@ -160,7 +164,7 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
         
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception:
             raise HTTPException(status_code=422, detail="Archive processing failed")
         
     else:
@@ -187,11 +191,13 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
                 
                 for result in response.results:
                     extracted_text += result.alternatives[0].transcript + " "
-            except Exception as e:
+            except Exception as ex:
+                logger.info(f"GOOGLE_STT_FAILED: {json.dumps({'file': filename, 'error': str(ex), 'fallback': 'textract'}, ensure_ascii=False, indent=2)}")
                 try:
                     extracted_bytes = textract.process(tmp_path)
                     extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
-                except Exception as e:
+                except Exception as ex2:
+                    logger.info(f"TEXTRACT_FAILED_AUDIO: {json.dumps({'file': filename, 'error': str(ex2)}, ensure_ascii=False, indent=2)}")
                     extracted_text = ""
             finally:
                 os.remove(tmp_path)
@@ -205,14 +211,16 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
             try:
                 extracted_bytes = textract.process(tmp_path)
                 extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
-            except Exception:
+            except Exception as ex:
+                logger.info(f"TEXTRACT_FAILED_FILE: {json.dumps({'file': filename, 'error': str(ex), 'fallback': 'direct_decode'}, ensure_ascii=False, indent=2)}")
                 try:
                     if not is_binary(file_data):
                         decoded_text = file_data.decode("utf-8", errors="replace")
                         extracted_text = decoded_text.strip()
                     else:
                         extracted_text = ""
-                except Exception:
+                except Exception as ex2:
+                    logger.info(f"DIRECT_DECODE_FAILED_FILE: {json.dumps({'file': filename, 'error': str(ex2)}, ensure_ascii=False, indent=2)}")
                     extracted_text = ""
             finally:
                 os.remove(tmp_path)
@@ -287,5 +295,5 @@ async def upload_page(content: WebContent):
         
         return {"success": True}
     
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=str(ex)) 

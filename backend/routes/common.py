@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from bson import ObjectId
 from typing import Any, List, Dict, Optional
+from logging_util import logger
 
 class ChatRequest(BaseModel):
     conversation_id: str
@@ -86,6 +87,14 @@ def get_conversation(user, conversation_id):
     return conversation.get("conversation", []) 
 
 def save_conversation(user, user_message, response_text, token_usage, request: ChatRequest, in_billing: float, out_billing: float):
+    response_data = {
+        "user_id": user.user_id,
+        "conversation_id": request.conversation_id,
+        "assistant_message": response_text
+    }
+
+    logger.info(f"ASSISTANT_RESPONSE: {json.dumps(response_data, ensure_ascii=False, indent=2)}")
+    
     formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
     billing = calculate_billing(request.model, token_usage, in_billing, out_billing)
     
@@ -138,10 +147,10 @@ def get_model_billing(model_name):
             if model['model_name'] == model_name:
                 return float(model['in_billing']), float(model['out_billing'])
         
-        print(f"Warning: Model {model_name} not found in models.json", flush=True)
+        logger.warning(f"Model {model_name} not found in models.json")
         return None
-    except Exception as e:
-        print(f"Error reading models.json: {str(e)}", flush=True)
+    except Exception as ex:
+        logger.error(f"Error reading models.json: {str(ex)}")
         return None
     
 def calculate_billing(model_name, token_usage, in_billing_rate: float, out_billing_rate: float):
@@ -154,9 +163,16 @@ def calculate_billing(model_name, token_usage, in_billing_rate: float, out_billi
         output_cost = (output_tokens + reasoning_tokens) * (out_billing_rate / 1000000)
         total_cost = input_cost + output_cost
         
-        print(f"Model: {model_name}, input_tokens: {input_tokens}, output_tokens: {output_tokens}, reasoning_tokens: {reasoning_tokens}, total_cost: {total_cost}", flush=True)
+        billing_data = {
+            "model": model_name,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "reasoning_tokens": reasoning_tokens,
+            "total_cost": total_cost
+        }
+        logger.info(f"BILLING: {json.dumps(billing_data, ensure_ascii=False, indent=2)}")
     else:
-        print("Error occurred: No token usage.", flush=True)
+        logger.error("BILLING_ERROR: No token usage provided")
         total_cost = 0
         
     return total_cost

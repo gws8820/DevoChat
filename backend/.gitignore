@@ -1,9 +1,11 @@
+__pycache__
 .env
 .venv
-images
-files
-icons
-shared_pages
-__pycache__
+
+logs/
+images/
+files/
+icons/
+shared_pages/
 
 mcp_servers.json

@@ -18,6 +18,7 @@ from ..common import (
     AliasRequest, ALIAS_PROMPT,
     save_alias
 )
+from logging_util import logger
 
 def normalize_user_content(part):
     if part.get("type") == "text":
@@ -38,7 +39,8 @@ def normalize_user_content(part):
                     mime_type="image/jpeg"
                 )
             )
-        except Exception as e:
+        except Exception as ex:
+            logger.error(f"IMAGE_NORMALIZE_ERROR: {str(ex)}")
             return None
     return types.Part(text=str(part))
 
@@ -65,7 +67,6 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                     candidate = chunk.candidates[0]
                     if hasattr(candidate, 'content') and candidate.content.parts:
                         for part in candidate.content.parts:
-                            print(part)
                             if hasattr(part, 'text'):
                                 if hasattr(part, 'thought') and part.thought and not is_thinking:
                                     is_thinking = True
@@ -127,7 +128,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                 "reasoning_tokens": reasoning_tokens
             })
     except Exception as ex:
-        print(f"Exception occured while processing stream: {ex}", flush=True)
+        logger.error(f"STREAM_ERROR: {str(ex)}")
         await chunk_queue.put({"error": str(ex)})
     finally:
         await chunk_queue.put(None)
@@ -203,7 +204,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         if not stream_task.done():
             stream_task.cancel()
     except Exception as ex:
-        print(f"Exception occured while getting response: {ex}", flush=True)
+        logger.error(f"RESPONSE_ERROR: {str(ex)}")
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
         save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
@@ -229,6 +230,6 @@ async def get_alias(request: AliasRequest, user: User = Depends(get_current_user
         save_alias(user, request.conversation_id, alias)
         
         return {"alias": alias}
-    except Exception as e:
-        print(f"Exception detected: {e}", flush=True)
-        return {"alias": "새 대화", "error": str(e)}
+    except Exception as ex:
+        logger.error(f"GET_ALIAS_ERROR: {str(ex)}")
+        return {"alias": "새 대화", "error": str(ex)}

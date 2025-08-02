@@ -81,8 +81,8 @@ async def get_models():
         with open("models.json", "r", encoding="utf-8") as f:
             models_data = json.load(f)
         return models_data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error occurred while fetching models: {str(e)}")
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error occurred while fetching models: {str(ex)}")
 
 @app.get("/mcp-servers", response_model=list[MCPServer])
 async def get_mcp_servers():
@@ -101,8 +101,8 @@ async def get_mcp_servers():
             servers.append(server)
         
         return servers
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error occured while fetching MCP servers: {str(e)}")
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error occured while fetching MCP servers: {str(ex)}")
 
 @app.get("/id/{share_id}", response_class=HTMLResponse)
 async def get_shared_page(share_id: str):
@@ -121,8 +121,8 @@ async def get_shared_page(share_id: str):
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
         return content
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=str(ex))
 
 @app.post("/visit_url")
 def visit_url(request: URLRequest):
@@ -138,8 +138,8 @@ def visit_url(request: URLRequest):
         content = re.sub(r'\n\s*\n', '\n\n', content)
         
         return {"content": f"[[{request.url}]]\n{content}"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error occured while visiting URL: {str(e)}")
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail=f"Error occured while visiting URL: {str(ex)}")
 
 @app.get("/og")
 async def get_opengraph_page():

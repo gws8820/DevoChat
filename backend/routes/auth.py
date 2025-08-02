@@ -246,5 +246,5 @@ async def update_user_status(
             trial_remaining=updated_user["trial_remaining"]
         )
         
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error occured: {str(e)}")
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error occured: {str(ex)}")

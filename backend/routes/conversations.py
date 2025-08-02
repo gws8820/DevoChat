@@ -126,7 +126,7 @@ async def create_new_conversation(current_user: User = Depends(get_current_user)
     
     try:
         conversations_collection.insert_one(new_conversation)
-    except Exception as e:
+    except Exception as ex:
         raise HTTPException(status_code=500, detail="Failed to create conversation")
         
     return {

@@ -15,6 +15,7 @@ from ..common import (
     get_conversation, save_conversation,
     normalize_assistant_content
 )
+from logging_util import logger
 
 def normalize_user_content(part):
     if part.get("type") in ["file", "url"]:
@@ -29,12 +30,14 @@ def normalize_user_content(part):
             with open(abs_path, "rb") as f:
                 file_data = f.read()
             base64_data = "data:image/jpeg;base64," + base64.b64encode(file_data).decode("utf-8")
-        except Exception as e:
-            return None
-        return {
-            "type": "image_url",
-            "image_url": {"url": base64_data}
-        }
+            
+            return {
+                "type": "image_url",
+                "image_url": {"url": base64_data}
+            }
+        except Exception as ex:
+            logger.error(f"IMAGE_NORMALIZE_ERROR: {str(ex)}")
+            return None    
     return part
 
 def format_message(message):
@@ -85,7 +88,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                 "output_tokens": output_tokens
             })
     except Exception as ex:
-        print(f"Exception occured while processing stream: {ex}", flush=True)
+        logger.error(f"STREAM_ERROR: {str(ex)}")
         await chunk_queue.put({"error": str(ex)})
     finally:
         await client.close()
@@ -152,7 +155,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             if not stream_task.done():
                 stream_task.cancel()
     except Exception as ex:
-        print(f"Exception occured while getting response: {ex}", flush=True)
+        logger.error(f"RESPONSE_ERROR: {str(ex)}")
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
         save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)

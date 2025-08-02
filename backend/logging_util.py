@@ -1,12 +1,41 @@
 import time
 import json
-import datetime
+import logging
+import os
+from logging.handlers import RotatingFileHandler
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-def log_with_timestamp(message, level="INFO"):
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-    print(f"[{timestamp}] {level}: {message}")
+logger = logging.getLogger("devochat")
+logger.setLevel(logging.DEBUG)
+
+logs_dir = os.path.join(os.path.dirname(__file__), "logs")
+os.makedirs(logs_dir, exist_ok=True)
+
+formatter = logging.Formatter(
+    '[%(asctime)s.%(msecs)03d] %(levelname)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+info_handler = RotatingFileHandler(
+    os.path.join(logs_dir, "server.log"),
+    maxBytes=10*1024*1024,
+    backupCount=5,
+    encoding='utf-8'
+)
+info_handler.setLevel(logging.INFO)
+info_handler.setFormatter(formatter)
+logger.addHandler(info_handler)
+
+debug_handler = RotatingFileHandler(
+    os.path.join(logs_dir, "debug.log"),
+    maxBytes=10*1024*1024,
+    backupCount=5,
+    encoding='utf-8'
+)
+debug_handler.setLevel(logging.DEBUG)
+debug_handler.setFormatter(formatter)
+logger.addHandler(debug_handler)
 
 async def get_request_body(request: Request):
     try:
@@ -26,8 +55,8 @@ async def get_request_body(request: Request):
                 body_str = body.decode()[:500]
                 return body_str + "..." if len(body) > 500 else body_str
         return None
-    except Exception as e:
-        return f"ERROR_READING_BODY: {str(e)}"
+    except Exception as ex:
+        return f"ERROR_READING_BODY: {str(ex)}"
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
@@ -49,7 +78,10 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         if request_body:
             log_data["body"] = request_body
         
-        log_with_timestamp(f"REQUEST: {json.dumps(log_data, ensure_ascii=False, indent=2)}")
+        if request.method in ["POST", "DELETE"]:
+            logger.info(f"REQUEST: {json.dumps(log_data, ensure_ascii=False, indent=2)}")
+        else:
+            logger.debug(f"REQUEST: {json.dumps(log_data, ensure_ascii=False, indent=2)}")
         
         try:
             response = await call_next(request)
@@ -63,20 +95,23 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "client_ip": client_ip
             }
             
-            log_with_timestamp(f"RESPONSE: {json.dumps(response_data, ensure_ascii=False)}")
+            if request.method in ["POST", "DELETE"]:
+                logger.info(f"RESPONSE: {json.dumps(response_data, ensure_ascii=False, indent=2)}")
+            else:
+                logger.debug(f"RESPONSE: {json.dumps(response_data, ensure_ascii=False, indent=2)}")
             
             return response
             
-        except Exception as e:
+        except Exception as ex:
             process_time = time.time() - start_time
             
             error_data = {
                 "method": request.method,
                 "path": str(request.url.path),
-                "error": str(e),
+                "error": str(ex),
                 "process_time_ms": round(process_time * 1000, 2),
                 "client_ip": client_ip
             }
             
-            log_with_timestamp(f"ERROR: {json.dumps(error_data, ensure_ascii=False, indent=2)}", "ERROR")
-            raise 
+            logger.error(f"ERROR: {json.dumps(error_data, ensure_ascii=False, indent=2)}")
+            raise
