@@ -71,9 +71,8 @@ function Message({
     try {
       let textToCopy;
       if (Array.isArray(content)) {
-        textToCopy = content.map((item) =>
-          item.type === "text" ? item.text : item.name
-        ).join(" ");
+        const textItem = content.find((item) => item.type === "text");
+        textToCopy = textItem ? textItem.text : "";
       } else {
         textToCopy = String(content)
           .replace(/\n\n<tool_use>\n.*?\n<\/tool_use>\n/gi, '')

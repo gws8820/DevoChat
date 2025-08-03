@@ -63,10 +63,14 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
         
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = "unknown"
+        if request.client:
+            forwarded_for = request.headers.get("x-forwarded-for")
+            if forwarded_for:
+                client_ip = forwarded_for.split(",")[0].strip()
+            else:
+                client_ip = request.client.host
         user_agent = request.headers.get("user-agent", "unknown")
-        
-        request_body = await get_request_body(request)
         
         log_data = {
             "method": request.method,
@@ -75,6 +79,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             "user_agent": user_agent[:100] + "..." if len(user_agent) > 100 else user_agent,
         }
         
+        request_body = await get_request_body(request)
         if request_body:
             log_data["body"] = request_body
         
