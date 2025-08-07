@@ -5,6 +5,7 @@ import os
 from logging.handlers import RotatingFileHandler
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
+from routes.auth import decode_user_token
 
 logger = logging.getLogger("devochat")
 logger.setLevel(logging.DEBUG)
@@ -58,7 +59,6 @@ async def get_request_body(request: Request):
     except Exception as ex:
         return f"ERROR_READING_BODY: {str(ex)}"
 
-
 class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
@@ -72,11 +72,16 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 client_ip = request.client.host
         user_agent = request.headers.get("user-agent", "unknown")
         
+        access_token = request.cookies.get("access_token")
+        user_info = decode_user_token(access_token)
+        
         log_data = {
             "method": request.method,
             "path": str(request.url.path),
             "client_ip": client_ip,
             "user_agent": user_agent[:100] + "..." if len(user_agent) > 100 else user_agent,
+            "name": user_info["name"] if user_info else None,
+            "user_id": user_info["user_id"] if user_info else None,
         }
         
         request_body = await get_request_body(request)
@@ -97,7 +102,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "path": str(request.url.path),
                 "status_code": response.status_code,
                 "process_time_ms": round(process_time * 1000, 2),
-                "client_ip": client_ip
+                "client_ip": client_ip,
+                "name": user_info["name"] if user_info else None,
+                "user_id": user_info["user_id"] if user_info else None,
             }
             
             if request.method in ["POST", "DELETE"]:
@@ -115,7 +122,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 "path": str(request.url.path),
                 "error": str(ex),
                 "process_time_ms": round(process_time * 1000, 2),
-                "client_ip": client_ip
+                "client_ip": client_ip,
+                "name": user_info["name"] if user_info else None,
+                "user_id": user_info["user_id"] if user_info else None,
             }
             
             logger.error(f"ERROR: {json.dumps(error_data, ensure_ascii=False, indent=2)}")

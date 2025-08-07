@@ -22,8 +22,18 @@ from logging_util import logger
 def normalize_user_content(part):
     if part.get("type") == "text":
         return part.get("text")
-    elif part.get("type") in ["file", "url"]:
+    elif part.get("type") == "url":
         return part.get("content")
+    elif part.get("type") == "file":
+        file_path = part.get("content")
+        try:
+            abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", file_path.lstrip("/")))
+            with open(abs_path, "r", encoding="utf-8") as f:
+                file_content = f.read()
+            return file_content
+        except Exception as ex:
+            logger.error(f"FILE_PROCESS_ERROR: {str(ex)}")
+            return None
     elif part.get("type") == "image":
         file_path = part.get("content")
         try:
@@ -33,7 +43,7 @@ def normalize_user_content(part):
             base64_data = "data:image/jpeg;base64," + base64.b64encode(file_data).decode("utf-8")
             return image(base64_data, detail="high")
         except Exception as ex:
-            logger.error(f"IMAGE_NORMALIZE_ERROR: {str(ex)}")
+            logger.error(f"IMAGE_PROCESS_ERROR: {str(ex)}")
             return None
 
 def format_message(message):
@@ -130,7 +140,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
 async def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     error_message, in_billing, out_billing = check_user_permissions(user, request)
     if error_message:
-        yield f"data: {json.dumps({'content': error_message})}\n\n"
+        yield f"data: {json.dumps({'error': error_message})}\n\n"
         return
     
     user_message = {"role": "user", "content": request.user_message}

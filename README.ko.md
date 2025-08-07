@@ -260,7 +260,6 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `endpoint` | 백엔드에서 해당 모델 요청을 처리할 API 경로입니다. (예: `/gpt`, `/claude`, `/gemini`) |
 | `in_billing` | 입력 토큰(프롬프트)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
 | `out_billing` | 출력 토큰(응답)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
-| `search_billing` | (선택 사항) 검색 기능 사용 시 추가되는 청구 비용입니다. |
 | `variants` | `"switch"` 타입일 때 전환할 모델을 정의합니다. |
 | `capabilities` | 모델이 지원하는 기능들을 정의합니다. |
 | `capabilities.stream` | 스트리밍 응답 지원 여부입니다. |

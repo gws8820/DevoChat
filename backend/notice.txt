@@ -1,1 +1,1 @@
-ZAI의 GLM 4.5 모델이 추가되었습니다!
+GPT-OSS-120B와 Claude Opus 4.1이 추가되었습니다!

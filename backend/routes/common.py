@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from bson import ObjectId
 from typing import Any, List, Dict, Optional
+from .auth import User
 from logging_util import logger
 
 class ChatRequest(BaseModel):
@@ -62,7 +63,7 @@ try:
 except FileNotFoundError:
     ALIAS_PROMPT = ""
 
-def check_user_permissions(user, request: ChatRequest):
+def check_user_permissions(user: User, request: ChatRequest):
     billing_result = get_model_billing(request.model)
     if not billing_result:
         return "잘못된 모델입니다.", None, None
@@ -79,15 +80,16 @@ def check_user_permissions(user, request: ChatRequest):
         return "메시지 내용이 비어 있습니다. 내용을 입력해 주세요.", None, None
     return None, in_billing, out_billing
 
-def get_conversation(user, conversation_id):
+def get_conversation(user: User, conversation_id: str):
     conversation = conversation_collection.find_one(
         {"user_id": user.user_id, "conversation_id": conversation_id},
         {"conversation": {"$slice": -6}}
     )
     return conversation.get("conversation", []) 
 
-def save_conversation(user, user_message, response_text, token_usage, request: ChatRequest, in_billing: float, out_billing: float):
+def save_conversation(user: User, user_message, response_text, token_usage, request: ChatRequest, in_billing: float, out_billing: float):
     response_data = {
+        "name": user.name,
         "user_id": user.user_id,
         "conversation_id": request.conversation_id,
         "assistant_message": response_text
@@ -96,7 +98,7 @@ def save_conversation(user, user_message, response_text, token_usage, request: C
     logger.info(f"ASSISTANT_RESPONSE: {json.dumps(response_data, ensure_ascii=False, indent=2)}")
     
     formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
-    billing = calculate_billing(request.model, token_usage, in_billing, out_billing)
+    billing = calculate_billing(user, request.model, token_usage, in_billing, out_billing)
     
     if user.trial:
         user_collection.update_one(
@@ -131,7 +133,7 @@ def save_conversation(user, user_message, response_text, token_usage, request: C
         }
     )
 
-def save_alias(user, conversation_id, alias):
+def save_alias(user: User, conversation_id: str, alias: str):
     conversation_collection.update_one(
         {"user_id": user.user_id, "conversation_id": conversation_id},
         {"$set": {"alias": alias}}
@@ -153,7 +155,7 @@ def get_model_billing(model_name):
         logger.error(f"Error reading models.json: {str(ex)}")
         return None
     
-def calculate_billing(model_name, token_usage, in_billing_rate: float, out_billing_rate: float):
+def calculate_billing(user: User, model_name, token_usage, in_billing_rate: float, out_billing_rate: float):
     if token_usage:
         input_tokens = token_usage.get('input_tokens', 0)
         output_tokens = token_usage.get('output_tokens', 0)
@@ -164,6 +166,8 @@ def calculate_billing(model_name, token_usage, in_billing_rate: float, out_billi
         total_cost = input_cost + output_cost
         
         billing_data = {
+            "name": user.name,
+            "user_id": user.user_id,
             "model": model_name,
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,

@@ -19,7 +19,7 @@ import MCPModal from "../components/MCPModal";
 import Toast from "../components/Toast";
 import "../styles/Common.css";
 
-function Chat({ isTouch, chatMessageRef, userInfo }) {
+function Chat({ isTouch, chatMessageRef }) {
   const { conversation_id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -463,7 +463,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   }, [conversation_id, location.state]);
 
   useEffect(() => {
-    const hasImageHistory = messages.some((msg) => 
+    const hasImageHistory = messages.slice(-6).some((msg) => 
       Array.isArray(msg.content) && msg.content.some((item) => item.type === "image")
     );
 
@@ -1049,7 +1049,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         onClose={handleMCPModalClose}
         onConfirm={handleMCPModalConfirm}
         currentMCPList={mcpList}
-        userInfo={userInfo}
       />
 
       <Toast

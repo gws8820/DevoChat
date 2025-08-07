@@ -66,6 +66,7 @@
 
 .model-box:hover {
     background-color: #f9f9f9;
+    color: #000;
 }
 
 .expand-icon {

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ClipLoader } from "react-spinners";
 import '../styles/MCPModal.css';
 
-const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList, userInfo }) => {
+const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList }) => {
   const [selectedServers, setSelectedServers] = useState([]);
   const [availableServers, setAvailableServers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,27 +14,21 @@ const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList, userInfo }) => {
     setError(null);
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/mcp-servers`);
+      const response = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/mcp-servers`, {
+        credentials: "include"
+      });
       if (!response.ok) {
         throw new Error('서버 목록을 불러올 수 없습니다.');
       }
       
       const servers = await response.json();
-      
-      const filteredServers = servers.filter(server => {
-        if (userInfo?.admin) {
-          return true;
-        }
-        return !server.admin;
-      });
-      
-      setAvailableServers(filteredServers);
+      setAvailableServers(servers);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [userInfo?.admin]);
+  }, []);
 
   useEffect(() => {
     if (isOpen && currentMCPList) {

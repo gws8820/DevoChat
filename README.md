@@ -260,7 +260,6 @@ Define the AI models available in the application and their properties through t
 | `endpoint` | API path for handling model requests in the backend (e.g., `/gpt`, `/claude`, `/gemini`) |
 | `in_billing` | Billing cost for input tokens (prompts). Unit: USD per million tokens |
 | `out_billing` | Billing cost for output tokens (responses). Unit: USD per million tokens |
-| `search_billing` | (Optional) Additional billing cost when using search features |
 | `variants` | Defines models to switch to for `"switch"` type |
 | `capabilities` | Defines the features supported by the model |
 | `capabilities.stream` | Whether streaming response is supported |

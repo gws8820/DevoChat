@@ -19,7 +19,7 @@ import MCPModal from "../components/MCPModal";
 import Toast from "../components/Toast";
 import "../styles/Common.css";
 
-function Main({ isTouch, userInfo }) {
+function Main({ isTouch }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [notice, setNotice] = useState("");
@@ -712,7 +712,6 @@ function Main({ isTouch, userInfo }) {
         onClose={handleMCPModalClose}
         onConfirm={handleMCPModalConfirm}
         currentMCPList={mcpList}
-        userInfo={userInfo}
       />
 
       <Toast

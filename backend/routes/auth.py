@@ -157,6 +157,19 @@ async def get_current_user(access_token: str = Cookie(None)) -> User:
         trial_remaining=db_user["trial_remaining"]
     )
 
+def decode_user_token(access_token: str):
+    if not access_token:
+        return None
+    
+    try:
+        payload = jwt.decode(access_token, AUTH_KEY, algorithms=[ALGORITHM])
+        return {
+            "name": payload.get("name"),
+            "user_id": payload.get("user_id")
+        }
+    except (ExpiredSignatureError, InvalidTokenError, Exception):
+        return None
+
 async def check_admin(access_token: str = Cookie(None)):
     if not access_token:
         raise HTTPException(

@@ -268,8 +268,8 @@ function AppContent() {
         )}
 
         <Routes location={location} key={location.pathname}>
-          <Route path="/" element={isLoggedIn ? <Main isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
-          <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} userInfo={userInfo} /> : <Navigate to="/login" />} />
+          <Route path="/" element={isLoggedIn ? <Main isTouch={isTouch} /> : <Navigate to="/login" />} />
+          <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
           <Route path="/view/:conversation_id" element={<View />} />
           <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
           <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />

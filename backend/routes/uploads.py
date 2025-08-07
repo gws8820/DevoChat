@@ -17,9 +17,13 @@ router = APIRouter()
 
 IMAGE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images")
 FILES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "files")
+FILES_PROCESSED_DIR = os.path.join(FILES_DIR, "processed")
+FILES_ORIGINAL_DIR = os.path.join(FILES_DIR, "original")
 
 os.makedirs(IMAGE_DIR, exist_ok=True)
 os.makedirs(FILES_DIR, exist_ok=True)
+os.makedirs(FILES_PROCESSED_DIR, exist_ok=True)
+os.makedirs(FILES_ORIGINAL_DIR, exist_ok=True)
 
 class WebContent(BaseModel):
     unique_id: str
@@ -231,17 +235,24 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
     if not current_user.admin and len(extracted_text) > 20000:
         raise HTTPException(status_code=413, detail="Extracted text exceeds 20000 character limit.")
 
-    # Save with UUID filename but return original filename for display
-    saved_filename = f"{uuid.uuid4().hex}{ext}"
-    file_location = os.path.join(FILES_DIR, saved_filename)
-    with open(file_location, "wb") as f:
-        f.write(file_data)
+    file_uuid = uuid.uuid4().hex
+    
+    processed_filename = f"{file_uuid}.txt"
+    processed_file_path = os.path.join(FILES_PROCESSED_DIR, processed_filename)
+    processed_content = f"[[{filename}]]\n{extracted_text}"
+    with open(processed_file_path, "w", encoding="utf-8") as f:
+        f.write(processed_content)
 
+    original_filename = f"{file_uuid}{ext}"
+    original_file_path = os.path.join(FILES_ORIGINAL_DIR, original_filename)
+    with open(original_file_path, "wb") as f:
+        f.write(file_data)
+    
     return {
         "type": "file",
         "name": filename,
-        "content": f"[[{filename}]]\n{extracted_text}",
-        "file_path": f"/files/{saved_filename}"
+        "content": f"/files/processed/{processed_filename}",
+        "file_path": f"/files/original/{original_filename}"
     }
 
 @router.post("/upload_page")

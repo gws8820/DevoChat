@@ -56,11 +56,24 @@ def normalize_user_content(part):
             "type": "input_text",
             "text": part.get("text")
         }
-    elif part.get("type") in ["file", "url"]:
+    elif part.get("type") == "url":
         return {
             "type": "input_text",
             "text": part.get("content")
         }
+    elif part.get("type") == "file":
+        file_path = part.get("content")
+        try:
+            abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", file_path.lstrip("/")))
+            with open(abs_path, "r", encoding="utf-8") as f:
+                file_content = f.read()
+            return {
+                "type": "input_text",
+                "text": file_content
+            }
+        except Exception as ex:
+            logger.error(f"FILE_PROCESS_ERROR: {str(ex)}")
+            return None
     elif part.get("type") == "image":
         file_path = part.get("content")
         try:
@@ -69,7 +82,7 @@ def normalize_user_content(part):
                 file_data = f.read()
             base64_data = "data:image/jpeg;base64," + base64.b64encode(file_data).decode("utf-8")
         except Exception as ex:
-            logger.error(f"IMAGE_NORMALIZE_ERROR: {str(ex)}")
+            logger.error(f"IMAGE_PROCESS_ERROR: {str(ex)}")
             return None
         return {
             "type": "input_image",
@@ -198,7 +211,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
 async def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     error_message, in_billing, out_billing = check_user_permissions(user, request)
     if error_message:
-        yield f"data: {json.dumps({'content': error_message})}\n\n"
+        yield f"data: {json.dumps({'error': error_message})}\n\n"
         return
     
     user_message = {"role": "user", "content": request.user_message}
@@ -278,6 +291,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     finally:
         save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
     
-@router.post("/openai")
+@router.post("/gpt")
 async def openai_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     return StreamingResponse(get_response(chat_request, user, fastapi_request), media_type="text/event-stream")

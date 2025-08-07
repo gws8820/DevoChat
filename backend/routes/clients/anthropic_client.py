@@ -48,11 +48,24 @@ def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dic
     return server_list, None
 
 def normalize_user_content(part):
-    if part.get("type") in ["file", "url"]:
+    if part.get("type") == "url":
         return {
             "type": "text",
             "text": part.get("content")
         }
+    elif part.get("type") == "file":
+        file_path = part.get("content")
+        try:
+            abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", file_path.lstrip("/")))
+            with open(abs_path, "r", encoding="utf-8") as f:
+                file_content = f.read()
+            return {
+                "type": "text",
+                "text": file_content
+            }
+        except Exception as ex:
+            logger.error(f"FILE_PROCESS_ERROR: {str(ex)}")
+            return None
     elif part.get("type") == "image":
         file_path = part.get("content")
         try:
@@ -61,7 +74,7 @@ def normalize_user_content(part):
                 file_data = f.read()
             base64_data = base64.b64encode(file_data).decode("utf-8")
         except Exception as ex:
-            logger.error(f"IMAGE_NORMALIZE_ERROR: {str(ex)}")
+            logger.error(f"IMAGE_PROCESS_ERROR: {str(ex)}")
             return None
         return {
             "type": "image",
@@ -213,7 +226,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
 async def get_response(request: ChatRequest, user: User, fastapi_request: Request):
     error_message, in_billing, out_billing = check_user_permissions(user, request)
     if error_message:
-        yield f"data: {json.dumps({'content': error_message})}\n\n"
+        yield f"data: {json.dumps({'error': error_message})}\n\n"
         return
     
     user_message = {"role": "user", "content": request.user_message}

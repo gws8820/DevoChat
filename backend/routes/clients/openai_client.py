@@ -20,11 +20,24 @@ from ..common import (
 from logging_util import logger
     
 def normalize_user_content(part):
-    if part.get("type") in ["file", "url"]:
+    if part.get("type") == "url":
         return {
             "type": "text",
             "text": part.get("content")
         }
+    elif part.get("type") == "file":
+        file_path = part.get("content")
+        try:
+            abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", file_path.lstrip("/")))
+            with open(abs_path, "r", encoding="utf-8") as f:
+                file_content = f.read()
+            return {
+                "type": "text",
+                "text": file_content
+            }
+        except Exception as ex:
+            logger.error(f"FILE_PROCESS_ERROR: {str(ex)}")
+            return None
     elif part.get("type") == "image":
         file_path = part.get("content")
         try:
@@ -38,7 +51,7 @@ def normalize_user_content(part):
                 "image_url": {"url": base64_data}
             }
         except Exception as ex:
-            logger.error(f"IMAGE_NORMALIZE_ERROR: {str(ex)}")
+            logger.error(f"IMAGE_PROCESS_ERROR: {str(ex)}")
             return None
     return part
 
@@ -53,6 +66,7 @@ def format_message(message):
         
 async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
     citations = None
+    is_thinking = False
     try:
         if request.stream:
             stream_result = await client.chat.completions.create(**parameters)
@@ -60,8 +74,19 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
             async for chunk in stream_result:
                 if await fastapi_request.is_disconnected():
                     return
+                
+                if hasattr(chunk.choices[0].delta, 'reasoning_content'):
+                    if not is_thinking:
+                        is_thinking = True
+                        await chunk_queue.put('<think>\n')
+                    await chunk_queue.put(chunk.choices[0].delta.reasoning_content)
+                
                 if chunk.choices[0].delta.content:
+                    if is_thinking:
+                        await chunk_queue.put('\n</think>\n\n')
+                        is_thinking = False
                     await chunk_queue.put(chunk.choices[0].delta.content)
+                
                 if chunk.usage:
                     input_tokens = chunk.usage.prompt_tokens or 0
                     output_tokens = chunk.usage.completion_tokens or 0
@@ -110,7 +135,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
 async def get_response(request: ChatRequest, settings: ApiSettings, user: User, fastapi_request: Request):
     error_message, in_billing, out_billing = check_user_permissions(user, request)
     if error_message:
-        yield f"data: {json.dumps({'content': error_message})}\n\n"
+        yield f"data: {json.dumps({'error': error_message})}\n\n"
         return
     
     user_message = {"role": "user", "content": request.user_message}
@@ -182,6 +207,14 @@ async def perplexity_endpoint(chat_request: ChatRequest, fastapi_request: Reques
     settings = ApiSettings(
         api_key=os.getenv('PERPLEXITY_API_KEY'),
         base_url="https://api.perplexity.ai"
+    )
+    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
+
+@router.post("/fireworks")
+async def fireworks_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+    settings = ApiSettings(
+        api_key=os.getenv('FIREWORKS_API_KEY'),
+        base_url="https://api.fireworks.ai/inference/v1"
     )
     return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
 

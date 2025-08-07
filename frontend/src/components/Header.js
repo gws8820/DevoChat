@@ -164,19 +164,10 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
             </div>
           </Tooltip>
         )}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentModelAlias}
-            className="model-box"
-            onClick={() => setIsModelModalOpen(true)}
-            initial={{ x: -5, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            {currentModelAlias}
-            <RiArrowRightSLine className="expand-icon" />
-          </motion.div>
-        </AnimatePresence>
+        <div className="model-box" onClick={() => setIsModelModalOpen(true)}>
+          {currentModelAlias}
+          <RiArrowRightSLine className="expand-icon" />
+        </div>
       </div>
 
       <div className="header-right">

@@ -4,12 +4,13 @@ import json
 import requests
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from routes import auth, realtime, conversations, uploads
-from routes.clients import openai_client, grok_client, responses_client, anthropic_client, google_client, mistral_client, huggingface_client
+from routes.clients import openai_client, grok_client, responses_client, anthropic_client, google_client, mistral_client
+from routes.auth import User, get_current_user
 from bs4 import BeautifulSoup
 import base64
 from logging_util import LoggingMiddleware
@@ -47,7 +48,6 @@ app.include_router(responses_client.router)
 app.include_router(anthropic_client.router)
 app.include_router(google_client.router)
 app.include_router(mistral_client.router)
-app.include_router(huggingface_client.router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -85,13 +85,16 @@ async def get_models():
         raise HTTPException(status_code=500, detail=f"Error occurred while fetching models: {str(ex)}")
 
 @app.get("/mcp-servers", response_model=list[MCPServer])
-async def get_mcp_servers():
+async def get_mcp_servers(user: User = Depends(get_current_user)):
     try:
         with open("mcp_servers.json", "r", encoding="utf-8") as f:
             mcp_servers = json.load(f)
         
         servers = []
         for server_id, config in mcp_servers.items():
+            if not user.admin and config["admin"]:
+                continue
+            
             server = MCPServer(
                 id=server_id,
                 name=config["name"],

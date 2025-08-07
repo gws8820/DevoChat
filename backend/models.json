@@ -44,7 +44,7 @@
       },
       {
         "model_name": "claude-sonnet-4-20250514",
-        "model_alias": "Claude 4 Sonnet",
+        "model_alias": "Claude Sonnet 4",
         "description": "고성능 Claude 모델",
         "endpoint": "/claude",
         "in_billing": "3",
@@ -64,8 +64,8 @@
         }
       },
       {
-        "model_name": "claude-opus-4-20250514",
-        "model_alias": "Claude 4 Opus",
+        "model_name": "claude-opus-4-1-20250805",
+        "model_alias": "Claude Opus 4.1",
         "description": "최고 성능 Claude 모델",
         "endpoint": "/claude",
         "in_billing": "15",
@@ -86,7 +86,7 @@
       },
       {
         "model_name": "claude-3-5-haiku-latest",
-        "model_alias": "Claude 3.5 Haiku",
+        "model_alias": "Claude Haiku 3.5",
         "description": "표준 Claude 모델",
         "endpoint": "/claude",
         "in_billing": "0.8",
@@ -151,7 +151,7 @@
         "model_name": "gpt-4.1",
         "model_alias": "GPT 4.1",
         "description": "표준 GPT 모델",
-        "endpoint": "/openai",
+        "endpoint": "/gpt",
         "in_billing": "2",
         "out_billing": "8",
         "capabilities": {
@@ -172,7 +172,7 @@
         "model_name": "gpt-4.1-mini",
         "model_alias": "GPT 4.1 mini",
         "description": "경량 GPT 모델",
-        "endpoint": "/openai",
+        "endpoint": "/gpt",
         "in_billing": "0.4",
         "out_billing": "1.6",
         "capabilities": {
@@ -190,10 +190,31 @@
         }
       },
       {
+        "model_name": "accounts/fireworks/models/gpt-oss-120b",
+        "model_alias": "GPT-OSS 120B",
+        "description": "고성능 오픈소스 GPT 모델",
+        "endpoint": "/fireworks",
+        "in_billing": "0.1",
+        "out_billing": "0.1",
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": true,
+          "search": false,
+          "deep_research": false,
+          "mcp": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": false,
+          "system_message": true
+        }
+      },
+      {
         "model_name": "o4-mini",
-        "model_alias": "OpenAI o4 mini",
+        "model_alias": "o4 mini",
         "description": "추론 GPT 모델",
-        "endpoint": "/openai",
+        "endpoint": "/gpt",
         "in_billing": "1.1",
         "out_billing": "4.4",
         "variants": {
@@ -215,9 +236,9 @@
       },
       {
         "model_name": "o4-mini-deep-research",
-        "model_alias": "OpenAI o4 mini",
+        "model_alias": "o4 mini",
         "description": "추론 GPT 모델",
-        "endpoint": "/openai",
+        "endpoint": "/gpt",
         "in_billing": "2",
         "out_billing": "8",
         "variants": {
@@ -239,9 +260,9 @@
       },
       {
         "model_name": "o3",
-        "model_alias": "OpenAI o3",
+        "model_alias": "o3",
         "description": "고성능 추론 GPT 모델",
-        "endpoint": "/openai",
+        "endpoint": "/gpt",
         "in_billing": "2",
         "out_billing": "8",
         "variants": {
@@ -263,9 +284,9 @@
       },
       {
         "model_name": "o3-deep-research",
-        "model_alias": "OpenAI o3",
+        "model_alias": "o3",
         "description": "고성능 추론 GPT 모델",
-        "endpoint": "/openai",
+        "endpoint": "/gpt",
         "in_billing": "10",
         "out_billing": "40",
         "variants": {
@@ -287,9 +308,9 @@
       },
       {
         "model_name": "o3-pro",
-        "model_alias": "OpenAI o3 Pro",
+        "model_alias": "o3 Pro",
         "description": "최고 성능 추론 GPT 모델",
-        "endpoint": "/openai",
+        "endpoint": "/gpt",
         "in_billing": "20",
         "out_billing": "80",
         "capabilities": {
@@ -307,10 +328,10 @@
         }
       },
       {
-        "model_name": "moonshotai/Kimi-K2-Instruct",
+        "model_name": "accounts/fireworks/models/kimi-k2-instruct",
         "model_alias": "Kimi K2",
         "description": "최신 Kimi 모델",
-        "endpoint": "/huggingface",
+        "endpoint": "/fireworks",
         "in_billing": "0.57",
         "out_billing": "2.3",
         "capabilities": {
@@ -328,14 +349,14 @@
         }
       },
       {
-        "model_name": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+        "model_name": "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507",
         "model_alias": "Qwen 3",
         "description": "최신 Qwen 모델",
-        "endpoint": "/huggingface",
+        "endpoint": "/fireworks",
         "in_billing": "0.22",
         "out_billing": "0.88",
         "variants": {
-          "inference": "Qwen/Qwen3-235B-A22B-Thinking-2507"
+          "inference": "accounts/fireworks/models/qwen3-235b-a22b-thinking-2507"
         },
         "capabilities": {
           "stream": true,
@@ -352,14 +373,14 @@
         }
       },
       {
-        "model_name": "Qwen/Qwen3-235B-A22B-Thinking-2507",
+        "model_name": "accounts/fireworks/models/qwen3-235b-a22b-thinking-2507",
         "model_alias": "Qwen 3",
         "description": "최신 Qwen 모델",
-        "endpoint": "/huggingface",
+        "endpoint": "/fireworks",
         "in_billing": "0.22",
         "out_billing": "0.88",
         "variants": {
-          "base": "Qwen/Qwen3-235B-A22B-Instruct-2507"
+          "base": "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507"
         },
         "capabilities": {
           "stream": true,
@@ -376,16 +397,19 @@
         }
       },
       {
-        "model_name": "deepseek-ai/DeepSeek-V3-0324",
+        "model_name": "accounts/fireworks/models/deepseek-v3-0324",
         "model_alias": "Deepseek V3",
         "description": "표준 Deepseek 모델",
-        "endpoint": "/huggingface",
+        "endpoint": "/fireworks",
         "in_billing": "0.9",
         "out_billing": "0.9",
+        "variants": {
+          "inference": "accounts/fireworks/models/deepseek-r1-0528"
+        },
         "capabilities": {
           "stream": true,
           "image": false,
-          "inference": false,
+          "inference": "switch",
           "search": false,
           "deep_research": false,
           "mcp": false
@@ -397,16 +421,19 @@
         }
       },
       {
-        "model_name": "deepseek-ai/DeepSeek-R1-0528",
+        "model_name": "accounts/fireworks/models/deepseek-r1-0528",
         "model_alias": "Deepseek R1",
         "description": "추론 Deepseek 모델",
-        "endpoint": "/huggingface",
+        "endpoint": "/fireworks",
         "in_billing": "3",
         "out_billing": "8",
+        "variants": {
+          "base": "accounts/fireworks/models/deepseek-v3-0324"
+        },
         "capabilities": {
           "stream": true,
           "image": false,
-          "inference": true,
+          "inference": "switch",
           "search": false,
           "deep_research": false,
           "mcp": false
@@ -545,10 +572,13 @@
         "endpoint": "/mistral",
         "in_billing": "0.4",
         "out_billing": "2",
+        "variants": {
+          "inference": "magistral-medium-2506"
+        },
         "capabilities": {
           "stream": true,
           "image": true,
-          "inference": false,
+          "inference": "switch",
           "search": false,
           "deep_research": false,
           "mcp": false
@@ -566,10 +596,13 @@
         "endpoint": "/mistral",
         "in_billing": "2",
         "out_billing": "5",
+        "variants": {
+          "base": "mistral-medium-2505"
+        },
         "capabilities": {
           "stream": true,
           "image": false,
-          "inference": true,
+          "inference": "switch",
           "search": false,
           "deep_research": false,
           "mcp": false
@@ -581,10 +614,10 @@
         }
       },
       {
-        "model_name": "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+        "model_name": "accounts/fireworks/models/llama4-maverick-instruct-basic",
         "model_alias": "Llama 4 Maverick",
         "description": "표준 Llama 모델",
-        "endpoint": "/huggingface",
+        "endpoint": "/fireworks",
         "in_billing": "0.22",
         "out_billing": "0.88",
         "capabilities": {
@@ -602,12 +635,12 @@
         }
       },
       {
-        "model_name": "zai-org/GLM-4.5",
+        "model_name": "accounts/fireworks/models/glm-4p5",
         "model_alias": "GLM 4.5",
-        "description": "표준 ZAI 모델",
-        "endpoint": "/huggingface",
-        "in_billing": "0.6",
-        "out_billing": "2.2",
+        "description": "최신 GLM 모델",
+        "endpoint": "/fireworks",
+        "in_billing": "0.55",
+        "out_billing": "2.19",
         "capabilities": {
           "stream": true,
           "image": false,
@@ -624,7 +657,7 @@
       },
       {
         "model_name": "LGAI-EXAONE/EXAONE-4.0-32B",
-        "model_alias": "LG EXAONE 4.0",
+        "model_alias": "EXAONE 4.0",
         "description": "최신 EXAONE 모델",
         "endpoint": "/friendli",
         "in_billing": "1",
@@ -645,8 +678,8 @@
       },
       {
         "model_name": "ax4",
-        "model_alias": "SKT A.X 4.0",
-        "description": "최신 에이닷X 모델",
+        "model_alias": "A.X 4.0",
+        "description": "최신 에이닷 모델",
         "endpoint": "/adotx",
         "in_billing": "0",
         "out_billing": "0",
