@@ -43,149 +43,44 @@
         }
       },
       {
-        "model_name": "claude-sonnet-4-20250514",
-        "model_alias": "Claude Sonnet 4",
-        "description": "고성능 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "3",
-        "out_billing": "15",
-        "capabilities": {
-          "stream": true,
-          "image": true,
-          "inference": "toggle",
-          "search": "toggle",
-          "deep_research": false,
-          "mcp": true
-        },
-        "controls": {
-          "temperature": "conditional",
-          "reason": true,
-          "system_message": true
-        }
-      },
-      {
-        "model_name": "claude-opus-4-1-20250805",
-        "model_alias": "Claude Opus 4.1",
-        "description": "최고 성능 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "15",
-        "out_billing": "75",
-        "capabilities": {
-          "stream": true,
-          "image": true,
-          "inference": "toggle",
-          "search": "toggle",
-          "deep_research": false,
-          "mcp": true
-        },
-        "controls": {
-          "temperature": "conditional",
-          "reason": true,
-          "system_message": true
-        }
-      },
-      {
-        "model_name": "claude-3-5-haiku-latest",
-        "model_alias": "Claude Haiku 3.5",
-        "description": "표준 Claude 모델",
-        "endpoint": "/claude",
-        "in_billing": "0.8",
-        "out_billing": "4",
-        "capabilities": {
-          "stream": true,
-          "image": true,
-          "inference": false,
-          "search": "toggle",
-          "deep_research": false,
-          "mcp": true
-        },
-        "controls": {
-          "temperature": true,
-          "reason": false,
-          "system_message": true
-        }
-      },
-      {
-        "model_name": "grok-4",
-        "model_alias": "Grok 4",
-        "description": "고성능 Grok 모델",
-        "endpoint": "/grok",
-        "in_billing": "3",
-        "out_billing": "15",
+        "model_name": "gpt-5",
+        "model_alias": "GPT 5",
+        "description": "최신 GPT 모델",
+        "endpoint": "/gpt",
+        "in_billing": "1.25",
+        "out_billing": "10",
         "capabilities": {
           "stream": true,
           "image": true,
           "inference": true,
           "search": "toggle",
           "deep_research": false,
-          "mcp": false
+          "mcp": true
         },
         "controls": {
-          "temperature": true,
-          "reason": false,
-          "system_message": true
-        }
-      },
-      {
-        "model_name": "grok-3-mini",
-        "model_alias": "Grok 3 mini",
-        "description": "경량 Grok 모델",
-        "endpoint": "/grok",
-        "in_billing": "0.3",
-        "out_billing": "0.5",
-        "capabilities": {
-          "stream": true,
-          "image": false,
-          "inference": true,
-          "search": "toggle",
-          "deep_research": false,
-          "mcp": false
-        },
-        "controls": {
-          "temperature": true,
+          "temperature": false,
           "reason": true,
           "system_message": true
         }
       },
       {
-        "model_name": "gpt-4.1",
-        "model_alias": "GPT 4.1",
-        "description": "표준 GPT 모델",
+        "model_name": "gpt-5-mini",
+        "model_alias": "GPT 5 mini",
+        "description": "최신 경량 GPT 모델",
         "endpoint": "/gpt",
-        "in_billing": "2",
-        "out_billing": "8",
+        "in_billing": "0.25",
+        "out_billing": "2",
         "capabilities": {
           "stream": true,
           "image": true,
-          "inference": false,
+          "inference": true,
           "search": "toggle",
           "deep_research": false,
           "mcp": true
         },
         "controls": {
-          "temperature": true,
-          "reason": false,
-          "system_message": true
-        }
-      },
-      {
-        "model_name": "gpt-4.1-mini",
-        "model_alias": "GPT 4.1 mini",
-        "description": "경량 GPT 모델",
-        "endpoint": "/gpt",
-        "in_billing": "0.4",
-        "out_billing": "1.6",
-        "capabilities": {
-          "stream": true,
-          "image": true,
-          "inference": false,
-          "search": "toggle",
-          "deep_research": false,
-          "mcp": true
-        },
-        "controls": {
-          "temperature": true,
-          "reason": false,
+          "temperature": false,
+          "reason": true,
           "system_message": true
         }
       },
@@ -194,8 +89,8 @@
         "model_alias": "GPT-OSS 120B",
         "description": "고성능 오픈소스 GPT 모델",
         "endpoint": "/fireworks",
-        "in_billing": "0.1",
-        "out_billing": "0.1",
+        "in_billing": "0.15",
+        "out_billing": "0.6",
         "capabilities": {
           "stream": true,
           "image": false,
@@ -324,6 +219,111 @@
         "controls": {
           "temperature": false,
           "reason": true,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "grok-4",
+        "model_alias": "Grok 4",
+        "description": "고성능 Grok 모델",
+        "endpoint": "/grok",
+        "in_billing": "3",
+        "out_billing": "15",
+        "capabilities": {
+          "stream": true,
+          "image": true,
+          "inference": true,
+          "search": "toggle",
+          "deep_research": false,
+          "mcp": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": false,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "grok-3-mini",
+        "model_alias": "Grok 3 mini",
+        "description": "경량 Grok 모델",
+        "endpoint": "/grok",
+        "in_billing": "0.3",
+        "out_billing": "0.5",
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": true,
+          "search": "toggle",
+          "deep_research": false,
+          "mcp": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": true,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "claude-sonnet-4-20250514",
+        "model_alias": "Claude Sonnet 4",
+        "description": "고성능 Claude 모델",
+        "endpoint": "/claude",
+        "in_billing": "3",
+        "out_billing": "15",
+        "capabilities": {
+          "stream": true,
+          "image": true,
+          "inference": "toggle",
+          "search": "toggle",
+          "deep_research": false,
+          "mcp": true
+        },
+        "controls": {
+          "temperature": "conditional",
+          "reason": true,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "claude-opus-4-1-20250805",
+        "model_alias": "Claude Opus 4.1",
+        "description": "최고 성능 Claude 모델",
+        "endpoint": "/claude",
+        "in_billing": "15",
+        "out_billing": "75",
+        "capabilities": {
+          "stream": true,
+          "image": true,
+          "inference": "toggle",
+          "search": "toggle",
+          "deep_research": false,
+          "mcp": true
+        },
+        "controls": {
+          "temperature": "conditional",
+          "reason": true,
+          "system_message": true
+        }
+      },
+      {
+        "model_name": "claude-3-5-haiku-latest",
+        "model_alias": "Claude Haiku 3.5",
+        "description": "표준 Claude 모델",
+        "endpoint": "/claude",
+        "in_billing": "0.8",
+        "out_billing": "4",
+        "capabilities": {
+          "stream": true,
+          "image": true,
+          "inference": false,
+          "search": "toggle",
+          "deep_research": false,
+          "mcp": true
+        },
+        "controls": {
+          "temperature": true,
+          "reason": false,
           "system_message": true
         }
       },

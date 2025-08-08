@@ -165,12 +165,16 @@
 .chat-message ol, ul {
   width: 100%;
   margin: 4px 0;
-  padding: 0;
+  padding-left: 10px;
   list-style-position: inside;
 }
 
 .chat-message li {
   padding: 4px;
+}
+
+.chat-message li p:first-child {
+  display: inline;
 }
 
 .chat-message .katex-display {
