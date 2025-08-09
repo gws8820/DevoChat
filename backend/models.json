@@ -52,7 +52,7 @@
         "capabilities": {
           "stream": true,
           "image": true,
-          "inference": true,
+          "inference": "toggle",
           "search": "toggle",
           "deep_research": false,
           "mcp": true
@@ -73,7 +73,7 @@
         "capabilities": {
           "stream": true,
           "image": true,
-          "inference": true,
+          "inference": "toggle",
           "search": "toggle",
           "deep_research": false,
           "mcp": true
@@ -86,7 +86,7 @@
       },
       {
         "model_name": "accounts/fireworks/models/gpt-oss-120b",
-        "model_alias": "GPT-OSS 120B",
+        "model_alias": "GPT OSS 120B",
         "description": "고성능 오픈소스 GPT 모델",
         "endpoint": "/fireworks",
         "in_billing": "0.15",

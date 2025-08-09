@@ -1,1 +1,1 @@
-GPT-5, GPT-OSS-120B와 Claude Opus 4.1이 추가되었습니다!
+URL 검사 로직이 보강되었습니다!

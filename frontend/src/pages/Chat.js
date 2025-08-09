@@ -169,16 +169,52 @@ function Chat({ isTouch, chatMessageRef }) {
         setScrollOnSend(true);
       });
   
-      const validPrefixes = ["http://", "https://", "www."];
-      const validDomainExtensions = [".com", ".net", ".kr"];
-      
-      const detectedUrls = message.split(/\s+/).filter((token) => {
-        const lowerToken = token.toLowerCase();
-        const startsWithValidPrefix = validPrefixes.some(prefix => lowerToken.startsWith(prefix));
-        const endsWithValidExtension = validDomainExtensions.some(ext => lowerToken.endsWith(ext));
+      const extractUrls = (message) => {
+        const validTlds = [
+          ".com", ".net", ".org", ".info", ".biz", ".xyz", ".tech", ".io", ".ai", ".gg", 
+          ".tv", ".me", ".app", ".dev", ".shop", ".store", ".co", ".kr", ".us", ".uk", 
+          ".eu", ".de", ".fr", ".jp", ".cn", ".au", ".ca", ".in", ".es", ".it", ".nl", 
+          ".se", ".no", ".fi", ".pl", ".ch", ".be", ".at"
+        ];
         
-        return startsWithValidPrefix || endsWithValidExtension;
-      });
+        const tldPattern = validTlds
+          .sort((a, b) => b.length - a.length)
+          .map(tld => tld.replace(/\./g, "\\."))
+          .join("|");
+        
+        const urlPattern = new RegExp(
+          `(?:https?:\\/\\/|http:\\/\\/|www\\.)?` +
+          `[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?` +
+          `(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*` +
+          `(?:${tldPattern})` +
+          `(?::\\d{1,5})?` +
+          `(?:\\/[A-Za-z0-9._~\\-/%+&=:;,@!?'*]*)?` +
+          `(?:\\?[A-Za-z0-9._~\\-/%&=+,:;@!?'*]*)?` +
+          `(?:#[A-Za-z0-9._~\\-/%&=+,:;@!?'*]*)?`,
+          "gi"
+        );
+        
+        const cleanUrl = (url) => {
+          if (!url) return url;
+          
+          const allowedEnd = /[A-Za-z0-9._~:%+&=;,@!?*#\-/]$/;
+          while (url && !allowedEnd.test(url)) {
+            if (url.length > 1 && url[url.length - 2] === '/') break;
+            url = url.slice(0, -1);
+          }
+          return url;
+        };
+        
+        const matches = message.match(urlPattern) || [];
+        const urls = matches
+          .filter(match => !match.includes('@'))
+          .map(match => cleanUrl(match))
+          .filter(url => url && url.length > 3);
+        
+        return [...new Set(urls)];
+      };
+
+      const detectedUrls = extractUrls(message);
       
       if (detectedUrls.length > 0) {
         const previewPromises = detectedUrls.map(async (token) => {

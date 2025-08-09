@@ -169,6 +169,13 @@
   list-style-position: inside;
 }
 
+.chat-message > ol,
+.chat-message > ul,
+.chat-message > .think-block > ol,
+.chat-message > .think-block > ul {
+  padding-left: 0;
+}
+
 .chat-message li {
   padding: 4px;
 }

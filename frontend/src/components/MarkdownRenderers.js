@@ -258,7 +258,11 @@ function parseToolBlocks(rawContent, isLoading, isLastMessage) {
 
 const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = false, isLastMessage = false }) => {
   const { finalContent, toolData } = useMemo(() => {
-    let parsedContent = content.replace(/\\\[/g, "$$").replace(/\\\]/g, "$$");
+    let parsedContent = content
+      .replace(/\\\[/g, "$$")
+      .replace(/\\\]/g, "$$")
+      .replace(/\\\(/g, "$")
+      .replace(/\\\)/g, "$");
     parsedContent = parseThinkBlocks(parsedContent);
     const { content: finalContent, toolData } = parseToolBlocks(parsedContent, isLoading, isLastMessage);
     return { finalContent, toolData };
@@ -274,6 +278,7 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
           {children}
         </a>
       ),
+      del: ({ children }) => <>~{children}~</>,
       code: InlineCode,
       pre: ({ children, ...props }) => {
         const { isComplete: currentIsComplete } = dynamicDataRef.current;
@@ -305,7 +310,7 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
   return (
     <ToolBlockStateProvider>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
+        remarkPlugins={[remarkMath, remarkGfm]}
         rehypePlugins={[
           rehypeRaw,
           [

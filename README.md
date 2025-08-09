@@ -3,11 +3,30 @@
 *English | [한국어](README.ko.md)*
 
 ### Unified AI Chat Platform
-DevoChat is a web application that allows you to use various AI models and MCP (Model Context Protocol) servers through a single interface.
+DevoChat is a web application that allows you to use various AI models and MCP (Model Context Protocol) servers through a single interface. Check out the [live demo](https://devochat.com).
 
-## Demo
+## Key Features
 
-Check out the live demo [here](https://devochat.com).
+- **Unified Conversation System**
+  - Uses MongoDB-based unified schema to freely switch between AI models during conversations without losing context.
+  - Provides client layers that normalize data to meet the API requirements of each AI provider.
+  - Offers an integrated management environment for various media files including images, PDFs, and documents.
+
+- **Advanced Conversation Platform**
+  - Provides parameter controls including temperature adjustment, reasoning intensity, and system prompt modification.
+  - Supports markdown, LaTeX formula, and code block rendering.
+  - Enables streaming responses and simulates streaming for non-streaming models by sending complete responses in chunks.
+  - Supports real-time/low-latency STS (Speech-To-Speech) conversations through RealTime API.
+
+- **Model Switching Architecture**
+  - Allows immediate addition of various AI models to the system through JSON modification without code changes.
+  - Supports toggling of additional features like inference, search, and deep research for hybrid models.
+  - Enables linking separate provider models (e.g., Qwen3-235B-A22B-Instruct-2507, Qwen3-235B-A22B-Thinking-2507) with a "switch" variant to function as a single hybrid model.
+
+- **Web-based MCP Client**
+  - Connects directly to all types of MCP servers (SSE, Local) from web browsers.
+  - Provides simple access to local MCP servers from anywhere on the web using the [secure-mcp-proxy](https://github.com/gws8820/secure-mcp-proxy) package.
+  - Supports visual monitoring of real-time tool calls and execution processes.
 
 ## Screenshots
 
@@ -76,38 +95,26 @@ Check out the live demo [here](https://devochat.com).
 
 ## Key Features
 
-- **Multi AI Model Support**
-  - GPT
-  - Claude
-  - Grok
-  - Gemini
-  - Perplexity
-  - Deepseek
-  - Kimi
-  - Qwen
-  - Mistral
-  - Llama
-  - ... and other API or local-based models
-    
-- **Advanced Conversation Features**
-  - Real-time conversations
-  - Web search
-  - Deep research
-  - Image upload
-  - File upload and text extraction
-  - Markdown, formula (LaTeX), code block rendering
-  - System prompt, DAN mode, Temperature, Reasoning Effect adjustment
+- **Unified Conversation System**
+  - Uses MongoDB-based unified schema to freely switch between AI models during conversations without losing context.
+  - Provides client layers that normalize data to meet the API requirements of each AI provider.
+  - Offers an integrated management environment for various media files including images, PDFs, and documents.
 
-- **MCP (Model Context Protocol) Client**
-  - Integration with all types of MCP servers
-  - Local MCP server integration via secure-mcp-proxy
-  - Real-time tool calls and result visualization
+- **Advanced Conversation Platform**
+  - Provides parameter controls including temperature adjustment, reasoning intensity, and system prompt modification.
+  - Supports markdown, LaTeX formula, and code block rendering.
+  - Enables streaming responses and simulates streaming for non-streaming models by sending complete responses in chunks.
+  - Supports real-time/low-latency STS (Speech-To-Speech) conversations through RealTime API.
 
-- **Conversation Management**
-  - Save and retrieve conversation history
-  - Message editing, deletion, and regeneration
-  - Automatic conversation title generation
-  - Usage calculation and management
+- **Model Switching Architecture**
+  - Allows immediate addition of various AI models to the system through JSON modification without code changes.
+  - Supports toggling of additional features like inference, search, and deep research for hybrid models.
+  - Enables linking separate provider models (e.g., Qwen3-235B-A22B-Instruct-2507, Qwen3-235B-A22B-Thinking-2507) with a "switch" variant to function as a single hybrid model.
+
+- **Web-based MCP Client**
+  - Connects directly to all types of MCP servers (SSE, Local) from web browsers.
+  - Provides simple access to local MCP servers from anywhere on the web using the [secure-mcp-proxy](https://github.com/gws8820/secure-mcp-proxy) package.
+  - Supports visual monitoring of real-time tool calls and execution processes.
 
 ## Tech Stack
 

@@ -142,7 +142,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                     elif hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "web_search_call":
                         tool_id = getattr(chunk.item, "id")
                         tool_name = "web_search"
-                        server_name = "OpenAI"
+                        server_name = "GPT"
                         
                         mcp_tools[tool_id] = {
                             "server_name": server_name,
