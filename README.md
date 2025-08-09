@@ -59,7 +59,7 @@ DevoChat is a web application that allows you to use various AI models and MCP (
     <td align="center" width="50%">
       <img src="samples/image.png" alt="Image Upload">
       <br>
-      <em>Image Upload and Analysis</em>
+      <em>Image Upload</em>
     </td>
     <td align="center" width="50%">
       <img src="samples/docs.png" alt="File Upload">
