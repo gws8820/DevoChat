@@ -12,7 +12,7 @@ DevoChat is a web application that allows you to use various AI models and MCP (
   - Provides client layers that normalize data to meet the API requirements of each AI provider.
   - Offers an integrated management environment for various media files including images, PDFs, and documents.
 
-- **Advanced Conversation Platform**
+- **Advanced Conversation Feature**
   - Provides parameter controls including temperature adjustment, reasoning intensity, and system prompt modification.
   - Supports markdown, LaTeX formula, and code block rendering.
   - Enables streaming responses and simulates streaming for non-streaming models by sending complete responses in chunks.
