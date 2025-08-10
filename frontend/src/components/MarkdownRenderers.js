@@ -159,16 +159,24 @@ export const Td = React.memo((props) => (
   <td className="markdown-td" {...props} />
 ));
 
-function parseThinkBlocks(rawContent) {
-  const openThinkCount = (rawContent.match(/<think>/gi) || []).length;
-  const closeThinkCount = (rawContent.match(/<\/think>/gi) || []).length;
-  if (openThinkCount > closeThinkCount) {
-    rawContent += "</think>";
-  }
-  return rawContent.replace(
-    /<think>([\s\S]*?)<\/think>/gi,
-    (match) => `<div class="think-block">${match.replace(/<\/?think>/gi, "")}</div>`
-  );
+function parseSpecialBlocks(rawContent) {
+  const normalize = (content, tag, className) => {
+    const openCount = (content.match(new RegExp(`<${tag}>`, 'gi')) || []).length;
+    const closeCount = (content.match(new RegExp(`</${tag}>`, 'gi')) || []).length;
+    if (openCount > closeCount) {
+      content += `</${tag}>`;
+    }
+    return content.replace(
+      new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'gi'),
+      (match) => `<div class="${className}">${match.replace(new RegExp(`</?${tag}>`, 'gi'), "")}</div>`
+    );
+  };
+  
+  let result = rawContent;
+  result = normalize(result, 'think', 'think-block');
+  result = normalize(result, 'citations', 'citations-block');
+
+  return result;
 }
 
 function parseToolBlocks(rawContent, isLoading, isLastMessage) {
@@ -204,7 +212,8 @@ function parseToolBlocks(rawContent, isLoading, isLastMessage) {
         const match = toolUsePattern.exec(rawContent);
         if (match) {
           const afterToolUse = rawContent.substring(match.index + match[0].length);
-          if (afterToolUse.trim() === '' && isLoading && isLastMessage) {
+          const trimmedAfter = afterToolUse.trim();
+          if ((trimmedAfter === '' || trimmedAfter === '</div>') && isLoading && isLastMessage) {
             validResults.add(current.toolId);
           }
         }
@@ -263,7 +272,7 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
       .replace(/\\\]/g, "$$")
       .replace(/\\\(/g, "$")
       .replace(/\\\)/g, "$");
-    parsedContent = parseThinkBlocks(parsedContent);
+    parsedContent = parseSpecialBlocks(parsedContent);
     const { content: finalContent, toolData } = parseToolBlocks(parsedContent, isLoading, isLastMessage);
     return { finalContent, toolData };
   }, [content, isLoading, isLastMessage]);
@@ -321,7 +330,7 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
                 ...defaultSchema.attributes,
                 div: [
                   ...(defaultSchema.attributes?.div || []),
-                  ["className", "think-block", "tool-block"],
+                  ["className", "think-block", "citations-block", "tool-block"],
                   ["dataToolId"],
                   ["data-tool-id"],
                   /^data-/,

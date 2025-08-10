@@ -125,9 +125,10 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
         await chunk_queue.put({"error": str(ex)})
     finally:
         if citations:
-            await chunk_queue.put("\n\n## 출처\n")
+            await chunk_queue.put('\n<citations>')
             for idx, item in enumerate(citations):
-                await chunk_queue.put(f"- [{idx+1}] {item}\n")
+                await chunk_queue.put(f"\n\n[{idx+1}] {item}")
+            await chunk_queue.put('</citations>\n')
 
         await client.close()
         await chunk_queue.put(None)

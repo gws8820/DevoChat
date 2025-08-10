@@ -59,7 +59,7 @@ DevoChat은 다양한 AI 모델과 MCP (Model Context Protocol) 서버를 하나
     <td align="center" width="50%">
       <img src="samples/image.png" alt="이미지 업로드">
       <br>
-      <em>이미지 업로드 및 분석</em>
+      <em>이미지 업로드</em>
     </td>
     <td align="center" width="50%">
       <img src="samples/docs.png" alt="파일 업로드">

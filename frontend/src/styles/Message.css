@@ -196,13 +196,12 @@
   overflow-y: hidden;
 }
 
-.think-block {
+.think-block, .citations-block {
   width: 100%;
   font-size: 14px;
   color: rgb(100, 100, 100);
 }
 
-/* 코드 블록 스타일링 */
 .code-block {
   position: relative;
   width: 100%;

@@ -65,6 +65,7 @@ def format_message(message):
 
 async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, parameters, fastapi_request: Request, client) -> None:
     is_thinking = False
+    citations = []
     try:
         if request.stream:
             stream_result = await client.aio.models.generate_content_stream(**parameters)
@@ -75,6 +76,10 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                 
                 if hasattr(chunk, 'candidates'):
                     candidate = chunk.candidates[0]
+                    if hasattr(candidate, 'grounding_metadata') and candidate.grounding_metadata:
+                        for grounding_chunk in candidate.grounding_metadata.grounding_chunks:
+                            uri = grounding_chunk.web.uri
+                            citations.append(uri) if uri else None
                     if hasattr(candidate, 'content') and candidate.content.parts:
                         for part in candidate.content.parts:
                             if hasattr(part, 'text'):
@@ -105,6 +110,10 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
             
             if hasattr(single_result, 'candidates'):
                 candidate = single_result.candidates[0]
+                if hasattr(candidate, 'grounding_metadata') and candidate.grounding_metadata:
+                    for grounding_chunk in candidate.grounding_metadata.grounding_chunks:
+                        uri = grounding_chunk.web.uri
+                        citations.append(uri) if uri else None
                 if hasattr(candidate, 'content') and candidate.content.parts:
                     thinking_parts = []
                     content_parts = []
@@ -141,6 +150,12 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
         logger.error(f"STREAM_ERROR: {str(ex)}")
         await chunk_queue.put({"error": str(ex)})
     finally:
+        if citations:
+            await chunk_queue.put('\n<citations>')
+            for idx, item in enumerate(citations):
+                await chunk_queue.put(f"\n\n[{idx+1}] {item}")
+            await chunk_queue.put('</citations>\n')
+            
         await chunk_queue.put(None)
 
 async def get_response(request: ChatRequest, user: User, fastapi_request: Request):

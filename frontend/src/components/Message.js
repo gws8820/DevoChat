@@ -77,6 +77,8 @@ function Message({
         textToCopy = String(content)
           .replace(/\n\n<tool_use>\n.*?\n<\/tool_use>\n/gi, '')
           .replace(/\n<tool_result>\n.*?\n<\/tool_result>\n\n/gi, '')
+          .replace(/<\/?think>/gi, '')
+          .replace(/<\/?citations>/gi, '')
           .replace(/\n$/, "");
       }
       await navigator.clipboard.writeText(textToCopy);

@@ -180,8 +180,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                             tool_name = tool_info["tool_name"]
                             
                             is_error = getattr(chunk.item, "status", "") != "completed"
+                            result = getattr(chunk.item, "action", {}).get("query", "")
                             
-                            await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': ''}, ensure_ascii=False)}\n</tool_result>\n\n")
+                            await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n")
         else:
             single_result = await client.responses.create(**parameters)
             full_response_text = single_result.output_text

@@ -183,6 +183,7 @@ def calculate_billing(user: User, model_name, token_usage, in_billing_rate: floa
 
 def normalize_assistant_content(content):
     content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<citations>.*?</citations>', '', content, flags=re.DOTALL)
     content = re.sub(r'<tool_use>.*?</tool_use>', '', content, flags=re.DOTALL)
     content = re.sub(r'<tool_result>.*?</tool_result>', '', content, flags=re.DOTALL)
     
