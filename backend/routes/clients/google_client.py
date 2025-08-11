@@ -77,9 +77,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                 if hasattr(chunk, 'candidates'):
                     candidate = chunk.candidates[0]
                     if hasattr(candidate, 'grounding_metadata') and candidate.grounding_metadata:
-                        for grounding_chunk in candidate.grounding_metadata.grounding_chunks:
-                            uri = grounding_chunk.web.uri
-                            citations.append(uri) if uri else None
+                        if candidate.grounding_metadata.grounding_chunks is not None:
+                            for grounding_chunk in candidate.grounding_metadata.grounding_chunks:
+                                citations.append(grounding_chunk.web.uri)
                     if hasattr(candidate, 'content') and candidate.content.parts:
                         for part in candidate.content.parts:
                             if hasattr(part, 'text'):
@@ -111,9 +111,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
             if hasattr(single_result, 'candidates'):
                 candidate = single_result.candidates[0]
                 if hasattr(candidate, 'grounding_metadata') and candidate.grounding_metadata:
-                    for grounding_chunk in candidate.grounding_metadata.grounding_chunks:
-                        uri = grounding_chunk.web.uri
-                        citations.append(uri) if uri else None
+                    if candidate.grounding_metadata.grounding_chunks is not None:
+                        for grounding_chunk in candidate.grounding_metadata.grounding_chunks:
+                            citations.append(grounding_chunk.web.uri)
                 if hasattr(candidate, 'content') and candidate.content.parts:
                     thinking_parts = []
                     content_parts = []
@@ -152,8 +152,8 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
     finally:
         if citations:
             await chunk_queue.put('\n<citations>')
-            for idx, item in enumerate(citations):
-                await chunk_queue.put(f"\n\n[{idx+1}] {item}")
+            for idx, item in enumerate(citations, 1):
+                await chunk_queue.put(f"\n\n[{idx}] {item}")
             await chunk_queue.put('</citations>\n')
             
         await chunk_queue.put(None)
@@ -185,7 +185,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     
     try:
         client = Client(api_key=os.getenv('GEMINI_API_KEY'))
-        model = request.model.split(':')[0]
         
         config_params = {
             "system_instruction": instructions,
@@ -203,7 +202,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             config_params["tools"] = [types.Tool(google_search = types.GoogleSearch())]
         
         parameters = {
-            "model": model,
+            "model": request.model,
             "contents": formatted_messages,
             "config": types.GenerateContentConfig(**config_params)
         }

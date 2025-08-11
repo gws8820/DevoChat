@@ -132,8 +132,8 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
     finally:
         if citations:
             await chunk_queue.put('\n<citations>')
-            for idx, item in enumerate(citations):
-                await chunk_queue.put(f"\n\n[{idx+1}] {item}")
+            for idx, item in enumerate(citations, 1):
+                await chunk_queue.put(f"\n\n[{idx}] {item}")
             await chunk_queue.put('</citations>\n')
                 
         await chunk_queue.put(None)
@@ -169,10 +169,9 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     
     try:
         client = AsyncClient(api_key=os.getenv('GROK_API_KEY'))
-        model = request.model.split(':')[0]
         
         parameters = {
-            "model": model,
+            "model": request.model,
             "temperature": request.temperature,
             "messages": formatted_messages
         }

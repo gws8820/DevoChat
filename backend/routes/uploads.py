@@ -201,7 +201,7 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
                     extracted_bytes = textract.process(tmp_path)
                     extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
                 except Exception as ex2:
-                    logger.info(f"TEXTRACT_FAILED_AUDIO: {json.dumps({'file': filename, 'error': str(ex2)}, ensure_ascii=False, indent=2)}")
+                    logger.info(f"TEXTRACT_FAILED: {json.dumps({'file': filename, 'error': str(ex2)}, ensure_ascii=False, indent=2)}")
                     extracted_text = ""
             finally:
                 os.remove(tmp_path)
@@ -216,7 +216,7 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
                 extracted_bytes = textract.process(tmp_path)
                 extracted_text = extracted_bytes.decode("utf-8", errors="ignore").strip()
             except Exception as ex:
-                logger.info(f"TEXTRACT_FAILED_FILE: {json.dumps({'file': filename, 'error': str(ex), 'fallback': 'direct_decode'}, ensure_ascii=False, indent=2)}")
+                logger.info(f"TEXTRACT_FAILED: {json.dumps({'file': filename, 'error': str(ex), 'fallback': 'direct_decode'}, ensure_ascii=False, indent=2)}")
                 try:
                     if not is_binary(file_data):
                         decoded_text = file_data.decode("utf-8", errors="replace")
@@ -224,7 +224,7 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
                     else:
                         extracted_text = ""
                 except Exception as ex2:
-                    logger.info(f"DIRECT_DECODE_FAILED_FILE: {json.dumps({'file': filename, 'error': str(ex2)}, ensure_ascii=False, indent=2)}")
+                    logger.info(f"DIRECT_DECODE_FAILED: {json.dumps({'file': filename, 'error': str(ex2)}, ensure_ascii=False, indent=2)}")
                     extracted_text = ""
             finally:
                 os.remove(tmp_path)

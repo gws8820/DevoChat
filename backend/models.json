@@ -1,6 +1,28 @@
 {
     "models": [
       {
+        "model_name": "qwen3:8b",
+        "model_alias": "Qwen 3 8B",
+        "description": "로컬 Qwen 모델",
+        "endpoint": "/ollama",
+        "in_billing": "0",
+        "out_billing": "0",
+        "capabilities": {
+          "stream": true,
+          "image": false,
+          "inference": true,
+          "search": false,
+          "deep_research": false,
+          "mcp": false
+        },
+        "controls": {
+          "temperature": true,
+          "reason": true,
+          "system_message": true
+        },
+        "admin": true
+      },
+      {
         "model_name": "gemini-2.5-flash",
         "model_alias": "Gemini 2.5 Flash",
         "description": "표준 Gemini 모델",
@@ -19,7 +41,8 @@
           "temperature": true,
           "reason": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "gemini-2.5-pro",
@@ -40,7 +63,8 @@
           "temperature": true,
           "reason": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "gpt-5",
@@ -61,7 +85,8 @@
           "temperature": false,
           "reason": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "gpt-5-mini",
@@ -82,7 +107,8 @@
           "temperature": false,
           "reason": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "accounts/fireworks/models/gpt-oss-120b",
@@ -103,7 +129,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "o4-mini",
@@ -127,7 +154,8 @@
           "temperature": false,
           "reason": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "o4-mini-deep-research",
@@ -151,7 +179,8 @@
           "temperature": false,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "o3",
@@ -175,7 +204,8 @@
           "temperature": false,
           "reason": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "o3-deep-research",
@@ -199,7 +229,8 @@
           "temperature": false,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "o3-pro",
@@ -220,7 +251,8 @@
           "temperature": false,
           "reason": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "grok-4",
@@ -241,7 +273,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "grok-3-mini",
@@ -262,7 +295,8 @@
           "temperature": true,
           "reason": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "claude-sonnet-4-20250514",
@@ -283,7 +317,8 @@
           "temperature": "conditional",
           "reason": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "claude-opus-4-1-20250805",
@@ -304,7 +339,8 @@
           "temperature": "conditional",
           "reason": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "claude-3-5-haiku-latest",
@@ -325,7 +361,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "accounts/fireworks/models/kimi-k2-instruct",
@@ -346,7 +383,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507",
@@ -370,7 +408,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "accounts/fireworks/models/qwen3-235b-a22b-thinking-2507",
@@ -394,7 +433,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "accounts/fireworks/models/deepseek-v3-0324",
@@ -418,7 +458,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "accounts/fireworks/models/deepseek-r1-0528",
@@ -442,7 +483,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "sonar",
@@ -467,7 +509,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "sonar-reasoning",
@@ -491,7 +534,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "sonar-deep-research",
@@ -515,7 +559,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "sonar-pro",
@@ -539,7 +584,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "sonar-reasoning-pro",
@@ -563,7 +609,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "mistral-medium-2505",
@@ -587,7 +634,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "magistral-medium-2506",
@@ -611,7 +659,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "accounts/fireworks/models/llama4-maverick-instruct-basic",
@@ -632,7 +681,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "accounts/fireworks/models/glm-4p5",
@@ -653,7 +703,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "LGAI-EXAONE/EXAONE-4.0-32B",
@@ -674,7 +725,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "ax4",
@@ -695,7 +747,8 @@
           "temperature": true,
           "reason": false,
           "system_message": true
-        }
+        },
+        "admin": false
       }
     ]
   }

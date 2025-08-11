@@ -23,7 +23,8 @@ function App() {
     const fetchModels = async () => {
       try {
         const modelsResponse = await axios.get(
-          `${process.env.REACT_APP_FASTAPI_URL}/models`
+          `${process.env.REACT_APP_FASTAPI_URL}/models`,
+          { withCredentials: true }
         );
         setModelsData(modelsResponse.data);
       } catch (error) {

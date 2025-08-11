@@ -126,8 +126,8 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
     finally:
         if citations:
             await chunk_queue.put('\n<citations>')
-            for idx, item in enumerate(citations):
-                await chunk_queue.put(f"\n\n[{idx+1}] {item}")
+            for idx, item in enumerate(citations, 1):
+                await chunk_queue.put(f"\n\n[{idx}] {item}")
             await chunk_queue.put('</citations>\n')
 
         await client.close()
@@ -164,9 +164,13 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
     token_usage = None
     
     try:
-        async with AsyncOpenAI(api_key=settings.api_key, base_url=settings.base_url) as client:
+        async with AsyncOpenAI(
+            api_key=settings.api_key,
+            base_url=settings.base_url,
+            default_headers=settings.headers or {}
+        ) as client:
             parameters = {
-                "model": request.model.split(':')[0],
+                "model": request.model,
                 "temperature": request.temperature,
                 "messages": formatted_messages,
                 "stream": request.stream
@@ -202,6 +206,18 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
         save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
+
+@router.post("/ollama")
+async def ollama_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+    settings = ApiSettings(
+        api_key='ollama',
+        base_url="https://ollama.devochat.com/v1",
+        headers={
+            "CF-Access-Client-Id": os.getenv('CF_ACCESS_CLIENT_ID'),
+            "CF-Access-Client-Secret": os.getenv('CF_ACCESS_CLIENT_SECRET'),
+        }
+    )
+    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
 
 @router.post("/perplexity")
 async def perplexity_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):

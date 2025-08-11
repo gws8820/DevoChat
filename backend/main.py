@@ -76,11 +76,18 @@ async def get_notice():
     )
 
 @app.get("/models", response_model=dict)
-async def get_models():
+async def get_models(user: User = Depends(get_current_user)):
     try:
         with open("models.json", "r", encoding="utf-8") as f:
             models_data = json.load(f)
-        return models_data
+            
+        models = []
+        for model in models_data["models"]:
+            if not user.admin and model["admin"]:
+                continue
+            models.append(model)
+        
+        return {"models": models}
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error occurred while fetching models: {str(ex)}")
 

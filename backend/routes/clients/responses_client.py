@@ -237,7 +237,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     try:
         async with AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY')) as client:
             parameters = {
-                "model": request.model.split(':')[0],
+                "model": request.model,
                 "temperature": request.temperature,
                 "instructions": instructions,
                 "input": formatted_messages,

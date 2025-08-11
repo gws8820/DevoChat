@@ -33,6 +33,7 @@ class AliasRequest(BaseModel):
 class ApiSettings(BaseModel):
     api_key: str
     base_url: str
+    headers: Optional[Dict[str, str]] = None
     
 load_dotenv()
 router = APIRouter()

@@ -97,7 +97,8 @@ def format_message(message):
         
 async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, parameters, fastapi_request: Request, client) -> None:
     is_thinking = False
-    mcp_tool_info = {}
+    citations = []
+    mcp_tools = {}
     try:
         if request.stream:
             stream_result = await client.beta.messages.create(**parameters)
@@ -114,7 +115,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             server_name = getattr(chunk.content_block, "server_name")
                             tool_name = getattr(chunk.content_block, "name")
                             
-                            mcp_tool_info[tool_id] = {
+                            mcp_tools[tool_id] = {
                                 "server_name": server_name,
                                 "tool_name": tool_name
                             }
@@ -122,7 +123,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             await chunk_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
                         elif getattr(chunk.content_block, "type", "") == "mcp_tool_result":
                             tool_use_id = getattr(chunk.content_block, "tool_use_id")
-                            tool_info = mcp_tool_info.get(tool_use_id)
+                            tool_info = mcp_tools.get(tool_use_id)
                             
                             server_name = tool_info.get("server_name")
                             tool_name = tool_info.get("tool_name")
@@ -140,7 +141,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             tool_name = getattr(chunk.content_block, "name")
                             server_name = "Claude"
                             
-                            mcp_tool_info[tool_id] = {
+                            mcp_tools[tool_id] = {
                                 "server_name": server_name,
                                 "tool_name": tool_name
                             }
@@ -148,21 +149,19 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             await chunk_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
                         elif getattr(chunk.content_block, "type", "") == "web_search_tool_result":
                             tool_use_id = getattr(chunk.content_block, "tool_use_id")
-                            tool_info = mcp_tool_info.get(tool_use_id)
+                            tool_info = mcp_tools.get(tool_use_id)
                             
                             server_name = tool_info.get("server_name", "Claude")
                             tool_name = tool_info.get("tool_name", "web_search")
                             
-                            result_content = getattr(chunk.content_block, "content", [])
-                            formatted_results = []
-                            for i, item in enumerate(result_content, 1):
-                                title = item.title if hasattr(item, 'title') else "제목 없음"
-                                url = item.url if hasattr(item, 'url') else ""
-                                formatted_results.append(f"{i}. {title}\n{url}")
+                            content = getattr(chunk.content_block, "content", [])
+                            tool_result = []
+                            for idx, item in enumerate(content, 1):
+                                tool_result.append(f"[{idx}] {item.title}")
+                                citations.append(item.url)
                             
-                            tool_result = "\n\n".join(formatted_results)
-                            
-                            await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': False, 'result': tool_result}, ensure_ascii=False)}\n</tool_result>\n\n")
+                            result = '\n'.join(tool_result)
+                            await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': False, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n")
                     elif chunk.type == "content_block_stop":
                         if is_thinking:
                             await chunk_queue.put('\n</think>\n\n')
@@ -220,6 +219,12 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
         logger.error(f"STREAM_ERROR: {str(ex)}")
         await chunk_queue.put({"error": str(ex)})
     finally:
+        if citations:
+            await chunk_queue.put('\n<citations>')
+            for idx, item in enumerate(citations, 1):
+                await chunk_queue.put(f"\n\n[{idx}] {item}")
+            await chunk_queue.put('</citations>\n')
+
         await client.close()
         await chunk_queue.put(None)
 
@@ -251,7 +256,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     try:
         async with anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) as client:
             parameters = {
-                "model": request.model.split(':')[0],
+                "model": request.model,
                 "temperature": request.temperature,
                 "max_tokens": 4096,
                 "system": instructions,

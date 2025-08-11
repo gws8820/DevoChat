@@ -139,7 +139,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     try:
         async with Mistral(api_key=os.getenv("MISTRAL_API_KEY")) as client:
             parameters = {
-                "model": request.model.split(':')[0],
+                "model": request.model,
                 "temperature": request.temperature,
                 "messages": formatted_messages,
                 "stream": request.stream
