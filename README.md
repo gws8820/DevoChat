@@ -13,7 +13,7 @@ DevoChat is a web application that allows you to use various AI models and MCP (
   - Offers an integrated management environment for various media files including images, PDFs, and documents.
 
 - **Advanced Conversation Feature**
-  - Provides parameter controls including temperature adjustment, reasoning intensity, and system prompt modification.
+  - Provides parameter controls including temperature, reasoning intensity, response length, and system prompt modification.
   - Supports markdown, LaTeX formula, and code block rendering.
   - Enables streaming responses and simulates streaming for non-streaming models by sending complete responses in chunks.
   - Supports real-time/low-latency STS (Speech-To-Speech) conversations through RealTime API.
@@ -183,8 +183,10 @@ Define the AI models available in the application and their properties through t
         "controls": {
           "temperature": "conditional",
           "reason": true,
+          "verbosity": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "grok-4",
@@ -203,8 +205,10 @@ Define the AI models available in the application and their properties through t
         "controls": {
           "temperature": true,
           "reason": false,
+          "verbosity": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "o3",
@@ -226,8 +230,10 @@ Define the AI models available in the application and their properties through t
         "controls": {
           "temperature": false,
           "reason": true,
+          "verbosity": true,
           "system_message": true
-        }
+        },
+        "admin": false
       }
       ...
     ]
@@ -254,7 +260,9 @@ Define the AI models available in the application and their properties through t
 | `controls` | Defines user control options supported by the model |
 | `controls.temperature` | Whether temperature adjustment is possible. Possible values: `true`, `false`, `"conditional"` |
 | `controls.reason` | Whether Reasoning Effect adjustment is possible. Possible values: `true`, `false` |
+| `controls.verbosity` | Whether response length control is possible. Possible values: `true`, `false` |
 | `controls.system_message` | Whether system message setting is possible. Possible values: `true`, `false` |
+| `admin` | If `true`, only admin users can access/select this model |
 
 ### Value Description
 

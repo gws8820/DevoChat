@@ -379,6 +379,13 @@ function Sidebar({
     if (isResponsive) toggleSidebar();
   }, [navigate, isResponsive, toggleSidebar]);
 
+  const handleImageGeneration = useCallback(() => {
+    setModalMessage("현재 준비중인 기능입니다.");
+    setModalAction("notify");
+    setShowModal(true);
+    if (isResponsive) toggleSidebar();
+  }, [isResponsive, toggleSidebar]);
+
   const handleConversationContextMenu = useCallback((e, conversation_id) => {
     e.preventDefault();
     if (renamingConversationId !== null) return;
@@ -492,7 +499,7 @@ function Sidebar({
             <LuAudioLines />
             실시간 대화
           </div>
-          <div className="new-task">
+          <div className="new-task" onClick={handleImageGeneration}>
             <LuImage />
             이미지 생성
           </div>
@@ -634,6 +641,7 @@ function Sidebar({
             message={modalMessage}
             onConfirm={confirmDelete}
             onCancel={cancelDelete}
+            showCancelButton={modalAction !== "notify"}
           />
         )}
       </AnimatePresence>

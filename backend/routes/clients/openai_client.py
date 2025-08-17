@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from ..auth import User, get_current_user
 from ..common import (
     ChatRequest, router,
-    MARKDOWN_PROMPT, DAN_PROMPT,
+    DEFAULT_PROMPT, DAN_PROMPT,
     check_user_permissions,
     get_conversation, save_conversation,
     normalize_assistant_content,
@@ -145,7 +145,7 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
 
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
-    instructions = MARKDOWN_PROMPT
+    instructions = DEFAULT_PROMPT
     if request.system_message:
         instructions += "\n\n" + request.system_message
     if request.dan and DAN_PROMPT:
@@ -175,6 +175,9 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
                 "messages": formatted_messages,
                 "stream": request.stream
             }
+
+            mapping = {1: 560, 2: 849, 3: 1288}
+            parameters["max_tokens"] = mapping.get(request.verbosity)
 
             if request.reason > 0:
                 mapping = {1: "low", 2: "medium", 3: "high"}

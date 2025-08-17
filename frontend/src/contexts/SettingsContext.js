@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState } from "react";
 
 export const SettingsContext = createContext();
 
@@ -9,6 +9,7 @@ export const SettingsProvider = ({ children, modelsData }) => {
   const [alias, setAlias] = useState("");
   const [temperature, setTemperature] = useState(0.5);
   const [reason, setReason] = useState(2);
+  const [verbosity, setVerbosity] = useState(2);
   const [systemMessage, setSystemMessage] = useState("");
   const [isImage, setIsImage] = useState(false);
   const [isInference, setIsInference] = useState(false);
@@ -19,16 +20,20 @@ export const SettingsProvider = ({ children, modelsData }) => {
   const [canReadImage, setCanReadImage] = useState(false);
   const [canControlTemp, setCanControlTemp] = useState(false);
   const [canControlReason, setCanControlReason] = useState(false);
+  const [canControlVerbosity, setCanControlVerbosity] = useState(false);
   const [canControlSystemMessage, setCanControlSystemMessage] = useState(false);
   const [canToggleInference, setCanToggleInference] = useState(false);
   const [canToggleSearch, setCanToggleSearch] = useState(false);
   const [canToggleDeepResearch, setCanToggleDeepResearch] = useState(false);
   const [canToggleMCP, setCanToggleMCP] = useState(false);
 
-  const updateModel = (newModel) => {
+  const updateModel = (newModel, initialSettings) => {
     const selectedModel = modelsData.models.find(m => m.model_name === newModel);
+    setModel(newModel);
+    
     const temperature = selectedModel?.controls?.temperature;
     const reason = selectedModel?.controls?.reason;
+    const verbosity = selectedModel?.controls?.verbosity;
     const system_message = selectedModel?.controls?.system_message;
     const inference = selectedModel?.capabilities?.inference;
     const search = selectedModel?.capabilities?.search;
@@ -36,23 +41,45 @@ export const SettingsProvider = ({ children, modelsData }) => {
     const image = selectedModel?.capabilities?.image;
     const mcp = selectedModel?.capabilities?.mcp;
 
-    setModel(newModel);
-    setIsInference(inference === true);
-    setCanToggleInference(inference === "toggle" || inference === "switch");
+    let nextIsInference;
 
-    setIsSearch(search === true);
-    setCanToggleSearch(search === "toggle" || search === "switch");
+    if (inference === "toggle" || inference === "switch") {
+      setCanToggleInference(true);
+      if (initialSettings) {
+        setIsInference(initialSettings.isInference);
+        nextIsInference = initialSettings.isInference;
+      } else {
+        nextIsInference = isInference;
+      }
+    } else {
+      setCanToggleInference(false);
+      setIsInference(inference);
+      nextIsInference = inference;
+    }
 
-    setIsDeepResearch(deep_research === true);
-    setCanToggleDeepResearch(deep_research === "toggle" || deep_research === "switch");
+    if (search === "toggle" || search === "switch") {
+      setCanToggleSearch(true);
+      if (initialSettings) {
+        setIsSearch(initialSettings.isSearch);
+      }
+    } else {
+      setCanToggleSearch(false);
+      setIsSearch(search);
+    }
 
-    const defaultTempCondition = temperature === true || temperature === "conditional"; // No inference as default
-    setCanControlTemp(defaultTempCondition);
-    setTemperature(defaultTempCondition ? 0.5 : 1);
+    if (deep_research === "toggle" || deep_research === "switch") {
+      setCanToggleDeepResearch(true);
+      if (initialSettings) {
+        setIsDeepResearch(initialSettings.isDeepResearch);
+      }
+    } else {
+      setCanToggleDeepResearch(false);
+      setIsDeepResearch(deep_research);
+    }
 
-    const defaultReasonCondition = reason === true && inference === true; // For inference-only models
-    setCanControlReason(defaultReasonCondition);
-    setReason(defaultReasonCondition ? 2 : 0);
+    setCanControlTemp(temperature === true || temperature === "conditional");
+    setCanControlReason(reason === true && nextIsInference === true);
+    setCanControlVerbosity(verbosity === true);
 
     setCanControlSystemMessage(system_message);
     if (!system_message) {
@@ -61,7 +88,6 @@ export const SettingsProvider = ({ children, modelsData }) => {
     }
 
     setCanReadImage(image);
-    
     setCanToggleMCP(mcp);
     setMCPList(mcp ? mcpList : []);
   };
@@ -69,16 +95,23 @@ export const SettingsProvider = ({ children, modelsData }) => {
   const toggleInference = () => {
     const selectedModel = modelsData.models.find(m => m.model_name === model);
     const inference = selectedModel?.capabilities?.inference;
+    const temperature = selectedModel?.controls?.temperature;
+    const reason = selectedModel?.controls?.reason;
     
+    const nextIsInference = !isInference;
+
     if (inference === "switch") {
       const variants = selectedModel?.variants;
-      const targetModel = isInference ? variants?.base : variants?.inference;
+      const targetModel = nextIsInference ? variants?.inference : variants?.base;
       if (targetModel) {
         updateModel(targetModel);
       }
-    }
+    } 
 
     setIsInference(!isInference);
+
+    setCanControlTemp(temperature === true || temperature === "conditional");
+    setCanControlReason(reason === true && nextIsInference === true);
   };
 
   const toggleSearch = () => {
@@ -111,40 +144,6 @@ export const SettingsProvider = ({ children, modelsData }) => {
     setIsDeepResearch(!isDeepResearch);
   };
 
-  useEffect(() => {
-    updateModel(model);
-    // eslint-disable-next-line
-  }, []);
-
-  useEffect(() => {
-    const selectedModel = modelsData.models.find(m => m.model_name === model);
-    const temperature = selectedModel?.controls?.temperature;
-    const reason = selectedModel?.controls?.reason;
-
-    if (temperature === "conditional") {
-      if(isInference) {
-        setCanControlTemp(false);
-        setTemperature(1);
-      }
-      else if(!isInference) {
-        setCanControlTemp(true);
-        setTemperature(0.5);
-      }
-    }
-
-    if (reason) {
-      if(isInference) {
-        setCanControlReason(true);
-        setReason(2);
-      }
-      else if(!isInference) {
-        setCanControlReason(false);
-        setReason(0);
-      }
-    }
-    // eslint-disable-next-line
-  }, [isInference]);
-
   return (
     <SettingsContext.Provider
       value={{
@@ -154,6 +153,7 @@ export const SettingsProvider = ({ children, modelsData }) => {
         alias,
         temperature,
         reason,
+        verbosity,
         systemMessage,
         isImage,
         isInference,
@@ -164,6 +164,7 @@ export const SettingsProvider = ({ children, modelsData }) => {
         canReadImage,
         canControlTemp,
         canControlReason,
+        canControlVerbosity,
         canControlSystemMessage,
         canToggleInference, 
         canToggleSearch,
@@ -173,11 +174,9 @@ export const SettingsProvider = ({ children, modelsData }) => {
         setAlias,
         setTemperature,
         setReason,
+        setVerbosity,
         setSystemMessage,
         setIsImage,
-        setIsInference,
-        setIsSearch,
-        setIsDeepResearch,
         setIsDAN,
         setMCPList,
         toggleInference,

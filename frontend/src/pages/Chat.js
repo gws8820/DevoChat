@@ -46,6 +46,7 @@ function Chat({ isTouch, chatMessageRef }) {
     model,
     temperature,
     reason,
+    verbosity,
     systemMessage,
     isInference,
     isSearch,
@@ -53,17 +54,18 @@ function Chat({ isTouch, chatMessageRef }) {
     isDAN,
     mcpList,
     canReadImage,
+    canControlTemp,
+    canControlReason,
+    canControlVerbosity,
     updateModel,
     setAlias,
     setTemperature,
     setReason,
+    setVerbosity,
     setSystemMessage,
     setIsImage,
     setIsDAN, 
     setMCPList,
-    toggleInference,
-    toggleSearch,
-    toggleDeepResearch
   } = useContext(SettingsContext);
 
   const { fetchConversations, updateConversation } = useContext(ConversationsContext);
@@ -258,8 +260,9 @@ function Chat({ isTouch, chatMessageRef }) {
               model: selectedModel.model_name,
               in_billing: selectedModel.in_billing,
               out_billing: selectedModel.out_billing,
-              temperature,
-              reason,
+              temperature: canControlTemp ? temperature : 1,
+              reason: canControlReason ? reason : 0,
+              verbosity: canControlVerbosity ? verbosity : 2,
               system_message: systemMessage,
               user_message: contentParts,
               inference: isInference,
@@ -332,6 +335,7 @@ function Chat({ isTouch, chatMessageRef }) {
       models,
       temperature,
       reason,
+      verbosity,
       systemMessage,
       updateAssistantMessage,
       setErrorMessage,
@@ -341,7 +345,10 @@ function Chat({ isTouch, chatMessageRef }) {
       isDAN,
       mcpList,
       uploadedFiles,
-      setUploadedFiles
+      setUploadedFiles,
+      canControlTemp,
+      canControlReason,
+      canControlVerbosity
     ]
   );
 
@@ -448,23 +455,27 @@ function Chat({ isTouch, chatMessageRef }) {
             `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
             { withCredentials: true }
           );
-          updateModel(res.data.model);
+          
+          updateModel(res.data.model, {
+            isInference: res.data.inference,
+            isSearch: res.data.search,
+            isDeepResearch: res.data.deep_research
+          });
+
           setAlias(res.data.alias);
           setTemperature(res.data.temperature);
           setReason(res.data.reason);
+          setVerbosity(res.data.verbosity);
           setSystemMessage(res.data.system_message);
-          
-          if (res.data.inference) toggleInference();
-          if (res.data.search) toggleSearch();
-          if (res.data.deep_research) toggleDeepResearch();
           setIsDAN(res.data.dan);
           setMCPList(res.data.mcp);
 
-          const updatedMessages = res.data.messages.map((m) => {
+          const initialMessages = res.data.messages.map((m) => {
             const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
             return m.role === "assistant" ? { ...messageWithId, isComplete: true } : messageWithId;
           });
-          setMessages(updatedMessages);
+          
+          setMessages(initialMessages);
           setIsInitialized(true);
         }
       } catch (err) {
@@ -476,7 +487,7 @@ function Chat({ isTouch, chatMessageRef }) {
           navigate("/", { state: { errorModal: "대화를 불러오는 중 오류가 발생했습니다." } });
         }
       } finally {
-        setIsInitialized(true);
+        if (!isInitialized) setIsInitialized(true);
       }
     };
 

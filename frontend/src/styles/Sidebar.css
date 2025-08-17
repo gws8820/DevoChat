@@ -140,6 +140,10 @@
     color: #333;
 }
 
+.conversation-text.search {
+    font-weight: 500;
+}
+
 .loading-text {
     font-size: 13.5px;
     color: #666;

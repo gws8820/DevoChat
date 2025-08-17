@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from ..auth import User, get_current_user
 from ..common import (
     ChatRequest, router,
-    MARKDOWN_PROMPT, DAN_PROMPT,
+    DEFAULT_PROMPT, DAN_PROMPT,
     check_user_permissions,
     get_conversation, save_conversation,
     normalize_assistant_content,
@@ -170,7 +170,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
 
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
-    instructions = MARKDOWN_PROMPT
+    instructions = DEFAULT_PROMPT
     if request.system_message:
         instructions += "\n\n" + request.system_message
     if request.dan and DAN_PROMPT:
@@ -190,6 +190,9 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             "system_instruction": instructions,
             "temperature": request.temperature
         }
+        
+        mapping = {1: 560, 2: 849, 3: 1288}
+        config_params["max_output_tokens"] = mapping.get(request.verbosity)
 
         if request.reason > 0:
             mapping = {1: 1024, 2: 8192, 3: 24576}
@@ -198,6 +201,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 thinking_budget=thinking_budget,
                 include_thoughts=True
             )
+            
         if request.search:
             config_params["tools"] = [types.Tool(google_search = types.GoogleSearch())]
         

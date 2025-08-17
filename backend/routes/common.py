@@ -17,6 +17,7 @@ class ChatRequest(BaseModel):
     out_billing: float
     temperature: float = 1.0
     reason: int = 0
+    verbosity: int = 2
     system_message: Optional[str] = None
     user_message: List[Dict[str, Any]]
     inference: bool = False
@@ -43,19 +44,19 @@ db = mongo_client.chat_db
 user_collection = db.users
 conversation_collection = db.conversations
 
+default_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'default_prompt.txt')
+try:
+    with open(default_prompt_path, 'r', encoding='utf-8') as f:
+        DEFAULT_PROMPT = f.read()
+except FileNotFoundError:
+    DEFAULT_PROMPT = ""
+    
 dan_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'dan_prompt.txt')
 try:
     with open(dan_prompt_path, 'r', encoding='utf-8') as f:
         DAN_PROMPT = f.read()
 except FileNotFoundError:
     DAN_PROMPT = ""
-
-markdown_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'markdown_prompt.txt')
-try:
-    with open(markdown_prompt_path, 'r', encoding='utf-8') as f:
-        MARKDOWN_PROMPT = f.read()
-except FileNotFoundError:
-    MARKDOWN_PROMPT = ""
 
 alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'alias_prompt.txt')
 try:
@@ -124,6 +125,7 @@ def save_conversation(user: User, user_message, response_text, token_usage, requ
                 "model": request.model,
                 "temperature": request.temperature,
                 "reason": request.reason,
+                "verbosity": request.verbosity,
                 "system_message": request.system_message,
                 "inference": request.inference,
                 "search": request.search,

@@ -16,14 +16,17 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
     alias,
     temperature,
     reason,
+    verbosity,
     systemMessage,
     isImage,
     canControlTemp,
     canControlReason,
+    canControlVerbosity,
     canControlSystemMessage,
     updateModel,
     setTemperature,
     setReason,
+    setVerbosity,
     setSystemMessage
   } = useContext(SettingsContext);
 
@@ -50,6 +53,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
 
   const currentModelAlias = models.find((m) => m.model_name === model)?.model_alias || "모델 선택";
   const reasonLabels = ["low", "medium", "high"];
+  const verboseLabels = ["low", "medium", "high"];
 
   const handleShare = async () => {
     try {
@@ -182,7 +186,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
         )}
 
         <AnimatePresence initial={false}>
-          {(canControlReason || canControlTemp) && (
+          {(canControlTemp || canControlReason || canControlVerbosity) && (
             <motion.div 
               className="header-icon-wrapper"
               key="controls"
@@ -215,7 +219,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                     {canControlReason && (
                       <div className="slider-section">
                         <div className="slider-label">
-                          <span>추론 성능</span>
+                          <span>추론 강도</span>
                           <span className="slider-value">
                             {reasonLabels[reason - 1]}
                           </span>
@@ -234,7 +238,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                     {canControlTemp && (
                       <div className="slider-section">
                         <div className="slider-label">
-                          <span>창의성 (온도)</span>
+                          <span>창의성</span>
                           <span className="slider-value">
                             {temperature}
                           </span>
@@ -248,6 +252,25 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                           onChange={(e) =>
                             setTemperature(parseFloat(e.target.value))
                           }
+                          className="slider"
+                        />
+                      </div>
+                    )}
+                    {canControlVerbosity && (
+                      <div className="slider-section">
+                        <div className="slider-label">
+                          <span>답변 길이</span>
+                          <span className="slider-value">
+                            {verboseLabels[verbosity - 1]}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="3"
+                          step="1"
+                          value={verbosity}
+                          onChange={(e) => setVerbosity(parseInt(e.target.value))}
                           className="slider"
                         />
                       </div>
@@ -268,11 +291,11 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
               <Tooltip content="지시어 설정" position="left" isTouch={isTouch}>
                 <div className="header-icon system-message-icon">
                   <RiEdit2Line
-                                  onClick={() => {
-                setIsSystemMessageOpen(!isSystemMessageOpen);
-                setIsControlPanelOpen(false);
-              }}
-              style={{ fontSize: "20px", strokeWidth: 0.3 }}
+                    onClick={() => {
+                      setIsSystemMessageOpen(!isSystemMessageOpen);
+                      setIsControlPanelOpen(false);
+                    }}
+                    style={{ fontSize: "20px", strokeWidth: 0.3 }}
                   />
                 </div>
               </Tooltip>

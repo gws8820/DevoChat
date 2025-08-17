@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, List
 from ..auth import User, get_current_user
 from ..common import (
     ChatRequest, router,
-    MARKDOWN_PROMPT, DAN_PROMPT,
+    DEFAULT_PROMPT, DAN_PROMPT,
     check_user_permissions,
     get_conversation, save_conversation,
     normalize_assistant_content,
@@ -240,7 +240,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
 
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
-    instructions = MARKDOWN_PROMPT
+    instructions = DEFAULT_PROMPT
     if request.system_message:
         instructions += "\n\n" + request.system_message
     if request.dan and DAN_PROMPT:
@@ -258,25 +258,29 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             parameters = {
                 "model": request.model,
                 "temperature": request.temperature,
-                "max_tokens": 4096,
                 "system": instructions,
                 "messages": formatted_messages,
                 "stream": request.stream,
             }
-
+            
+            mapping = {1: 560, 2: 849, 3: 1288}
+            parameters["max_tokens"] = mapping.get(request.verbosity)
+            
             if request.reason > 0:
                 mapping = {1: 1024, 2: 8192, 3: 24576}
                 thinking_budget = mapping.get(request.reason)
-                parameters["max_tokens"] = thinking_budget + 4096
+                parameters["max_tokens"] += thinking_budget
                 parameters["thinking"] = {
                     "type": "enabled",
                     "budget_tokens": thinking_budget
                 }
+
             if request.search:
                 parameters["tools"] = [{
                     "name": "web_search",
                     "type": "web_search_20250305"
                 }]
+                
             if len(request.mcp) > 0:
                 mcp_servers, error = get_mcp_servers(request.mcp, user)
                 if error:

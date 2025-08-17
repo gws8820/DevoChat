@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, List
 from ..auth import User, get_current_user
 from ..common import (
     ChatRequest, router,
-    MARKDOWN_PROMPT, DAN_PROMPT,
+    DEFAULT_PROMPT, DAN_PROMPT,
     check_user_permissions,
     get_conversation, save_conversation,
     normalize_assistant_content
@@ -227,7 +227,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
 
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
-    instructions = MARKDOWN_PROMPT
+    instructions = DEFAULT_PROMPT
     if request.system_message:
         instructions += "\n\n" + request.system_message
     if request.dan and DAN_PROMPT:
@@ -250,6 +250,9 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 "stream": request.stream,
                 "background": bool(request.stream and (request.reason or request.deep_research) and not request.mcp)
             }
+            
+            mapping = {1: "low", 2: "medium", 3: "high"}
+            parameters["text"] = {"verbosity": mapping.get(request.verbosity)}
 
             mapping = {0: "minimal", 1: "low", 2: "medium", 3: "high"}
             reasoning_effort = mapping.get(request.reason)

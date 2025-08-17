@@ -64,7 +64,7 @@ function SearchModal({
                     onClose();
                   }}
                 >
-                  <span className="conversation-text">{conv.alias}</span>
+                  <span className="conversation-text search">{conv.alias}</span>
                   {conv.starred && (
                     <div className={`star-icon ${conv.starred ? `starred` : ''} no-click`}>
                       <IoMdStar />

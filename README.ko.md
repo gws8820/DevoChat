@@ -13,7 +13,7 @@ DevoChat은 다양한 AI 모델과 MCP (Model Context Protocol) 서버를 하나
   - 이미지, PDF, 문서 등 다양한 미디어 파일을 통합 관리하는 환경을 제공합니다.
 
 - **고급 대화 기능**
-  - 온도 조절, 추론 강도, 시스템 프롬프트 수정 등 세부 파라미터 제어를 제공합니다.
+  - 온도, 추론 강도, 답변 길이, 시스템 프롬프트 수정 등 세부 파라미터 제어를 제공합니다.
   - 마크다운, LaTeX 수식, 코드 블럭 렌더링을 제공합니다.
   - 스트리밍 응답을 지원하며, 비스트리밍 모델의 경우 전체 응답을 청크 단위로 전송하여 스트리밍을 시뮬레이션합니다.
   - 실시간/저지연 STS (Speech-To-Speech) 대화를 위한 RealTime API를 지원합니다.
@@ -183,8 +183,10 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "controls": {
           "temperature": "conditional",
           "reason": true,
+          "verbosity": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "grok-3",
@@ -203,8 +205,10 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "controls": {
           "temperature": true,
           "reason": false,
+          "verbosity": true,
           "system_message": true
-        }
+        },
+        "admin": false
       },
       {
         "model_name": "o3",
@@ -226,8 +230,10 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "controls": {
           "temperature": false,
           "reason": true,
+          "verbosity": true,
           "system_message": true
-        }
+        },
+        "admin": false
       }
       ...
     ]
@@ -254,7 +260,9 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `controls` | 모델이 지원하는 사용자 제어 옵션들을 정의합니다. |
 | `controls.temperature` | Temperature 조절 가능 여부입니다. 가능한 값: `true`, `false`, `"conditional"` |
 | `controls.reason` | Reasoning Effect 조절 가능 여부입니다. 가능한 값: `true`, `false` |
+| `controls.verbosity` | 답변 길이(verbosity) 조절 가능 여부입니다. 가능한 값: `true`, `false` |
 | `controls.system_message` | 시스템 메시지 설정 가능 여부입니다. 가능한 값: `true`, `false` |
+| `admin` | `true`인 경우, 관리자만 해당 모델을 선택/사용할 수 있습니다. |
 
 ### 값 설명
 

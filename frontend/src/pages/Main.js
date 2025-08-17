@@ -36,14 +36,19 @@ function Main({ isTouch }) {
     defaultModel,
     model,
     updateModel,
+    isInference,
+    isSearch,
+    isDeepResearch,
     canReadImage,
     setTemperature,
     setReason,
+    setVerbosity,
     setSystemMessage,
     setIsImage,
-    setIsSearch,
-    setIsInference,
-    setIsDAN
+    setIsDAN,
+    toggleInference,
+    toggleSearch,
+    toggleDeepResearch
   } = useContext(SettingsContext);
 
   const { addConversation } = useContext(ConversationsContext);
@@ -70,14 +75,18 @@ function Main({ isTouch }) {
   }, []);
 
   useEffect(() => {
-    setIsImage(false);
-    setIsSearch(false);
-    setIsInference(false);
-    setIsDAN(false);
     updateModel(defaultModel);
+
+    if (isInference) toggleInference();
+    if (isSearch) toggleSearch();
+    if (isDeepResearch) toggleDeepResearch();
+    
     setTemperature(0.5);
-    setReason(0);
+    setReason(2);
+    setVerbosity(2);
     setSystemMessage("");
+    setIsImage(false);
+    setIsDAN(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
