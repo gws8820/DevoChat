@@ -9,8 +9,9 @@ function Modal({ message, onConfirm, onCancel, showCancelButton = true }) {
     <motion.div
       className="modal-overlay"
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1, transition: { duration: 0.3 } }}
-      exit={{ opacity: 0, transition: { duration: 0.3 } }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
     >
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-content">{message}</div>

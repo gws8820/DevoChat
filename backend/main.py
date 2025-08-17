@@ -28,13 +28,6 @@ class MCPServer(BaseModel):
     icon: str
     admin: bool
 
-notice_path = os.path.join(os.path.dirname(__file__), 'notice.txt')
-try:
-    with open(notice_path, 'r', encoding='utf-8') as f:
-        NOTICE_MESSAGE = f.read()
-except FileNotFoundError:
-    NOTICE_MESSAGE = ""
-
 load_dotenv()
 app = FastAPI()
 
@@ -68,11 +61,12 @@ app.mount("/icons", StaticFiles(directory="icons"), name="icons")
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    message_hash = base64.b64encode(NOTICE_MESSAGE.encode('utf-8')).decode('utf-8')
+    message = "배송 조회 MCP 서버가 추가되었습니다!"
+    hash = base64.b64encode(message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(
-        message=NOTICE_MESSAGE,
-        hash=message_hash
+        message=message,
+        hash=hash
     )
 
 @app.get("/models", response_model=dict)

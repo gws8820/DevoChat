@@ -239,11 +239,11 @@ function AppContent() {
 
       <div
         style={{ 
-          width: (shouldShowLayout && isSidebarOpen && !isResponsive) ? "calc(100% - 260px)" : "100%",
+          width: "100%",
           height: "100dvh",
-          transform: (shouldShowLayout && isSidebarOpen && !isResponsive) ? "translateX(260px)" : "translateX(0)",
-          transition: "transform 0.3s ease, width 0.3s ease",
-          willChange: "transform",
+          marginLeft: (shouldShowLayout && isSidebarOpen && !isResponsive) ? "260px" : "0",
+          transition: "margin-left 0.3s ease",
+          scrollbarGutter: "stable",
           backfaceVisibility: "hidden",
         }}
       >

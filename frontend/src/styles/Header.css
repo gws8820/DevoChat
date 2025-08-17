@@ -7,6 +7,11 @@
     height: 60px;
     flex: 0 0 60px;
     padding: 0px 20px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .header-left {

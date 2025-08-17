@@ -11,6 +11,11 @@
     position: fixed;
     left: 0;
     top: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .sidebar .header {
@@ -21,41 +26,6 @@
     padding: 0 6px;
 }
 
-.open-search {
-    font-size: 19px !important;
-}
-
-.search-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    background-color: rgb(252, 252, 252);
-    z-index: 101;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.search-container {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 0 8px;
-    box-sizing: border-box;
-}
-
-.search-input {
-    width: 100%;
-    margin: 0 2px;
-    padding: 12px 10px;
-    border: none;
-    border-radius: 4px;
-    font-size: 14px;
-    background-color: rgb(248, 248, 248);
-}
-
 .logo {
     display: flex;
     align-items: center;
@@ -63,7 +33,7 @@
 
 .logo-image {
     padding: 0 8px;
-    max-width: 80%;
+    max-width: 68%;
     -webkit-user-drag: none;
     -khtml-user-drag: none;
     -moz-user-drag: none;
@@ -75,29 +45,43 @@
     user-select: none;
 }
 
-.newconv-container {
+.newtask-container {
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    border-bottom: 1px solid rgb(240, 240, 240);
-    margin-top: 5px;
-}
-
-.new-conversation {
-    all: unset;
-    display: block;
-    width: 100%;
-    padding: 10px 20px;
-    font-size: 16px;
-    font-weight: 500;
-    transition: background-color 0.2s ease-in-out;
-    cursor: pointer;
+    padding: 2px 8px;
+    gap: 2px;
     box-sizing: border-box;
 }
 
-.new-conversation:hover {
-    background-color: #f0f0f0;
+.new-task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background-color 0.2s ease-in-out;
+    cursor: pointer;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.new-task.search {
+    margin-bottom: 2px;
+    padding: 9px 11px;
+    background-color: rgb(255, 255, 255);
+    border: 1px solid rgb(236, 236, 236);
+    border-radius: 15px;
+}
+
+.new-task:hover {
+    background-color: #f1f1f1;
 }
 
 .conversation-container {
+    margin-top: 8px;
     flex: 1 1 auto;
     overflow-y: auto;
     list-style-type: none;
@@ -111,26 +95,34 @@
     justify-content: center;
   }
 
+.conversation-header {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #505050;
+}
+
 .conversation-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     height: 37px;
     box-sizing: border-box;
-    padding: 6px 18px;
-    border-radius: 5px;
+    margin: 0 8px;
+    padding: 6px 10px;
+    gap: 5px;
+    border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -webkit-touch-callout: none;
-    gap: 5px;
+}
+
+.conversation-item.search {
+    height: 45px;
+    padding: 10px;
 }
 
 .conversation-item:hover {
-    background-color: #f0f0f0;
+    background-color: #f3f3f3;
 }
 
 .conversation-text,
@@ -165,7 +157,7 @@ input:focus {
 }
 
 .active-conversation {
-    background-color: #e0e0e0;
+    background-color: #f3f3f3;
 }
 
 .star-icon {
@@ -262,7 +254,7 @@ input:focus {
 }
 
 .user-dropdown button:hover {
-    background-color: #f0f0f0;
+    background-color: #f3f3f3;
 }
 
 .user-container {
@@ -280,7 +272,7 @@ input:focus {
 }
 
 .user-info:hover {
-    background-color: #f0f0f0;
+    background-color: #f3f3f3;
 }
 
 .user-icon {
@@ -304,7 +296,7 @@ input:focus {
 }
 
 .dropdown-button:hover {
-    background-color: #f0f0f0;
+    background-color: #f3f3f3;
 }
 
 @media (hover: hover) {

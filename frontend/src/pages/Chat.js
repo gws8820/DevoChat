@@ -1,12 +1,6 @@
-// src/pages/Chat.js
 import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { IoImageOutline } from "react-icons/io5";
-import { GoPlus, GoGlobe, GoLightBulb, GoTelescope, GoUnlock } from "react-icons/go";
-import { ImSpinner8 } from "react-icons/im";
-import { BiX } from "react-icons/bi";
-import { FiPaperclip, FiMic, FiServer } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
@@ -15,8 +9,8 @@ import { useFileUpload } from "../utils/useFileUpload";
 import axios from "../utils/axiosConfig";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
-import MCPModal from "../components/MCPModal";
 import Toast from "../components/Toast";
+import InputContainer from "../components/InputContainer";
 import "../styles/Common.css";
 
 function Chat({ isTouch, chatMessageRef }) {
@@ -28,18 +22,13 @@ function Chat({ isTouch, chatMessageRef }) {
   const [inputText, setInputText] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isComposing, setIsComposing] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
   const [scrollOnSend, setScrollOnSend] = useState(false);
   const [deleteIndex, setdeleteIndex] = useState(null);
   const [confirmModal, setConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [showMediaOptions, setShowMediaOptions] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
   
   const { 
@@ -49,13 +38,8 @@ function Chat({ isTouch, chatMessageRef }) {
     removeFile
   } = useFileUpload([]);
 
-  const textAreaRef = useRef(null);
-  const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
-  const optionsRef = useRef(null);
-  const recognitionRef = useRef(null);
-  const recordingTimerRef = useRef(null);
 
   const {
     modelsData,
@@ -68,12 +52,7 @@ function Chat({ isTouch, chatMessageRef }) {
     isDeepResearch,
     isDAN,
     mcpList,
-    canControlSystemMessage,
     canReadImage,
-    canToggleInference,
-    canToggleSearch,
-    canToggleDeepResearch,
-    canToggleMCP,
     updateModel,
     setAlias,
     setTemperature,
@@ -386,6 +365,13 @@ function Chat({ isTouch, chatMessageRef }) {
     [deleteMessages, sendMessage]
   );
 
+  const cancelRequest = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  }, []);
+
   const sendEditedMessage = useCallback(
     (idx, updatedContent) => {
       resendMesage(updatedContent, idx);
@@ -505,7 +491,7 @@ function Chat({ isTouch, chatMessageRef }) {
 
     const hasUploadedImage = uploadedFiles.some((file) => {
       return (file.type && (file.type === "image" || file.type.startsWith("image/"))) || 
-             /\.(jpe?g|png|gif|bmp|webp)$/i.test(file.name);
+        /\.(jpe?g|png|gif|bmp|webp)$/i.test(file.name);
     });
   
     setIsImage(hasImageHistory || hasUploadedImage);
@@ -544,65 +530,6 @@ function Chat({ isTouch, chatMessageRef }) {
     }
   }, [messages, isAtBottom]);
 
-  const handleKeyDown = useCallback(
-    (event) => {
-      if (
-        event.key === "Enter" &&
-        !event.shiftKey &&
-        !isComposing &&
-        !isTouch &&
-        !uploadingFiles
-      ) {
-        event.preventDefault();
-        sendMessage(inputText);
-      }
-    },
-    [inputText, isComposing, isTouch, uploadingFiles, sendMessage]
-  );
-
-  const adjustTextareaHeight = useCallback(() => {
-    const textarea = textAreaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      const newHeight = Math.min(textarea.scrollHeight, 250);
-      textarea.style.height = `${newHeight}px`;
-    }
-  }, []);
-
-  useEffect(() => {
-    adjustTextareaHeight();
-  }, [inputText, adjustTextareaHeight]);
-  
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
-        setShowMediaOptions(false);
-      }
-    }
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handlePlusButtonClick = useCallback((e) => {
-    e.stopPropagation();
-    setShowMediaOptions(!showMediaOptions);
-  }, [showMediaOptions]);
-
-  const handleFileClick = useCallback((e) => {
-    e.stopPropagation();
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-    setShowMediaOptions(false);
-  }, []);
-
-  const handleFileDelete = useCallback((file) => {
-    removeFile(file.id);
-  }, [removeFile]);
-
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
     setIsDragActive(true);
@@ -626,128 +553,6 @@ function Chat({ isTouch, chatMessageRef }) {
     [processFiles, canReadImage]
   );
 
-  const handlePaste = useCallback(
-    async (e) => {
-      const items = e.clipboardData.items;
-      const filesToUpload = [];
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (item.kind === "file") {
-          const file = item.getAsFile();
-          if (file) {
-            filesToUpload.push(file);
-          }
-        }
-      }
-      if (filesToUpload.length > 0) {
-        e.preventDefault();
-        await processFiles(filesToUpload, (errorMessage) => {
-          setToastMessage(errorMessage);
-          setShowToast(true);
-        }, canReadImage);
-      }
-    },
-    [processFiles, canReadImage]
-  );
-
-  const handleRecordingStop = useCallback(() => {
-    if (recognitionRef.current && isRecording) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-      clearInterval(recordingTimerRef.current);
-      setRecordingTime(0);
-      setIsRecording(false);
-    }
-  }, [isRecording]);
-
-  const handleRecordingStart = useCallback(async () => {
-    try {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      
-      if (!SpeechRecognition) {
-        setToastMessage("이 브라우저는 음성 인식을 지원하지 않습니다.");
-        setShowToast(true);
-        return;
-      }
-      
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'ko-KR';
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      
-      recognition.onresult = (event) => {
-        let finalText = '';
-        let interimText = '';
-        
-        for (let i = 0; i < event.results.length; i++) {
-          const result = event.results[i];
-          const transcript = result[0].transcript;
-          
-          if (result.isFinal)
-            finalText += transcript;
-          else 
-            interimText += transcript;
-        }
-        
-        const newText = inputText + finalText + interimText;
-        setInputText(newText);
-      };
-      
-      recognition.onerror = (event) => {
-        setToastMessage(`음성 인식 오류가 발생했습니다. ${event.error}`);
-        setShowToast(true);
-        handleRecordingStop();
-      };
-      
-      recognition.onend = () => {
-        if (isRecording) {
-          recognition.start();
-        }
-      };
-      
-      recognition.start();
-      recognitionRef.current = recognition;
-      
-      setIsRecording(true);
-      setShowMediaOptions(false);
-    } catch (error) {
-      setToastMessage("음성 인식을 시작하는 데 실패했습니다.");
-      setShowToast(true);
-    }
-  }, [isRecording, handleRecordingStop, inputText]);
-
-  useEffect(() => {
-    if (isRecording) {
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-    } else {
-      clearInterval(recordingTimerRef.current);
-      setRecordingTime(0);
-    }
-    
-    return () => clearInterval(recordingTimerRef.current);
-  }, [isRecording]);
-
-  const formatRecordingTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const handleMCPClick = useCallback(() => {
-    setIsMCPModalOpen(true);
-    setShowMediaOptions(false);
-  }, []);
-
-  const handleMCPModalClose = useCallback(() => {
-    setIsMCPModalOpen(false);
-  }, []);
-
-  const handleMCPModalConfirm = useCallback((selectedServers) => {
-    setMCPList(selectedServers);
-  }, [setMCPList]);
-  
   return (
     <div
       className="container"
@@ -771,7 +576,8 @@ function Chat({ isTouch, chatMessageRef }) {
           <ClipLoader loading={true} size={50} />
         </motion.div>
       )}
-      <div className="chat-messages" ref={chatMessageRef}>
+      
+      <div className="chat-messages" ref={chatMessageRef} style={{ scrollbarGutter: "stable" }}>
         {useMemo(() => 
           messages.map((msg, idx) => (
             <Message
@@ -790,6 +596,7 @@ function Chat({ isTouch, chatMessageRef }) {
             />
           )), [messages, handleDelete, handleRegenerate, sendEditedMessage, isTouch, isLoading]
         )}
+
         <AnimatePresence>
           {confirmModal && (
             <Modal
@@ -806,6 +613,7 @@ function Chat({ isTouch, chatMessageRef }) {
             />
           )}
         </AnimatePresence>
+
         {isThinking && (
           <motion.div
             className="chat-message think"
@@ -818,248 +626,19 @@ function Chat({ isTouch, chatMessageRef }) {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <motion.div
-        className="input-container"
-        initial={{ y: 8, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="content-container">
-          <AnimatePresence>
-            {uploadedFiles.length > 0 && (
-              <motion.div
-                className="file-area"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <AnimatePresence>
-                  {uploadedFiles.map((file) => (
-                    <motion.div
-                      key={file.id}
-                      className="file-wrap"
-                      initial={{ y: 5, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: 5, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      style={{ position: "relative" }}
-                    >
-                      <div className="file-object">
-                        <span className="file-name">{file.name}</span>
-                        {!file.content && (
-                          <div className="file-upload-overlay">
-                            <ClipLoader size={20} />
-                          </div>
-                        )}
-                      </div>
-                      <BiX
-                        className="file-delete"
-                        onClick={() => handleFileDelete(file)}
-                      />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div className="input-area">
-            <AnimatePresence>
-              {isRecording && (
-                <motion.div 
-                  className="recording-indicator"
-                  initial={{ y: 5, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: 5, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="recording-dot"></div>
-                  <span>
-                    {`녹음 중... ${formatRecordingTime(recordingTime)}`}
-                  </span>
-                  <button className="stop-recording-button" onClick={handleRecordingStop}>
-                    완료
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <textarea
-              ref={textAreaRef}
-              className="message-input"
-              placeholder="답장 입력하기"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onPaste={handlePaste}
-              onKeyDown={handleKeyDown}
-              onCompositionStart={() => setIsComposing(true)}
-              onCompositionEnd={() => setIsComposing(false)}
-            />
-          </div>
-          <div className="button-area">
-            <div className="function-button-container" ref={optionsRef}>
-              <AnimatePresence>
-                <motion.div 
-                  className="function-button plus-button" 
-                  onClick={handlePlusButtonClick}
-                  transition={{ 
-                    type: "physics",
-                    velocity: 200,
-                    stiffness: 100,
-                    damping: 15
-                  }}
-                  layout
-                >
-                  <GoPlus style={{ strokeWidth: 0.5 }} />
-                </motion.div>
-              </AnimatePresence>
-              <AnimatePresence>
-                {showMediaOptions && (
-                  <motion.div 
-                    className="media-options-dropdown"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className="media-option" onClick={handleFileClick}>
-                      <FiPaperclip />
-                      파일 업로드
-                    </div>
-                    <div className="media-option" onClick={handleRecordingStart}>
-                      <FiMic />
-                      음성 인식
-                    </div>
-                    {canToggleMCP && (
-                      <div className="media-option" onClick={handleMCPClick}>
-                        <FiServer style={{ paddingLeft: "0.5px", color: "#5e5bff", strokeWidth: 2.5 }} />
-                        <span className="mcp-text">MCP 서버</span>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            
-            <AnimatePresence initial={false}>
-              {canToggleSearch && (
-                <motion.div
-                  key="search"
-                  className={`function-button ${isSearch ? "active" : ""}`}
-                  onClick={toggleSearch}
-                  initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                  animate={{ x: 0, opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{
-                    type: "physics",
-                    velocity: 200,
-                    stiffness: 100,
-                    damping: 15
-                  }}
-                  layout
-                >
-                  <GoGlobe style={{ strokeWidth: 0.5 }} />
-                  <span className="button-text">검색</span>
-                </motion.div>
-              )}
-              {canToggleInference && (
-                <motion.div
-                  key="inference"
-                  className={`function-button ${isInference ? "active" : ""}`}
-                  onClick={toggleInference}
-                  initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                  animate={{ x: 0, opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ 
-                    type: "physics",
-                    velocity: 200,
-                    stiffness: 100,
-                    damping: 15
-                  }}
-                  layout
-                >
-                  <GoLightBulb style={{ strokeWidth: 0.5 }} />
-                  <span className="button-text">추론</span>
-                </motion.div>
-              )}
-              {canToggleDeepResearch && (
-                <motion.div
-                  key="deep-research"
-                  className={`function-button ${isDeepResearch ? "active" : ""}`}
-                  onClick={toggleDeepResearch}
-                  initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                  animate={{ x: 0, opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ 
-                    type: "physics",
-                    velocity: 200,
-                    stiffness: 100,
-                    damping: 15
-                  }}
-                  layout
-                >
-                  <GoTelescope style={{ strokeWidth: 0.5 }} />
-                  <span className="button-text">딥 리서치</span>
-                </motion.div>
-              )}
-              {canControlSystemMessage && (
-                <motion.div
-                  key="dan"
-                  className={`function-button ${isDAN ? "active" : ""}`}
-                  onClick={() => setIsDAN(!isDAN)}
-                  initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                  animate={{ x: 0, opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ 
-                    type: "physics",
-                    velocity: 200,
-                    stiffness: 100,
-                    damping: 15
-                  }}
-                  layout
-                >
-                  <GoUnlock style={{ strokeWidth: 0.5 }} />
-                  <span className="button-text">DAN</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
 
-        <button
-          className="send-button"
-          onClick={() =>
-            isLoading
-              ? abortControllerRef.current?.abort()
-              : sendMessage(inputText)
-          }
-          disabled={uploadingFiles}
-          aria-label={isLoading ? "전송 중단" : "메시지 전송"}
-        >
-          {isLoading ? (
-            <div className="loading-container">
-              <ImSpinner8 className="spinner" />
-              <FaStop className="stop-icon" />
-            </div>
-          ) : (
-            <FaPaperPlane />
-          )}
-        </button>
-      </motion.div>
-
-      <input
-        type="file"
-        accept="*/*"
-        multiple
-        ref={fileInputRef}
-        style={{ display: "none" }}
-        onChange={async (e) => {
-          const files = Array.from(e.target.files);
-          await processFiles(files, (errorMessage) => {
-            setToastMessage(errorMessage);
-            setShowToast(true);
-          }, canReadImage);
-          e.target.value = "";
-        }}
+      <InputContainer
+        isTouch={isTouch}
+        placeholder="답장 입력하기"
+        inputText={inputText}
+        setInputText={setInputText}
+        isLoading={isLoading}
+        onSend={sendMessage}
+        onCancel={cancelRequest}
+        uploadedFiles={uploadedFiles}
+        processFiles={processFiles}
+        removeFile={removeFile}
+        uploadingFiles={uploadingFiles}
       />
 
       <AnimatePresence>
@@ -1080,13 +659,6 @@ function Chat({ isTouch, chatMessageRef }) {
         )}
       </AnimatePresence>
       
-      <MCPModal
-        isOpen={isMCPModalOpen}
-        onClose={handleMCPModalClose}
-        onConfirm={handleMCPModalConfirm}
-        currentMCPList={mcpList}
-      />
-
       <Toast
         type="error"
         message={toastMessage}

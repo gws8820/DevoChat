@@ -103,6 +103,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
     mcp_tools = {}
     try:
         if request.stream:
+            summary_index = None
             stream_result = await client.responses.create(**parameters)
             async for chunk in stream_result:
                 if await fastapi_request.is_disconnected():
@@ -111,11 +112,16 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                     if not is_thinking:
                         is_thinking = True
                         await chunk_queue.put('<think>\n')
+                    current_summary_index = getattr(chunk, "summary_index", None)
+                    if current_summary_index != summary_index:
+                        await chunk_queue.put('\n\n')
+                    summary_index = current_summary_index
                     await chunk_queue.put(chunk.delta)
                 elif chunk.type == "response.output_text.delta":
                     if is_thinking:
                         await chunk_queue.put('\n</think>\n\n')
                         is_thinking = False
+                        summary_index = None
                     await chunk_queue.put(chunk.delta)
                 elif chunk.type == "response.completed":
                     if chunk.response.usage:
@@ -245,13 +251,17 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 "background": bool(request.stream and (request.reason or request.deep_research) and not request.mcp)
             }
 
-            if request.reason > 0:
-                mapping = {1: "low", 2: "medium", 3: "high"}
-                reasoning_effort = mapping.get(request.reason)
+            mapping = {0: "minimal", 1: "low", 2: "medium", 3: "high"}
+            reasoning_effort = mapping.get(request.reason)
+            
+            if request.search and reasoning_effort == "minimal":
+                pass
+            else:
                 parameters["reasoning"] = {
                     "effort": reasoning_effort,
                     "summary": "auto"
                 }
+                
             if request.search:
                 parameters["tools"] = [{"type": "web_search_preview"}]
             if request.deep_research:

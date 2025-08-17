@@ -43,21 +43,21 @@ db = mongo_client.chat_db
 user_collection = db.users
 conversation_collection = db.conversations
 
-dan_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'dan_prompt.txt')
+dan_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'dan_prompt.txt')
 try:
     with open(dan_prompt_path, 'r', encoding='utf-8') as f:
         DAN_PROMPT = f.read()
 except FileNotFoundError:
     DAN_PROMPT = ""
 
-markdown_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'markdown_prompt.txt')
+markdown_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'markdown_prompt.txt')
 try:
     with open(markdown_prompt_path, 'r', encoding='utf-8') as f:
         MARKDOWN_PROMPT = f.read()
 except FileNotFoundError:
     MARKDOWN_PROMPT = ""
 
-alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'alias_prompt.txt')
+alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'alias_prompt.txt')
 try:
     with open(alias_prompt_path, 'r', encoding='utf-8') as f:
         ALIAS_PROMPT = f.read()
