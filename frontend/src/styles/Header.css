@@ -174,7 +174,7 @@
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(24px);
-    z-index: 100;
+    z-index: 10;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 
                 0 4px 12px rgba(0, 0, 0, 0.04);
     overflow: hidden;
@@ -250,7 +250,7 @@
     margin-right: 10px;
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(24px);
-    z-index: 100;
+    z-index: 10;
     border-radius: 12px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 
                 0 4px 12px rgba(0, 0, 0, 0.04);

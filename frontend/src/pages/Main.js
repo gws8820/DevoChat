@@ -82,8 +82,8 @@ function Main({ isTouch }) {
     if (isDeepResearch) toggleDeepResearch();
     
     setTemperature(0.5);
-    setReason(2);
-    setVerbosity(2);
+    setReason(0.5);
+    setVerbosity(0.5);
     setSystemMessage("");
     setIsImage(false);
     setIsDAN(false);

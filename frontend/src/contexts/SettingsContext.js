@@ -8,8 +8,8 @@ export const SettingsProvider = ({ children, modelsData }) => {
   const [model, setModel] = useState(defaultModel);
   const [alias, setAlias] = useState("");
   const [temperature, setTemperature] = useState(0.5);
-  const [reason, setReason] = useState(2);
-  const [verbosity, setVerbosity] = useState(2);
+  const [reason, setReason] = useState(0.5);
+  const [verbosity, setVerbosity] = useState(0.5);
   const [systemMessage, setSystemMessage] = useState("");
   const [isImage, setIsImage] = useState(false);
   const [isInference, setIsInference] = useState(false);
@@ -108,7 +108,7 @@ export const SettingsProvider = ({ children, modelsData }) => {
       }
     } 
 
-    setIsInference(!isInference);
+    setIsInference(nextIsInference);
 
     setCanControlTemp(temperature === true || temperature === "conditional");
     setCanControlReason(reason === true && nextIsInference === true);

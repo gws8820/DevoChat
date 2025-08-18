@@ -262,7 +262,7 @@ function Chat({ isTouch, chatMessageRef }) {
               out_billing: selectedModel.out_billing,
               temperature: canControlTemp ? temperature : 1,
               reason: canControlReason ? reason : 0,
-              verbosity: canControlVerbosity ? verbosity : 2,
+              verbosity: canControlVerbosity ? verbosity : 0,
               system_message: systemMessage,
               user_message: contentParts,
               inference: isInference,

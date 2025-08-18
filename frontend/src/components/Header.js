@@ -52,8 +52,11 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   });
 
   const currentModelAlias = models.find((m) => m.model_name === model)?.model_alias || "모델 선택";
-  const reasonLabels = ["low", "medium", "high"];
-  const verboseLabels = ["low", "medium", "high"];
+
+  const toPercent = (value) => {
+    const pct = Math.round(value * 100);
+    return `${pct}%`;
+  };
 
   const handleShare = async () => {
     try {
@@ -216,42 +219,42 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    {canControlReason && (
-                      <div className="slider-section">
-                        <div className="slider-label">
-                          <span>추론 강도</span>
-                          <span className="slider-value">
-                            {reasonLabels[reason - 1]}
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min="1"
-                          max="3"
-                          step="1"
-                          value={reason}
-                          onChange={(e) => setReason(parseInt(e.target.value))}
-                          className="slider"
-                        />
-                      </div>
-                    )}
                     {canControlTemp && (
                       <div className="slider-section">
                         <div className="slider-label">
                           <span>창의성</span>
                           <span className="slider-value">
-                            {temperature}
+                            {toPercent(temperature)}
                           </span>
                         </div>
                         <input
                           type="range"
-                          min="0"
-                          max="1"
-                          step="0.1"
+                          min={0.01}
+                          max={1}
+                          step={0.01}
                           value={temperature}
                           onChange={(e) =>
                             setTemperature(parseFloat(e.target.value))
                           }
+                          className="slider"
+                        />
+                      </div>
+                    )}
+                    {canControlReason && (
+                      <div className="slider-section">
+                        <div className="slider-label">
+                          <span>추론 강도</span>
+                          <span className="slider-value">
+                            {toPercent(reason)}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={0.01}
+                          max={1}
+                          step={0.01}
+                          value={reason}
+                          onChange={(e) => setReason(parseFloat(e.target.value))}
                           className="slider"
                         />
                       </div>
@@ -261,16 +264,16 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                         <div className="slider-label">
                           <span>답변 길이</span>
                           <span className="slider-value">
-                            {verboseLabels[verbosity - 1]}
+                            {toPercent(verbosity)}
                           </span>
                         </div>
                         <input
                           type="range"
-                          min="1"
-                          max="3"
-                          step="1"
+                          min={0.01}
+                          max={1}
+                          step={0.01}
                           value={verbosity}
-                          onChange={(e) => setVerbosity(parseInt(e.target.value))}
+                          onChange={(e) => setVerbosity(parseFloat(e.target.value))}
                           className="slider"
                         />
                       </div>
