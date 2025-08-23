@@ -1,34 +1,62 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useEffect } from "react";
+import axios from "../utils/axiosConfig";
 
 export const SettingsContext = createContext();
 
-export const SettingsProvider = ({ children, modelsData }) => {
+export const SettingsProvider = ({ children }) => {
   const defaultModel = "gemini-2.5-flash";
+  const defaultImageModel = "flux-kontext-max";
   
+  const [models, setModels] = useState([]);
+  const [imageModels, setImageModels] = useState([]);
   const [model, setModel] = useState(defaultModel);
+  const [imageModel, setImageModel] = useState(defaultImageModel);
+  const [isModelReady, setIsModelReady] = useState(false);
   const [alias, setAlias] = useState("");
-  const [temperature, setTemperature] = useState(0.5);
+  const [temperature, setTemperature] = useState(1);
   const [reason, setReason] = useState(0.5);
   const [verbosity, setVerbosity] = useState(0.5);
   const [systemMessage, setSystemMessage] = useState("");
-  const [isImage, setIsImage] = useState(false);
   const [isInference, setIsInference] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
   const [isDeepResearch, setIsDeepResearch] = useState(false);
   const [isDAN, setIsDAN] = useState(false);
+  const [hasImage, setHasImage] = useState(false); // Has Image in Chat
   const [mcpList, setMCPList] = useState([]);
-  const [canReadImage, setCanReadImage] = useState(false);
   const [canControlTemp, setCanControlTemp] = useState(false);
   const [canControlReason, setCanControlReason] = useState(false);
   const [canControlVerbosity, setCanControlVerbosity] = useState(false);
   const [canControlSystemMessage, setCanControlSystemMessage] = useState(false);
+  const [canReadImage, setCanReadImage] = useState(false); // Can Read Image (Chat Mode)
+  const [canEditImage, setCanEditImage] = useState(false); // Can Edit Image (Image Mode)
   const [canToggleInference, setCanToggleInference] = useState(false);
   const [canToggleSearch, setCanToggleSearch] = useState(false);
   const [canToggleDeepResearch, setCanToggleDeepResearch] = useState(false);
   const [canToggleMCP, setCanToggleMCP] = useState(false);
+  const [maxImageInput, setMaxImageInput] = useState(1);
+
+  const fetchModels = async () => {
+    try {
+      const [modelsResponse, imageModelsResponse] = await Promise.all([
+        axios.get(`${process.env.REACT_APP_FASTAPI_URL}/models`, { withCredentials: true }),
+        axios.get(`${process.env.REACT_APP_FASTAPI_URL}/image_models`, { withCredentials: true })
+      ]);
+      setModels(modelsResponse.data?.models || []);
+      setImageModels(imageModelsResponse.data?.models || []);
+    } catch (error) {
+      setModels([]);
+      setImageModels([]);
+    } finally {
+      setIsModelReady(true);
+    }
+  };
+
+  useEffect(() => {
+    fetchModels();
+  }, []);
 
   const updateModel = (newModel, initialSettings) => {
-    const selectedModel = modelsData.models.find(m => m.model_name === newModel);
+    const selectedModel = models.find(m => m.model_name === newModel);
     setModel(newModel);
     
     const temperature = selectedModel?.controls?.temperature;
@@ -93,7 +121,7 @@ export const SettingsProvider = ({ children, modelsData }) => {
   };
 
   const toggleInference = () => {
-    const selectedModel = modelsData.models.find(m => m.model_name === model);
+    const selectedModel = models.find(m => m.model_name === model);
     const inference = selectedModel?.capabilities?.inference;
     const temperature = selectedModel?.controls?.temperature;
     const reason = selectedModel?.controls?.reason;
@@ -115,7 +143,7 @@ export const SettingsProvider = ({ children, modelsData }) => {
   };
 
   const toggleSearch = () => {
-    const selectedModel = modelsData.models.find(m => m.model_name === model);
+    const selectedModel = models.find(m => m.model_name === model);
     const search = selectedModel?.capabilities?.search;
     
     if (search === "switch") {
@@ -130,7 +158,7 @@ export const SettingsProvider = ({ children, modelsData }) => {
   };
 
   const toggleDeepResearch = () => {
-    const selectedModel = modelsData.models.find(m => m.model_name === model);
+    const selectedModel = models.find(m => m.model_name === model);
     const deep_research = selectedModel?.capabilities?.deep_research;
     
     if (deep_research === "switch") {
@@ -144,44 +172,85 @@ export const SettingsProvider = ({ children, modelsData }) => {
     setIsDeepResearch(!isDeepResearch);
   };
 
+  const updateImageModel = (newImageModel) => {
+    const selectedImageModel = imageModels.find(m => m.model_name === newImageModel);
+    setImageModel(newImageModel);
+    
+    const imageConfig = selectedImageModel?.capabilities?.image;
+    const type = imageConfig?.type;
+    const maxInput = imageConfig?.max_input;
+    
+    setCanEditImage(type === "switch" || type === true);
+    setMaxImageInput(maxInput);
+  };
+
+  const switchImageMode = (hasUploadedImages) => {
+    const selectedImageModel = imageModels.find(m => m.model_name === imageModel);
+    const imageConfig = selectedImageModel?.capabilities?.image;
+    const type = imageConfig?.type;
+    
+    if (type === "switch") {
+      const variants = selectedImageModel?.variants;
+      if (hasUploadedImages) {
+        const targetModel = variants?.image;
+        if (targetModel) {
+          updateImageModel(targetModel);
+        }
+      } else {
+        const targetModel = variants?.base;
+        if (targetModel) {
+          updateImageModel(targetModel);
+        }
+      }
+    }
+  };
+
   return (
     <SettingsContext.Provider
       value={{
-        modelsData,
         defaultModel,
+        defaultImageModel,
+        isModelReady,
+        models,
+        imageModels,
         model,
+        imageModel,
         alias,
         temperature,
         reason,
         verbosity,
         systemMessage,
-        isImage,
+        hasImage,
         isInference,
         isSearch,
         isDeepResearch,
         isDAN,
         mcpList,
-        canReadImage,
         canControlTemp,
         canControlReason,
         canControlVerbosity,
         canControlSystemMessage,
+        canEditImage,
         canToggleInference, 
         canToggleSearch,
         canToggleDeepResearch, 
         canToggleMCP,
+        canReadImage,
+        maxImageInput,
         updateModel,
+        updateImageModel,
         setAlias,
         setTemperature,
         setReason,
         setVerbosity,
         setSystemMessage,
-        setIsImage,
+        setHasImage,
         setIsDAN,
         setMCPList,
         toggleInference,
         toggleSearch,
-        toggleDeepResearch
+        toggleDeepResearch,
+        switchImageMode
       }}
     >
       {children}

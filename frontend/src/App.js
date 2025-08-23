@@ -4,8 +4,10 @@ import { useEffect, useState, useCallback, useRef, useContext, useMemo } from "r
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
+import ImageHeader from "./components/ImageHeader";
 import Main from "./pages/Main";
 import Chat from "./pages/Chat";
+import Image from "./pages/Image";
 import View from "./pages/View";
 import Realtime from "./pages/Realtime";
 import Admin from "./pages/Admin";
@@ -13,33 +15,14 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Toast from "./components/Toast";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { SettingsContext } from "./contexts/SettingsContext";
 import { ConversationsProvider, ConversationsContext } from "./contexts/ConversationsContext";
 import logo from "./logo.png";
 
 function App() {
-  const [modelsData, setModelsData] = useState(null);
-
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const modelsResponse = await axios.get(
-          `${process.env.REACT_APP_FASTAPI_URL}/models`,
-          { withCredentials: true }
-        );
-        setModelsData(modelsResponse.data);
-      } catch (error) {
-        console.error("Failed to fetch models:", error);
-        setModelsData({ models: [] });
-      }
-    };
-    fetchModels();
-  }, []);
-
-  if (modelsData === null) return null;
-
   return (
     <Router>
-      <SettingsProvider modelsData={modelsData}>
+      <SettingsProvider>
         <ConversationsProvider>
           <AppContent />
         </ConversationsProvider>
@@ -62,7 +45,13 @@ function AppContent() {
   const navigate = useNavigate();
 
   const shouldShowLayout = useMemo(() => {
-    return isLoggedIn && (location.pathname === '/' || location.pathname.startsWith('/chat/'));
+    return (
+      isLoggedIn && (
+        location.pathname === '/' ||
+        location.pathname.startsWith('/chat/') ||
+        location.pathname.startsWith('/image')
+      )
+    );
   }, [isLoggedIn, location.pathname]);
 
   const shouldShowLogo = useMemo(() => {
@@ -71,6 +60,7 @@ function AppContent() {
 
   const chatMessageRef = useRef(null);
   const { fetchConversations } = useContext(ConversationsContext);
+  const { isModelReady } = useContext(SettingsContext);
 
   useEffect(() => {
     const handleResize = () => {
@@ -194,6 +184,7 @@ function AppContent() {
   }, [isTouch]);
 
   if (isLoggedIn === null) return null;
+  if (isLoggedIn && !isModelReady) return null;
 
   return (
     <div style={{ display: "flex", margin: "0", overflow: "hidden" }}>
@@ -260,18 +251,27 @@ function AppContent() {
         )}
 
         {shouldShowLayout && (
-          <Header
-            toggleSidebar={toggleSidebar}
-            isSidebarOpen={isSidebarOpen}
-            isTouch={isTouch}
-            chatMessageRef={chatMessageRef}
-          />
+          location.pathname.startsWith('/image') ? (
+            <ImageHeader
+              toggleSidebar={toggleSidebar}
+              isSidebarOpen={isSidebarOpen}
+              isTouch={isTouch}
+            />
+          ) : (
+            <Header
+              toggleSidebar={toggleSidebar}
+              isSidebarOpen={isSidebarOpen}
+              isTouch={isTouch}
+              chatMessageRef={chatMessageRef}
+            />
+          )
         )}
 
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={isLoggedIn ? <Main isTouch={isTouch} /> : <Navigate to="/login" />} />
           <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
           <Route path="/view/:conversation_id" element={<View />} />
+          <Route path="/image" element={isLoggedIn ? <Image /> : <Navigate to="/login" />} />
           <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
           <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />
           <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <Login />} />

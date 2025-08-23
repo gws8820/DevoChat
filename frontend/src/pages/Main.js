@@ -32,7 +32,7 @@ function Main({ isTouch }) {
   } = useFileUpload([]);
 
   const {
-    modelsData,
+    models,
     defaultModel,
     model,
     updateModel,
@@ -44,8 +44,8 @@ function Main({ isTouch }) {
     setReason,
     setVerbosity,
     setSystemMessage,
-    setIsImage,
     setIsDAN,
+    setHasImage,
     toggleInference,
     toggleSearch,
     toggleDeepResearch
@@ -53,7 +53,6 @@ function Main({ isTouch }) {
 
   const { addConversation } = useContext(ConversationsContext);
 
-  const models = modelsData.models;
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
 
   useEffect(() => {
@@ -81,11 +80,11 @@ function Main({ isTouch }) {
     if (isSearch) toggleSearch();
     if (isDeepResearch) toggleDeepResearch();
     
-    setTemperature(0.5);
+    setTemperature(1);
     setReason(0.5);
     setVerbosity(0.5);
     setSystemMessage("");
-    setIsImage(false);
+    setHasImage(false);
     setIsDAN(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -169,9 +168,9 @@ function Main({ isTouch }) {
       return (file.type && (file.type === "image" || file.type.startsWith("image/"))) || 
         /\.(jpe?g|png|gif|bmp|webp)$/i.test(file.name);
     });
-    setIsImage(hasUploadedImage);
+    setHasImage(hasUploadedImage);
   },
-  [setIsImage, uploadedFiles]);
+  [setHasImage, uploadedFiles]);
   
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -206,8 +205,8 @@ function Main({ isTouch }) {
       <div className="welcome-container">
         <motion.div
           className="welcome-message"
-          initial={{ y: 5 }}
-          animate={{ y: 0 }}
+          initial={{ y: 8, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
           무엇을 도와드릴까요?
@@ -216,7 +215,7 @@ function Main({ isTouch }) {
 
       <InputContainer
         isTouch={isTouch}
-        placeholder="내용 입력하기"
+        placeholder="내용 입력"
         extraClassName="main-input-container"
         inputText={inputText}
         setInputText={setInputText}

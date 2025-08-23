@@ -381,6 +381,29 @@
       "admin": false
     },
     {
+      "model_name": "accounts/fireworks/models/deepseek-v3p1",
+      "model_alias": "Deepseek V3.1",
+      "description": "최신 Deepseek 모델",
+      "endpoint": "/fireworks",
+      "in_billing": "0.56",
+      "out_billing": "1.68",
+      "capabilities": {
+        "stream": true,
+        "image": false,
+        "inference": true,
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
       "model_name": "accounts/fireworks/models/kimi-k2-instruct",
       "model_alias": "Kimi K2",
       "description": "최신 Kimi 모델",
@@ -438,58 +461,6 @@
       "out_billing": "0.88",
       "variants": {
         "base": "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": false,
-        "inference": "switch",
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "accounts/fireworks/models/deepseek-v3-0324",
-      "model_alias": "Deepseek V3",
-      "description": "표준 Deepseek 모델",
-      "endpoint": "/fireworks",
-      "in_billing": "0.9",
-      "out_billing": "0.9",
-      "variants": {
-        "inference": "accounts/fireworks/models/deepseek-r1-0528"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": false,
-        "inference": "switch",
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "accounts/fireworks/models/deepseek-r1-0528",
-      "model_alias": "Deepseek R1",
-      "description": "추론 Deepseek 모델",
-      "endpoint": "/fireworks",
-      "in_billing": "3",
-      "out_billing": "8",
-      "variants": {
-        "base": "accounts/fireworks/models/deepseek-v3-0324"
       },
       "capabilities": {
         "stream": true,

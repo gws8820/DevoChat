@@ -14,7 +14,8 @@ from ..common import (
     DEFAULT_PROMPT, DAN_PROMPT,
     check_user_permissions,
     get_conversation, save_conversation,
-    normalize_assistant_content
+    normalize_assistant_content,
+    getReason, getVerbosity
 )
 from logging_util import logger
 
@@ -186,7 +187,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                             tool_name = tool_info["tool_name"]
                             
                             is_error = getattr(chunk.item, "status", "") != "completed"
-                            result = getattr(chunk.item, "action", {}).get("query", "")
+                            result = getattr(chunk.item, "action", None).query or ""
                             
                             await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n")
         else:
@@ -251,19 +252,18 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 "background": bool(request.stream and (request.reason or request.deep_research) and not request.mcp)
             }
             
-            mapping = {1: "low", 2: "medium", 3: "high"}
-            parameters["text"] = {"verbosity": mapping.get(request.verbosity)}
-
-            mapping = {0: "minimal", 1: "low", 2: "medium", 3: "high"}
-            reasoning_effort = mapping.get(request.reason)
+            if request.verbosity:
+                parameters["text"] = {"verbosity": getVerbosity(request.verbosity, "tertiary")}
             
-            if request.search and reasoning_effort == "minimal":
-                pass
-            else:
-                parameters["reasoning"] = {
-                    "effort": reasoning_effort,
-                    "summary": "auto"
-                }
+            if request.reason:
+                reason_effort = getReason(request.reason, "tertiary")
+                if request.search and reason_effort == "minimal":
+                    pass
+                else:
+                    parameters["reasoning"] = {
+                        "effort": reason_effort,
+                        "summary": "auto"
+                    }
                 
             if request.search:
                 parameters["tools"] = [{"type": "web_search_preview"}]

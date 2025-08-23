@@ -29,8 +29,14 @@ function Message({
   const textareaRef = useRef(null);
   
   const startEdit = () => {
-    const textContent =
-      content.find((item) => item.type === "text")?.text || "";
+    let textContent = "";
+    if (Array.isArray(content)) {
+      textContent = content.find((item) => item.type === "text")?.text || "";
+    } else if (typeof content === "string") {
+      textContent = content;
+    } else if (content != null) {
+      textContent = String(content);
+    }
     setEditText(textContent);
     setIsEditing(true);
   };
@@ -184,31 +190,47 @@ function Message({
       </motion.div>
     );
   } else if (role === "assistant") {
-    return (
-      <div className="assistant-wrap">
-        <div className="chat-message assistant">
-          <MarkdownRenderer
-            content={content}
-            isComplete={isComplete !== undefined ? isComplete : true}
-            isLoading={isLoading}
-            isLastMessage={isLastMessage}
-          />
+    if (content.type === "image") {
+      return (
+        <div className="assistant-wrap">
+          <div className="message-file-area">
+            <div className="image-object">
+              <img
+                src={content.content}
+                alt={content.name}
+                onLoad={() => setScrollOnSend && setScrollOnSend(true)}
+              />
+            </div>
+          </div>
         </div>
-        <div className="message-function">
-          {copied ? (
-            <GoCheck className="function-button" />
-          ) : (
-            <GoCopy className="function-button" onClick={handleCopy} />
-          )}
-          {onRegenerate && (
-            <GoSync
-              className="function-button"
-              onClick={() => onRegenerate(messageIndex)}
+      );
+    } else {
+      return (
+        <div className="assistant-wrap">
+          <div className="chat-message assistant">
+            <MarkdownRenderer
+              content={String(content)}
+              isComplete={isComplete !== undefined ? isComplete : true}
+              isLoading={isLoading}
+              isLastMessage={isLastMessage}
             />
-          )}
+          </div>
+          <div className="message-function">
+            {copied ? (
+              <GoCheck className="function-button" />
+            ) : (
+              <GoCopy className="function-button" onClick={handleCopy} />
+            )}
+            {onRegenerate && (
+              <GoSync
+                className="function-button"
+                onClick={() => onRegenerate(messageIndex)}
+              />
+            )}
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   } else if (role === "error") {
     return (
       <motion.div

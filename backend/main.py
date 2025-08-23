@@ -7,9 +7,13 @@ from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, Response, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
+import aiofiles
+import aiofiles.os
+from pathlib import Path
 from routes import auth, realtime, conversations, uploads
 from routes.clients import openai_client, grok_client, responses_client, anthropic_client, google_client, mistral_client
+from routes.image_clients import openai_client, google_client, flux_client, byteplus_client, alibaba_client
 from routes.auth import User, get_current_user
 from bs4 import BeautifulSoup
 import base64
@@ -35,12 +39,19 @@ app.include_router(auth.router)
 app.include_router(conversations.router)
 app.include_router(uploads.router)
 app.include_router(realtime.router)
+
 app.include_router(openai_client.router)
 app.include_router(grok_client.router)
 app.include_router(responses_client.router)
 app.include_router(anthropic_client.router)
 app.include_router(google_client.router)
 app.include_router(mistral_client.router)
+
+app.include_router(openai_client.router)
+app.include_router(google_client.router)
+app.include_router(flux_client.router)
+app.include_router(byteplus_client.router)
+app.include_router(alibaba_client.router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -55,18 +66,63 @@ app.add_middleware(
 
 app.add_middleware(LoggingMiddleware)
 
-app.mount("/images", StaticFiles(directory="images"), name="images")
-app.mount("/files", StaticFiles(directory="files"), name="files")
-app.mount("/icons", StaticFiles(directory="icons"), name="icons")
-
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    message = "배송 조회 MCP 서버가 추가되었습니다!"
+    message = "Deepseek V3.1 모델이 추가되었습니다!"
     hash = base64.b64encode(message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(
         message=message,
         hash=hash
+    )
+    
+@app.get("/uploads/images/{file_path:path}")
+async def serve_uploaded_images(file_path: str):
+    file_location = Path("uploads/images") / file_path
+    if not await aiofiles.os.path.exists(file_location):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(
+        file_location, 
+        headers={
+            "Cache-Control": "public, max-age=3600",
+            "Content-Type": "image/jpeg"
+        }
+    )
+
+@app.get("/uploads/files/{file_path:path}")
+async def serve_uploaded_files(file_path: str):
+    file_location = Path("uploads/files") / file_path
+    if not await aiofiles.os.path.exists(file_location):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(
+        file_location,
+        headers={"Cache-Control": "public, max-age=3600"}
+    )
+
+@app.get("/generated/images/{file_path:path}")
+async def serve_generated_images(file_path: str):
+    file_location = Path("generated/images") / file_path
+    if not await aiofiles.os.path.exists(file_location):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(
+        file_location,
+        headers={
+            "Cache-Control": "public, max-age=3600",
+            "Content-Type": "image/png"
+        }
+    )
+
+@app.get("/icons/{file_path:path}")
+async def serve_icons(file_path: str):
+    file_location = Path("icons") / file_path
+    if not await aiofiles.os.path.exists(file_location):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(
+        file_location,
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "Content-Type": "image/png"
+        }
     )
 
 @app.get("/models", response_model=dict)
@@ -84,6 +140,22 @@ async def get_models(user: User = Depends(get_current_user)):
         return {"models": models}
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error occurred while fetching models: {str(ex)}")
+
+@app.get("/image_models", response_model=dict)
+async def get_image_models(user: User = Depends(get_current_user)):
+    try:
+        with open("image_models.json", "r", encoding="utf-8") as f:
+            models_data = json.load(f)
+
+        models = []
+        for model in models_data["models"]:
+            if not user.admin and model.get("admin"):
+                continue
+            models.append(model)
+
+        return {"models": models}
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error occurred while fetching image models: {str(ex)}")
 
 @app.get("/mcp-servers", response_model=list[MCPServer])
 async def get_mcp_servers(user: User = Depends(get_current_user)):

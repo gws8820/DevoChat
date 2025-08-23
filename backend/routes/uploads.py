@@ -15,8 +15,8 @@ from logging_util import logger
 
 router = APIRouter()
 
-IMAGE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images")
-FILES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "files")
+IMAGE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "images")
+FILES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "files")
 FILES_PROCESSED_DIR = os.path.join(FILES_DIR, "processed")
 FILES_ORIGINAL_DIR = os.path.join(FILES_DIR, "original")
 
@@ -76,7 +76,7 @@ async def upload_image(file: UploadFile = File(...), current_user: User = Depend
     try:
         image = Image.open(io.BytesIO(file_data))
     except Exception:
-        raise HTTPException(status_code=400, detail="Can't Read Image File")
+        raise HTTPException(status_code=400, detail="Can't read image file.")
 
     image = ImageOps.exif_transpose(image)
 
@@ -104,7 +104,7 @@ async def upload_image(file: UploadFile = File(...), current_user: User = Depend
     return {
         "type": "image",
         "name": file.filename,
-        "content": f"/images/{saved_filename}"
+        "content": f"/uploads/images/{saved_filename}"
     }
 
 @router.post("/upload/file")
@@ -251,8 +251,8 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
     return {
         "type": "file",
         "name": filename,
-        "content": f"/files/processed/{processed_filename}",
-        "file_path": f"/files/original/{original_filename}"
+        "content": f"/uploads/files/processed/{processed_filename}",
+        "file_path": f"/uploads/files/original/{original_filename}"
     }
 
 @router.post("/upload_page")

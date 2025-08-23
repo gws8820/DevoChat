@@ -13,7 +13,8 @@ from ..common import (
     DEFAULT_PROMPT, DAN_PROMPT,
     check_user_permissions,
     get_conversation, save_conversation,
-    normalize_assistant_content
+    normalize_assistant_content,
+    getReason, getVerbosity
 )
 from logging_util import logger
 
@@ -145,8 +146,8 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 "stream": request.stream
             }
             
-            mapping = {1: 560, 2: 849, 3: 1288}
-            parameters["max_tokens"] = mapping.get(request.verbosity)
+            if request.verbosity:
+                parameters["max_tokens"] = getVerbosity(request.verbosity, "tokens")
             
             chunk_queue = asyncio.Queue()
             stream_task = asyncio.create_task(process_stream(chunk_queue, request, parameters, fastapi_request, client))

@@ -42,7 +42,7 @@ function Chat({ isTouch, chatMessageRef }) {
   const abortControllerRef = useRef(null);
 
   const {
-    modelsData,
+    models,
     model,
     temperature,
     reason,
@@ -63,14 +63,16 @@ function Chat({ isTouch, chatMessageRef }) {
     setReason,
     setVerbosity,
     setSystemMessage,
-    setIsImage,
-    setIsDAN, 
+    setIsDAN,
+    setHasImage,
     setMCPList,
   } = useContext(SettingsContext);
 
-  const { fetchConversations, updateConversation } = useContext(ConversationsContext);
+  const {
+    fetchConversations,
+    updateConversation
+  } = useContext(ConversationsContext);
 
-  const models = modelsData.models;
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
 
   const generateMessageId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -505,8 +507,8 @@ function Chat({ isTouch, chatMessageRef }) {
         /\.(jpe?g|png|gif|bmp|webp)$/i.test(file.name);
     });
   
-    setIsImage(hasImageHistory || hasUploadedImage);
-  }, [messages, setIsImage, uploadedFiles]);
+    setHasImage(hasImageHistory || hasUploadedImage);
+  }, [messages, setHasImage, uploadedFiles]);
 
   useEffect(() => {
     const chatContainer = messagesEndRef.current?.parentElement;
@@ -640,7 +642,7 @@ function Chat({ isTouch, chatMessageRef }) {
 
       <InputContainer
         isTouch={isTouch}
-        placeholder="답장 입력하기"
+        placeholder="답장 입력"
         inputText={inputText}
         setInputText={setInputText}
         isLoading={isLoading}

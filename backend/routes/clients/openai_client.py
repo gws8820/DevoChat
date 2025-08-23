@@ -14,6 +14,7 @@ from ..common import (
     check_user_permissions,
     get_conversation, save_conversation,
     normalize_assistant_content,
+    getReason, getVerbosity,
     
     ApiSettings
 )
@@ -175,14 +176,12 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
                 "messages": formatted_messages,
                 "stream": request.stream
             }
+            
+            if request.verbosity:
+                parameters["max_tokens"] = getVerbosity(request.verbosity, "tokens")
 
-            mapping = {1: 560, 2: 849, 3: 1288}
-            parameters["max_tokens"] = mapping.get(request.verbosity)
-
-            if request.reason > 0:
-                mapping = {1: "low", 2: "medium", 3: "high"}
-                reasoning_effort = mapping.get(request.reason)
-                parameters["reasoning_effort"] = reasoning_effort
+            if request.reason:
+                parameters["reasoning_effort"] = getReason(request.reason, "tertiary")
             
             chunk_queue = asyncio.Queue()
             stream_task = asyncio.create_task(process_stream(chunk_queue, request, parameters, fastapi_request, client))

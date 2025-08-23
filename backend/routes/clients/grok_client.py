@@ -15,7 +15,8 @@ from ..common import (
     DEFAULT_PROMPT, DAN_PROMPT,
     check_user_permissions,
     get_conversation, save_conversation,
-    normalize_assistant_content
+    normalize_assistant_content,
+    getReason, getVerbosity
 )
 from logging_util import logger
 
@@ -176,13 +177,11 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             "messages": formatted_messages
         }
         
-        mapping = {1: 560, 2: 849, 3: 1288}
-        parameters["max_tokens"] = mapping.get(request.verbosity)
-
-        if request.reason > 0:
-            mapping = {1: "low", 2: "high", 3: "high"}
-            reasoning_effort = mapping.get(request.reason)
-            parameters["reasoning_effort"] = reasoning_effort
+        if request.verbosity:
+            parameters["max_tokens"] = getVerbosity(request.verbosity, "tokens")
+        
+        if request.reason:
+            parameters["reasoning_effort"] = getReason(request.reason, "binary")
             
         if request.search:
             parameters["search_parameters"] = SearchParameters(

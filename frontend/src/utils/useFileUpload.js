@@ -95,20 +95,19 @@ export const useFileUpload = (initialFiles = []) => {
   );
 
   const processFiles = useCallback(
-    async (files, onError, canReadImage) => {
-      const maxAllowed = 10;
+    async (files, onError, imageSupport, maxAllowed = 10) => {
       let acceptedFiles = [];
       const currentCount = uploadedFiles.length;
       const remaining = maxAllowed - currentCount;
       
       const imageFiles = files.filter((file) => file.type.startsWith("image/"));
-      if (imageFiles.length > 0 && canReadImage === false) {
+      if (imageFiles.length > 0 && !imageSupport) {
         onError?.("해당 모델은 이미지 업로드를 지원하지 않습니다.");
         return;
       }
       
       if (files.length > remaining) {
-        onError?.("최대 업로드 가능한 파일 개수를 초과했습니다.");
+        onError?.(`최대 ${maxAllowed}개까지 업로드할 수 있습니다.`);
         acceptedFiles = files.slice(0, remaining);
       } else {
         acceptedFiles = files;

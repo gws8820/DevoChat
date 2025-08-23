@@ -67,9 +67,16 @@
 .message-file-area {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   gap: 6px;
   font-size: 15px;
+}
+
+.user-wrap .message-file-area {
+  align-items: flex-end;
+}
+
+.assistant-wrap .message-file-area {
+  align-items: flex-start;
 }
 
 .message-file-area .file-object {
@@ -366,7 +373,7 @@ textarea:focus {
   }
   
   .message-file-area .file-object, .message-file-area .image-object {
-    margin: 0 5px 2px 0;
+    margin: 0 5px 2px;
   }
 
   .edit-buttons {

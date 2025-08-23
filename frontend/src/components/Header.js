@@ -11,14 +11,14 @@ import "../styles/Header.css";
 
 function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   const {
-    modelsData,
+    models,
     model,
     alias,
     temperature,
     reason,
     verbosity,
     systemMessage,
-    isImage,
+    hasImage,
     canControlTemp,
     canControlReason,
     canControlVerbosity,
@@ -33,7 +33,6 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   const location = useLocation();
   const conversation_id = location.pathname.split('/chat/')[1];
 
-  const models = modelsData.models;
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
   const [isControlPanelOpen, setIsControlPanelOpen] = useState(false);
   const [isSystemMessageOpen, setIsSystemMessageOpen] = useState(false);
@@ -46,15 +45,15 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   const systemMessageRef = useRef(null);
 
   let modelsList = models.filter((m) => {
-    if (isImage && !m.capabilities?.image) return false;
+    if (hasImage && !m.capabilities?.image) return false;
     if (m.variants?.base) return false;
     return true;
   });
 
   const currentModelAlias = models.find((m) => m.model_name === model)?.model_alias || "모델 선택";
 
-  const toPercent = (value) => {
-    const pct = Math.round(value * 100);
+  const toPercent = (value, max = 1) => {
+    const pct = Math.round((value / max) * 100);
     return `${pct}%`;
   };
 
@@ -224,13 +223,13 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                         <div className="slider-label">
                           <span>창의성</span>
                           <span className="slider-value">
-                            {toPercent(temperature)}
+                            {toPercent(temperature, 2)}
                           </span>
                         </div>
                         <input
                           type="range"
                           min={0.01}
-                          max={1}
+                          max={2}
                           step={0.01}
                           value={temperature}
                           onChange={(e) =>

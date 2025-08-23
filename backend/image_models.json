@@ -1,0 +1,96 @@
+{
+  "models": [
+    {
+      "model_name": "flux-kontext-max",
+      "model_alias": "Flux Kontext Max",
+      "description": "Black Forest Labs",
+      "endpoint": "/image/flux",
+      "capabilities": { "image": { "type": true, "max_input": 4 } },
+      "admin": false
+    },
+    {
+      "model_name": "flux-kontext-pro",
+      "model_alias": "Flux Kontext Pro",
+      "description": "Black Forest Labs",
+      "endpoint": "/image/flux",
+      "capabilities": { "image": { "type": true, "max_input": 4 } },
+      "admin": false
+    },
+    {
+      "model_name": "flux-pro-1.1",
+      "model_alias": "Flux Pro 1.1",
+      "description": "Black Forest Labs",
+      "endpoint": "/image/flux",
+      "capabilities": { "image": { "type": false } },
+      "admin": false
+    },
+    {
+      "model_name": "seedream-3-0-t2i-250415",
+      "model_alias": "Seedream 3.0",
+      "description": "BytePlus",
+      "endpoint": "/image/byteplus",
+      "variants": {
+        "image": "seededit-3-0-i2i-250628"
+      },
+      "capabilities": { "image": { "type": "switch" } },
+      "admin": false
+    },
+    {
+      "model_name": "seededit-3-0-i2i-250628",
+      "model_alias": "SeedEdit 3.0",
+      "description": "BytePlus",
+      "endpoint": "/image/byteplus",
+      "variants": {
+        "base": "seedream-3-0-t2i-250415"
+      },
+      "capabilities": { "image": { "type": "switch", "max_input": 1 } },
+      "admin": false
+    },
+    {
+      "model_name": "qwen-image",
+      "model_alias": "Qwen Image",
+      "description": "Alibaba",
+      "endpoint": "/image/alibaba/text2image",
+      "variants": {
+        "image": "qwen-image-edit"
+      },
+      "capabilities": { "image": { "type": "switch" } },
+      "admin": false
+    },
+    {
+      "model_name": "qwen-image-edit",
+      "model_alias": "Qwen Image Edit",
+      "description": "Alibaba",
+      "endpoint": "/image/alibaba/image-edit",
+      "variants": {
+        "base": "qwen-image"
+      },
+      "capabilities": { "image": { "type": "switch", "max_input": 1 } },
+      "admin": false
+    },
+    {
+      "model_name": "gemini-2.0-flash-preview-image-generation",
+      "model_alias": "Gemini 2.0 Image Generation",
+      "description": "Google",
+      "endpoint": "/image/google/gemini",
+      "capabilities": { "image": { "type": true, "max_input": 10 } },
+      "admin": false
+    },
+    {
+      "model_name": "imagen-4.0-generate-001",
+      "model_alias": "Imagen 4.0",
+      "description": "Google",
+      "endpoint": "/image/google/imagen",
+      "capabilities": { "image": { "type": false } },
+      "admin": false
+    },
+    {
+      "model_name": "gpt-image-1",
+      "model_alias": "GPT Image 1",
+      "description": "OpenAI",
+      "endpoint": "/image/openai",
+      "capabilities": { "image": { "type": true, "max_input": 1 } },
+      "admin": false
+    }
+  ]
+}

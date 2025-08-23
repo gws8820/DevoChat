@@ -42,11 +42,16 @@ function InputContainer({
     const textarea = textAreaRef.current;
     if (textarea) {
       textarea.style.height = "auto";
-      const newHeight = Math.min(textarea.scrollHeight, 250);
+      const calculatedHeight = Math.max(textarea.scrollHeight, 40);
+      const newHeight = Math.min(calculatedHeight, 250);
       textarea.style.height = `${newHeight}px`;
     }
   }, []);
 
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [inputText, adjustTextareaHeight]);
+  
   const formatRecordingTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -60,7 +65,7 @@ function InputContainer({
     isDAN,
     mcpList,
     canControlSystemMessage,
-    canReadImage,
+    isImage,
     canToggleInference,
     canToggleSearch,
     canToggleDeepResearch,
@@ -71,10 +76,6 @@ function InputContainer({
     toggleSearch,
     toggleDeepResearch,
   } = useContext(SettingsContext);
-
-  useEffect(() => {
-    adjustTextareaHeight();
-  }, [inputText, adjustTextareaHeight]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -108,10 +109,10 @@ function InputContainer({
       }
       if (filesToUpload.length > 0) {
         e.preventDefault();
-        await processFiles(filesToUpload, notifyError, canReadImage);
+        await processFiles(filesToUpload, notifyError, isImage);
       }
     },
-    [processFiles, canReadImage, notifyError]
+    [processFiles, isImage, notifyError]
   );
 
   const handlePlusButtonClick = useCallback((e) => {
@@ -237,7 +238,7 @@ function InputContainer({
 
   return (
     <motion.div
-      className={`input-container ${extraClassName}`.trim()}
+      className={`input-container ${extraClassName}`}
       initial={{ y: 8, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -313,7 +314,7 @@ function InputContainer({
         <div className="button-area">
           <div className="function-button-container" ref={optionsRef}>
             <motion.div
-              className="function-button plus-button"
+              className="function-button"
               onClick={handlePlusButtonClick}
               transition={{ type: "physics", velocity: 200, stiffness: 100, damping: 15 }}
               layout
@@ -440,7 +441,7 @@ function InputContainer({
           await processFiles(files, (errorMessage) => {
             setToastMessage(errorMessage);
             setShowToast(true);
-          }, canReadImage);
+          }, isImage);
           e.target.value = "";
         }}
       />

@@ -380,11 +380,9 @@ function Sidebar({
   }, [navigate, isResponsive, toggleSidebar]);
 
   const handleImageGeneration = useCallback(() => {
-    setModalMessage("현재 준비중인 기능입니다.");
-    setModalAction("notify");
-    setShowModal(true);
+    navigate("/image");
     if (isResponsive) toggleSidebar();
-  }, [isResponsive, toggleSidebar]);
+  }, [navigate, isResponsive, toggleSidebar]);
 
   const handleConversationContextMenu = useCallback((e, conversation_id) => {
     e.preventDefault();

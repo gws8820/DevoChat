@@ -15,6 +15,9 @@ from ..common import (
     check_user_permissions,
     get_conversation, save_conversation,
     normalize_assistant_content,
+    getReason, getVerbosity,
+    
+    MAX_VERBOSITY_TOKENS
 )
 from logging_util import logger
 
@@ -263,16 +266,17 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 "stream": request.stream,
             }
             
-            mapping = {1: 560, 2: 849, 3: 1288}
-            parameters["max_tokens"] = mapping.get(request.verbosity)
+            if request.verbosity:
+                parameters["max_tokens"] = getVerbosity(request.verbosity, "tokens")
+            else:
+                parameters["max_tokens"] = MAX_VERBOSITY_TOKENS
             
-            if request.reason > 0:
-                mapping = {1: 1024, 2: 8192, 3: 24576}
-                thinking_budget = mapping.get(request.reason)
-                parameters["max_tokens"] += thinking_budget
+            if request.reason:
+                reason_tokens = getReason(request.reason, "tokens")
+                parameters["max_tokens"] += reason_tokens
                 parameters["thinking"] = {
                     "type": "enabled",
-                    "budget_tokens": thinking_budget
+                    "budget_tokens": reason_tokens
                 }
 
             if request.search:

@@ -14,7 +14,9 @@ from ..common import (
     check_user_permissions,
     get_conversation, save_conversation,
     normalize_assistant_content,
+    getReason, getVerbosity,
     
+    MAX_VERBOSITY_TOKENS,
     AliasRequest, ALIAS_PROMPT,
     save_alias
 )
@@ -191,14 +193,16 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             "temperature": request.temperature
         }
         
-        mapping = {1: 560, 2: 849, 3: 1288}
-        config_params["max_output_tokens"] = mapping.get(request.verbosity)
+        if request.verbosity:
+            config_params["max_output_tokens"] = getVerbosity(request.verbosity, "tokens")
+        else:
+            config_params["max_output_tokens"] = MAX_VERBOSITY_TOKENS
 
-        if request.reason > 0:
-            mapping = {1: 1024, 2: 8192, 3: 24576}
-            thinking_budget = mapping.get(request.reason)
+        if request.reason:
+            reason_tokens = getReason(request.reason, "tokens")
+            config_params["max_output_tokens"] += reason_tokens
             config_params["thinking_config"] = types.ThinkingConfig(
-                thinking_budget=thinking_budget,
+                thinking_budget=reason_tokens,
                 include_thoughts=True
             )
             

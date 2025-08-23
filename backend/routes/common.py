@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import uuid
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from fastapi import APIRouter
@@ -16,8 +17,8 @@ class ChatRequest(BaseModel):
     in_billing: float
     out_billing: float
     temperature: float = 1.0
-    reason: int = 0
-    verbosity: int = 2
+    reason: float = 0
+    verbosity: float = 0
     system_message: Optional[str] = None
     user_message: List[Dict[str, Any]]
     inference: bool = False
@@ -26,6 +27,10 @@ class ChatRequest(BaseModel):
     dan: bool = False
     mcp: List[str] = []
     stream: bool = True
+
+class ImageGenerateRequest(BaseModel):
+    model: str
+    prompt: List[Dict[str, Any]]
 
 class AliasRequest(BaseModel):
     conversation_id: str
@@ -43,6 +48,9 @@ mongo_client = MongoClient(os.getenv('MONGODB_URI'))
 db = mongo_client.chat_db
 user_collection = db.users
 conversation_collection = db.conversations
+
+MAX_VERBOSITY_TOKENS = 4096
+MAX_REASON_TOKENS = 16384
 
 default_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'default_prompt.txt')
 try:
@@ -64,6 +72,9 @@ try:
         ALIAS_PROMPT = f.read()
 except FileNotFoundError:
     ALIAS_PROMPT = ""
+
+generated_image_path = os.path.join(os.path.dirname(__file__), "..", "generated/images")
+os.makedirs(generated_image_path, exist_ok=True)
 
 def check_user_permissions(user: User, request: ChatRequest):
     billing_result = get_model_billing(request.model)
@@ -184,6 +195,46 @@ def calculate_billing(user: User, model_name, token_usage, in_billing_rate: floa
         
     return total_cost
 
+def getVerbosity(verbosity_value: float, format_type: str) -> Any:
+    if verbosity_value == 0:
+        return None
+        
+    if format_type == "tokens":
+        return int(verbosity_value * MAX_VERBOSITY_TOKENS)
+    
+    elif format_type == "binary":
+        return "low" if verbosity_value <= 0.5 else "high"
+    
+    elif format_type == "tertiary":
+        if verbosity_value <= 0.33:
+            return "low"
+        elif verbosity_value <= 0.66:
+            return "medium"
+        else:
+            return "high"
+    
+    return None
+
+def getReason(reason_value: float, format_type: str) -> Any:
+    if reason_value == 0:
+        return None
+        
+    if format_type == "tokens":
+        return int(reason_value * MAX_REASON_TOKENS)
+    
+    elif format_type == "binary":
+        return "low" if reason_value <= 0.5 else "high"
+    
+    elif format_type == "tertiary":
+        if reason_value <= 0.33:
+            return "low"
+        elif reason_value <= 0.66:
+            return "medium"
+        else:
+            return "high"
+    
+    return None
+
 def normalize_assistant_content(content):
     content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
     content = re.sub(r'<citations>.*?</citations>', '', content, flags=re.DOTALL)
@@ -191,3 +242,15 @@ def normalize_assistant_content(content):
     content = re.sub(r'<tool_result>.*?</tool_result>', '', content, flags=re.DOTALL)
     
     return content.strip()
+
+def save_generated_image(image_bytes: bytes) -> dict:
+    file_name = f"{uuid.uuid4().hex}.png"
+    file_path = os.path.join(generated_image_path, file_name)
+    with open(file_path, "wb") as f:
+        f.write(image_bytes)
+
+    return {
+        "type": "image",
+        "name": "Generated Image",
+        "content": f"/generated/images/{file_name}"
+    }
