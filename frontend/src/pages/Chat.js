@@ -629,7 +629,7 @@ function Chat({ isTouch, chatMessageRef }) {
 
         {isThinking && (
           <motion.div
-            className="chat-message think"
+            className="chat-message loading"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}

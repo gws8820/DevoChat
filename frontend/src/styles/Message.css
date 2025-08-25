@@ -136,7 +136,7 @@
   text-align: left;
 }
 
-.chat-message.think {
+.chat-message.loading {
   width: 150px;
   font-size: 14px;
   color: transparent;

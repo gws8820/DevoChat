@@ -69,6 +69,7 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch }) {
                   >
                     <div className="model-alias">{m.model_alias}</div>
                     <div className="model-description">{m.description}</div>
+                    <div className="model-pricing">{parseFloat(((parseFloat(m.billing?.in_billing) + parseFloat(m.billing?.out_billing)) * 100).toFixed(1))}$ / 100회</div>
                   </div>
                 ))}
               </div>

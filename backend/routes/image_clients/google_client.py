@@ -5,13 +5,17 @@ from PIL import Image
 from google.genai import types, Client
 
 from ..auth import User, get_current_user
-from ..common import router, ImageGenerateRequest, save_generated_image
+from ..common import router, ImageGenerateRequest, save_generated_image, check_image_user_permissions
 
 client = Client(api_key=os.getenv('GEMINI_API_KEY'))
     
 @router.post("/image/google/gemini")
 async def gemini_endpoint(request: ImageGenerateRequest, user: User = Depends(get_current_user)):
   try:
+    error_message, in_billing, out_billing = check_image_user_permissions(user, request)
+    if error_message:
+      raise HTTPException(status_code=403, detail=error_message)
+      
     contents: list = []
     
     for part in request.prompt:
@@ -43,13 +47,17 @@ async def gemini_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
     if not img_bytes:
       raise HTTPException(status_code=500, detail="Invalid image response")
 
-    return save_generated_image(img_bytes)
+    return save_generated_image(user, img_bytes, request.model, in_billing, out_billing)
   except Exception as ex:
     raise HTTPException(status_code=500, detail=f"Google image generation failed: {str(ex)}")
   
 @router.post("/image/google/imagen")
 async def imagen_endpoint(request: ImageGenerateRequest, user: User = Depends(get_current_user)):
   try:
+    error_message, in_billing, out_billing = check_image_user_permissions(user, request)
+    if error_message:
+      raise HTTPException(status_code=403, detail=error_message)
+      
     prompt = "\n\n".join(part.get("text") for part in request.prompt)
     
     response = await client.aio.models.generate_images(
@@ -66,6 +74,6 @@ async def imagen_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
     if not img_bytes:
       raise HTTPException(status_code=500, detail="Invalid image response")
 
-    return save_generated_image(img_bytes)
+    return save_generated_image(user, img_bytes, request.model, in_billing, out_billing)
   except Exception as ex:
     raise HTTPException(status_code=500, detail=f"Google image generation failed: {str(ex)}")

@@ -1,10 +1,15 @@
 {
+  "default": "seedream-3-0-t2i-250415",
   "models": [
     {
       "model_name": "flux-kontext-max",
       "model_alias": "Flux Kontext Max",
       "description": "Black Forest Labs",
       "endpoint": "/image/flux",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.08"
+      },
       "capabilities": { "image": { "type": true, "max_input": 4 } },
       "admin": false
     },
@@ -13,6 +18,10 @@
       "model_alias": "Flux Kontext Pro",
       "description": "Black Forest Labs",
       "endpoint": "/image/flux",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.04"
+      },
       "capabilities": { "image": { "type": true, "max_input": 4 } },
       "admin": false
     },
@@ -21,6 +30,10 @@
       "model_alias": "Flux Pro 1.1",
       "description": "Black Forest Labs",
       "endpoint": "/image/flux",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.04"
+      },
       "capabilities": { "image": { "type": false } },
       "admin": false
     },
@@ -29,6 +42,10 @@
       "model_alias": "Seedream 3.0",
       "description": "BytePlus",
       "endpoint": "/image/byteplus",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.03"
+      },
       "variants": {
         "image": "seededit-3-0-i2i-250628"
       },
@@ -40,6 +57,10 @@
       "model_alias": "SeedEdit 3.0",
       "description": "BytePlus",
       "endpoint": "/image/byteplus",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.03"
+      },
       "variants": {
         "base": "seedream-3-0-t2i-250415"
       },
@@ -51,6 +72,10 @@
       "model_alias": "Qwen Image",
       "description": "Alibaba",
       "endpoint": "/image/alibaba/text2image",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.035"
+      },
       "variants": {
         "image": "qwen-image-edit"
       },
@@ -62,6 +87,10 @@
       "model_alias": "Qwen Image Edit",
       "description": "Alibaba",
       "endpoint": "/image/alibaba/image-edit",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.045"
+      },
       "variants": {
         "base": "qwen-image"
       },
@@ -73,14 +102,46 @@
       "model_alias": "Gemini 2.0 Image Generation",
       "description": "Google",
       "endpoint": "/image/google/gemini",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.039"
+      },
       "capabilities": { "image": { "type": true, "max_input": 10 } },
       "admin": false
     },
     {
-      "model_name": "imagen-4.0-generate-001",
-      "model_alias": "Imagen 4.0",
+      "model_name": "imagen-4.0-ultra-generate-001",
+      "model_alias": "Imagen 4.0 Ultra",
       "description": "Google",
       "endpoint": "/image/google/imagen",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.06"
+      },
+      "capabilities": { "image": { "type": false } },
+      "admin": false
+    },
+    {
+      "model_name": "imagen-4.0-generate-001",
+      "model_alias": "Imagen 4.0 Standard",
+      "description": "Google",
+      "endpoint": "/image/google/imagen",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.04"
+      },
+      "capabilities": { "image": { "type": false } },
+      "admin": false
+    },
+    {
+      "model_name": "grok-2-image",
+      "model_alias": "Grok 2 Image",
+      "description": "XAI",
+      "endpoint": "/image/grok",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.07"
+      },
       "capabilities": { "image": { "type": false } },
       "admin": false
     },
@@ -89,6 +150,10 @@
       "model_alias": "GPT Image 1",
       "description": "OpenAI",
       "endpoint": "/image/openai",
+      "billing": {
+        "in_billing": "0.01",
+        "out_billing": "0.042"
+      },
       "capabilities": { "image": { "type": true, "max_input": 1 } },
       "admin": false
     }

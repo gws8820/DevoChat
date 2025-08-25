@@ -4,13 +4,12 @@ import axios from "../utils/axiosConfig";
 export const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
-  const defaultModel = "gemini-2.5-flash";
-  const defaultImageModel = "flux-kontext-max";
-  
+  const [defaultModel, setDefaultModel] = useState("");
+  const [defaultImageModel, setDefaultImageModel] = useState("");
+  const [model, setModel] = useState("");
+  const [imageModel, setImageModel] = useState("");
   const [models, setModels] = useState([]);
   const [imageModels, setImageModels] = useState([]);
-  const [model, setModel] = useState(defaultModel);
-  const [imageModel, setImageModel] = useState(defaultImageModel);
   const [isModelReady, setIsModelReady] = useState(false);
   const [alias, setAlias] = useState("");
   const [temperature, setTemperature] = useState(1);
@@ -41,11 +40,18 @@ export const SettingsProvider = ({ children }) => {
         axios.get(`${process.env.REACT_APP_FASTAPI_URL}/models`, { withCredentials: true }),
         axios.get(`${process.env.REACT_APP_FASTAPI_URL}/image_models`, { withCredentials: true })
       ]);
-      setModels(modelsResponse.data?.models || []);
-      setImageModels(imageModelsResponse.data?.models || []);
+      
+      setModels(modelsResponse.data?.models);
+      setImageModels(imageModelsResponse.data?.models);
+      
+      setDefaultModel(modelsResponse.data?.default);
+      setDefaultImageModel(imageModelsResponse.data?.default);
     } catch (error) {
       setModels([]);
       setImageModels([]);
+      
+      setDefaultModel("");
+      setDefaultImageModel("");
     } finally {
       setIsModelReady(true);
     }

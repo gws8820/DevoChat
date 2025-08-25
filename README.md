@@ -3,7 +3,7 @@
 *English | [한국어](README.ko.md)*
 
 ### Unified AI Chat Platform
-DevoChat is a web application that allows you to use various AI models and MCP (Model Context Protocol) servers through a single interface. Check out the [live demo](https://devochat.com).
+DevoChat is a web application that allows you to use various multimodal AI models and MCP (Model Context Protocol) servers through a single interface. Check out the [live demo](https://devochat.com).
 
 ## Key Features
 
@@ -16,6 +16,7 @@ DevoChat is a web application that allows you to use various AI models and MCP (
   - Provides parameter controls including temperature, reasoning intensity, response length, and system prompt modification.
   - Supports markdown, LaTeX formula, and code block rendering.
   - Enables streaming responses and simulates streaming for non-streaming models by sending complete responses in chunks.
+  - Supports image generation via Text-to-Image and Image-to-Image models.
   - Supports real-time/low-latency STS (Speech-To-Speech) conversations through RealTime API.
 
 - **Model Switching Architecture**
@@ -45,6 +46,30 @@ DevoChat is a web application that allows you to use various AI models and MCP (
   </tr>
   <tr>
     <td align="center" width="50%">
+      <img src="samples/docs.png" alt="File Upload">
+      <br>
+      <em>File Upload</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="samples/image.png" alt="Image Upload">
+      <br>
+      <em>Image Upload</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="samples/image-generation.png" alt="Image Generation">
+      <br>
+      <em>Image Generation</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="samples/image-edit.png" alt="Image Editing">
+      <br>
+      <em>Image Editing</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
       <img src="samples/code.png" alt="Code Block">
       <br>
       <em>Code Highlighting</em>
@@ -57,33 +82,9 @@ DevoChat is a web application that allows you to use various AI models and MCP (
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/image.png" alt="Image Upload">
-      <br>
-      <em>Image Upload</em>
-    </td>
-    <td align="center" width="50%">
-      <img src="samples/docs.png" alt="File Upload">
-      <br>
-      <em>File Upload</em>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
       <img src="samples/url.png" alt="URL Processing">
       <br>
       <em>URL Processing</em>
-    </td>
-    <td align="center" width="50%">
-      <img src="samples/mcp-select.png" alt="MCP Server Selection">
-      <br>
-      <em>MCP Server Selection</em>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <img src="samples/mcp-use.png" alt="MCP Server Usage">
-      <br>
-      <em>MCP Server Usage</em>
     </td>
     <td align="center" width="50%">
       <img src="samples/realtime.png" alt="Real-time Conversation">
@@ -91,7 +92,92 @@ DevoChat is a web application that allows you to use various AI models and MCP (
       <em>Real-time Conversation</em>
     </td>
   </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="samples/mcp-select.png" alt="MCP Server Selection">
+      <br>
+      <em>MCP Server Selection</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="samples/mcp-use.png" alt="MCP Server Usage">
+      <br>
+      <em>MCP Server Usage</em>
+    </td>
+  </tr>
 </table>
+
+## Project Structure
+
+```
+devochat/
+├── frontend/                           # React frontend
+│   ├── src/
+│   │   ├── components/                 # UI components
+│   │   │   ├── Header.js               # Main header
+│   │   │   ├── ImageHeader.js          # Image generation page header
+│   │   │   ├── Sidebar.js              # Sidebar navigation
+│   │   │   ├── Message.js              # Message rendering
+│   │   │   ├── InputContainer.js       # Chat input container
+│   │   │   ├── ImageInputContainer.js  # Image generation input container
+│   │   │   ├── MCPModal.js             # MCP server selection modal
+│   │   │   ├── Toast.js                # Notification messages
+│   │   │   ├── Tooltip.js              # Tooltips
+│   │   │   └── ...
+│   │   ├── pages/                      # Page components
+│   │   │   ├── Chat.js                 # Main chat page
+│   │   │   ├── Image.js                # Image generation page
+│   │   │   ├── Realtime.js             # Real-time conversation page
+│   │   │   ├── Admin.js                # Admin page
+│   │   │   ├── Login.js                # Login page
+│   │   │   ├── Register.js             # Registration page
+│   │   │   └── ...
+│   │   ├── contexts/                   # State management
+│   │   │   ├── SettingsContext.js      # Model/settings state
+│   │   │   └── ConversationsContext.js # Conversations list state
+│   │   ├── utils/                      # Utility functions
+│   │   │   ├── useFileUpload.js        # File upload hook
+│   │   │   └── utils.js                # Common utilities
+│   │   ├── styles/                     # CSS stylesheets
+│   │   │   ├── Common.css              # Common styles
+│   │   │   ├── Header.css              # Header styles
+│   │   │   ├── Sidebar.css             # Sidebar styles
+│   │   │   └── ...
+│   │   └── App.js                      # Main app component
+│
+├── backend/                            # FastAPI backend
+│   ├── main.py                         # FastAPI application entry point
+│   ├── routes/                         # API routers
+│   │   ├── auth.py                     # Authentication/authorization management
+│   │   ├── conversations.py            # Conversation management API
+│   │   ├── uploads.py                  # File upload handling
+│   │   ├── realtime.py                 # Real-time communication
+│   │   ├── common.py                   # Common utilities
+│   │   ├── clients/                    # Text AI model clients
+│   │   │   ├── openai_client.py
+│   │   │   ├── anthropic_client.py
+│   │   │   ├── google_client.py
+│   │   │   ├── mistral_client.py
+│   │   │   ├── grok_client.py
+│   │   │   ├── perplexity_client.py
+│   │   │   ├── fireworks_client.py
+│   │   │   ├── friendli_client.py
+│   │   │   └── ...
+│   │   └── image_clients/              # Image generation AI model clients
+│   │       ├── openai_client.py
+│   │       ├── flux_client.py
+│   │       ├── google_client.py
+│   │       ├── grok_client.py
+│   │       ├── byteplus_client.py
+│   │       └── alibaba_client.py
+│   ├── models.json                     # Text AI model settings
+│   ├── image_models.json               # Image generation AI model settings
+│   ├── mcp_servers.json                # MCP server settings
+│   ├── prompts/                        # System prompts
+│   ├── uploads/                        # Uploaded files storage
+│   ├── generated/                      # Generated images storage
+│   ├── logs/                           # Log files
+│   └── .venv/                          # Python virtual environment
+```
 
 ## Tech Stack
 
@@ -150,6 +236,12 @@ GEMINI_API_KEY=...
 PERPLEXITY_API_KEY=...
 HUGGINGFACE_API_KEY=...
 XAI_API_KEY=...
+MISTRAL_API_KEY=...
+FIREWORKS_API_KEY=...
+FRIENDLI_API_KEY=...
+FLUX_API_KEY=...
+BYTEPLUS_API_KEY=...
+ALIBABA_API_KEY=...
 ```
 
 #### Run FastAPI Server
@@ -165,78 +257,85 @@ Define the AI models available in the application and their properties through t
 
 ```json
 {
-    "models": [
-      {
-        "model_name": "claude-sonnet-4-20250514",
-        "model_alias": "Claude 4 Sonnet",
-        "description": "High-performance Claude model",
-        "endpoint": "/claude",
+  "default": "gpt-5-mini",
+  "models": [
+    {
+      "model_name": "claude-sonnet-4-20250514",
+      "model_alias": "Claude 4 Sonnet",
+      "description": "High-performance Claude model",
+      "endpoint": "/claude",
+      "billing": {
         "in_billing": "3",
-        "out_billing": "15",
-        "capabilities": {
-          "stream": true,
-          "image": true,
-          "inference": "toggle",
-          "search": "toggle",
-          "deep_research": false
-        },
-        "controls": {
-          "temperature": "conditional",
-          "reason": true,
-          "verbosity": true,
-          "system_message": true
-        },
-        "admin": false
+        "out_billing": "15"
       },
-      {
-        "model_name": "grok-4",
-        "model_alias": "Grok 4",
-        "description": "High-performance Grok model",
-        "endpoint": "/grok",
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": "toggle",
+        "search": "toggle",
+        "deep_research": false
+      },
+      "controls": {
+        "temperature": "conditional",
+        "reason": true,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "grok-4",
+      "model_alias": "Grok 4",
+      "description": "High-performance Grok model",
+      "endpoint": "/grok",
+      "billing": {
         "in_billing": "3",
-        "out_billing": "15",
-        "capabilities": {
-          "stream": true,
-          "image": false,
-          "inference": false,
-          "search": false,
-          "deep_research": false
-        },
-        "controls": {
-          "temperature": true,
-          "reason": false,
-          "verbosity": true,
-          "system_message": true
-        },
-        "admin": false
+        "out_billing": "15"
       },
-      {
-        "model_name": "o3",
-        "model_alias": "OpenAI o3",
-        "description": "High-performance reasoning GPT model",
-        "endpoint": "/gpt",
+      "capabilities": {
+        "stream": true,
+        "image": false,
+        "inference": false,
+        "search": false,
+        "deep_research": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "o3",
+      "model_alias": "OpenAI o3",
+      "description": "High-performance reasoning GPT model",
+      "endpoint": "/gpt",
+      "billing": {
         "in_billing": "2",
-        "out_billing": "8",
-        "variants": {
-          "deep_research": "o3-deep-research"
-        },
-        "capabilities": {
-          "stream": true,
-          "image": true,
-          "inference": true,
-          "search": false,
-          "deep_research": "switch"
-        },
-        "controls": {
-          "temperature": false,
-          "reason": true,
-          "verbosity": true,
-          "system_message": true
-        },
-        "admin": false
-      }
-      ...
-    ]
+        "out_billing": "8"
+      },
+      "variants": {
+        "deep_research": "o3-deep-research"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": true,
+        "search": false,
+        "deep_research": "switch"
+      },
+      "controls": {
+        "temperature": false,
+        "reason": true,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    }
+    ...
+  ]
 }
 ```
 
@@ -248,8 +347,9 @@ Define the AI models available in the application and their properties through t
 | `model_alias` | User-friendly name displayed in the UI |
 | `description` | Brief description of the model for reference when selecting |
 | `endpoint` | API path for handling model requests in the backend (e.g., `/gpt`, `/claude`, `/gemini`) |
-| `in_billing` | Billing cost for input tokens (prompts). Unit: USD per million tokens |
-| `out_billing` | Billing cost for output tokens (responses). Unit: USD per million tokens |
+| `billing` | Object containing model usage cost information |
+| `billing.in_billing` | Billing cost for input tokens (prompts). Unit: USD per million tokens |
+| `billing.out_billing` | Billing cost for output tokens (responses). Unit: USD per million tokens |
 | `variants` | Defines models to switch to for `"switch"` type |
 | `capabilities` | Defines the features supported by the model |
 | `capabilities.stream` | Whether streaming response is supported |
@@ -257,6 +357,7 @@ Define the AI models available in the application and their properties through t
 | `capabilities.inference` | Whether inference is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.search` | Whether web search is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.deep_research` | Whether Deep Research is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
+| `capabilities.mcp` | Whether MCP server integration is supported. Possible values: `true`, `false` |
 | `controls` | Defines user control options supported by the model |
 | `controls.temperature` | Whether temperature adjustment is possible. Possible values: `true`, `false`, `"conditional"` |
 | `controls.reason` | Whether Reasoning Effect adjustment is possible. Possible values: `true`, `false` |
@@ -280,6 +381,61 @@ When a user toggles this feature, it switches to another individual model. Dynam
 
 #### conditional  
 Available in standard mode, but not available in inference mode.
+
+### image_models.json Configuration
+
+Define the image generation AI models available in the application and their properties through the `image_models.json` file:
+
+```json
+{
+  "default": "seedream-3-0-t2i-250415",
+  "models": [
+    {
+      "model_name": "flux-kontext-max",
+      "model_alias": "Flux Kontext Max",
+      "description": "Black Forest Labs",
+      "endpoint": "/image/flux",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.08"
+      },
+      "capabilities": { 
+        "image": { 
+          "type": true, 
+          "max_input": 4 
+        } 
+      },
+      "admin": false
+    },
+    {
+      "model_name": "seedream-3-0-t2i-250415",
+      "model_alias": "Seedream 3.0",
+      "description": "BytePlus",
+      "endpoint": "/image/byteplus",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.03"
+      },
+      "variants": {
+        "image": "seededit-3-0-i2i-250628"
+      },
+      "capabilities": { 
+        "image": { 
+          "type": "switch" 
+        } 
+      },
+      "admin": false
+    }
+  ]
+}
+```
+
+### Image Model Parameter Description
+
+| Parameter | Description |
+|---------|------|
+| `capabilities.image.type` | Whether image input is supported. `true`: supported, `false`: not supported, `"switch"`: switch to variant model |
+| `capabilities.image.max_input` | Maximum number of images that can be input simultaneously |
 
 ### Model Switching System (Variants)
 

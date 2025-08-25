@@ -185,14 +185,19 @@ function Image({ isTouch }) {
           }
         );
 
+        const result = await response.json();
+
         if (response.status === 401) {
           if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
             window.location.href = '/login?expired=true';
           }
           return;
         }
-
-        const result = await response.json();
+        else if (!response.ok) {
+          setErrorMessage(result.detail);
+          return;
+        }
+        
         if (result.content) {
           addAssistantMessage({
             type: "image",
@@ -257,6 +262,16 @@ function Image({ isTouch }) {
       ) : (
         <div className="chat-messages" style={{ scrollbarGutter: "stable" }}>
           {renderedMessages}
+          {isLoading && (
+            <motion.div
+              className="chat-message loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}
+            >
+              이미지 생성 중...
+            </motion.div>
+          )}
           <div ref={messagesEndRef} />
         </div>
       )}

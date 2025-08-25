@@ -357,7 +357,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                       )}
                     </div>
                     <div className="model-description">{m.description}</div>
-                    <div className="model-pricing">In {m.in_billing}$ / Out {m.out_billing}$</div>
+                    <div className="model-pricing">In {m.billing?.in_billing}$ / Out {m.billing?.out_billing}$</div>
                   </div>
                 ))}
               </div>

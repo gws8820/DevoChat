@@ -13,7 +13,7 @@ import aiofiles.os
 from pathlib import Path
 from routes import auth, realtime, conversations, uploads
 from routes.clients import openai_client, grok_client, responses_client, anthropic_client, google_client, mistral_client
-from routes.image_clients import openai_client, google_client, flux_client, byteplus_client, alibaba_client
+from routes.image_clients import openai_client, google_client, grok_client, flux_client, byteplus_client, alibaba_client
 from routes.auth import User, get_current_user
 from bs4 import BeautifulSoup
 import base64
@@ -49,6 +49,7 @@ app.include_router(mistral_client.router)
 
 app.include_router(openai_client.router)
 app.include_router(google_client.router)
+app.include_router(grok_client.router)
 app.include_router(flux_client.router)
 app.include_router(byteplus_client.router)
 app.include_router(alibaba_client.router)
@@ -68,7 +69,7 @@ app.add_middleware(LoggingMiddleware)
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    message = "Deepseek V3.1 모델이 추가되었습니다!"
+    message = "이미지 생성 기능이 추가되었습니다!"
     hash = base64.b64encode(message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(
@@ -137,7 +138,10 @@ async def get_models(user: User = Depends(get_current_user)):
                 continue
             models.append(model)
         
-        return {"models": models}
+        return {
+            "models": models,
+            "default": models_data.get("default")
+        }
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error occurred while fetching models: {str(ex)}")
 
@@ -153,7 +157,10 @@ async def get_image_models(user: User = Depends(get_current_user)):
                 continue
             models.append(model)
 
-        return {"models": models}
+        return {
+            "models": models,
+            "default": models_data.get("default")
+        }
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error occurred while fetching image models: {str(ex)}")
 
