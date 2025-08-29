@@ -6,7 +6,7 @@ import aiofiles
 from fastapi import HTTPException, Depends
 
 from ..auth import User, get_current_user
-from ..common import router, ImageGenerateRequest, save_generated_image, check_image_user_permissions
+from ..common import router, ImageGenerateRequest, save_image_conversation, check_image_user_permissions
 
 @router.post("/image/byteplus")
 async def byteplus_endpoint(request: ImageGenerateRequest, user: User = Depends(get_current_user)):
@@ -65,7 +65,7 @@ async def byteplus_endpoint(request: ImageGenerateRequest, user: User = Depends(
                 if not image_bytes:
                     raise HTTPException(status_code=500, detail="Empty image data received")
                 
-                return save_generated_image(user, image_bytes, request.model, in_billing, out_billing)
+                return save_image_conversation(user, request, image_bytes, in_billing, out_billing)
                 
     except HTTPException:
         raise

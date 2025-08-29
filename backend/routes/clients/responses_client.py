@@ -305,6 +305,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     finally:
         save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
     
-@router.post("/gpt")
+@router.post("/chat/gpt")
 async def openai_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     return StreamingResponse(get_response(chat_request, user, fastapi_request), media_type="text/event-stream")

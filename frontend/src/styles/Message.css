@@ -102,7 +102,11 @@
 
 .message-file-area .image-object {
   width: 400px;
-  margin: 0 14px 3px 14px;
+  margin: 0 14px 3px;
+}
+
+.assistant-wrap .message-file-area .image-object {
+  margin-bottom: 14px;
 }
 
 .message-file-area .image-object img {
@@ -151,6 +155,7 @@
   display: flex;
   flex-direction: row;
   max-width: 90%;
+  margin-bottom: 18px;
 }
 
 .refresh-wrap {

@@ -26,7 +26,7 @@ async def get_conversations(current_user: User = Depends(get_current_user)):
     user_id = current_user.user_id
     cursor = conversations_collection.find(
         {"user_id": user_id},
-        {"_id": 1, "user_id": 1, "conversation_id": 1, "alias": 1, "starred": 1, "starred_at": 1, "created_at": 1}
+        {"_id": 1, "user_id": 1, "conversation_id": 1, "type": 1, "alias": 1, "starred": 1, "starred_at": 1, "created_at": 1}
     ).sort([
         ("starred", -1),
         ("starred_at", -1),
@@ -38,6 +38,7 @@ async def get_conversations(current_user: User = Depends(get_current_user)):
             "_id": str(doc["_id"]),
             "user_id": doc["user_id"],
             "conversation_id": doc["conversation_id"],
+            "type": doc["type"],
             "alias": doc.get("alias", ""),
             "starred": doc["starred"],
             "starred_at": doc.get("starred_at").isoformat() if doc.get("starred_at") else None,
@@ -59,7 +60,7 @@ async def get_user_conversations(
     
     cursor = conversations_collection.find(
         {"user_id": user_id},
-        {"_id": 1, "user_id": 1, "conversation_id": 1, "alias": 1, "model": 1, "created_at": 1}
+        {"_id": 1, "user_id": 1, "conversation_id": 1, "type": 1, "alias": 1, "model": 1, "created_at": 1}
     ).sort("created_at", -1)
     
     conversations = []
@@ -67,15 +68,16 @@ async def get_user_conversations(
         conversations.append({
             "_id": str(doc["_id"]),
             "user_id": doc["user_id"],
-            "alias": doc.get("alias", ""),
             "conversation_id": doc["conversation_id"],
+            "type": doc["type"],
+            "alias": doc.get("alias", ""),
             "model": doc["model"],
             "created_at": doc.get("created_at").isoformat() if doc.get("created_at") else None
         })
     
     return {"conversations": conversations}
 
-@router.get("/conversation/{conversation_id}", response_model=dict)
+@router.get("/chat/conversation/{conversation_id}", response_model=dict)
 async def get_conversation(conversation_id: str, current_user: User = Depends(get_current_user)):
     doc = conversations_collection.find_one({"conversation_id": conversation_id})
     if not doc:
@@ -101,12 +103,30 @@ async def get_conversation(conversation_id: str, current_user: User = Depends(ge
         "messages": doc.get("conversation", [])
     }
 
-@router.post("/new_conversation", response_model=dict)
+@router.get("/image/conversation/{conversation_id}", response_model=dict)
+async def get_image_conversation(conversation_id: str, current_user: User = Depends(get_current_user)):
+    doc = conversations_collection.find_one({"conversation_id": conversation_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if doc["user_id"] != current_user.user_id and not current_user.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this conversation"
+        )
+    return {
+        "conversation_id": doc["conversation_id"],
+        "alias": doc.get("alias", ""),
+        "model": doc.get("model", ""),
+        "messages": doc.get("conversation", [])
+    }
+    
+@router.post("/chat/new_conversation", response_model=dict)
 async def create_new_conversation(current_user: User = Depends(get_current_user)):
     conversation_id = str(uuid.uuid4())
     user_id = current_user.user_id
     
     new_conversation = {
+        "type": "chat",
         "user_id": user_id,
         "conversation_id": conversation_id,
         "alias": None,
@@ -133,6 +153,31 @@ async def create_new_conversation(current_user: User = Depends(get_current_user)
         
     return {
         "message": "New conversation created",
+        "conversation_id": conversation_id,
+        "created_at": new_conversation["created_at"].isoformat()
+    }
+    
+@router.post("/image/new_conversation", response_model=dict)
+async def create_new_image_conversation(current_user: User = Depends(get_current_user)):
+    conversation_id = str(uuid.uuid4())
+    user_id = current_user.user_id
+    new_conversation = {
+        "type": "image",
+        "user_id": user_id,
+        "conversation_id": conversation_id,
+        "alias": None,
+        "model": None,
+        "conversation": [],
+        "starred": False,
+        "starred_at": None,
+        "created_at": datetime.now(timezone.utc)
+    }
+    try:
+        conversations_collection.insert_one(new_conversation)
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail="Failed to create image conversation")
+    return {
+        "message": "New image conversation created",
         "conversation_id": conversation_id,
         "created_at": new_conversation["created_at"].isoformat()
     }

@@ -5,7 +5,7 @@ from fastapi import HTTPException, Depends
 from openai import AsyncOpenAI
 
 from ..auth import User, get_current_user
-from ..common import router, ImageGenerateRequest, save_generated_image, check_image_user_permissions
+from ..common import router, ImageGenerateRequest, save_image_conversation, check_image_user_permissions
 
 @router.post("/image/openai")
 async def openai_endpoint(request: ImageGenerateRequest, user: User = Depends(get_current_user)):
@@ -44,6 +44,6 @@ async def openai_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
         raise HTTPException(status_code=500, detail="No image generated")
 
       image_bytes = base64.b64decode(response.data[0].b64_json)
-      return save_generated_image(user, image_bytes, request.model, in_billing, out_billing)
+      return save_image_conversation(user, request, image_bytes, in_billing, out_billing)
   except Exception as ex:
     raise HTTPException(status_code=500, detail=f"OpenAI image generation failed: {str(ex)}")

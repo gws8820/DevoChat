@@ -70,8 +70,8 @@ def is_binary(data: bytes) -> bool:
 @router.post("/upload/image")
 async def upload_image(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
     file_data = await file.read()
-    if not current_user.admin and len(file_data) > 100 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="File size exceeds 100MB limit.")
+    if not current_user.admin and len(file_data) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File size exceeds 10MB limit.")
 
     try:
         image = Image.open(io.BytesIO(file_data))
@@ -93,7 +93,7 @@ async def upload_image(file: UploadFile = File(...), current_user: User = Depend
     image.thumbnail(max_dimension, Image.Resampling.LANCZOS)
 
     buffer = io.BytesIO()
-    image.save(buffer, format="JPEG", quality=100, optimize=True)
+    image.save(buffer, format="JPEG", quality=70, optimize=True)
     
     # Save with UUID filename but return original filename for display
     saved_filename = f"{uuid.uuid4().hex}.jpeg"
@@ -113,8 +113,8 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
     audio_extensions = ['.wav', '.mp3', '.ogg', '.flac', '.amr', '.amr-wb', '.mulaw', '.alaw', '.webm', '.m4a', '.mp4']
     
     file_data = await file.read()
-    if not current_user.admin and len(file_data) > 100 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="File size exceeds 100MB limit.")
+    if not current_user.admin and len(file_data) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File size exceeds 10MB limit.")
 
     filename = file.filename
     _, ext = os.path.splitext(filename)

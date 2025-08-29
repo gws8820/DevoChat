@@ -209,7 +209,7 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
     finally:
         save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
 
-@router.post("/ollama")
+@router.post("/chat/ollama")
 async def ollama_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     settings = ApiSettings(
         api_key='ollama',
@@ -221,7 +221,7 @@ async def ollama_endpoint(chat_request: ChatRequest, fastapi_request: Request, u
     )
     return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
 
-@router.post("/perplexity")
+@router.post("/chat/perplexity")
 async def perplexity_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     settings = ApiSettings(
         api_key=os.getenv('PERPLEXITY_API_KEY'),
@@ -229,7 +229,7 @@ async def perplexity_endpoint(chat_request: ChatRequest, fastapi_request: Reques
     )
     return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
 
-@router.post("/fireworks")
+@router.post("/chat/fireworks")
 async def fireworks_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     settings = ApiSettings(
         api_key=os.getenv('FIREWORKS_API_KEY'),
@@ -237,7 +237,7 @@ async def fireworks_endpoint(chat_request: ChatRequest, fastapi_request: Request
     )
     return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
 
-@router.post("/friendli")
+@router.post("/chat/friendli")
 async def friendli_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     settings = ApiSettings(
         api_key=os.getenv('FRIENDLI_API_KEY'),
@@ -245,7 +245,7 @@ async def friendli_endpoint(chat_request: ChatRequest, fastapi_request: Request,
     )
     return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
 
-@router.post("/adotx")
+@router.post("/chat/adotx")
 async def adotx_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     settings = ApiSettings(
         api_key=os.getenv('ADOTX_API_KEY'),

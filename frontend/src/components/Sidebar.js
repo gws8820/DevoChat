@@ -183,15 +183,16 @@ function Sidebar({
   }, [conversations]);
 
   const handleNavigate = useCallback((conversation_id) => {
-    const conversationExists = conversations.find(
+    const conv = conversations.find(
       (c) => c.conversation_id === conversation_id
     );
-    if (!conversationExists) {
+    if (!conv) {
       setToastMessage("대화가 존재하지 않습니다.");
       setShowToast(true);
       return;
     }
-    navigate(`/chat/${conversation_id}`);
+    const targetPath = conv.type === 'image' ? `/image/${conversation_id}` : `/chat/${conversation_id}`;
+    navigate(targetPath);
     if (isResponsive) toggleSidebar();
   }, [conversations, navigate, isResponsive, toggleSidebar]);
 
@@ -271,9 +272,8 @@ function Sidebar({
     }
   }, []);
 
-  const currentConversationId = location.pathname.startsWith("/chat/")
-    ? location.pathname.split("/chat/")[1]
-    : null;
+  const match = location.pathname.match(/^\/(?:chat|image)\/([^/]+)/);
+  const currentConversationId = match ? match[1] : null;
 
   const handleRename = useCallback(async (conversation_id, newAlias) => {
     try {
@@ -578,6 +578,18 @@ function Sidebar({
                 <div className="user-billing">
                   {userInfo?.billing?.toFixed(2)}$ 사용됨
                 </div>
+                {userInfo?.admin && (
+                  <div
+                    onClick={() => {
+                      navigate("/admin");
+                      setIsDropdown(false);
+                      if (isResponsive) toggleSidebar();
+                    }}
+                    className="dropdown-button"
+                  >
+                    사용자 관리
+                  </div>
+                )}
                 <div onClick={handleDeleteAll} className="dropdown-button">
                   전체 대화 삭제
                 </div>

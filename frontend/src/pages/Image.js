@@ -1,28 +1,37 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, useContext } from "react";
+import { useParams, useLocation } from "react-router-dom";
 import { IoImageOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
-
+import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
+import { ConversationsContext } from "../contexts/ConversationsContext";
 import { useFileUpload } from "../utils/useFileUpload";
 import ImageInputContainer from "../components/ImageInputContainer";
 import Message from "../components/Message";
 import Toast from "../components/Toast";
+import axios from "../utils/axiosConfig";
 import "../styles/Common.css";
 
-function Image({ isTouch }) {
-  const { 
+function Image({ isTouch, chatMessageRef }) {
+  const { conversation_id } = useParams();
+  const location = useLocation();
+  const {
     imageModel, 
     imageModels, 
     maxImageInput,
     canEditImage,
     defaultImageModel,
     updateImageModel,
-    switchImageMode
+    switchImageMode,
+    setAlias
   } = useContext(SettingsContext);
+
+  const { updateConversation } = useContext(ConversationsContext);
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [scrollOnSend, setScrollOnSend] = useState(false);
@@ -69,6 +78,81 @@ function Image({ isTouch }) {
     };
     setMessages((prev) => [...prev, errorMessage]);
   }, []);
+
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        if (location.state?.initialMessage) {
+          setIsInitialized(true);
+          const initialMessage = location.state.initialMessage;
+          const initialFiles = location.state.initialFiles;
+
+          window.history.replaceState({}, "", location.pathname);
+
+          if (initialFiles && initialFiles.length > 0) {
+            sendMessage(initialMessage, initialFiles);
+          } else {
+            sendMessage(initialMessage);
+          }
+
+          (async () => {
+            try {
+              const aliasResponse = await fetch(
+                `${process.env.REACT_APP_FASTAPI_URL}/image/get_alias`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ 
+                    conversation_id: conversation_id,
+                    text: initialMessage
+                  }),
+                  credentials: "include"
+                }
+              );
+
+              if (aliasResponse.status === 401) {
+                if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+                  window.location.href = '/login?expired=true';
+                }
+                return;
+              }
+              const aliasData = await aliasResponse.json();
+              if (aliasData && aliasData.alias) {
+                setAlias(aliasData.alias);
+                updateConversation(conversation_id, aliasData.alias, false);
+              }
+            } catch (err) {
+              updateConversation(conversation_id, "새 대화", false);
+            }
+          })();
+        } 
+        
+        else {
+          const res = await axios.get(
+            `${process.env.REACT_APP_FASTAPI_URL}/image/conversation/${conversation_id}`,
+            { withCredentials: true }
+          );
+
+          updateImageModel(res.data.model);
+          setAlias(res.data.alias);
+
+          const initialMessages = (res.data.messages).map((m) => {
+            const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
+            return messageWithId;
+          });
+          setMessages(initialMessages);
+          setIsInitialized(true);
+        }
+      } catch (err) {
+        setErrorMessage("초기화 중 오류가 발생했습니다.");
+      } finally {
+        if (!isInitialized) setIsInitialized(true);
+      }
+    };
+
+    initializeChat();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation_id, location.state]);
 
   useEffect(() => {
     const container = messagesEndRef.current?.parentElement;
@@ -177,6 +261,7 @@ function Image({ isTouch }) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              conversation_id,
               model: selectedModel.model_name,
               prompt: contentParts
             }),
@@ -194,14 +279,14 @@ function Image({ isTouch }) {
           return;
         }
         else if (!response.ok) {
-          setErrorMessage(result.detail);
+          setErrorMessage("이미지 생성에 실패했습니다.");
           return;
         }
         
         if (result.content) {
           addAssistantMessage({
             type: "image",
-            content: `${process.env.REACT_APP_FASTAPI_URL}${result.content}`,
+            content: result.content,
             name: result.name
           });
         } else {
@@ -215,7 +300,18 @@ function Image({ isTouch }) {
         abortControllerRef.current = null;
       }
     },
-    [imageModel, imageModels, canEditImage, maxImageInput, uploadedFiles, setUploadedFiles, uploadingFiles, addAssistantMessage, setErrorMessage]
+    [
+      conversation_id,
+      imageModel,
+      imageModels,
+      canEditImage,
+      maxImageInput,
+      uploadedFiles,
+      setUploadedFiles,
+      uploadingFiles,
+      addAssistantMessage,
+      setErrorMessage
+    ]
   );
 
   const cancelRequest = useCallback(() => {
@@ -225,22 +321,6 @@ function Image({ isTouch }) {
     }
   }, []);
 
-  const renderedMessages = useMemo(() => (
-    messages.map((msg, idx) => (
-      <Message
-        key={msg.id}
-        messageIndex={idx}
-        role={msg.role}
-        content={msg.content}
-        isComplete={msg.isComplete}
-        setScrollOnSend={setScrollOnSend}
-        isTouch={isTouch}
-        isLoading={isLoading}
-        isLastMessage={idx === messages.length - 1}
-      />
-    ))
-  ), [messages, isTouch, isLoading]);
-
   return (
     <div
       className="container"
@@ -248,33 +328,51 @@ function Image({ isTouch }) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {messages.length === 0 ? (
-        <div className="welcome-container">
-          <motion.div
-            className="welcome-message"
-            initial={{ y: 8, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            상상을 마음껏 펼쳐보세요!
-          </motion.div>
-        </div>
-      ) : (
-        <div className="chat-messages" style={{ scrollbarGutter: "stable" }}>
-          {renderedMessages}
-          {isLoading && (
-            <motion.div
-              className="chat-message loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}
-            >
-              이미지 생성 중...
-            </motion.div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+      {!isInitialized && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100dvh",
+            marginBottom: "30px",
+          }}
+        >
+          <ClipLoader loading={true} size={50} />
+        </motion.div>
       )}
+
+      <div className="chat-messages" ref={chatMessageRef} style={{ scrollbarGutter: "stable" }}>
+        {useMemo(() => 
+          messages.map((msg, idx) => (
+            <Message
+              key={msg.id}
+              messageIndex={idx}
+              role={msg.role}
+              content={msg.content}
+              setScrollOnSend={setScrollOnSend}
+              isTouch={isTouch}
+              isLoading={isLoading}
+              isLastMessage={idx === messages.length - 1}
+            />
+          )), [messages, isTouch, isLoading]
+        )}
+
+        {isLoading && (
+          <motion.div
+            className="chat-message loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}
+          >
+            이미지 생성 중...
+          </motion.div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
 
       <ImageInputContainer
         isTouch={isTouch}

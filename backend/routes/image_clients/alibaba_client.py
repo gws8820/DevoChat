@@ -7,7 +7,7 @@ import aiofiles
 from fastapi import HTTPException, Depends
 
 from ..auth import User, get_current_user
-from ..common import router, ImageGenerateRequest, save_generated_image, check_image_user_permissions
+from ..common import router, ImageGenerateRequest, save_image_conversation, check_image_user_permissions
 
 async def generate_image(session: aiohttp.ClientSession, task_id: str, max_wait_time: int = 300) -> dict:
     start_time = asyncio.get_event_loop().time()
@@ -106,7 +106,7 @@ async def alibaba_endpoint(request: ImageGenerateRequest, user: User = Depends(g
                 if not image_bytes:
                     raise HTTPException(status_code=500, detail="Empty image data received")
                 
-                return save_generated_image(user, image_bytes, request.model, in_billing, out_billing)
+                return save_image_conversation(user, request, image_bytes, in_billing, out_billing)
                 
     except HTTPException:
         raise
@@ -193,7 +193,7 @@ async def alibaba_image_edit_endpoint(request: ImageGenerateRequest, user: User 
                     if not image_bytes:
                         raise HTTPException(status_code=500, detail="Empty image data received")
                     
-                    return save_generated_image(user, image_bytes, request.model, in_billing, out_billing)
+                    return save_image_conversation(user, request, image_bytes, in_billing, out_billing)
                     
     except HTTPException:
         raise

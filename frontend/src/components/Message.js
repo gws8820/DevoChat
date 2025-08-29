@@ -196,7 +196,7 @@ function Message({
           <div className="message-file-area">
             <div className="image-object">
               <img
-                src={content.content}
+                src={`${process.env.REACT_APP_FASTAPI_URL}${content.content}`}
                 alt={content.name}
                 onLoad={() => setScrollOnSend && setScrollOnSend(true)}
               />

@@ -1,128 +1,68 @@
 import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { IoImageOutline } from "react-icons/io5";
+import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
-import { motion, AnimatePresence } from "framer-motion";
 import { useFileUpload } from "../utils/useFileUpload";
 import axios from "../utils/axiosConfig";
-import Modal from "../components/Modal";
 import Toast from "../components/Toast";
-import InputContainer from "../components/InputContainer";
+import ImageInputContainer from "../components/ImageInputContainer";
 import "../styles/Common.css";
 
-function Main({ isTouch }) {
+function ImageMain({ isTouch }) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [notice, setNotice] = useState("");
-  const [noticeHash, setNoticeHash] = useState("");
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
-  const [confirmModal, setConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
   const abortControllerRef = useRef(null);
 
-  const { 
-    uploadedFiles, 
-    processFiles, 
-    removeFile
-  } = useFileUpload([]);
-
   const {
-    models,
-    defaultModel,
-    model,
-    updateModel,
-    isInference,
-    isSearch,
-    isDeepResearch,
-    canReadImage,
-    setTemperature,
-    setReason,
-    setVerbosity,
-    setSystemMessage,
-    setIsDAN,
-    setHasImage,
-    toggleInference,
-    toggleSearch,
-    toggleDeepResearch
+    canEditImage,
+    maxImageInput,
+    updateImageModel,
+    defaultImageModel
   } = useContext(SettingsContext);
 
   const { addConversation } = useContext(ConversationsContext);
 
+  const {
+    uploadedFiles,
+    processFiles,
+    removeFile
+  } = useFileUpload([]);
+
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
 
   useEffect(() => {
-    const fetchNotice = async () => {
-      try {
-        const noticeResponse = await axios.get(`${process.env.REACT_APP_FASTAPI_URL}/notice`);
-        const { message, hash } = noticeResponse.data;
-        setNotice(message);
-        setNoticeHash(hash);
-        
-        const storedHash = localStorage.getItem('noticeHash');
-        if (!storedHash || storedHash !== hash) {
-          setConfirmModal(true);
-        }
-      } catch (error) {}
-    };
-    
-    fetchNotice();
-  }, []);
-
-  useEffect(() => {
-    updateModel(defaultModel);
-
-    if (isInference) toggleInference();
-    if (isSearch) toggleSearch();
-    if (isDeepResearch) toggleDeepResearch();
-    
-    setTemperature(1);
-    setReason(0.5);
-    setVerbosity(0.5);
-    setSystemMessage("");
-    setHasImage(false);
-    setIsDAN(false);
+    updateImageModel(defaultImageModel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (location.state?.errorModal) {
-      setToastMessage(location.state.errorModal);
-      setShowToast(true);
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
 
   const sendMessage = useCallback(
     async (message) => {
       if (!message.trim() || uploadingFiles) return;
       try {
-        const selectedModel = models.find((m) => m.model_name === model);
-        if (!selectedModel) {
-          throw new Error("선택한 모델이 유효하지 않습니다.");
-        }
         setIsLoading(true);
-        
+
         const controller = new AbortController();
         abortControllerRef.current = controller;
-        
+
         const response = await axios.post(
-          `${process.env.REACT_APP_FASTAPI_URL}/chat/new_conversation`, {},
-          { 
+          `${process.env.REACT_APP_FASTAPI_URL}/image/new_conversation`, {},
+          {
             withCredentials: true,
             signal: controller.signal
           }
         );
-        
+
         const conversation_id = response.data.conversation_id;
         const created_at = response.data.created_at;
-        
         const newConversation = {
-          type: "chat",
+          type: "image",
           conversation_id,
           alias: "새 대화",
           starred: false,
@@ -131,8 +71,8 @@ function Main({ isTouch }) {
           isLoading: true
         };
         addConversation(newConversation);
-        
-        navigate(`/chat/${conversation_id}`, {
+
+        navigate(`/image/${conversation_id}`, {
           state: {
             initialMessage: message,
             initialFiles: uploadedFiles,
@@ -147,14 +87,7 @@ function Main({ isTouch }) {
         abortControllerRef.current = null;
       }
     },
-    [
-      models,
-      model,
-      navigate,
-      uploadedFiles,
-      uploadingFiles,
-      addConversation
-    ]
+    [navigate, uploadedFiles, uploadingFiles, addConversation]
   );
 
   const cancelRequest = useCallback(() => {
@@ -163,16 +96,7 @@ function Main({ isTouch }) {
       abortControllerRef.current = null;
     }
   }, []);
-  
-  useEffect(() => {
-    const hasUploadedImage = uploadedFiles.some((file) => {
-      return (file.type && (file.type === "image" || file.type.startsWith("image/"))) || 
-        /\.(jpe?g|png|gif|bmp|webp)$/i.test(file.name);
-    });
-    setHasImage(hasUploadedImage);
-  },
-  [setHasImage, uploadedFiles]);
-  
+
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
     setIsDragActive(true);
@@ -191,9 +115,9 @@ function Main({ isTouch }) {
       await processFiles(files, (errorMessage) => {
         setToastMessage(errorMessage);
         setShowToast(true);
-      }, canReadImage);
+      }, canEditImage, maxImageInput);
     },
-    [processFiles, canReadImage]
+    [processFiles, canEditImage, maxImageInput]
   );
 
   return (
@@ -210,13 +134,13 @@ function Main({ isTouch }) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          무엇을 도와드릴까요?
+          상상을 마음껏 펼쳐보세요!
         </motion.div>
       </div>
 
-      <InputContainer
+      <ImageInputContainer
         isTouch={isTouch}
-        placeholder="내용 입력"
+        placeholder="프롬프트 입력"
         extraClassName="main-input-container"
         inputText={inputText}
         setInputText={setInputText}
@@ -227,6 +151,8 @@ function Main({ isTouch }) {
         processFiles={processFiles}
         removeFile={removeFile}
         uploadingFiles={uploadingFiles}
+        canEditImage={canEditImage}
+        maxImageInput={maxImageInput}
       />
 
       <AnimatePresence>
@@ -241,22 +167,9 @@ function Main({ isTouch }) {
           >
             <div className="drag-container">
               <IoImageOutline style={{ fontSize: "40px" }} />
-              <div className="drag-text">여기에 파일을 추가하세요</div>
+              <div className="drag-text">여기에 이미지를 추가하세요</div>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {confirmModal && (
-          <Modal
-            message={notice}
-            onConfirm={() => {
-              localStorage.setItem('noticeHash', noticeHash);
-              setConfirmModal(false);
-            }}
-            showCancelButton={false}
-          />
         )}
       </AnimatePresence>
 
@@ -270,4 +183,4 @@ function Main({ isTouch }) {
   );
 }
 
-export default Main;
+export default ImageMain;

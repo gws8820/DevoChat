@@ -8,6 +8,7 @@ import ImageHeader from "./components/ImageHeader";
 import Main from "./pages/Main";
 import Chat from "./pages/Chat";
 import Image from "./pages/Image";
+import ImageMain from "./pages/ImageMain";
 import View from "./pages/View";
 import Realtime from "./pages/Realtime";
 import Admin from "./pages/Admin";
@@ -256,6 +257,7 @@ function AppContent() {
               toggleSidebar={toggleSidebar}
               isSidebarOpen={isSidebarOpen}
               isTouch={isTouch}
+              chatMessageRef={chatMessageRef}
             />
           ) : (
             <Header
@@ -270,8 +272,9 @@ function AppContent() {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={isLoggedIn ? <Main isTouch={isTouch} /> : <Navigate to="/login" />} />
           <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
-          <Route path="/view/:conversation_id" element={<View />} />
-          <Route path="/image" element={isLoggedIn ? <Image /> : <Navigate to="/login" />} />
+          <Route path="/image" element={isLoggedIn ? <ImageMain isTouch={isTouch} /> : <Navigate to="/login" />} />
+          <Route path="/image/:conversation_id" element={isLoggedIn ? <Image isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
+          <Route path="/view/:type/:conversation_id" element={isLoggedIn ? <View /> : <Navigate to="/login" />} />
           <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
           <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />
           <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <Login />} />

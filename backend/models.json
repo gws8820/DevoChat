@@ -5,7 +5,7 @@
       "model_name": "qwen3:8b",
       "model_alias": "Qwen 3 8B",
       "description": "로컬 Qwen 모델",
-      "endpoint": "/ollama",
+      "endpoint": "/chat/ollama",
       "billing": {
         "in_billing": "0",
         "out_billing": "0"
@@ -30,7 +30,7 @@
       "model_name": "gpt-5",
       "model_alias": "GPT 5",
       "description": "최신 GPT 모델",
-      "endpoint": "/gpt",
+      "endpoint": "/chat/gpt",
       "billing": {
         "in_billing": "1.25",
         "out_billing": "10"
@@ -55,7 +55,7 @@
       "model_name": "gpt-5-mini",
       "model_alias": "GPT 5 mini",
       "description": "최신 경량 GPT 모델",
-      "endpoint": "/gpt",
+      "endpoint": "/chat/gpt",
       "billing": {
         "in_billing": "0.25",
         "out_billing": "2"
@@ -80,7 +80,7 @@
       "model_name": "accounts/fireworks/models/gpt-oss-120b",
       "model_alias": "GPT OSS 120B",
       "description": "고성능 오픈소스 GPT 모델",
-      "endpoint": "/fireworks",
+      "endpoint": "/chat/fireworks",
       "billing": {
         "in_billing": "0.15",
         "out_billing": "0.6"
@@ -105,7 +105,7 @@
       "model_name": "o3",
       "model_alias": "o3",
       "description": "고성능 추론 GPT 모델",
-      "endpoint": "/gpt",
+      "endpoint": "/chat/gpt",
       "billing": {
         "in_billing": "2",
         "out_billing": "8"
@@ -133,7 +133,7 @@
       "model_name": "o3-deep-research",
       "model_alias": "o3",
       "description": "고성능 추론 GPT 모델",
-      "endpoint": "/gpt",
+      "endpoint": "/chat/gpt",
       "billing": {
         "in_billing": "10",
         "out_billing": "40"
@@ -161,7 +161,7 @@
       "model_name": "o3-pro",
       "model_alias": "o3 Pro",
       "description": "최고 성능 추론 GPT 모델",
-      "endpoint": "/gpt",
+      "endpoint": "/chat/gpt",
       "billing": {
         "in_billing": "20",
         "out_billing": "80"
@@ -186,7 +186,7 @@
       "model_name": "grok-4",
       "model_alias": "Grok 4",
       "description": "고성능 Grok 모델",
-      "endpoint": "/grok",
+      "endpoint": "/chat/grok",
       "billing": {
         "in_billing": "3",
         "out_billing": "15"
@@ -211,7 +211,7 @@
       "model_name": "grok-3-mini",
       "model_alias": "Grok 3 mini",
       "description": "경량 Grok 모델",
-      "endpoint": "/grok",
+      "endpoint": "/chat/grok",
       "billing": {
         "in_billing": "0.3",
         "out_billing": "0.5"
@@ -236,7 +236,7 @@
       "model_name": "gemini-2.5-flash",
       "model_alias": "Gemini 2.5 Flash",
       "description": "표준 Gemini 모델",
-      "endpoint": "/gemini",
+      "endpoint": "/chat/gemini",
       "billing": {
         "in_billing": "0.3",
         "out_billing": "2.5"
@@ -261,7 +261,7 @@
       "model_name": "gemini-2.5-pro",
       "model_alias": "Gemini 2.5 Pro",
       "description": "고성능 Gemini 모델",
-      "endpoint": "/gemini",
+      "endpoint": "/chat/gemini",
       "billing": {
         "in_billing": "1.25",
         "out_billing": "10"
@@ -286,7 +286,7 @@
       "model_name": "claude-sonnet-4-20250514",
       "model_alias": "Claude Sonnet 4",
       "description": "고성능 Claude 모델",
-      "endpoint": "/claude",
+      "endpoint": "/chat/claude",
       "billing": {
         "in_billing": "3",
         "out_billing": "15"
@@ -311,7 +311,7 @@
       "model_name": "claude-opus-4-1-20250805",
       "model_alias": "Claude Opus 4.1",
       "description": "최고 성능 Claude 모델",
-      "endpoint": "/claude",
+      "endpoint": "/chat/claude",
       "billing": {
         "in_billing": "15",
         "out_billing": "75"
@@ -336,7 +336,7 @@
       "model_name": "claude-3-5-haiku-latest",
       "model_alias": "Claude Haiku 3.5",
       "description": "표준 Claude 모델",
-      "endpoint": "/claude",
+      "endpoint": "/chat/claude",
       "billing": {
         "in_billing": "0.8",
         "out_billing": "4"
@@ -361,7 +361,7 @@
       "model_name": "accounts/fireworks/models/deepseek-v3p1",
       "model_alias": "Deepseek V3.1",
       "description": "최신 Deepseek 모델",
-      "endpoint": "/fireworks",
+      "endpoint": "/chat/fireworks",
       "billing": {
         "in_billing": "0.56",
         "out_billing": "1.68"
@@ -386,7 +386,7 @@
       "model_name": "accounts/fireworks/models/kimi-k2-instruct",
       "model_alias": "Kimi K2",
       "description": "최신 Kimi 모델",
-      "endpoint": "/fireworks",
+      "endpoint": "/chat/fireworks",
       "billing": {
         "in_billing": "0.57",
         "out_billing": "2.3"
@@ -411,7 +411,7 @@
       "model_name": "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507",
       "model_alias": "Qwen 3",
       "description": "최신 Qwen 모델",
-      "endpoint": "/fireworks",
+      "endpoint": "/chat/fireworks",
       "billing": {
         "in_billing": "0.22",
         "out_billing": "0.88"
@@ -439,7 +439,7 @@
       "model_name": "accounts/fireworks/models/qwen3-235b-a22b-thinking-2507",
       "model_alias": "Qwen 3",
       "description": "최신 Qwen 모델",
-      "endpoint": "/fireworks",
+      "endpoint": "/chat/fireworks",
       "billing": {
         "in_billing": "0.22",
         "out_billing": "0.88"
@@ -467,7 +467,7 @@
       "model_name": "sonar",
       "model_alias": "Perplexity Sonar",
       "description": "표준 Perplexity 모델",
-      "endpoint": "/perplexity",
+      "endpoint": "/chat/perplexity",
       "billing": {
         "in_billing": "1",
         "out_billing": "1"
@@ -496,7 +496,7 @@
       "model_name": "sonar-reasoning",
       "model_alias": "Perplexity Sonar",
       "description": "표준 Perplexity 모델",
-      "endpoint": "/perplexity",
+      "endpoint": "/chat/perplexity",
       "billing": {
         "in_billing": "1",
         "out_billing": "5"
@@ -524,7 +524,7 @@
       "model_name": "sonar-deep-research",
       "model_alias": "Perplexity Sonar",
       "description": "표준 Perplexity 모델",
-      "endpoint": "/perplexity",
+      "endpoint": "/chat/perplexity",
       "billing": {
         "in_billing": "5",
         "out_billing": "8"
@@ -552,7 +552,7 @@
       "model_name": "sonar-pro",
       "model_alias": "Perplexity Sonar Pro",
       "description": "고성능 Perplexity 모델",
-      "endpoint": "/perplexity",
+      "endpoint": "/chat/perplexity",
       "billing": {
         "in_billing": "3",
         "out_billing": "15"
@@ -580,7 +580,7 @@
       "model_name": "sonar-reasoning-pro",
       "model_alias": "Perplexity Sonar Pro",
       "description": "고성능 Perplexity 모델",
-      "endpoint": "/perplexity",
+      "endpoint": "/chat/perplexity",
       "billing": {
         "in_billing": "2",
         "out_billing": "8"
@@ -608,7 +608,7 @@
       "model_name": "mistral-medium-2505",
       "model_alias": "Mistral Medium",
       "description": "표준 Mistral 모델",
-      "endpoint": "/mistral",
+      "endpoint": "/chat/mistral",
       "billing": {
         "in_billing": "0.4",
         "out_billing": "2"
@@ -636,7 +636,7 @@
       "model_name": "magistral-medium-2506",
       "model_alias": "Magistral Medium",
       "description": "추론 Mistral 모델",
-      "endpoint": "/mistral",
+      "endpoint": "/chat/mistral",
       "billing": {
         "in_billing": "2",
         "out_billing": "5"
@@ -664,7 +664,7 @@
       "model_name": "accounts/fireworks/models/llama4-maverick-instruct-basic",
       "model_alias": "Llama 4 Maverick",
       "description": "표준 Llama 모델",
-      "endpoint": "/fireworks",
+      "endpoint": "/chat/fireworks",
       "billing": {
         "in_billing": "0.22",
         "out_billing": "0.88"
@@ -689,7 +689,7 @@
       "model_name": "accounts/fireworks/models/glm-4p5",
       "model_alias": "GLM 4.5",
       "description": "최신 GLM 모델",
-      "endpoint": "/fireworks",
+      "endpoint": "/chat/fireworks",
       "billing": {
         "in_billing": "0.55",
         "out_billing": "2.19"
@@ -714,7 +714,7 @@
       "model_name": "LGAI-EXAONE/EXAONE-4.0-32B",
       "model_alias": "EXAONE 4.0",
       "description": "최신 EXAONE 모델",
-      "endpoint": "/friendli",
+      "endpoint": "/chat/friendli",
       "billing": {
         "in_billing": "1",
         "out_billing": "1"
@@ -739,7 +739,7 @@
       "model_name": "ax4",
       "model_alias": "A.X 4.0",
       "description": "최신 에이닷 모델",
-      "endpoint": "/adotx",
+      "endpoint": "/chat/adotx",
       "billing": {
         "in_billing": "0",
         "out_billing": "0"

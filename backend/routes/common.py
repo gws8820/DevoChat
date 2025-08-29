@@ -29,6 +29,7 @@ class ChatRequest(BaseModel):
 class ImageGenerateRequest(BaseModel):
     model: str
     prompt: List[Dict[str, Any]]
+    conversation_id: str | None = None
 
 class AliasRequest(BaseModel):
     conversation_id: str
@@ -64,12 +65,19 @@ try:
 except FileNotFoundError:
     DAN_PROMPT = ""
 
-alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'alias_prompt.txt')
+chat_alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'chat_alias_prompt.txt')
 try:
-    with open(alias_prompt_path, 'r', encoding='utf-8') as f:
-        ALIAS_PROMPT = f.read()
+    with open(chat_alias_prompt_path, 'r', encoding='utf-8') as f:
+        CHAT_ALIAS_PROMPT = f.read()
 except FileNotFoundError:
-    ALIAS_PROMPT = ""
+    CHAT_ALIAS_PROMPT = ""
+    
+image_alias_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'image_alias_prompt.txt')
+try:
+    with open(image_alias_prompt_path, 'r', encoding='utf-8') as f:
+        IMAGE_ALIAS_PROMPT = f.read()
+except FileNotFoundError:
+    IMAGE_ALIAS_PROMPT = ""
 
 generated_image_path = os.path.join(os.path.dirname(__file__), "..", "generated/images")
 os.makedirs(generated_image_path, exist_ok=True)
@@ -280,13 +288,19 @@ def save_conversation(user: User, user_message, response_text, token_usage, requ
         }
     )
     
-def save_generated_image(user: User, image_bytes, model_name, in_billing: float, out_billing: float) -> dict:
+def save_image_conversation(user: User, request: ImageGenerateRequest, image_bytes, in_billing: float, out_billing: float) -> dict:
     file_name = f"{uuid.uuid4().hex}.png"
     file_path = os.path.join(generated_image_path, file_name)
     with open(file_path, "wb") as f:
         f.write(image_bytes)
 
-    billing = calculate_image_billing(user, model_name, in_billing, out_billing)
+    image_data = {
+        "type": "image",
+        "name": "Generated Image",
+        "content": f"/generated/images/{file_name}"
+    }
+    
+    billing = calculate_image_billing(user, request.model, in_billing, out_billing)
     
     if user.trial:
         user_collection.update_one(
@@ -298,12 +312,21 @@ def save_generated_image(user: User, image_bytes, model_name, in_billing: float,
             {"_id": ObjectId(user.user_id)},
             {"$inc": {"billing": billing}}
         )
-        
-    return {
-        "type": "image",
-        "name": "Generated Image",
-        "content": f"/generated/images/{file_name}"
-    }
+    
+    user_message = {"role": "user", "content": request.prompt}
+    assistant_message = {"role": "assistant", "content": image_data}
+
+    conversation_collection.update_one(
+        {"user_id": user.user_id, "conversation_id": request.conversation_id},
+        {
+            "$push": {
+                "conversation": {
+                    "$each": [user_message, assistant_message]
+                }
+            },
+            "$set": {"model": request.model}
+        }
+    )
 
 def save_alias(user: User, conversation_id: str, alias: str):
     conversation_collection.update_one(

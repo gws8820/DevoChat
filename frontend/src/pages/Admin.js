@@ -146,8 +146,8 @@ function Admin() {
     navigate('/admin');
   };
 
-  const viewConversationDetails = (conversationId) => {
-    window.open(`/view/${conversationId}`, '_blank');
+  const viewConversationDetails = (conversationId, type) => {
+    window.open(`/view/${type}/${conversationId}`, '_blank');
   };
 
   const StatusToggle = ({ user }) => {
@@ -253,7 +253,7 @@ function Admin() {
                       <td>
                         <button 
                           className="user-name-link"
-                          onClick={() => viewConversationDetails(conv.conversation_id)}
+                          onClick={() => viewConversationDetails(conv.conversation_id, conv.type)}
                         >
                           {conv.alias}
                         </button>

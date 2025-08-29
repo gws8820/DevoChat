@@ -221,6 +221,11 @@ function Chat({ isTouch, chatMessageRef }) {
               }
               return;
             }
+            if (res.status === 413) {
+              setToastMessage("크기 제한을 초과하여 URL 인식에 실패했습니다.");
+              setShowToast(true);
+              return;
+            }
             if (res.ok) {
               const data = await res.json();
               if (data.content) {
@@ -422,7 +427,7 @@ function Chat({ isTouch, chatMessageRef }) {
           (async () => {
             try {
               const aliasResponse = await fetch(
-                `${process.env.REACT_APP_FASTAPI_URL}/get_alias`,
+                `${process.env.REACT_APP_FASTAPI_URL}/chat/get_alias`,
                 {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -446,7 +451,6 @@ function Chat({ isTouch, chatMessageRef }) {
                 updateConversation(conversation_id, aliasData.alias, false);
               }
             } catch (err) {
-              console.error("Alias generation failed:", err);
               updateConversation(conversation_id, "새 대화", false);
             }
           })();
@@ -454,7 +458,7 @@ function Chat({ isTouch, chatMessageRef }) {
         
         else {
           const res = await axios.get(
-            `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
+            `${process.env.REACT_APP_FASTAPI_URL}/chat/conversation/${conversation_id}`,
             { withCredentials: true }
           );
           

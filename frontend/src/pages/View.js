@@ -7,7 +7,7 @@ import Message from "../components/Message";
 import "../styles/Common.css";
 
 function View() {
-  const { conversation_id } = useParams();
+  const { type, conversation_id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -21,7 +21,7 @@ function View() {
     const initializeChat = async () => {
       try {
         const res = await axios.get(
-          `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
+          `${process.env.REACT_APP_FASTAPI_URL}/${type}/conversation/${conversation_id}`,
           { withCredentials: true }
         );
         const updatedMessages = res.data.messages.map((m) => {
@@ -42,7 +42,7 @@ function View() {
 
     initializeChat();
     // eslint-disable-next-line
-  }, [conversation_id, location.state]);
+  }, [type, conversation_id, location.state]);
 
   return (
     <div className="container">

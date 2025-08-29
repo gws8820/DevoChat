@@ -69,7 +69,7 @@ app.add_middleware(LoggingMiddleware)
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    message = "이미지 생성 기능이 추가되었습니다!"
+    message = "Gemini 2.5 Image (nano-banana) 모델이 추가되었습니다!"
     hash = base64.b64encode(message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(
@@ -210,6 +210,9 @@ async def get_shared_page(share_id: str):
 @app.post("/visit_url")
 def visit_url(request: URLRequest):
     try:
+        if len(request.url) > 20000:
+            raise HTTPException(status_code=413, detail="URL size exceeds 20000 characters limit.")
+        
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
         response = requests.get(request.url, headers=headers, timeout=5, allow_redirects=True)
         soup = BeautifulSoup(response.text, "html.parser")

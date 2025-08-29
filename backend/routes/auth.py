@@ -74,7 +74,8 @@ async def login(user: LoginUser):
             "user_id": str(db_user["_id"]),
             "name": db_user["name"],
             "email": db_user["email"],
-            "exp": datetime.now(timezone.utc) + timedelta(days=7)
+            "admin": db_user.get("admin"),
+            "exp": datetime.now(timezone.utc) + timedelta(days=30)
         },
         AUTH_KEY,
         algorithm=ALGORITHM
@@ -111,7 +112,8 @@ async def get_auth_status(access_token: str = Cookie(None)):
             "logged_in": True,
             "user_id": payload["user_id"],
             "name": payload["name"],
-            "email": payload["email"]
+            "email": payload["email"],
+            "admin": payload["admin"]
         }
     except (ExpiredSignatureError, InvalidTokenError):
         response = JSONResponse(

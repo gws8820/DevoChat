@@ -31,7 +31,8 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   } = useContext(SettingsContext);
 
   const location = useLocation();
-  const conversation_id = location.pathname.split('/chat/')[1];
+  const match = location.pathname.match(/^\/(?:chat|image)\/([^/]+)/);
+  const conversation_id = match?.[1];
 
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
   const [isControlPanelOpen, setIsControlPanelOpen] = useState(false);

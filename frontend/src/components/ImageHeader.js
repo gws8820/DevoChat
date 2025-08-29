@@ -1,18 +1,30 @@
 import React, { useEffect, useRef, useState, useContext } from "react";
-import { RiMenuLine, RiArrowRightSLine } from "react-icons/ri";
+import { useLocation } from 'react-router-dom';
+import { RiMenuLine, RiArrowRightSLine, RiShare2Line } from "react-icons/ri";
 import { motion, AnimatePresence } from "framer-motion";
+import { v4 as uuidv4 } from 'uuid';
 import Tooltip from "./Tooltip";
+import Toast from "./Toast";
 import { SettingsContext } from "../contexts/SettingsContext";
 import "../styles/Header.css";
 
-function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch }) {
+function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   const { 
     imageModel, 
     imageModels, 
-    updateImageModel
+    updateImageModel,
+    alias
   } = useContext(SettingsContext);
   
+  const location = useLocation();
+  const match = location.pathname.match(/^\/(?:chat|image)\/([^/]+)/);
+  const conversation_id = match?.[1];
+
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("error");
+  const [showToast, setShowToast] = useState(false);
+  
   const modelModalRef = useRef(null);
   
   let imageModelsList = imageModels.filter((m) => {
@@ -21,6 +33,72 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch }) {
   });
 
   const currentModelAlias = imageModels.find((m) => m.model_name === imageModel)?.model_alias || "모델 선택";
+
+  const handleShare = async () => {
+    try {
+      const uniqueId = uuidv4();
+
+      const containerClone = chatMessageRef.current.cloneNode(true);
+      const elementsToRemove = containerClone.querySelectorAll('.message-function, .copy-button');
+      elementsToRemove.forEach(el => {
+        el.remove();
+      });
+      
+      const htmlContent = containerClone.outerHTML;
+      const stylesheets = [];
+      
+      const linkElements = document.querySelectorAll('link[rel="stylesheet"]');
+      linkElements.forEach(link => {
+        if (link.href) {
+          stylesheets.push(link.href);
+        }
+      });
+      const styleElements = document.querySelectorAll('style');
+      styleElements.forEach(style => {
+        stylesheets.push(style.outerHTML);
+      });
+
+      try {
+        await navigator.clipboard.writeText(`https://share.devochat.com/id/${uniqueId}`);
+        setToastMessage("공유 링크가 복사되었습니다.");
+        setToastType("copy");
+        setShowToast(true);
+      } catch (err) {
+        console.error("복사 실패:", err);
+      }
+
+      const res = await fetch(
+        `${process.env.REACT_APP_FASTAPI_URL}/upload_page`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            unique_id: uniqueId,
+            html: htmlContent,
+            stylesheets,
+            title: alias
+          })
+        }
+      );
+      
+      if (res.status === 401) {
+        if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+          window.location.href = '/login?expired=true';
+        }
+        return;
+      }
+  
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || res.status);
+      }
+
+    } catch (error) {
+      console.error('링크 생성 실패:', error);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -46,6 +124,18 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch }) {
           {currentModelAlias}
           <RiArrowRightSLine className="expand-icon" />
         </div>
+      </div>
+
+      <div className="header-right">
+        {conversation_id && (
+          <div className="header-icon-wrapper">
+            <Tooltip content="공유하기" position="left" isTouch={isTouch}>
+              <div className="header-icon share-icon">
+                <RiShare2Line onClick={handleShare} />
+              </div>
+            </Tooltip>
+          </div>
+        )}
       </div>
       <AnimatePresence>
         {isModelModalOpen && (
@@ -77,6 +167,14 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Toast
+        type={toastType}
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        duration={2000}
+      />
     </div>
   );
 }
