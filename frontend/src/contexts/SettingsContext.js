@@ -4,12 +4,12 @@ import axios from "../utils/axiosConfig";
 export const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
-  const [defaultModel, setDefaultModel] = useState("");
-  const [defaultImageModel, setDefaultImageModel] = useState("");
   const [model, setModel] = useState("");
   const [imageModel, setImageModel] = useState("");
+  const [realtimeModel, setRealtimeModel] = useState("");
   const [models, setModels] = useState([]);
   const [imageModels, setImageModels] = useState([]);
+  const [realtimeModels, setRealtimeModels] = useState([]);
   const [isModelReady, setIsModelReady] = useState(false);
   const [alias, setAlias] = useState("");
   const [temperature, setTemperature] = useState(1);
@@ -36,22 +36,30 @@ export const SettingsProvider = ({ children }) => {
 
   const fetchModels = async () => {
     try {
-      const [modelsResponse, imageModelsResponse] = await Promise.all([
+      const [modelsResponse, imageModelsResponse, realtimeModelsResponse] = await Promise.all([
         axios.get(`${process.env.REACT_APP_FASTAPI_URL}/models`, { withCredentials: true }),
-        axios.get(`${process.env.REACT_APP_FASTAPI_URL}/image_models`, { withCredentials: true })
+        axios.get(`${process.env.REACT_APP_FASTAPI_URL}/image_models`, { withCredentials: true }),
+        axios.get(`${process.env.REACT_APP_FASTAPI_URL}/realtime_models`, { withCredentials: true })
       ]);
       
       setModels(modelsResponse.data?.models);
       setImageModels(imageModelsResponse.data?.models);
+      setRealtimeModels(realtimeModelsResponse.data?.models);
       
-      setDefaultModel(modelsResponse.data?.default);
-      setDefaultImageModel(imageModelsResponse.data?.default);
+      window.defaultModelData = {
+        default: modelsResponse.data?.default,
+        imageDefault: imageModelsResponse.data?.default,
+        realtimeDefault: realtimeModelsResponse.data?.default
+      };
+
     } catch (error) {
       setModels([]);
       setImageModels([]);
-      
-      setDefaultModel("");
-      setDefaultImageModel("");
+      setRealtimeModels([]);
+
+      updateModel("");
+      updateImageModel("");
+      updateRealtimeModel("");
     } finally {
       setIsModelReady(true);
     }
@@ -59,7 +67,29 @@ export const SettingsProvider = ({ children }) => {
 
   useEffect(() => {
     fetchModels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (models.length > 0 && window.defaultModelData) {
+      updateModel(window.defaultModelData.default);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [models]);
+
+  useEffect(() => {
+    if (imageModels.length > 0 && window.defaultModelData) {
+      updateImageModel(window.defaultModelData.imageDefault);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageModels]);
+
+  useEffect(() => {
+    if (realtimeModels.length > 0 && window.defaultModelData) {
+      updateRealtimeModel(window.defaultModelData.realtimeDefault);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realtimeModels]);
 
   const updateModel = (newModel, initialSettings) => {
     const selectedModel = models.find(m => m.model_name === newModel);
@@ -190,6 +220,10 @@ export const SettingsProvider = ({ children }) => {
     setMaxImageInput(maxInput);
   };
 
+  const updateRealtimeModel = (newRealtimeModel) => {
+    setRealtimeModel(newRealtimeModel);
+  };
+
   const switchImageMode = (hasUploadedImages) => {
     const selectedImageModel = imageModels.find(m => m.model_name === imageModel);
     const imageConfig = selectedImageModel?.capabilities?.image;
@@ -214,13 +248,13 @@ export const SettingsProvider = ({ children }) => {
   return (
     <SettingsContext.Provider
       value={{
-        defaultModel,
-        defaultImageModel,
-        isModelReady,
         models,
         imageModels,
+        realtimeModels,
         model,
         imageModel,
+        realtimeModel,
+        isModelReady,
         alias,
         temperature,
         reason,
@@ -245,6 +279,7 @@ export const SettingsProvider = ({ children }) => {
         maxImageInput,
         updateModel,
         updateImageModel,
+        updateRealtimeModel,
         setAlias,
         setTemperature,
         setReason,

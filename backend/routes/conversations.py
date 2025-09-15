@@ -126,9 +126,9 @@ async def create_new_conversation(current_user: User = Depends(get_current_user)
     user_id = current_user.user_id
     
     new_conversation = {
-        "type": "chat",
         "user_id": user_id,
         "conversation_id": conversation_id,
+        "type": "chat",
         "alias": None,
         "model": None,
         "temperature": None,
@@ -162,9 +162,9 @@ async def create_new_image_conversation(current_user: User = Depends(get_current
     conversation_id = str(uuid.uuid4())
     user_id = current_user.user_id
     new_conversation = {
-        "type": "image",
         "user_id": user_id,
         "conversation_id": conversation_id,
+        "type": "image",
         "alias": None,
         "model": None,
         "conversation": [],

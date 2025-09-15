@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ClipLoader } from "react-spinners";
 import { FaPaperPlane, FaStop } from "react-icons/fa";
 import Toast from "./Toast";
+import "../styles/InputContainer.css";
 
 function ImageInputContainer({
   isTouch,
@@ -135,15 +136,25 @@ function ImageInputContainer({
                     transition={{ duration: 0.3 }}
                     style={{ position: "relative" }}
                   >
-                    <div className="file-object">
-                      <span className="file-name">{file.name}</span>
-                      {!file.content && (
-                        <div className="file-upload-overlay">
-                          <ClipLoader size={20} />
-                        </div>
-                      )}
-                    </div>
-                    <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
+                    {file.preview ? (
+                      <div className="file-object image">
+                        <img
+                          src={file.preview}
+                          alt={file.name}
+                        />
+                        <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
+                      </div>
+                    ) : (
+                      <div className="file-object">
+                        <span className="file-name">{file.name}</span>
+                        <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
+                      </div>
+                    )}
+                    {!file.content && (
+                      <div className="file-upload-overlay">
+                        <ClipLoader size={20} />
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </AnimatePresence>

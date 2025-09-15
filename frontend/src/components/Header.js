@@ -1,6 +1,6 @@
 import React, { useState, useContext, useRef, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
-import { RiMenuLine, RiArrowRightSLine, RiShare2Line, RiLightbulbLine, RiEdit2Line } from "react-icons/ri";
+import { RiMenuLine, RiArrowRightSLine, RiShare2Line, RiLightbulbLine, RiEdit2Line, RiImage2Line } from "react-icons/ri";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from 'uuid';
@@ -353,9 +353,14 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                   >
                     <div className="model-alias">
                       {m.model_alias}
-                      {m.capabilities?.mcp && (
-                        <span className="mcp-badge">MCP</span>
-                      )}
+                      <div className="model-badge">
+                        {m.capabilities?.image && (
+                          <RiImage2Line className="image-badge" />
+                        )}
+                        {m.capabilities?.mcp && (
+                          <span className="mcp-badge">MCP</span>
+                        )}
+                      </div>
                     </div>
                     <div className="model-description">{m.description}</div>
                     <div className="model-pricing">In {m.billing?.in_billing}$ / Out {m.billing?.out_billing}$</div>

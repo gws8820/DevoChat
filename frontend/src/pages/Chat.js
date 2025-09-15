@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { IoImageOutline } from "react-icons/io5";
+import { IoImageOutline, IoAttach } from "react-icons/io5";
 import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
@@ -24,8 +24,8 @@ function Chat({ isTouch, chatMessageRef }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
-  const [isAtBottom, setIsAtBottom] = useState(true);
-  const [scrollOnSend, setScrollOnSend] = useState(false);
+  const [scrollTrigger, setScrollTrigger] = useState(0);
+  const [userFixedScroll, setUserFixedScroll] = useState(false);
   const [deleteIndex, setdeleteIndex] = useState(null);
   const [confirmModal, setConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -38,9 +38,10 @@ function Chat({ isTouch, chatMessageRef }) {
     removeFile
   } = useFileUpload([]);
 
-  const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
-
+  const lastScrollTopRef = useRef(0);
+  const touchStartYRef = useRef(null);
+  
   const {
     models,
     model,
@@ -148,10 +149,10 @@ function Chat({ isTouch, chatMessageRef }) {
       setInputText("");
       setUploadedFiles([]);
       setIsLoading(true);
-      requestAnimationFrame(() => {
-        setScrollOnSend(true);
-      });
-  
+      setTimeout(() => {
+        setScrollTrigger((v) => v + 1);
+      }, 0);
+
       const extractUrls = (message) => {
         const validTlds = [
           ".com", ".net", ".org", ".info", ".biz", ".xyz", ".tech", ".io", ".ai", ".gg", 
@@ -254,7 +255,9 @@ function Chat({ isTouch, chatMessageRef }) {
         }
         if (isInference) {
           setIsThinking(true);
-          setScrollOnSend(true);
+          setTimeout(() => {
+            setScrollTrigger((v) => v + 1);
+          }, 1100);
         }
   
         const response = await fetch(
@@ -310,7 +313,7 @@ function Chat({ isTouch, chatMessageRef }) {
               try {
                 const data = JSON.parse(jsonData);
                 if (data.error) {
-                  setErrorMessage("서버 오류가 발생했습니다: " + data.error);
+                  setErrorMessage(data.error);
                   reader.cancel();
                   return;
                 } else if (data.content) {
@@ -515,37 +518,86 @@ function Chat({ isTouch, chatMessageRef }) {
   }, [messages, setHasImage, uploadedFiles]);
 
   useEffect(() => {
-    const chatContainer = messagesEndRef.current?.parentElement;
-    if (!chatContainer) return;
-    const handleScroll = () => {
-      const { scrollTop, clientHeight, scrollHeight } = chatContainer;
-      if (scrollHeight - scrollTop - clientHeight > 50) {
-        setIsAtBottom(false);
-      } else {
-        setIsAtBottom(true);
+    if (isInitialized) {
+      chatMessageRef.current.scrollTop = chatMessageRef.current.scrollHeight;
+    }
+  }, [chatMessageRef, isInitialized]);
+  
+  useEffect(() => {
+    if (scrollTrigger !== 0) {
+      chatMessageRef.current.scrollTo({ top: chatMessageRef.current.scrollHeight, behavior: "smooth" });
+    }
+  }, [chatMessageRef, scrollTrigger]);
+
+  useEffect(() => {
+    if (isLoading && !userFixedScroll) { // Only During Streaming
+      chatMessageRef.current.scrollTo({ top: chatMessageRef.current.scrollHeight, behavior: "auto" });
+    }
+  }, [chatMessageRef, messages, isLoading, userFixedScroll]);
+
+  // userFixedScroll Logic
+  useEffect(() => {
+    const el = chatMessageRef.current;
+    lastScrollTopRef.current = el.scrollTop;
+
+    const handleWheel = (e) => {
+      if (!isLoading) return;
+      if (e.deltaY < 0) {
+        setUserFixedScroll(true);
+      } else if (e.deltaY > 0) {
+        const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+        if (distanceFromBottom <= 100) {
+          setUserFixedScroll(false);
+        }
       }
     };
-    chatContainer.addEventListener("scroll", handleScroll);
-    handleScroll();
-    return () => chatContainer.removeEventListener("scroll", handleScroll);
-  }, []);
+
+    const handleTouchStart = (e) => {
+      if (!isLoading) return;
+      if (e.touches && e.touches.length) {
+        touchStartYRef.current = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (!isLoading) return;
+      if (!e.touches || !e.touches.length) return;
+      const currentY = e.touches[0].clientY;
+      const startY = touchStartYRef.current;
+      if (startY == null) return;
+      if (currentY > startY + 5) {
+        setUserFixedScroll(true);
+      } else if (currentY < startY - 5) {
+        const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+        if (distanceFromBottom <= 100) {
+          setUserFixedScroll(false);
+        }
+      }
+    };
+
+    const handleScroll = () => {
+      if (!isLoading) return;
+      lastScrollTopRef.current = el.scrollTop;
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: true });
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+      el.removeEventListener("scroll", handleScroll);
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [chatMessageRef, isLoading]);
 
   useEffect(() => {
-    if (scrollOnSend) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      });
-      setScrollOnSend(false);
+    if (!isLoading) {
+      setUserFixedScroll(false);
     }
-  }, [messages, scrollOnSend]);
-
-  useEffect(() => {
-    if (isAtBottom) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-      });
-    }
-  }, [messages, isAtBottom]);
+  }, [isLoading]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -606,10 +658,11 @@ function Chat({ isTouch, chatMessageRef }) {
               onDelete={handleDelete}
               onRegenerate={handleRegenerate}
               onSendEditedMessage={sendEditedMessage}
-              setScrollOnSend={setScrollOnSend}
+              setScrollTrigger={setScrollTrigger}
               isTouch={isTouch}
               isLoading={isLoading}
               isLastMessage={idx === messages.length - 1}
+              shouldRender={idx >= messages.length - 6}
             />
           )), [messages, handleDelete, handleRegenerate, sendEditedMessage, isTouch, isLoading]
         )}
@@ -641,7 +694,6 @@ function Chat({ isTouch, chatMessageRef }) {
             생각하는 중...
           </motion.div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <InputContainer
@@ -669,8 +721,17 @@ function Chat({ isTouch, chatMessageRef }) {
             transition={{ duration: 0.1 }}
           >
             <div className="drag-container">
-              <IoImageOutline style={{ fontSize: "40px" }} />
-              <div className="drag-text">여기에 파일을 추가하세요</div>
+              {canReadImage ? (
+                <>
+                  <IoImageOutline style={{ fontSize: "40px" }} />
+                  <div className="drag-text">여기에 파일 또는 이미지를 추가하세요</div>
+                </>
+              ) : (
+                <>
+                  <IoAttach style={{ fontSize: "40px" }} />
+                  <div className="drag-text">여기에 파일을 추가하세요</div>
+                </>
+              )}
             </div>
           </motion.div>
         )}

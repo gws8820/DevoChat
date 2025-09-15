@@ -115,14 +115,17 @@ export const useFileUpload = (initialFiles = []) => {
       
       const filePairs = acceptedFiles.map((file) => {
         const uniqueId = uuidv4();
-        return { file, uniqueId };
+        const preview = file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined;
+        return { file, uniqueId, preview };
       });
 
       setUploadedFiles((prev) => [
         ...prev,
-        ...filePairs.map(({ file, uniqueId }) => ({
+        ...filePairs.map(({ file, uniqueId, preview }) => ({
           id: uniqueId,
           name: file.name,
+          type: file.type,
+          preview,
         })),
       ]);
 
@@ -132,14 +135,18 @@ export const useFileUpload = (initialFiles = []) => {
             const result = await uploadFiles(file, uniqueId);
             setUploadedFiles((prev) =>
               prev.map((item) =>
-                item.id === uniqueId ? result : item
+                item.id === uniqueId ? { ...item, ...result } : item
               )
             );
           } catch (err) {
             onError?.(err.message);
-            setUploadedFiles((prev) =>
-              prev.filter((item) => item.id !== uniqueId)
-            );
+            setUploadedFiles((prev) => {
+              const target = prev.find((item) => item.id === uniqueId);
+              if (target && target.preview) {
+                URL.revokeObjectURL(target.preview);
+              }
+              return prev.filter((item) => item.id !== uniqueId);
+            });
           }
         })
       );
@@ -150,7 +157,13 @@ export const useFileUpload = (initialFiles = []) => {
   );
   
   const removeFile = useCallback((fileId) => {
-    setUploadedFiles((prev) => prev.filter((file) => file.id !== fileId));
+    setUploadedFiles((prev) => {
+      const target = prev.find((file) => file.id === fileId);
+      if (target && target.preview) {
+        URL.revokeObjectURL(target.preview);
+      }
+      return prev.filter((file) => file.id !== fileId);
+    });
   }, [setUploadedFiles]);
 
   return {

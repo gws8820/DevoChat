@@ -2,40 +2,49 @@ import os
 import base64
 import asyncio
 import aiohttp
+import aiofiles
 
 from fastapi import HTTPException, Depends
 
 from ..auth import User, get_current_user
 from ..common import router, ImageGenerateRequest, save_image_conversation, check_image_user_permissions
 
-async def generate_image(session: aiohttp.ClientSession, polling_url: str, max_wait_time: int = 300) -> dict:
+
+async def generate_image(session: aiohttp.ClientSession, request_id: str, max_wait_time: int = 300) -> dict:
     start_time = asyncio.get_event_loop().time()
+    
+    headers = {
+        "Authorization": f"Bearer {os.getenv('WAVESPEED_API_KEY')}"
+    }
+    
+    polling_url = f"https://api.wavespeed.ai/api/v3/predictions/{request_id}/result"
     
     while True:
         current_time = asyncio.get_event_loop().time()
         if current_time - start_time > max_wait_time:
             raise HTTPException(status_code=408, detail="Image generation timeout")
         
-        async with session.get(polling_url) as response:
+        async with session.get(polling_url, headers=headers) as response:
             if response.status != 200:
                 raise HTTPException(status_code=500, detail=response.status)
             
             result = await response.json()
-            status = result.get("status")
+            status = result.get("data", {}).get("status")
             
-            if status == "Ready":
+            if status == "completed":
                 return result
-            elif status == "Error":
-                error_detail = result.get("error")
+            elif status == "failed":
+                error_detail = result.get("data", {}).get("error")
                 raise HTTPException(status_code=500, detail=error_detail)
-            elif status in ["Pending", "Running"]:
-                await asyncio.sleep(2)
+            elif status in ["created", "processing"]:
+                await asyncio.sleep(1)
                 continue
             else:
                 raise HTTPException(status_code=500, detail=status)
 
-@router.post("/image/flux")
-async def flux_endpoint(request: ImageGenerateRequest, user: User = Depends(get_current_user)):
+
+@router.post("/image/wavespeed")
+async def wavespeed_endpoint(request: ImageGenerateRequest, user: User = Depends(get_current_user)):
     try:
         error_message, in_billing, out_billing = check_image_user_permissions(user, request)
         if error_message:
@@ -54,34 +63,23 @@ async def flux_endpoint(request: ImageGenerateRequest, user: User = Depends(get_
         
         prompt = "\n\n".join(text_parts)
         
-        request_data = {
-            "prompt": prompt,
-            "safety_tolerance": 6,
-            "prompt_upsampling": False
-        }
+        request_data = {"prompt": prompt}
         
         if image_parts:
-            for i, image_path in enumerate(image_parts[:4]):
-                with open(image_path, "rb") as image_file:
-                    image_b64 = base64.b64encode(image_file.read()).decode('utf-8')
-                    
-                if i == 0:
-                    request_data["input_image"] = image_b64
-                elif i == 1:
-                    request_data["input_image_2"] = image_b64
-                elif i == 2:
-                    request_data["input_image_3"] = image_b64
-                elif i == 3:
-                    request_data["input_image_4"] = image_b64
+            image_path = image_parts[0]
+            async with aiofiles.open(image_path, "rb") as image_file:
+                image_bytes = await image_file.read()
+                image_b64 = f"data:image/jpeg;base64,{base64.b64encode(image_bytes).decode('utf-8')}"
+                request_data["image"] = image_b64
         
         headers = {
-            "x-key": os.getenv('FLUX_API_KEY'),
+            "Authorization": f"Bearer {os.getenv('WAVESPEED_API_KEY')}",
             "Content-Type": "application/json"
         }
         
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                f"https://api.bfl.ai/v1/{request.model}",
+                f"https://api.wavespeed.ai/api/v3/{request.model}",
                 json=request_data,
                 headers=headers
             ) as response:
@@ -92,11 +90,11 @@ async def flux_endpoint(request: ImageGenerateRequest, user: User = Depends(get_
                     )
                 
                 response_data = await response.json()
-                polling_url = response_data["polling_url"]
+                request_id = response_data["data"]["id"]
                 
-            result = await generate_image(session, polling_url)
+            result = await generate_image(session, request_id)
             
-            image_url = result["result"]["sample"]
+            image_url = result["data"]["outputs"][0]
             if not image_url:
                 raise HTTPException(status_code=500, detail="No image URL in result")
 

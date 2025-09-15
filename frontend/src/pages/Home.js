@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { IoImageOutline } from "react-icons/io5";
+import { IoImageOutline, IoAttach } from "react-icons/io5";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +11,7 @@ import Toast from "../components/Toast";
 import InputContainer from "../components/InputContainer";
 import "../styles/Common.css";
 
-function Main({ isTouch }) {
+function Home({ isTouch }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [notice, setNotice] = useState("");
@@ -33,9 +33,7 @@ function Main({ isTouch }) {
 
   const {
     models,
-    defaultModel,
     model,
-    updateModel,
     isInference,
     isSearch,
     isDeepResearch,
@@ -74,8 +72,6 @@ function Main({ isTouch }) {
   }, []);
 
   useEffect(() => {
-    updateModel(defaultModel);
-
     if (isInference) toggleInference();
     if (isSearch) toggleSearch();
     if (isDeepResearch) toggleDeepResearch();
@@ -240,8 +236,17 @@ function Main({ isTouch }) {
             transition={{ duration: 0.1 }}
           >
             <div className="drag-container">
-              <IoImageOutline style={{ fontSize: "40px" }} />
-              <div className="drag-text">여기에 파일을 추가하세요</div>
+              {canReadImage ? (
+                <>
+                  <IoImageOutline style={{ fontSize: "40px" }} />
+                  <div className="drag-text">여기에 파일 또는 이미지를 추가하세요</div>
+                </>
+              ) : (
+                <>
+                  <IoAttach style={{ fontSize: "40px" }} />
+                  <div className="drag-text">여기에 파일을 추가하세요</div>
+                </>
+              )}
             </div>
           </motion.div>
         )}
@@ -270,4 +275,4 @@ function Main({ isTouch }) {
   );
 }
 
-export default Main;
+export default Home;

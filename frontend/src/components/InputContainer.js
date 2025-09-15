@@ -9,6 +9,7 @@ import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { SettingsContext } from "../contexts/SettingsContext";
 import MCPModal from "./MCPModal";
 import Toast from "./Toast";
+import "../styles/InputContainer.css";
  
 function InputContainer({
   isTouch,
@@ -264,15 +265,30 @@ function InputContainer({
                     transition={{ duration: 0.3 }}
                     style={{ position: "relative" }}
                   >
-                    <div className="file-object">
-                      <span className="file-name">{file.name}</span>
-                      {!file.content && (
-                        <div className="file-upload-overlay">
-                          <ClipLoader size={20} />
-                        </div>
-                      )}
-                    </div>
-                    <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
+                    {file.preview ? (
+                      <div className="file-object image">
+                        <img
+                          src={file.preview}
+                          alt={file.name}
+                        />
+                        <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
+                        {!file.content && (
+                          <div className="file-upload-overlay">
+                            <ClipLoader size={20} />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="file-object">
+                        <span className="file-name">{file.name}</span>
+                        <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
+                        {!file.content && (
+                          <div className="file-upload-overlay">
+                            <ClipLoader size={20} />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </AnimatePresence>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
+import React, { useState, useCallback, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoImageOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +10,7 @@ import Toast from "../components/Toast";
 import ImageInputContainer from "../components/ImageInputContainer";
 import "../styles/Common.css";
 
-function ImageMain({ isTouch }) {
+function ImageHome({ isTouch }) {
   const navigate = useNavigate();
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -22,9 +22,7 @@ function ImageMain({ isTouch }) {
 
   const {
     canEditImage,
-    maxImageInput,
-    updateImageModel,
-    defaultImageModel
+    maxImageInput
   } = useContext(SettingsContext);
 
   const { addConversation } = useContext(ConversationsContext);
@@ -36,11 +34,6 @@ function ImageMain({ isTouch }) {
   } = useFileUpload([]);
 
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
-
-  useEffect(() => {
-    updateImageModel(defaultImageModel);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const sendMessage = useCallback(
     async (message) => {
@@ -112,7 +105,18 @@ function ImageMain({ isTouch }) {
       e.preventDefault();
       setIsDragActive(false);
       const files = Array.from(e.dataTransfer.files);
-      await processFiles(files, (errorMessage) => {
+      if (!canEditImage) {
+        e.stopPropagation();
+        return;
+      }
+      
+      const imageFiles = files.filter((file) => file.type && file.type.startsWith("image/"));
+      if (imageFiles.length === 0) {
+        setToastMessage("이미지만 업로드할 수 있습니다.");
+        setShowToast(true);
+        return;
+      }
+      await processFiles(imageFiles, (errorMessage) => {
         setToastMessage(errorMessage);
         setShowToast(true);
       }, canEditImage, maxImageInput);
@@ -156,7 +160,7 @@ function ImageMain({ isTouch }) {
       />
 
       <AnimatePresence>
-        {isDragActive && (
+        {isDragActive && canEditImage && (
           <motion.div
             key="drag-overlay"
             className="drag-overlay"
@@ -183,4 +187,4 @@ function ImageMain({ isTouch }) {
   );
 }
 
-export default ImageMain;
+export default ImageHome;

@@ -12,8 +12,8 @@ import aiofiles
 import aiofiles.os
 from pathlib import Path
 from routes import auth, realtime, conversations, uploads
-from routes.clients import openai_client, grok_client, responses_client, anthropic_client, google_client, mistral_client
-from routes.image_clients import openai_client, google_client, grok_client, flux_client, byteplus_client, alibaba_client
+from routes.chat_clients import openai_client, grok_client, responses_client, anthropic_client, google_client, mistral_client
+from routes.image_clients import openai_client, google_client, grok_client, flux_client, wavespeed_client
 from routes.auth import User, get_current_user
 from bs4 import BeautifulSoup
 import base64
@@ -51,8 +51,7 @@ app.include_router(openai_client.router)
 app.include_router(google_client.router)
 app.include_router(grok_client.router)
 app.include_router(flux_client.router)
-app.include_router(byteplus_client.router)
-app.include_router(alibaba_client.router)
+app.include_router(wavespeed_client.router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -69,7 +68,7 @@ app.add_middleware(LoggingMiddleware)
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    message = "Gemini 2.5 Image (nano-banana) 모델이 추가되었습니다!"
+    message = "Seedream v4 시리즈가 추가되었습니다!"
     hash = base64.b64encode(message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(
@@ -129,7 +128,7 @@ async def serve_icons(file_path: str):
 @app.get("/models", response_model=dict)
 async def get_models(user: User = Depends(get_current_user)):
     try:
-        with open("models.json", "r", encoding="utf-8") as f:
+        with open("config/models.json", "r", encoding="utf-8") as f:
             models_data = json.load(f)
             
         models = []
@@ -140,7 +139,7 @@ async def get_models(user: User = Depends(get_current_user)):
         
         return {
             "models": models,
-            "default": models_data.get("default")
+            "default": models_data["default"]
         }
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error occurred while fetching models: {str(ex)}")
@@ -148,7 +147,7 @@ async def get_models(user: User = Depends(get_current_user)):
 @app.get("/image_models", response_model=dict)
 async def get_image_models(user: User = Depends(get_current_user)):
     try:
-        with open("image_models.json", "r", encoding="utf-8") as f:
+        with open("config/image_models.json", "r", encoding="utf-8") as f:
             models_data = json.load(f)
 
         models = []
@@ -159,15 +158,31 @@ async def get_image_models(user: User = Depends(get_current_user)):
 
         return {
             "models": models,
-            "default": models_data.get("default")
+            "default": models_data["default"]
         }
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error occurred while fetching image models: {str(ex)}")
 
+@app.get("/realtime_models", response_model=dict)
+async def get_realtime_models(user: User = Depends(get_current_user)):
+    if user.trial:
+        raise HTTPException(status_code=403, detail="체험판 유저는 Realtime API 사용이 불가합니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요.")
+    
+    try:
+        with open("config/realtime_models.json", "r", encoding="utf-8") as f:
+            models_data = json.load(f)
+
+        return {
+            "models": models_data["models"],
+            "default": models_data["default"]
+        }
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Error occurred while fetching realtime models: {str(ex)}")
+
 @app.get("/mcp-servers", response_model=list[MCPServer])
 async def get_mcp_servers(user: User = Depends(get_current_user)):
     try:
-        with open("mcp_servers.json", "r", encoding="utf-8") as f:
+        with open("config/mcp_servers.json", "r", encoding="utf-8") as f:
             mcp_servers = json.load(f)
         
         servers = []

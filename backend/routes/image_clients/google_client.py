@@ -49,7 +49,7 @@ async def gemini_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
 
     return save_image_conversation(user, request, img_bytes, in_billing, out_billing)
   except Exception as ex:
-    raise HTTPException(status_code=500, detail=f"Google image generation failed: {str(ex)}")
+    raise HTTPException(status_code=500, detail=str(ex))
   
 @router.post("/image/google/imagen")
 async def imagen_endpoint(request: ImageGenerateRequest, user: User = Depends(get_current_user)):
@@ -76,4 +76,4 @@ async def imagen_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
 
     return save_image_conversation(user, request, img_bytes, in_billing, out_billing)
   except Exception as ex:
-    raise HTTPException(status_code=500, detail=f"Google image generation failed: {str(ex)}")
+    raise HTTPException(status_code=500, detail=str(ex))

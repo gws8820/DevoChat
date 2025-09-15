@@ -1,0 +1,55 @@
+{
+  "default": "gpt-realtime:marin",
+  "models": [
+    {
+      "model_name": "gpt-realtime:alloy",
+      "model_alias": "Alloy",
+      "description": "차분하고 균형 잡힌 목소리의 동반자"
+    },
+    {
+      "model_name": "gpt-realtime:ash",
+      "model_alias": "Ash",
+      "description": "언제나 곁을 지키는 든든한 조력자"
+    },
+    {
+      "model_name": "gpt-realtime:ballad",
+      "model_alias": "Ballad",
+      "description": "호기심과 활기로 길을 넓히는 탐험가"
+    },
+    {
+      "model_name": "gpt-realtime:cedar",
+      "model_alias": "Cedar",
+      "description": "침착함으로 생각 정리를 돕는 멘토"
+    },
+    {
+      "model_name": "gpt-realtime:coral",
+      "model_alias": "Coral",
+      "description": "밝은 톤으로 대화를 이끄는 분위기 메이커"
+    },
+    {
+      "model_name": "gpt-realtime:echo",
+      "model_alias": "Echo",
+      "description": "편안한 음색으로 대화 흐름을 맞추는 친구"
+    },
+    {
+      "model_name": "gpt-realtime:marin",
+      "model_alias": "Marin",
+      "description": "햇살 같은 음색의 동기부여자"
+    },
+    {
+      "model_name": "gpt-realtime:sage",
+      "model_alias": "Sage",
+      "description": "부드러운 톤으로 마음을 다독이는 상담가"
+    },
+    {
+      "model_name": "gpt-realtime:shimmer",
+      "model_alias": "Shimmer",
+      "description": "낮고 깊은 음색으로 신뢰를 주는 조언가"
+    },
+    {
+      "model_name": "gpt-realtime:verse",
+      "model_alias": "Verse",
+      "description": "차분한 목소리로 메시지를 다듬는 내레이터"
+    }
+  ]
+}

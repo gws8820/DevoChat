@@ -36,20 +36,19 @@ async def grok_endpoint(request: ImageGenerateRequest, user: User = Depends(get_
                 headers=headers
             ) as response:
                 if response.status != 200:
-                    error_text = await response.text()
                     raise HTTPException(
                         status_code=response.status, 
-                        detail=f"xAI server error: {error_text}"
+                        detail=str(response)
                     )
                 
                 response_data = await response.json()
                 image_bytes = base64.b64decode(response_data["data"][0]["b64_json"])
                 if not image_bytes:
-                    raise HTTPException(status_code=500, detail="빈 이미지 데이터를 받았습니다")
+                    raise HTTPException(status_code=500, detail="Empty image data received")
                 
                 return save_image_conversation(user, request, image_bytes, in_billing, out_billing)
                 
     except HTTPException:
         raise
     except Exception as ex:
-        raise HTTPException(status_code=500, detail=f"Grok 이미지 생성 실패: {str(ex)}")
+        raise HTTPException(status_code=500, detail=str(ex))

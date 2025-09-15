@@ -21,20 +21,24 @@ from logging_util import logger
 
 def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dict[str, Any]], Optional[str]]:
     try:
-        with open("mcp_servers.json", "r", encoding="utf-8") as f:
+        config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "config", "mcp_servers.json"))
+        with open(config_path, "r", encoding="utf-8") as f:
             mcp_server_configs = json.load(f)
-    except Exception:
+    except Exception as ex:
+        logger.error(f"MCP_SERVER_FETCH_ERROR: {str(ex)}")
         return [], "서버 오류가 발생했습니다."
     
     server_list = []
     
     for server_id in server_ids:
         if server_id not in mcp_server_configs:
-            return [], "잘못된 접근입니다."
+            logger.warning(json.dumps({"event": "INVALID_MCP_SERVER_ERROR", "username": current_user.name, "server_id": server_id}, ensure_ascii=False, indent=2))
+            continue
         
         server_config = mcp_server_configs[server_id]
         
         if server_config.get("admin") and not current_user.admin:
+            logger.warning(json.dumps({"event": "MCP_SERVER_PERMISSION_ERROR", "username": current_user.name, "server_id": server_id}, ensure_ascii=False, indent=2))
             return [], "잘못된 접근입니다."
         
         mcp_server = {

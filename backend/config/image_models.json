@@ -74,61 +74,91 @@
       "admin": false
     },
     {
-      "model_name": "seedream-3-0-t2i-250415",
-      "model_alias": "Seedream 3.0",
+      "model_name": "bytedance/seedream-v4",
+      "model_alias": "Seedream V4",
       "description": "BytePlus",
-      "endpoint": "/image/byteplus",
+      "endpoint": "/image/wavespeed",
       "billing": {
         "in_billing": "0",
         "out_billing": "0.03"
       },
       "variants": {
-        "image": "seededit-3-0-i2i-250628"
+        "image": "bytedance/seedream-v4/edit"
       },
       "capabilities": { "image": { "type": "switch" } },
       "admin": false
     },
     {
-      "model_name": "seededit-3-0-i2i-250628",
-      "model_alias": "SeedEdit 3.0",
+      "model_name": "bytedance/seedream-v4/edit",
+      "model_alias": "SeedEdit V4",
       "description": "BytePlus",
-      "endpoint": "/image/byteplus",
+      "endpoint": "/image/wavespeed",
       "billing": {
         "in_billing": "0",
         "out_billing": "0.03"
       },
       "variants": {
-        "base": "seedream-3-0-t2i-250415"
+        "base": "bytedance/seedream-v4"
       },
       "capabilities": { "image": { "type": "switch", "max_input": 1 } },
       "admin": false
     },
     {
-      "model_name": "qwen-image",
+      "model_name": "wavespeed-ai/qwen-image/text-to-image",
       "model_alias": "Qwen Image",
       "description": "Alibaba",
-      "endpoint": "/image/alibaba/text2image",
+      "endpoint": "/image/wavespeed",
       "billing": {
         "in_billing": "0",
-        "out_billing": "0.035"
+        "out_billing": "0.04"
       },
       "variants": {
-        "image": "qwen-image-edit"
+        "image": "wavespeed-ai/qwen-image/edit"
       },
       "capabilities": { "image": { "type": "switch" } },
       "admin": false
     },
     {
-      "model_name": "qwen-image-edit",
+      "model_name": "wavespeed-ai/qwen-image/edit",
       "model_alias": "Qwen Image Edit",
       "description": "Alibaba",
-      "endpoint": "/image/alibaba/image-edit",
+      "endpoint": "/image/wavespeed",
       "billing": {
         "in_billing": "0",
         "out_billing": "0.045"
       },
       "variants": {
-        "base": "qwen-image"
+        "base": "wavespeed-ai/qwen-image/text-to-image"
+      },
+      "capabilities": { "image": { "type": "switch", "max_input": 1 } },
+      "admin": false
+    },
+    {
+      "model_name": "wavespeed-ai/wan-2.2/text-to-image-realism",
+      "model_alias": "Wan 2.2 Realism",
+      "description": "WaveSpeed",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.05"
+      },
+      "variants": {
+        "image": "wavespeed-ai/wan-2.2/image-to-image"
+      },
+      "capabilities": { "image": { "type": "switch" } },
+      "admin": false
+    },
+    {
+      "model_name": "wavespeed-ai/wan-2.2/image-to-image",
+      "model_alias": "Wan 2.2 Image To Image",
+      "description": "WaveSpeed",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.05"
+      },
+      "variants": {
+        "base": "wavespeed-ai/wan-2.2/text-to-image-realism"
       },
       "capabilities": { "image": { "type": "switch", "max_input": 1 } },
       "admin": false

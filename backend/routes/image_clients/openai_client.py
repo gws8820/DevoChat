@@ -46,4 +46,4 @@ async def openai_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
       image_bytes = base64.b64decode(response.data[0].b64_json)
       return save_image_conversation(user, request, image_bytes, in_billing, out_billing)
   except Exception as ex:
-    raise HTTPException(status_code=500, detail=f"OpenAI image generation failed: {str(ex)}")
+    raise HTTPException(status_code=500, detail=str(ex))

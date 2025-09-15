@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import { motion } from "framer-motion";
@@ -13,7 +13,6 @@ function View() {
 
   const [messages, setMessages] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
-  const messagesEndRef = useRef(null);
 
   const generateMessageId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -62,7 +61,7 @@ function View() {
           <ClipLoader loading={true} size={50} />
         </motion.div>
       )}
-      <div className="chat-messages">
+      <div className="chat-messages view">
         {useMemo(() => 
           messages.map((msg, idx) => (
             <Message
@@ -73,7 +72,6 @@ function View() {
             />
           )), [messages]
         )}
-        <div ref={messagesEndRef} style={{marginBottom: "20px"}} />
       </div>
     </div>
   );

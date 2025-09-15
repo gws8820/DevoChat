@@ -48,7 +48,7 @@ db = mongo_client.chat_db
 user_collection = db.users
 conversation_collection = db.conversations
 
-MAX_VERBOSITY_TOKENS = 4096
+MAX_VERBOSITY_TOKENS = 8192
 MAX_REASON_TOKENS = 16384
 
 default_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'default_prompt.txt')
@@ -172,7 +172,7 @@ def normalize_assistant_content(content):
 
 def get_model_billing(model_name):
     try:
-        models_path = os.path.join(os.path.dirname(__file__), '..', 'models.json')
+        models_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'models.json')
         with open(models_path, 'r', encoding='utf-8') as f:
             models_data = json.load(f)
         
@@ -180,15 +180,15 @@ def get_model_billing(model_name):
             if model['model_name'] == model_name:
                 return float(model['billing']['in_billing']), float(model['billing']['out_billing'])
         
-        logger.warning(f"Model {model_name} not found in models.json")
+        logger.warning(f"Model {model_name} not found in config/models.json")
         return None
     except Exception as ex:
-        logger.error(f"Error reading models.json: {str(ex)}")
+        logger.error(f"Error reading config/models.json: {str(ex)}")
         return None
 
 def get_image_model_billing(model_name):
     try:
-        models_path = os.path.join(os.path.dirname(__file__), '..', 'image_models.json')
+        models_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'image_models.json')
         with open(models_path, 'r', encoding='utf-8') as f:
             models_data = json.load(f)
         
@@ -196,10 +196,10 @@ def get_image_model_billing(model_name):
             if model['model_name'] == model_name:
                 return float(model['billing']['in_billing']), float(model['billing']['out_billing'])
         
-        logger.warning(f"Image model {model_name} not found in image_models.json")
+        logger.warning(f"Image model {model_name} not found in config/image_models.json")
         return None
     except Exception as ex:
-        logger.error(f"Error reading image_models.json: {str(ex)}")
+        logger.error(f"Error reading config/image_models.json: {str(ex)}")
         return None
 
 def calculate_billing(user: User, model_name, token_usage, in_billing_rate: float, out_billing_rate: float):
@@ -296,7 +296,7 @@ def save_image_conversation(user: User, request: ImageGenerateRequest, image_byt
 
     image_data = {
         "type": "image",
-        "name": "Generated Image",
+        "name": file_name,
         "content": f"/generated/images/{file_name}"
     }
     
@@ -327,6 +327,8 @@ def save_image_conversation(user: User, request: ImageGenerateRequest, image_byt
             "$set": {"model": request.model}
         }
     )
+
+    return image_data
 
 def save_alias(user: User, conversation_id: str, alias: str):
     conversation_collection.update_one(

@@ -1,15 +1,25 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { useNavigate } from "react-router-dom";
 import { IoMic, IoMicOff, IoClose } from "react-icons/io5";
+import { LuUserRoundCog } from "react-icons/lu";
 import { ClipLoader } from "react-spinners";
 import { motion, AnimatePresence } from "framer-motion";
+import { SettingsContext } from "../contexts/SettingsContext";
 import "../styles/Realtime.css";
+import "../styles/Header.css";
 
 const Realtime = () => {
+  const { 
+    realtimeModels, 
+    realtimeModel, 
+    updateRealtimeModel 
+  } = useContext(SettingsContext);
+  
   const [isMicEnabled, setIsMicEnabled] = useState(true);
   const [isConnecting, setIsConnecting] = useState(true);
   const [transcript, setTranscript] = useState("");
   const [isModelSpeaking, setIsModelSpeaking] = useState(false);
+  const [isModelModalOpen, setIsModelModalOpen] = useState(false);
 
   const peerConnection = useRef(null);
   const dataChannel = useRef(null);
@@ -17,6 +27,7 @@ const Realtime = () => {
   const audioStreamRef = useRef(null);
   const combinedAudioRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const modelModalRef = useRef(null);
 
   const navigate = useNavigate();
 
@@ -118,10 +129,10 @@ const Realtime = () => {
     }
   }, []);
 
-  const connectToSession = useCallback(async () => {
+  const connectToSession = useCallback(async (realtimeModel) => {
     try {
       const tokenResponse = await fetch(
-        `${process.env.REACT_APP_FASTAPI_URL}/session`,
+        `${process.env.REACT_APP_FASTAPI_URL}/session?model=${encodeURIComponent(realtimeModel)}`,
         { credentials: "include" }
       );
       
@@ -136,7 +147,9 @@ const Realtime = () => {
         throw new Error(`${errorData.detail}`);
       }
       const data = await tokenResponse.json();
-      const EPHEMERAL_KEY = data.client_secret.value;
+
+      const EPHEMERAL_KEY = data.token;
+      const REALTIME_MODEL = data.model;
 
       peerConnection.current = new RTCPeerConnection();
       await addAudioTrack(peerConnection.current);
@@ -163,7 +176,7 @@ const Realtime = () => {
       };
 
       dataChannel.current = peerConnection.current.createDataChannel('oai-events');
-      
+
       dataChannel.current.onmessage = (event) => {
         try {
           const realtimeEvent = JSON.parse(event.data);
@@ -189,25 +202,14 @@ const Realtime = () => {
             setTimeout(() => setTranscript(""), 3000);
           }
         } catch (error) {
-          console.error('이벤트 파싱 오류:', error);
+          console.error('이벤트 파싱 오류가 발생했습니다:', error);
         }
       };
       
-      dataChannel.current.onopen = () => {
-        const sessionUpdateEvent = {
-          type: "session.update",
-          session: {
-            instructions: "한국어로 응답해."
-          }
-        };
-        dataChannel.current.send(JSON.stringify(sessionUpdateEvent));
-      };
-
       const offer = await peerConnection.current.createOffer();
       await peerConnection.current.setLocalDescription(offer);
-      const baseUrl = 'https://api.openai.com/v1/realtime';
-      const model = 'gpt-4o-mini-realtime-preview';
-      const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
+      const baseUrl = 'https://api.openai.com/v1/realtime/calls';
+      const sdpResponse = await fetch(`${baseUrl}?model=${REALTIME_MODEL}`, {
         method: 'POST',
         body: offer.sdp,
         headers: {
@@ -228,12 +230,12 @@ const Realtime = () => {
   }, [navigate, addAudioTrack, cleanup]);
 
   useEffect(() => {
-    connectToSession();
+    connectToSession(realtimeModel);
 
     return () => {
       cleanup();
     };
-  }, [connectToSession, cleanup]);
+  }, [realtimeModel, connectToSession, cleanup]);
 
   const toggleMicrophone = useCallback(() => {
     if (!audioStreamRef.current) return;
@@ -253,6 +255,25 @@ const Realtime = () => {
     setTimeout(() => navigate(-1), 300);
   }, [navigate, cleanup]);
 
+  const handleModelChange = useCallback(async (newModel) => {
+    setIsModelModalOpen(false);
+    if (newModel === realtimeModel) return;
+    
+    setIsConnecting(true);
+    cleanup();
+    updateRealtimeModel(newModel);
+  }, [realtimeModel, cleanup, updateRealtimeModel]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isModelModalOpen && modelModalRef.current && !modelModalRef.current.contains(event.target)) {
+        setIsModelModalOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isModelModalOpen]);
+
   return (
     <>
       <AnimatePresence>
@@ -269,6 +290,10 @@ const Realtime = () => {
             </div>
           ) : (
             <>
+              <div className="realtime-models-icon" onClick={() => setIsModelModalOpen(true)}>
+                <LuUserRoundCog />
+              </div>
+
               <div className="audio-bars-container">
                 <div className="audio-bar"></div>
                 <div className="audio-bar"></div>
@@ -313,6 +338,33 @@ const Realtime = () => {
             </>
           )}
         </motion.div>
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isModelModalOpen && (
+          <motion.div
+            className="hmodal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="hmodal" ref={modelModalRef}>
+              <div className="model-list">
+                {realtimeModels?.map((m, index) => (
+                  <div
+                    className="model-item"
+                    key={index}
+                    onClick={() => handleModelChange(m.model_name)}
+                  >
+                    <div className="model-alias">{m.model_alias}</div>
+                    <div className="model-description">{m.description}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
       
       <audio ref={audioInputRef} style={{ display: 'none' }} />

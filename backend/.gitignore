@@ -8,4 +8,4 @@ generated/
 icons/
 shared_pages/
 
-mcp_servers.json
+config/mcp_servers.json

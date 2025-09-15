@@ -5,10 +5,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocat
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import ImageHeader from "./components/ImageHeader";
-import Main from "./pages/Main";
+import Home from "./pages/Home";
 import Chat from "./pages/Chat";
-import Image from "./pages/Image";
-import ImageMain from "./pages/ImageMain";
+import ImageChat from "./pages/ImageChat";
+import ImageHome from "./pages/ImageHome";
 import View from "./pages/View";
 import Realtime from "./pages/Realtime";
 import Admin from "./pages/Admin";
@@ -270,10 +270,10 @@ function AppContent() {
         )}
 
         <Routes location={location} key={location.pathname}>
-          <Route path="/" element={isLoggedIn ? <Main isTouch={isTouch} /> : <Navigate to="/login" />} />
+          <Route path="/" element={isLoggedIn ? <Home isTouch={isTouch} /> : <Navigate to="/login" />} />
           <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
-          <Route path="/image" element={isLoggedIn ? <ImageMain isTouch={isTouch} /> : <Navigate to="/login" />} />
-          <Route path="/image/:conversation_id" element={isLoggedIn ? <Image isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
+          <Route path="/image" element={isLoggedIn ? <ImageHome isTouch={isTouch} /> : <Navigate to="/login" />} />
+          <Route path="/image/:conversation_id" element={isLoggedIn ? <ImageChat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
           <Route path="/view/:type/:conversation_id" element={isLoggedIn ? <View /> : <Navigate to="/login" />} />
           <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
           <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />

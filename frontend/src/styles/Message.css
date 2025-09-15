@@ -12,6 +12,10 @@
   border-radius: 5px;
 }
 
+.chat-messages.view {
+  margin-bottom: 20px;
+}
+
 .chat-messages::-webkit-scrollbar {
   width: 10px;
 }
@@ -29,6 +33,10 @@
   flex-direction: column;
   word-break: break-all;
   content-visibility: auto;
+}
+
+.chat-message.visible {
+  content-visibility: visible;
 }
 
 .user-wrap {
@@ -106,7 +114,7 @@
 }
 
 .assistant-wrap .message-file-area .image-object {
-  margin-bottom: 14px;
+  margin-bottom: 6px;
 }
 
 .message-file-area .image-object img {

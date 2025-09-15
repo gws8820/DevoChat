@@ -8,11 +8,12 @@ import { ConversationsContext } from "../contexts/ConversationsContext";
 import { useFileUpload } from "../utils/useFileUpload";
 import ImageInputContainer from "../components/ImageInputContainer";
 import Message from "../components/Message";
+import Modal from "../components/Modal";
 import Toast from "../components/Toast";
 import axios from "../utils/axiosConfig";
 import "../styles/Common.css";
 
-function Image({ isTouch, chatMessageRef }) {
+function ImageChat({ isTouch, chatMessageRef }) {
   const { conversation_id } = useParams();
   const location = useLocation();
   const {
@@ -20,7 +21,6 @@ function Image({ isTouch, chatMessageRef }) {
     imageModels, 
     maxImageInput,
     canEditImage,
-    defaultImageModel,
     updateImageModel,
     switchImageMode,
     setAlias
@@ -33,8 +33,9 @@ function Image({ isTouch, chatMessageRef }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
-  const [isAtBottom, setIsAtBottom] = useState(true);
-  const [scrollOnSend, setScrollOnSend] = useState(false);
+  const [scrollTrigger, setScrollTrigger] = useState(0);
+  const [deleteIndex, setdeleteIndex] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
@@ -45,15 +46,10 @@ function Image({ isTouch, chatMessageRef }) {
     removeFile
   } = useFileUpload([]);
 
-  const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
+  const bottomRef = useRef(null);
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
   const generateMessageId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-  useEffect(() => {
-    updateImageModel(defaultImageModel);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     const hasUploadedImages = uploadedFiles.length > 0;
@@ -155,37 +151,12 @@ function Image({ isTouch, chatMessageRef }) {
   }, [conversation_id, location.state]);
 
   useEffect(() => {
-    const container = messagesEndRef.current?.parentElement;
-    if (!container) return;
-    const handleScroll = () => {
-      const { scrollTop, clientHeight, scrollHeight } = container;
-      if (scrollHeight - scrollTop - clientHeight > 50) {
-        setIsAtBottom(false);
-      } else {
-        setIsAtBottom(true);
-      }
-    };
-    container.addEventListener("scroll", handleScroll);
-    handleScroll();
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
-
+    if (isInitialized) chatMessageRef.current.scrollTop = chatMessageRef.current.scrollHeight;
+  }, [chatMessageRef, isInitialized]);
+  
   useEffect(() => {
-    if (scrollOnSend) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      });
-      setScrollOnSend(false);
-    }
-  }, [messages, scrollOnSend]);
-
-  useEffect(() => {
-    if (isAtBottom) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-      });
-    }
-  }, [messages, isAtBottom]);
+    if (scrollTrigger !== 0) chatMessageRef.current.scrollTo({ top: chatMessageRef.current.scrollHeight, behavior: "smooth" });
+  }, [chatMessageRef, scrollTrigger]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -202,7 +173,18 @@ function Image({ isTouch, chatMessageRef }) {
       e.preventDefault();
       setIsDragActive(false);
       const files = Array.from(e.dataTransfer.files);
-      await processFiles(files, (errorMessage) => {
+      if (!canEditImage) {
+        e.stopPropagation();
+        return;
+      }
+
+      const imageFiles = files.filter((file) => file.type && file.type.startsWith("image/"));
+      if (imageFiles.length === 0) {
+        setToastMessage("이미지만 업로드할 수 있습니다.");
+        setShowToast(true);
+        return;
+      }
+      await processFiles(imageFiles, (errorMessage) => {
         setToastMessage(errorMessage);
         setShowToast(true);
       }, canEditImage, maxImageInput);
@@ -242,9 +224,9 @@ function Image({ isTouch, chatMessageRef }) {
       setInputText("");
       setUploadedFiles([]);
       setIsLoading(true);
-      requestAnimationFrame(() => {
-        setScrollOnSend(true);
-      });
+      setTimeout(() => {
+        setScrollTrigger((v) => v + 1);
+      }, 1100);
 
       const controller = new AbortController();
       abortControllerRef.current = controller;
@@ -279,7 +261,7 @@ function Image({ isTouch, chatMessageRef }) {
           return;
         }
         else if (!response.ok) {
-          setErrorMessage("이미지 생성에 실패했습니다.");
+          setErrorMessage("이미지 생성에 실패했습니다: " + result.detail);
           return;
         }
         
@@ -321,6 +303,57 @@ function Image({ isTouch, chatMessageRef }) {
     }
   }, []);
 
+  const deleteMessages = useCallback(
+    async (startIndex) => {
+      setMessages((prevMessages) => prevMessages.slice(0, startIndex));
+
+      return axios
+        .delete(
+          `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/${startIndex}`,
+          { withCredentials: true }
+        )
+        .catch((err) => {
+          setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
+          setShowToast(true);
+        });
+    },
+    [conversation_id]
+  );
+
+  const resendMesage = useCallback(
+    async (messageContent, deleteIndex = null) => {
+      try {
+        if (deleteIndex !== null) {
+          await deleteMessages(deleteIndex);
+        }
+        
+        const textContent = messageContent.find(item => item.type === "text")?.text || "";
+        const nonTextContent = messageContent.filter(item => item.type !== "text");
+        
+        sendMessage(textContent, nonTextContent);
+      } catch (err) {
+        setToastMessage("메세지 처리 중 오류가 발생했습니다.");
+        setShowToast(true);
+      }
+    },
+    [deleteMessages, sendMessage]
+  );
+
+  const handleRegenerate = useCallback(
+    (startIndex) => {
+      const previousMessage = messages[startIndex - 1];
+      if (!previousMessage) return;
+      
+      resendMesage(previousMessage.content, startIndex - 1);
+    },
+    [messages, resendMesage]
+  );
+
+  const handleDelete = useCallback((idx) => {
+    setdeleteIndex(idx);
+    setConfirmModal(true);
+  }, []);
+
   return (
     <div
       className="container"
@@ -353,13 +386,33 @@ function Image({ isTouch, chatMessageRef }) {
               messageIndex={idx}
               role={msg.role}
               content={msg.content}
-              setScrollOnSend={setScrollOnSend}
+              onDelete={handleDelete}
+              onRegenerate={handleRegenerate}
+              setScrollTrigger={setScrollTrigger}
               isTouch={isTouch}
               isLoading={isLoading}
               isLastMessage={idx === messages.length - 1}
+              shouldRender={idx >= messages.length - 6}
             />
-          )), [messages, isTouch, isLoading]
+          )), [messages, handleDelete, handleRegenerate, isTouch, isLoading]
         )}
+
+        <AnimatePresence>
+          {confirmModal && (
+            <Modal
+              message="정말 메세지를 삭제하시겠습니까?"
+              onConfirm={() => {
+                deleteMessages(deleteIndex);
+                setdeleteIndex(null);
+                setConfirmModal(false);
+              }}
+              onCancel={() => {
+                setdeleteIndex(null);
+                setConfirmModal(false);
+              }}
+            />
+          )}
+        </AnimatePresence>
 
         {isLoading && (
           <motion.div
@@ -371,13 +424,12 @@ function Image({ isTouch, chatMessageRef }) {
             이미지 생성 중...
           </motion.div>
         )}
-        <div ref={messagesEndRef} />
+        <div ref={bottomRef} />
       </div>
 
       <ImageInputContainer
         isTouch={isTouch}
         placeholder="프롬프트 입력"
-        extraClassName={messages.length === 0 ? "main-input-container" : ""}
         inputText={inputText}
         setInputText={setInputText}
         isLoading={isLoading}
@@ -392,7 +444,7 @@ function Image({ isTouch, chatMessageRef }) {
       />
 
       <AnimatePresence>
-        {isDragActive && (
+        {isDragActive && canEditImage && (
           <motion.div
             key="drag-overlay"
             className="drag-overlay"
@@ -419,6 +471,4 @@ function Image({ isTouch, chatMessageRef }) {
   );
 }
 
-export default Image;
-
-
+export default ImageChat;

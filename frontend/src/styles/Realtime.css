@@ -16,6 +16,26 @@
     user-select: none;
 }
 
+.realtime-models-icon {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    z-index: 1001;
+}
+
+.realtime-models-icon:hover {
+    background-color: rgba(245, 245, 245);
+}
+
 .audio-bars-container {
     display: flex;
     align-items: center;
@@ -81,7 +101,13 @@
     color: rgb(230, 55, 55);
 }
 
+
 @media (max-width: 768px) {
+    .realtime-models-icon {
+        top: 15px;
+        right: 10px;
+    }
+
     .bottom-ui-container {
         gap: 20px;
     }

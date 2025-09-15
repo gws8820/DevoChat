@@ -17,10 +17,11 @@ function Message({
   onDelete,
   onRegenerate,
   onSendEditedMessage,
-  setScrollOnSend,
+  setScrollTrigger,
   isTouch,
   isLoading,
   isLastMessage,
+  shouldRender
 }) {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -127,7 +128,11 @@ function Message({
                   <img
                     src={`${process.env.REACT_APP_FASTAPI_URL}${item.content}`}
                     alt={item.name}
-                    onLoad={() => setScrollOnSend && setScrollOnSend(true)}
+                    onLoad={() => {
+                      if (setScrollTrigger) {
+                        setScrollTrigger((v) => v + 1);
+                      }
+                    }}
                   />
                 </div>
               );
@@ -136,7 +141,7 @@ function Message({
           })}
         </div>
 
-        <div className="chat-message user">
+        <div className={`chat-message user ${shouldRender ? 'visible' : ''}`}>
           {isEditing ? (
             <TextareaAutosize
               ref={textareaRef}
@@ -198,16 +203,28 @@ function Message({
               <img
                 src={`${process.env.REACT_APP_FASTAPI_URL}${content.content}`}
                 alt={content.name}
-                onLoad={() => setScrollOnSend && setScrollOnSend(true)}
+                onLoad={() => {
+                  if (setScrollTrigger) {
+                    setScrollTrigger((v) => v + 1);
+                  }
+                }}
               />
             </div>
+          </div>
+          <div className="message-function">
+            {onRegenerate && (
+              <GoSync
+                className="function-button"
+                onClick={() => onRegenerate(messageIndex)}
+              />
+            )}
           </div>
         </div>
       );
     } else {
       return (
         <div className="assistant-wrap">
-          <div className="chat-message assistant">
+          <div className={`chat-message assistant ${shouldRender ? 'visible' : ''}`}>
             <MarkdownRenderer
               content={String(content)}
               isComplete={isComplete !== undefined ? isComplete : true}
@@ -234,7 +251,7 @@ function Message({
   } else if (role === "error") {
     return (
       <motion.div
-        className="chat-message error"
+        className={`chat-message error ${shouldRender ? 'visible' : ''}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, delay: 0.8, ease: "easeOut" }}
@@ -242,7 +259,7 @@ function Message({
         <div style={{ marginRight: "7px" }}>{content}</div>
         <div className="refresh-wrap">
           <TbRefresh
-            style={{ marginTop: "1px", color: "#666666", fontSize: "18px", cursor: "pointer" }}
+            style={{ color: "#666666", fontSize: "18px", cursor: "pointer" }}
             onClick={() => window.location.reload()}
           />
         </div>
@@ -260,10 +277,11 @@ Message.propTypes = {
   onRegenerate: PropTypes.func,
   onEdit: PropTypes.func,
   onSendEditedMessage: PropTypes.func,
-  setScrollOnSend: PropTypes.func,
+  setScrollTrigger: PropTypes.func,
   isTouch: PropTypes.bool,
   isLoading: PropTypes.bool,
-  isLastMessage: PropTypes.bool
+  isLastMessage: PropTypes.bool,
+  shouldRender: PropTypes.bool
 };
 
 Message.defaultProps = {
