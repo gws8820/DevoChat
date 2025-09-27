@@ -1,5 +1,4 @@
 // src/App.js
-import axios from "./utils/axiosConfig";
 import { useEffect, useState, useCallback, useRef, useContext, useMemo } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
@@ -75,22 +74,23 @@ function AppContent() {
   useEffect(() => {
     async function checkLoginStatus() {
       try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_FASTAPI_URL}/auth/status`,
-          { withCredentials: true }
-        );
-        setIsLoggedIn(response.data.logged_in);
-        if (response.data.logged_in) {
+        const statusRes = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/auth/status`, { credentials: "include" });
+        if (!statusRes.ok) {
+          setIsLoggedIn(false);
+          setUserInfo(null);
+          return;
+        }
+        const statusData = await statusRes.json();
+        setIsLoggedIn(statusData.logged_in);
+        if (statusData.logged_in) {
           fetchConversations();
           try {
-            const userResponse = await axios.get(
-              `${process.env.REACT_APP_FASTAPI_URL}/auth/user`,
-              { withCredentials: true }
-            );
-            setUserInfo(userResponse.data);
-          } catch (error) {
-            console.error("Failed to fetch user info.", error);
-          }
+            const userRes = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/auth/user`, { credentials: "include" });
+            if (userRes.ok) {
+              const userData = await userRes.json();
+              setUserInfo(userData);
+            }
+          } catch (error) {}
         }
       } catch (error) {
         setIsLoggedIn(false);

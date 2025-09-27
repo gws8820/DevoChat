@@ -1,7 +1,6 @@
 // src/contexts/ConversationsContext.js
 import React, { createContext, useState, useCallback } from "react";
-import axios from "../utils/axiosConfig";
-
+ 
 export const ConversationsContext = createContext();
 
 export function ConversationsProvider({ children }) {
@@ -12,15 +11,17 @@ export function ConversationsProvider({ children }) {
   const fetchConversations = useCallback(async () => {
     setIsLoadingChat(true);
     try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_FASTAPI_URL}/conversations`,
-        { withCredentials: true }
-      );
-      setConversations(response.data.conversations);
+      const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/conversations`, {
+        credentials: "include"
+      });
+      if (!res.ok) {
+        throw new Error('대화를 불러오는 데 실패했습니다.');
+      }
+      const data = await res.json();
+      setConversations(data.conversations);
       setError(null);
     } catch (error) {
-      console.error("Failed to fetch conversations.", error);
-      setError("대화를 불러오는 데 실패했습니다.");
+      setError(error.message || "대화를 불러오는 데 실패했습니다.");
     } finally {
       setIsLoadingChat(false);
     }

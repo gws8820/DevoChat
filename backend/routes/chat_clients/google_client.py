@@ -173,7 +173,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
     instructions = DEFAULT_PROMPT
-    if request.system_message:
+    if request.control.system_message and request.system_message:
         instructions += "\n\n" + request.system_message
     if request.dan and DAN_PROMPT:
         instructions += "\n\n" + DAN_PROMPT
@@ -190,15 +190,15 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         
         config_params = {
             "system_instruction": instructions,
-            "temperature": request.temperature
+            "temperature": request.temperature if request.control.temperature else 1.0
         }
         
-        if request.verbosity:
+        if request.control.verbosity and request.verbosity:
             config_params["max_output_tokens"] = getVerbosity(request.verbosity, "tokens")
         else:
             config_params["max_output_tokens"] = MAX_VERBOSITY_TOKENS
 
-        if request.reason:
+        if request.control.reason and request.reason:
             reason_tokens = getReason(request.reason, "tokens")
             config_params["max_output_tokens"] += reason_tokens
             config_params["thinking_config"] = types.ThinkingConfig(

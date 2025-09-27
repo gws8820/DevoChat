@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
-import axios from "../utils/axiosConfig";
-
+ 
 export const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
@@ -36,20 +35,30 @@ export const SettingsProvider = ({ children }) => {
 
   const fetchModels = async () => {
     try {
-      const [modelsResponse, imageModelsResponse, realtimeModelsResponse] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_FASTAPI_URL}/models`, { withCredentials: true }),
-        axios.get(`${process.env.REACT_APP_FASTAPI_URL}/image_models`, { withCredentials: true }),
-        axios.get(`${process.env.REACT_APP_FASTAPI_URL}/realtime_models`, { withCredentials: true })
+      const [modelsRes, imageModelsRes, realtimeModelsRes] = await Promise.all([
+        fetch(`${process.env.REACT_APP_FASTAPI_URL}/chat_models`, { credentials: "include" }),
+        fetch(`${process.env.REACT_APP_FASTAPI_URL}/image_models`, { credentials: "include" }),
+        fetch(`${process.env.REACT_APP_FASTAPI_URL}/realtime_models`, { credentials: "include" })
       ]);
-      
-      setModels(modelsResponse.data?.models);
-      setImageModels(imageModelsResponse.data?.models);
-      setRealtimeModels(realtimeModelsResponse.data?.models);
-      
+      if (!modelsRes.ok || !imageModelsRes.ok || !realtimeModelsRes.ok) {
+        setModels([]);
+        setImageModels([]);
+        setRealtimeModels([]);
+        return;
+      }
+
+      const modelsData = await modelsRes.json();
+      const imageModelsData = await imageModelsRes.json();
+      const realtimeModelsData = await realtimeModelsRes.json();
+
+      setModels(modelsData?.models);
+      setImageModels(imageModelsData?.models);
+      setRealtimeModels(realtimeModelsData?.models);
+
       window.defaultModelData = {
-        default: modelsResponse.data?.default,
-        imageDefault: imageModelsResponse.data?.default,
-        realtimeDefault: realtimeModelsResponse.data?.default
+        default: modelsData?.default,
+        imageDefault: imageModelsData?.default,
+        realtimeDefault: realtimeModelsData?.default
       };
 
     } catch (error) {
@@ -146,10 +155,7 @@ export const SettingsProvider = ({ children }) => {
     setCanControlVerbosity(verbosity === true);
 
     setCanControlSystemMessage(system_message);
-    if (!system_message) {
-      setSystemMessage("");
-      setIsDAN(false);
-    }
+    if (!system_message) setIsDAN(false);
 
     setCanReadImage(image);
     setCanToggleMCP(mcp);

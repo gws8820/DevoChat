@@ -169,7 +169,7 @@ devochat/
 │   │       ├── grok_client.py
 │   │       ├── byteplus_client.py
 │   │       └── alibaba_client.py
-│   ├── models.json                     # Text AI model settings
+│   ├── chat_models.json                # Text AI model settings
 │   ├── image_models.json               # Image generation AI model settings
 │   ├── mcp_servers.json                # MCP server settings
 │   ├── prompts/                        # System prompts
@@ -251,9 +251,9 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 ## Usage
 
-### models.json Configuration
+### chat_models.json Configuration
 
-Define the AI models available in the application and their properties through the `models.json` file:
+Define the AI models available in the application and their properties through the `chat_models.json` file.
 
 ```json
 {

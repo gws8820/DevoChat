@@ -1,5 +1,4 @@
 // Register.js
-import axios from "../utils/axiosConfig";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -42,15 +41,19 @@ function Register() {
     }
 
     try {
-      await axios.post(`${process.env.REACT_APP_FASTAPI_URL}/register`, { name, email, password });
-      setConfirmModal(true);
+      const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+      });
+    if (!res.ok) {
+      let detail = null;
+      try { detail = (await res.json())?.detail; } catch {}
+      throw new Error(detail || "알 수 없는 오류가 발생했습니다.");
+    }
+    setConfirmModal(true);
     } catch (error) {
-      const detail = error.response?.data?.detail;
-      setToastMessage(
-        Array.isArray(detail)
-          ? "잘못된 입력입니다."
-          : detail || "알 수 없는 오류가 발생했습니다."
-      );
+    setToastMessage(error.message || "알 수 없는 오류가 발생했습니다.");
       setShowToast(true);
     }
   }

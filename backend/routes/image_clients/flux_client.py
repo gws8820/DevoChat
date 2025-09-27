@@ -18,7 +18,11 @@ async def generate_image(session: aiohttp.ClientSession, polling_url: str, max_w
         
         async with session.get(polling_url) as response:
             if response.status != 200:
-                raise HTTPException(status_code=500, detail=response.status)
+                try:
+                    error_text = await response.text()
+                except Exception:
+                    error_text = str(response.status)
+                raise HTTPException(status_code=500, detail=error_text)
             
             result = await response.json()
             status = result.get("status")
@@ -86,10 +90,11 @@ async def flux_endpoint(request: ImageGenerateRequest, user: User = Depends(get_
                 headers=headers
             ) as response:
                 if response.status != 200:
-                    raise HTTPException(
-                        status_code=response.status, 
-                        detail=str(response)
-                    )
+                    try:
+                        error_text = await response.text()
+                    except Exception:
+                        error_text = str(response)
+                    raise HTTPException(status_code=response.status, detail=error_text)
                 
                 response_data = await response.json()
                 polling_url = response_data["polling_url"]
@@ -102,7 +107,11 @@ async def flux_endpoint(request: ImageGenerateRequest, user: User = Depends(get_
 
             async with session.get(image_url) as img_response:
                 if img_response.status != 200:
-                    raise HTTPException(status_code=500, detail="Failed to download generated image")
+                    try:
+                        error_text = await img_response.text()
+                    except Exception:
+                        error_text = "Failed to download generated image"
+                    raise HTTPException(status_code=img_response.status, detail=error_text)
                 
                 image_bytes = await img_response.read()
                 

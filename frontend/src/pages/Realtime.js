@@ -60,7 +60,7 @@ const Realtime = () => {
         const source = audioContext.createMediaStreamSource(stream);
         source.connect(analyser);
       } catch (err) {
-        console.error("스트림 분석 중 오류가 발생했습니다:", err);
+        console.error("An error occured during stream analysis:", err);
       }
     };
 
@@ -189,11 +189,11 @@ const Realtime = () => {
             setIsModelSpeaking(true);
           }
 
-          if (realtimeEvent.type === 'response.audio_transcript.delta') {
+          if (realtimeEvent.type === 'response.output_audio_transcript.delta') {
             setTranscript(prev => prev + (realtimeEvent.delta || ''));
           }
 
-          if (realtimeEvent.type === 'response.audio_transcript.done') {
+          if (realtimeEvent.type === 'response.output_audio_transcript.done') {
             setTranscript(realtimeEvent.transcript);
           }
 
@@ -202,7 +202,7 @@ const Realtime = () => {
             setTimeout(() => setTranscript(""), 3000);
           }
         } catch (error) {
-          console.error('이벤트 파싱 오류가 발생했습니다:', error);
+          console.error('Parsing error:', error);
         }
       };
       
@@ -353,7 +353,7 @@ const Realtime = () => {
               <div className="model-list">
                 {realtimeModels?.map((m, index) => (
                   <div
-                    className="model-item"
+                    className={`model-item ${m?.model_gender}`}
                     key={index}
                     onClick={() => handleModelChange(m.model_name)}
                   >

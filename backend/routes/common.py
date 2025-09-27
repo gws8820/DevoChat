@@ -11,25 +11,32 @@ from typing import Any, List, Dict, Optional
 from .auth import User
 from logging_util import logger
 
+class ControlFlags(BaseModel):
+    temperature: bool = True
+    reason: bool = True
+    verbosity: bool = True
+    system_message: bool = True
+
 class ChatRequest(BaseModel):
     conversation_id: str
     model: str
     temperature: float = 1.0
     reason: float = 0
     verbosity: float = 0
-    system_message: Optional[str] = None
-    user_message: List[Dict[str, Any]]
+    system_message: str = ""
+    user_message: List[Dict[str, Any]] = []
     inference: bool = False
     search: bool = False
     deep_research: bool = False
     dan: bool = False
     mcp: List[str] = []
     stream: bool = True
+    control: ControlFlags = ControlFlags()
 
 class ImageGenerateRequest(BaseModel):
+    conversation_id: str
     model: str
     prompt: List[Dict[str, Any]]
-    conversation_id: str | None = None
 
 class AliasRequest(BaseModel):
     conversation_id: str
@@ -172,7 +179,7 @@ def normalize_assistant_content(content):
 
 def get_model_billing(model_name):
     try:
-        models_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'models.json')
+        models_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'chat_models.json')
         with open(models_path, 'r', encoding='utf-8') as f:
             models_data = json.load(f)
         
@@ -180,10 +187,10 @@ def get_model_billing(model_name):
             if model['model_name'] == model_name:
                 return float(model['billing']['in_billing']), float(model['billing']['out_billing'])
         
-        logger.warning(f"Model {model_name} not found in config/models.json")
+        logger.warning(f"Model {model_name} not found in config/chat_models.json")
         return None
     except Exception as ex:
-        logger.error(f"Error reading config/models.json: {str(ex)}")
+        logger.error(f"Error reading config/chat_models.json: {str(ex)}")
         return None
 
 def get_image_model_billing(model_name):

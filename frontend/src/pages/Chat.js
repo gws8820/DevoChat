@@ -6,7 +6,6 @@ import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFileUpload } from "../utils/useFileUpload";
-import axios from "../utils/axiosConfig";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
 import Toast from "../components/Toast";
@@ -58,6 +57,7 @@ function Chat({ isTouch, chatMessageRef }) {
     canControlTemp,
     canControlReason,
     canControlVerbosity,
+    canControlSystemMessage,
     updateModel,
     setAlias,
     setTemperature,
@@ -112,15 +112,21 @@ function Chat({ isTouch, chatMessageRef }) {
     async (startIndex) => {
       setMessages((prevMessages) => prevMessages.slice(0, startIndex));
 
-      return axios
-        .delete(
-          `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/${startIndex}`,
-          { withCredentials: true }
-        )
-        .catch((err) => {
-          setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
-          setShowToast(true);
+      try {
+        const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/${startIndex}`, {
+          method: 'DELETE',
+          credentials: 'include'
         });
+        if (res.status === 401) {
+          if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+            window.location.href = '/login?expired=true';
+          }
+        }
+        if (!res.ok) throw new Error('delete failed');
+      } catch (err) {
+        setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
+        setShowToast(true);
+      }
     },
     [conversation_id]
   );
@@ -270,9 +276,9 @@ function Chat({ isTouch, chatMessageRef }) {
               model: selectedModel.model_name,
               in_billing: selectedModel.in_billing,
               out_billing: selectedModel.out_billing,
-              temperature: canControlTemp ? temperature : 1,
-              reason: canControlReason ? reason : 0,
-              verbosity: canControlVerbosity ? verbosity : 0,
+              temperature: temperature,
+              reason: reason,
+              verbosity: verbosity,
               system_message: systemMessage,
               user_message: contentParts,
               inference: isInference,
@@ -281,6 +287,12 @@ function Chat({ isTouch, chatMessageRef }) {
               dan: isDAN,
               mcp: mcpList,
               stream: selectedModel.capabilities.stream,
+              control: {
+                temperature: canControlTemp,
+                reason: canControlReason,
+                verbosity: canControlVerbosity,
+                system_message: canControlSystemMessage,
+              },
             }),
             credentials: "include",
             signal: controller.signal,
@@ -358,7 +370,8 @@ function Chat({ isTouch, chatMessageRef }) {
       setUploadedFiles,
       canControlTemp,
       canControlReason,
-      canControlVerbosity
+      canControlVerbosity,
+      canControlSystemMessage
     ]
   );
 
@@ -460,26 +473,36 @@ function Chat({ isTouch, chatMessageRef }) {
         }
         
         else {
-          const res = await axios.get(
-            `${process.env.REACT_APP_FASTAPI_URL}/chat/conversation/${conversation_id}`,
-            { withCredentials: true }
-          );
+          const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/chat/conversation/${conversation_id}`, {
+            credentials: 'include'
+          });
+          if (!res.ok) {
+            if (res.status === 404) {
+              fetchConversations();
+              navigate("/", { state: { errorModal: "대화를 찾을 수 없습니다." } });
+            } else {
+              fetchConversations();
+              navigate("/", { state: { errorModal: "대화를 불러오는 중 오류가 발생했습니다." } });
+            }
+            return;
+          }
+          const data = await res.json();
           
-          updateModel(res.data.model, {
-            isInference: res.data.inference,
-            isSearch: res.data.search,
-            isDeepResearch: res.data.deep_research
+          updateModel(data.model, {
+            isInference: data.inference,
+            isSearch: data.search,
+            isDeepResearch: data.deep_research
           });
 
-          setAlias(res.data.alias);
-          setTemperature(res.data.temperature);
-          setReason(res.data.reason);
-          setVerbosity(res.data.verbosity);
-          setSystemMessage(res.data.system_message);
-          setIsDAN(res.data.dan);
-          setMCPList(res.data.mcp);
+          setAlias(data.alias);
+          setTemperature(data.temperature);
+          setReason(data.reason);
+          setVerbosity(data.verbosity);
+          setSystemMessage(data.system_message);
+          setIsDAN(data.dan);
+          setMCPList(data.mcp);
 
-          const initialMessages = res.data.messages.map((m) => {
+          const initialMessages = data.messages.map((m) => {
             const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
             return m.role === "assistant" ? { ...messageWithId, isComplete: true } : messageWithId;
           });

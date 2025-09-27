@@ -36,6 +36,14 @@
     background-color: rgba(245, 245, 245);
 }
 
+.model-item.male {
+    color: rgb(50, 120, 220);
+}
+
+.model-item.female {
+    color: rgb(220, 60, 140);
+}
+
 .audio-bars-container {
     display: flex;
     align-items: center;

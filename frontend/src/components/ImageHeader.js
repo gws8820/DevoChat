@@ -71,6 +71,7 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
         `${process.env.REACT_APP_FASTAPI_URL}/upload_page`,
         {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
@@ -91,8 +92,9 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
       }
   
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.detail || res.status);
+        let detail = null;
+        try { detail = (await res.json())?.detail; } catch {}
+        throw new Error(detail || String(res.status));
       }
 
     } catch (error) {

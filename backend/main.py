@@ -68,7 +68,7 @@ app.add_middleware(LoggingMiddleware)
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    message = "Seedream v4 시리즈가 추가되었습니다!"
+    message = "Grok 4 모델이 97% 할인되었습니다!"
     hash = base64.b64encode(message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(
@@ -125,10 +125,10 @@ async def serve_icons(file_path: str):
         }
     )
 
-@app.get("/models", response_model=dict)
+@app.get("/chat_models", response_model=dict)
 async def get_models(user: User = Depends(get_current_user)):
     try:
-        with open("config/models.json", "r", encoding="utf-8") as f:
+        with open("config/chat_models.json", "r", encoding="utf-8") as f:
             models_data = json.load(f)
             
         models = []
@@ -142,7 +142,7 @@ async def get_models(user: User = Depends(get_current_user)):
             "default": models_data["default"]
         }
     except Exception as ex:
-        raise HTTPException(status_code=500, detail=f"Error occurred while fetching models: {str(ex)}")
+        raise HTTPException(status_code=500, detail=f"Error occurred while fetching chat models: {str(ex)}")
 
 @app.get("/image_models", response_model=dict)
 async def get_image_models(user: User = Depends(get_current_user)):

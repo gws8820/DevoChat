@@ -248,7 +248,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
     instructions = DEFAULT_PROMPT
-    if request.system_message:
+    if request.control.system_message and request.system_message:
         instructions += "\n\n" + request.system_message
     if request.dan and DAN_PROMPT:
         instructions += "\n\n" + DAN_PROMPT
@@ -264,18 +264,18 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         async with anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) as client:
             parameters = {
                 "model": request.model,
-                "temperature": request.temperature,
+                "temperature": request.temperature if request.control.temperature else 1.0,
                 "system": instructions,
                 "messages": formatted_messages,
                 "stream": request.stream,
             }
             
-            if request.verbosity:
+            if request.control.verbosity and request.verbosity:
                 parameters["max_tokens"] = getVerbosity(request.verbosity, "tokens")
             else:
                 parameters["max_tokens"] = MAX_VERBOSITY_TOKENS
             
-            if request.reason:
+            if request.control.reason and request.reason:
                 reason_tokens = getReason(request.reason, "tokens")
                 parameters["max_tokens"] += reason_tokens
                 parameters["thinking"] = {

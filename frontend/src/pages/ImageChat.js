@@ -10,7 +10,6 @@ import ImageInputContainer from "../components/ImageInputContainer";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
 import Toast from "../components/Toast";
-import axios from "../utils/axiosConfig";
 import "../styles/Common.css";
 
 function ImageChat({ isTouch, chatMessageRef }) {
@@ -124,15 +123,19 @@ function ImageChat({ isTouch, chatMessageRef }) {
         } 
         
         else {
-          const res = await axios.get(
-            `${process.env.REACT_APP_FASTAPI_URL}/image/conversation/${conversation_id}`,
-            { withCredentials: true }
-          );
+          const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/image/conversation/${conversation_id}`, {
+            credentials: "include"
+          });
+          if (!res.ok) {
+            setErrorMessage("초기화 중 오류가 발생했습니다.");
+            return;
+          }
+          const data = await res.json();
 
-          updateImageModel(res.data.model);
-          setAlias(res.data.alias);
+          updateImageModel(data.model);
+          setAlias(data.alias);
 
-          const initialMessages = (res.data.messages).map((m) => {
+          const initialMessages = (data.messages).map((m) => {
             const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
             return messageWithId;
           });
@@ -307,15 +310,21 @@ function ImageChat({ isTouch, chatMessageRef }) {
     async (startIndex) => {
       setMessages((prevMessages) => prevMessages.slice(0, startIndex));
 
-      return axios
-        .delete(
-          `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/${startIndex}`,
-          { withCredentials: true }
-        )
-        .catch((err) => {
-          setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
-          setShowToast(true);
+      try {
+        const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/${startIndex}`, {
+          method: "DELETE",
+          credentials: "include"
         });
+        if (res.status === 401 && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+          window.location.href = '/login?expired=true';
+        }
+        if (!res.ok) {
+          throw new Error('메세지 삭제에 실패했습니다.');
+        }
+      } catch (err) {
+        setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
+        setShowToast(true);
+      }
     },
     [conversation_id]
   );

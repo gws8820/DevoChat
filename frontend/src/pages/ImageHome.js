@@ -1,11 +1,10 @@
-import React, { useState, useCallback, useRef, useContext } from "react";
+import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoImageOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { useFileUpload } from "../utils/useFileUpload";
-import axios from "../utils/axiosConfig";
 import Toast from "../components/Toast";
 import ImageInputContainer from "../components/ImageInputContainer";
 import "../styles/Common.css";
@@ -22,7 +21,8 @@ function ImageHome({ isTouch }) {
 
   const {
     canEditImage,
-    maxImageInput
+    maxImageInput,
+    switchImageMode
   } = useContext(SettingsContext);
 
   const { addConversation } = useContext(ConversationsContext);
@@ -35,6 +35,12 @@ function ImageHome({ isTouch }) {
 
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
 
+  useEffect(() => {
+    const hasUploadedImages = uploadedFiles.length > 0;
+    switchImageMode(hasUploadedImages);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadedFiles, switchImageMode]);
+
   const sendMessage = useCallback(
     async (message) => {
       if (!message.trim() || uploadingFiles) return;
@@ -44,28 +50,30 @@ function ImageHome({ isTouch }) {
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
-        const response = await axios.post(
-          `${process.env.REACT_APP_FASTAPI_URL}/image/new_conversation`, {},
-          {
-            withCredentials: true,
-            signal: controller.signal
-          }
-        );
-
-        const conversation_id = response.data.conversation_id;
-        const created_at = response.data.created_at;
+        const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/image/new_conversation`, {
+          method: "POST",
+          credentials: "include",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({})
+        });
+        if (!res.ok) {
+          throw new Error('새 대화를 시작하는 데 실패했습니다.');
+        }
+        
+        const data = await res.json();
         const newConversation = {
           type: "image",
-          conversation_id,
+          conversation_id: data.conversation_id,
           alias: "새 대화",
           starred: false,
           starred_at: null,
-          created_at: created_at,
+          created_at: data.created_at,
           isLoading: true
         };
         addConversation(newConversation);
 
-        navigate(`/image/${conversation_id}`, {
+        navigate(`/image/${data.conversation_id}`, {
           state: {
             initialMessage: message,
             initialFiles: uploadedFiles,

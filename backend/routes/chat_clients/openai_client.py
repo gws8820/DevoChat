@@ -147,7 +147,7 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
     instructions = DEFAULT_PROMPT
-    if request.system_message:
+    if request.control.system_message and request.system_message:
         instructions += "\n\n" + request.system_message
     if request.dan and DAN_PROMPT:
         instructions += "\n\n" + DAN_PROMPT
@@ -172,15 +172,15 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
         ) as client:
             parameters = {
                 "model": request.model,
-                "temperature": request.temperature,
+                "temperature": request.temperature if request.control.temperature else 1.0,
                 "messages": formatted_messages,
                 "stream": request.stream
             }
             
-            if request.verbosity:
+            if request.control.verbosity and request.verbosity:
                 parameters["max_tokens"] = getVerbosity(request.verbosity, "tokens")
 
-            if request.reason:
+            if request.control.reason and request.reason:
                 parameters["reasoning_effort"] = getReason(request.reason, "tertiary")
             
             chunk_queue = asyncio.Queue()

@@ -9,7 +9,6 @@ import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "../utils/axiosConfig";
 import Modal from "./Modal";
 import Tooltip from "./Tooltip";
 import Toast from "./Toast";
@@ -204,13 +203,19 @@ function Sidebar({
 
       toggleStarConversation(conversation_id, !conversation.starred);
       
-      await axios.put(
-        `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/star`,
-        { starred: !conversation.starred },
-        { withCredentials: true }
-      );
+      const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/star`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ starred: !conversation.starred })
+      });
+      if (res.status === 401 && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+          window.location.href = '/login?expired=true';
+      }
+      if (!res.ok) {
+        throw new Error('즐겨찾기 토글이 실패했습니다.');
+      }
     } catch (error) {
-      console.error("Failed to toggle star status:", error);
       setToastMessage("즐겨찾기 토글이 실패했습니다.");
       const conversation = conversations.find(c => c.conversation_id === conversation_id);
       if (conversation) {
@@ -285,11 +290,18 @@ function Sidebar({
         setAlias(newAlias);
       }
   
-      await axios.put(
-        `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/rename`,
-        { alias: newAlias },
-        { withCredentials: true }
-      );
+      const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/rename`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alias: newAlias })
+      });
+      if (res.status === 401 && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+        window.location.href = '/login?expired=true';
+      }
+      if (!res.ok) {
+        throw new Error('대화 이름 편집에 실패했습니다.');
+      }
     } catch (error) {
       console.error("Failed to rename conversation.", error);
       setToastMessage("대화 이름 편집에 실패했습니다.");
@@ -303,10 +315,16 @@ function Sidebar({
       if (currentConversationId === conversation_id)
         navigate("/");
 
-      await axios.delete(
-        `${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`,
-        { withCredentials: true }
-      );
+      const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (res.status === 401 && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+        window.location.href = '/login?expired=true';
+      }
+      if (!res.ok) {
+        throw new Error('대화 삭제에 실패했습니다.');
+      }
     } catch (error) {
       console.error("Failed to delete conversation.", error);
       setToastMessage("대화 삭제에 실패했습니다.");
@@ -333,10 +351,18 @@ function Sidebar({
         deleteAllConversation();
         navigate("/");
 
-        await axios.delete(
-          `${process.env.REACT_APP_FASTAPI_URL}/conversation/all`,
-          { withCredentials: true }
-        );
+        {
+          const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/conversation/all`, {
+            method: 'DELETE',
+            credentials: 'include'
+          });
+          if (res.status === 401 && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+            window.location.href = '/login?expired=true';
+          }
+          if (!res.ok) {
+            throw new Error('대화 삭제에 실패했습니다.');
+          }
+        }
       } catch (error) {
         console.error("Failed to delete conversations.", error);
         setToastMessage("대화 삭제에 실패했습니다.");
@@ -344,11 +370,22 @@ function Sidebar({
       }
     } else if (modalAction === "logout") {
       try {
-        await axios.post(
-          `${process.env.REACT_APP_FASTAPI_URL}/logout`,
-          {},
-          { withCredentials: true }
-        );
+        {
+          const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/logout`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          if (res.status === 401 && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+            window.location.href = '/login?expired=true';
+          }
+          if (!res.ok) {
+            let detail = null;
+            try { detail = (await res.json())?.detail; } catch {}
+            throw new Error(detail || '알 수 없는 오류가 발생했습니다.');
+          }
+        }
         window.location.href = '/login';
       } catch (error) {
         const detail = error.response?.data?.detail;

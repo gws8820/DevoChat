@@ -36,10 +36,11 @@ async def grok_endpoint(request: ImageGenerateRequest, user: User = Depends(get_
                 headers=headers
             ) as response:
                 if response.status != 200:
-                    raise HTTPException(
-                        status_code=response.status, 
-                        detail=str(response)
-                    )
+                    try:
+                        error_text = await response.text()
+                    except Exception:
+                        error_text = str(response)
+                    raise HTTPException(status_code=response.status, detail=error_text)
                 
                 response_data = await response.json()
                 image_bytes = base64.b64decode(response_data["data"][0]["b64_json"])

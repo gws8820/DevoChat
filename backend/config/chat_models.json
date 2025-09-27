@@ -232,18 +232,49 @@
       "admin": false
     },
     {
-      "model_name": "grok-4",
+      "model_name": "grok-4-fast-non-reasoning",
       "model_alias": "Grok 4",
       "description": "고성능 Grok 모델",
       "endpoint": "/chat/grok",
       "billing": {
-        "in_billing": "3",
-        "out_billing": "15"
+        "in_billing": "0.2",
+        "out_billing": "0.5"
+      },
+      "variants": {
+        "inference": "grok-4-fast-reasoning"
       },
       "capabilities": {
         "stream": true,
         "image": true,
-        "inference": true,
+        "inference": "switch",
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "grok-4-fast-reasoning",
+      "model_alias": "Grok 4",
+      "description": "고성능 Grok 모델",
+      "endpoint": "/chat/grok",
+      "billing": {
+        "in_billing": "0.2",
+        "out_billing": "0.5"
+      },
+      "variants": {
+        "base": "grok-4-fast-non-reasoning"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": "switch",
         "search": "toggle",
         "deep_research": false,
         "mcp": false

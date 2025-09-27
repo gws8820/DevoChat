@@ -5,7 +5,6 @@ import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFileUpload } from "../utils/useFileUpload";
-import axios from "../utils/axiosConfig";
 import Modal from "../components/Modal";
 import Toast from "../components/Toast";
 import InputContainer from "../components/InputContainer";
@@ -56,8 +55,11 @@ function Home({ isTouch }) {
   useEffect(() => {
     const fetchNotice = async () => {
       try {
-        const noticeResponse = await axios.get(`${process.env.REACT_APP_FASTAPI_URL}/notice`);
-        const { message, hash } = noticeResponse.data;
+        const noticeRes = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/notice`, { credentials: "include" });
+        if (!noticeRes.ok) {
+          return;
+        }
+        const { message, hash } = await noticeRes.json();
         setNotice(message);
         setNoticeHash(hash);
         
@@ -106,29 +108,30 @@ function Home({ isTouch }) {
         const controller = new AbortController();
         abortControllerRef.current = controller;
         
-        const response = await axios.post(
-          `${process.env.REACT_APP_FASTAPI_URL}/chat/new_conversation`, {},
-          { 
-            withCredentials: true,
-            signal: controller.signal
-          }
-        );
+        const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/chat/new_conversation`, {
+          method: "POST",
+          credentials: "include",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({})
+        });
+        if (!res.ok) {
+          throw new Error('새 대화를 시작하는 데 실패했습니다.');
+        }
         
-        const conversation_id = response.data.conversation_id;
-        const created_at = response.data.created_at;
-        
+        const data = await res.json();
         const newConversation = {
           type: "chat",
-          conversation_id,
+          conversation_id: data.conversation_id,
           alias: "새 대화",
           starred: false,
           starred_at: null,
-          created_at: created_at,
+          created_at: data.created_at,
           isLoading: true
         };
         addConversation(newConversation);
-        
-        navigate(`/chat/${conversation_id}`, {
+
+        navigate(`/chat/${data.conversation_id}`, {
           state: {
             initialMessage: message,
             initialFiles: uploadedFiles,

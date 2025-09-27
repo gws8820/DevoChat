@@ -1,5 +1,4 @@
 // Login.js
-import axios from "../utils/axiosConfig";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -42,19 +41,20 @@ function Login() {
     }
 
     try {
-      await axios.post(
-        `${process.env.REACT_APP_FASTAPI_URL}/login`,
-        { email, password },
-        { withCredentials: true }
-      );
+      const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      if (!res.ok) {
+        let detail = null;
+        try { detail = (await res.json())?.detail; } catch {}
+        throw new Error(detail || "알 수 없는 오류가 발생했습니다.");
+      }
       window.location.reload();
     } catch (error) {
-      const detail = error.response?.data?.detail;
-      setToastMessage(
-        Array.isArray(detail)
-          ? "잘못된 입력입니다."
-          : detail || "알 수 없는 오류가 발생했습니다."
-      );
+      setToastMessage(error.message || "알 수 없는 오류가 발생했습니다.");
       setShowToast(true);
     }
   }
