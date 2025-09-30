@@ -55,20 +55,14 @@ export const SettingsProvider = ({ children }) => {
       setImageModels(imageModelsData?.models);
       setRealtimeModels(realtimeModelsData?.models);
 
-      window.defaultModelData = {
-        default: modelsData?.default,
-        imageDefault: imageModelsData?.default,
-        realtimeDefault: realtimeModelsData?.default
-      };
+      updateModel(modelsData.default, null, modelsData.models);
+      updateImageModel(imageModelsData.default, imageModelsData.models);
+      updateRealtimeModel(realtimeModelsData.default, realtimeModelsData.models);
 
     } catch (error) {
       setModels([]);
       setImageModels([]);
       setRealtimeModels([]);
-
-      updateModel("");
-      updateImageModel("");
-      updateRealtimeModel("");
     } finally {
       setIsModelReady(true);
     }
@@ -79,29 +73,9 @@ export const SettingsProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (models.length > 0 && window.defaultModelData) {
-      updateModel(window.defaultModelData.default);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [models]);
-
-  useEffect(() => {
-    if (imageModels.length > 0 && window.defaultModelData) {
-      updateImageModel(window.defaultModelData.imageDefault);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageModels]);
-
-  useEffect(() => {
-    if (realtimeModels.length > 0 && window.defaultModelData) {
-      updateRealtimeModel(window.defaultModelData.realtimeDefault);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [realtimeModels]);
-
-  const updateModel = (newModel, initialSettings) => {
-    const selectedModel = models.find(m => m.model_name === newModel);
+  const updateModel = (newModel, modelConfig, initialModelsList) => {
+    const modelsArray = initialModelsList || models;
+    const selectedModel = modelsArray.find(m => m.model_name === newModel);
     setModel(newModel);
     
     const temperature = selectedModel?.controls?.temperature;
@@ -118,9 +92,9 @@ export const SettingsProvider = ({ children }) => {
 
     if (inference === "toggle" || inference === "switch") {
       setCanToggleInference(true);
-      if (initialSettings) {
-        setIsInference(initialSettings.isInference);
-        nextIsInference = initialSettings.isInference;
+      if (modelConfig) {
+        setIsInference(modelConfig.isInference);
+        nextIsInference = modelConfig.isInference;
       } else {
         nextIsInference = isInference;
       }
@@ -132,8 +106,8 @@ export const SettingsProvider = ({ children }) => {
 
     if (search === "toggle" || search === "switch") {
       setCanToggleSearch(true);
-      if (initialSettings) {
-        setIsSearch(initialSettings.isSearch);
+      if (modelConfig) {
+        setIsSearch(modelConfig.isSearch);
       }
     } else {
       setCanToggleSearch(false);
@@ -142,8 +116,8 @@ export const SettingsProvider = ({ children }) => {
 
     if (deep_research === "toggle" || deep_research === "switch") {
       setCanToggleDeepResearch(true);
-      if (initialSettings) {
-        setIsDeepResearch(initialSettings.isDeepResearch);
+      if (modelConfig) {
+        setIsDeepResearch(modelConfig.isDeepResearch);
       }
     } else {
       setCanToggleDeepResearch(false);
@@ -180,7 +154,7 @@ export const SettingsProvider = ({ children }) => {
 
     setIsInference(nextIsInference);
 
-    setCanControlTemp(temperature === true || temperature === "conditional");
+    setCanControlTemp(temperature === true || (temperature === "conditional" && !nextIsInference));
     setCanControlReason(reason === true && nextIsInference === true);
   };
 
@@ -214,8 +188,9 @@ export const SettingsProvider = ({ children }) => {
     setIsDeepResearch(!isDeepResearch);
   };
 
-  const updateImageModel = (newImageModel) => {
-    const selectedImageModel = imageModels.find(m => m.model_name === newImageModel);
+  const updateImageModel = (newImageModel, initialImageModelsList) => {
+    const imageModelsArray = initialImageModelsList || imageModels;
+    const selectedImageModel = imageModelsArray.find(m => m.model_name === newImageModel);
     setImageModel(newImageModel);
     
     const imageConfig = selectedImageModel?.capabilities?.image;
@@ -226,7 +201,7 @@ export const SettingsProvider = ({ children }) => {
     setMaxImageInput(maxInput);
   };
 
-  const updateRealtimeModel = (newRealtimeModel) => {
+  const updateRealtimeModel = (newRealtimeModel, initialRealtimeModelsList) => {
     setRealtimeModel(newRealtimeModel);
   };
 

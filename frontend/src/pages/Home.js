@@ -82,8 +82,8 @@ function Home({ isTouch }) {
     setReason(0.5);
     setVerbosity(0.5);
     setSystemMessage("");
-    setHasImage(false);
     setIsDAN(false);
+    setHasImage(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

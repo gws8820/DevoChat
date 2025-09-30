@@ -1,5 +1,5 @@
 {
-  "default": "gemini-2.5-flash",
+  "default": "grok-4-fast-non-reasoning",
   "models": [
     {
       "model_name": "qwen3:8b",
@@ -181,8 +181,109 @@
         "system_message": true
       },
       "admin": false
-    },    {
-      "model_name": "gemini-2.5-flash",
+    },
+    {
+      "model_name": "claude-sonnet-4-5-20250929",
+      "model_alias": "Claude 4.5 Sonnet",
+      "description": "고성능 Claude 모델",
+      "endpoint": "/chat/claude",
+      "billing": {
+        "in_billing": "3",
+        "out_billing": "15"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": "toggle",
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": true
+      },
+      "controls": {
+        "temperature": "conditional",
+        "reason": true,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "claude-3-7-sonnet-latest",
+      "model_alias": "Claude 3.7 Sonnet",
+      "description": "언어 특화 Claude 모델",
+      "endpoint": "/chat/claude",
+      "billing": {
+        "in_billing": "3",
+        "out_billing": "15"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": "toggle",
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": true
+      },
+      "controls": {
+        "temperature": "conditional",
+        "reason": true,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "claude-opus-4-1-20250805",
+      "model_alias": "Claude 4.1 Opus",
+      "description": "최고 성능 Claude 모델",
+      "endpoint": "/chat/claude",
+      "billing": {
+        "in_billing": "15",
+        "out_billing": "75"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": "toggle",
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": true
+      },
+      "controls": {
+        "temperature": "conditional",
+        "reason": true,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "claude-3-5-haiku-latest",
+      "model_alias": "Claude 3.5 Haiku",
+      "description": "표준 Claude 모델",
+      "endpoint": "/chat/claude",
+      "billing": {
+        "in_billing": "0.8",
+        "out_billing": "4"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": false,
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": true
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "gemini-flash-latest",
       "model_alias": "Gemini 2.5 Flash",
       "description": "표준 Gemini 모델",
       "endpoint": "/chat/gemini",
@@ -307,81 +408,6 @@
       "controls": {
         "temperature": true,
         "reason": true,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "claude-sonnet-4-20250514",
-      "model_alias": "Claude 4 Sonnet",
-      "description": "고성능 Claude 모델",
-      "endpoint": "/chat/claude",
-      "billing": {
-        "in_billing": "3",
-        "out_billing": "15"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": "toggle",
-        "search": "toggle",
-        "deep_research": false,
-        "mcp": true
-      },
-      "controls": {
-        "temperature": "conditional",
-        "reason": true,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "claude-opus-4-1-20250805",
-      "model_alias": "Claude 4.1 Opus",
-      "description": "최고 성능 Claude 모델",
-      "endpoint": "/chat/claude",
-      "billing": {
-        "in_billing": "15",
-        "out_billing": "75"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": "toggle",
-        "search": "toggle",
-        "deep_research": false,
-        "mcp": true
-      },
-      "controls": {
-        "temperature": "conditional",
-        "reason": true,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "claude-3-5-haiku-latest",
-      "model_alias": "Claude 3.5 Haiku",
-      "description": "표준 Claude 모델",
-      "endpoint": "/chat/claude",
-      "billing": {
-        "in_billing": "0.8",
-        "out_billing": "4"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": false,
-        "search": "toggle",
-        "deep_research": false,
-        "mcp": true
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
         "verbosity": true,
         "system_message": true
       },

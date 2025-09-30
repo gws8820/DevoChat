@@ -120,23 +120,27 @@ devochat/
 │   │   │   ├── InputContainer.js       # Chat input container
 │   │   │   ├── ImageInputContainer.js  # Image generation input container
 │   │   │   ├── MCPModal.js             # MCP server selection modal
+│   │   │   ├── SearchModal.js          # Search modal
+│   │   │   ├── Modal.js                # Generic modal
 │   │   │   ├── Toast.js                # Notification messages
 │   │   │   ├── Tooltip.js              # Tooltips
-│   │   │   └── ...
+│   │   │   ├── ToolBlock.js            # MCP tool block
+│   │   │   └── MarkdownRenderers.js    # Markdown renderers
 │   │   ├── pages/                      # Page components
+│   │   │   ├── Home.js                 # Home page
 │   │   │   ├── Chat.js                 # Main chat page
-│   │   │   ├── Image.js                # Image generation page
+│   │   │   ├── ImageHome.js            # Image generation home
+│   │   │   ├── ImageChat.js            # Image generation page
 │   │   │   ├── Realtime.js             # Real-time conversation page
+│   │   │   ├── View.js                 # Conversation viewer page
 │   │   │   ├── Admin.js                # Admin page
 │   │   │   ├── Login.js                # Login page
-│   │   │   ├── Register.js             # Registration page
-│   │   │   └── ...
+│   │   │   └── Register.js             # Registration page
 │   │   ├── contexts/                   # State management
 │   │   │   ├── SettingsContext.js      # Model/settings state
 │   │   │   └── ConversationsContext.js # Conversations list state
 │   │   ├── utils/                      # Utility functions
-│   │   │   ├── useFileUpload.js        # File upload hook
-│   │   │   └── utils.js                # Common utilities
+│   │   │   └── useFileUpload.js        # File upload hook
 │   │   ├── styles/                     # CSS stylesheets
 │   │   │   ├── Common.css              # Common styles
 │   │   │   ├── Header.css              # Header styles
@@ -152,25 +156,22 @@ devochat/
 │   │   ├── uploads.py                  # File upload handling
 │   │   ├── realtime.py                 # Real-time communication
 │   │   ├── common.py                   # Common utilities
-│   │   ├── clients/                    # Text AI model clients
+│   │   ├── chat_clients/               # Text AI model clients
 │   │   │   ├── openai_client.py
 │   │   │   ├── anthropic_client.py
 │   │   │   ├── google_client.py
 │   │   │   ├── mistral_client.py
 │   │   │   ├── grok_client.py
-│   │   │   ├── perplexity_client.py
-│   │   │   ├── fireworks_client.py
-│   │   │   ├── friendli_client.py
-│   │   │   └── ...
+│   │   │   └── responses_client.py
 │   │   └── image_clients/              # Image generation AI model clients
 │   │       ├── openai_client.py
 │   │       ├── flux_client.py
 │   │       ├── google_client.py
 │   │       ├── grok_client.py
-│   │       ├── byteplus_client.py
-│   │       └── alibaba_client.py
+│   │       └── wavespeed_client.py
 │   ├── chat_models.json                # Text AI model settings
 │   ├── image_models.json               # Image generation AI model settings
+│   ├── realtime_models.json            # Real-time conversation model settings
 │   ├── mcp_servers.json                # MCP server settings
 │   ├── prompts/                        # System prompts
 │   ├── uploads/                        # Uploaded files storage

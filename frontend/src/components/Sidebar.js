@@ -332,6 +332,16 @@ function Sidebar({
     }
   }, [deleteConversation, currentConversationId, navigate]);
 
+  const handleRefresh = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  const handleAdminClick = useCallback(() => {
+    navigate("/admin");
+    setIsDropdown(false);
+    if (isResponsive) toggleSidebar();
+  }, [navigate, isResponsive, toggleSidebar]);
+
   const handleDeleteAll = useCallback(() => {
     setModalMessage("정말 모든 대화를 삭제하시겠습니까?");
     setModalAction("deleteAll");
@@ -612,27 +622,28 @@ function Sidebar({
                 exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
               >
-                <div className="user-billing">
-                  {userInfo?.billing?.toFixed(2)}$ 사용됨
+                <div onClick={handleRefresh} className="dropdown-item user-billing">
+                  <div className="billing-text">
+                    {userInfo?.billing?.toFixed(2)}$ 사용됨
+                  </div>
+                  <div className="refresh-button">
+                    페이지 새로고침
+                  </div>
                 </div>
                 {userInfo?.admin && (
                   <div
-                    onClick={() => {
-                      navigate("/admin");
-                      setIsDropdown(false);
-                      if (isResponsive) toggleSidebar();
-                    }}
-                    className="dropdown-button"
+                    onClick={handleAdminClick}
+                    className="dropdown-item"
                   >
                     사용자 관리
                   </div>
                 )}
-                <div onClick={handleDeleteAll} className="dropdown-button">
+                <div onClick={handleDeleteAll} className="dropdown-item">
                   전체 대화 삭제
                 </div>
                 <div
                   onClick={handleLogoutClick}
-                  className="dropdown-button"
+                  className="dropdown-item"
                   style={{ color: "red" }}
                 >
                   로그아웃

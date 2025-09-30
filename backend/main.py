@@ -68,7 +68,7 @@ app.add_middleware(LoggingMiddleware)
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    message = "Grok 4 모델이 97% 할인되었습니다!"
+    message = "Claude 4.5 Sonnet 모델이 추가되었습니다!"
     hash = base64.b64encode(message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(

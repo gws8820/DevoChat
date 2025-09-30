@@ -2,7 +2,7 @@
 
 *[English](README.md) | 한국어*
 
-### 통합 인공지능 대화 플랫폼
+### 통합 AI 대화 플랫폼
 DevoChat은 다양한 멀티모달 AI 모델과 MCP (Model Context Protocol) 서버를 하나의 인터페이스에서 사용할 수 있는 웹 애플리케이션입니다. [여기](https://devochat.com)에서 라이브 데모를 확인하세요.
 
 ## 주요 기능
@@ -120,23 +120,27 @@ devochat/
 │   │   │   ├── InputContainer.js       # 채팅 입력 컨테이너
 │   │   │   ├── ImageInputContainer.js  # 이미지 생성 입력 컨테이너
 │   │   │   ├── MCPModal.js             # MCP 서버 선택 모달
+│   │   │   ├── SearchModal.js          # 검색 모달
+│   │   │   ├── Modal.js                # 범용 모달
 │   │   │   ├── Toast.js                # 알림 메시지
 │   │   │   ├── Tooltip.js              # 도구 설명
-│   │   │   └── ...
+│   │   │   ├── ToolBlock.js            # MCP 도구 블록
+│   │   │   └── MarkdownRenderers.js    # 마크다운 렌더러
 │   │   ├── pages/                      # 페이지 컴포넌트
+│   │   │   ├── Home.js                 # 홈 페이지
 │   │   │   ├── Chat.js                 # 메인 채팅 페이지
-│   │   │   ├── Image.js                # 이미지 생성 페이지
+│   │   │   ├── ImageHome.js            # 이미지 생성 홈
+│   │   │   ├── ImageChat.js            # 이미지 생성 페이지
 │   │   │   ├── Realtime.js             # 실시간 대화 페이지
+│   │   │   ├── View.js                 # 대화 뷰어 페이지
 │   │   │   ├── Admin.js                # 관리자 페이지
 │   │   │   ├── Login.js                # 로그인 페이지
-│   │   │   ├── Register.js             # 회원가입 페이지
-│   │   │   └── ...
+│   │   │   └── Register.js             # 회원가입 페이지
 │   │   ├── contexts/                   # 상태 관리
 │   │   │   ├── SettingsContext.js      # 모델/설정 상태
 │   │   │   └── ConversationsContext.js # 대화 목록 상태
 │   │   ├── utils/                      # 유틸리티 함수
-│   │   │   ├── useFileUpload.js        # 파일 업로드 훅
-│   │   │   └── utils.js                # 공통 유틸리티
+│   │   │   └── useFileUpload.js        # 파일 업로드 훅
 │   │   ├── styles/                     # CSS 스타일시트
 │   │   │   ├── Common.css              # 공통 스타일
 │   │   │   ├── Header.css              # 헤더 스타일
@@ -152,25 +156,22 @@ devochat/
 │   │   ├── uploads.py                  # 파일 업로드 처리
 │   │   ├── realtime.py                 # 실시간 통신
 │   │   ├── common.py                   # 공통 유틸리티
-│   │   ├── clients/                    # 텍스트 AI 모델 클라이언트
+│   │   ├── chat_clients/               # 텍스트 AI 모델 클라이언트
 │   │   │   ├── openai_client.py
 │   │   │   ├── anthropic_client.py
 │   │   │   ├── google_client.py
 │   │   │   ├── mistral_client.py
 │   │   │   ├── grok_client.py
-│   │   │   ├── perplexity_client.py
-│   │   │   ├── fireworks_client.py
-│   │   │   ├── friendli_client.py
-│   │   │   └── ...
+│   │   │   └── responses_client.py
 │   │   └── image_clients/              # 이미지 생성 AI 모델 클라이언트
 │   │       ├── openai_client.py
 │   │       ├── flux_client.py
 │   │       ├── google_client.py
 │   │       ├── grok_client.py
-│   │       ├── byteplus_client.py
-│   │       └── alibaba_client.py
+│   │       └── wavespeed_client.py
 │   ├── chat_models.json                # 텍스트 AI 모델 설정
 │   ├── image_models.json               # 이미지 생성 AI 모델 설정
+│   ├── realtime_models.json            # 실시간 대화 모델 설정
 │   ├── mcp_servers.json                # MCP 서버 설정
 │   ├── prompts/                        # 시스템 프롬프트
 │   ├── uploads/                        # 업로드된 파일 저장소
