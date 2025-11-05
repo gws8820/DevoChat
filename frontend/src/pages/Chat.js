@@ -47,6 +47,7 @@ function Chat({ isTouch, chatMessageRef }) {
     temperature,
     reason,
     verbosity,
+    memory,
     systemMessage,
     isInference,
     isSearch,
@@ -63,10 +64,11 @@ function Chat({ isTouch, chatMessageRef }) {
     setTemperature,
     setReason,
     setVerbosity,
+    setMemory,
     setSystemMessage,
     setIsDAN,
     setHasImage,
-    setMCPList,
+    setMCPList
   } = useContext(SettingsContext);
 
   const {
@@ -279,6 +281,7 @@ function Chat({ isTouch, chatMessageRef }) {
               temperature: temperature,
               reason: reason,
               verbosity: verbosity,
+              memory: memory,
               system_message: systemMessage,
               user_message: contentParts,
               inference: isInference,
@@ -358,6 +361,7 @@ function Chat({ isTouch, chatMessageRef }) {
       temperature,
       reason,
       verbosity,
+      memory,
       systemMessage,
       updateAssistantMessage,
       setErrorMessage,
@@ -498,6 +502,7 @@ function Chat({ isTouch, chatMessageRef }) {
           setTemperature(data.temperature);
           setReason(data.reason);
           setVerbosity(data.verbosity);
+          setMemory(data.memory);
           setSystemMessage(data.system_message);
           setIsDAN(data.dan);
           setMCPList(data.mcp);
@@ -528,7 +533,7 @@ function Chat({ isTouch, chatMessageRef }) {
   }, [conversation_id, location.state]);
 
   useEffect(() => {
-    const hasImageHistory = messages.slice(-6).some((msg) => 
+    const hasImageHistory = messages.slice(-10).some((msg) => 
       Array.isArray(msg.content) && msg.content.some((item) => item.type === "image")
     );
 

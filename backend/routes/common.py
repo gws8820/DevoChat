@@ -23,6 +23,7 @@ class ChatRequest(BaseModel):
     temperature: float = 1.0
     reason: float = 0
     verbosity: float = 0
+    memory: int = 5
     system_message: str = ""
     user_message: List[Dict[str, Any]] = []
     inference: bool = False
@@ -122,10 +123,10 @@ def check_image_user_permissions(user: User, request: ImageGenerateRequest):
         return "프롬프트가 비어 있습니다. 내용을 입력해 주세요.", None, None
     return None, in_billing, out_billing
     
-def get_conversation(user: User, conversation_id: str):
+def get_conversation(user: User, conversation_id: str, memory):
     conversation = conversation_collection.find_one(
         {"user_id": user.user_id, "conversation_id": conversation_id},
-        {"conversation": {"$slice": -6}}
+        {"conversation": {"$slice": -memory }}
     )
     return conversation.get("conversation", [])
 
@@ -285,6 +286,7 @@ def save_conversation(user: User, user_message, response_text, token_usage, requ
                 "temperature": request.temperature,
                 "reason": request.reason,
                 "verbosity": request.verbosity,
+                "memory": request.memory,
                 "system_message": request.system_message,
                 "inference": request.inference,
                 "search": request.search,

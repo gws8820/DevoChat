@@ -227,7 +227,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         return
     
     user_message = {"role": "user", "content": request.user_message}
-    conversation = get_conversation(user, request.conversation_id)
+    conversation = get_conversation(user, request.conversation_id, request.memory)
     conversation.append(user_message)
 
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
@@ -252,8 +252,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 "temperature": request.temperature if request.control.temperature else 1.0,
                 "instructions": instructions,
                 "input": formatted_messages,
-                "stream": request.stream,
-                "background": request.stream and not request.mcp
+                "stream": request.stream
             }
             
             if request.control.verbosity and request.verbosity:
@@ -261,14 +260,10 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             
             if request.control.reason and request.reason:
                 reason_effort = getReason(request.reason, "tertiary")
-                if request.search and reason_effort == "minimal":
-                    pass
-                else:
-                    parameters["reasoning"] = {
-                        "effort": reason_effort,
-                        "summary": "auto"
-                    }
-                
+                parameters["reasoning"] = {
+                    "effort": reason_effort,
+                    "summary": "auto"
+                }
             if request.search:
                 parameters["tools"] = [{"type": "web_search_preview"}]
             if request.deep_research:

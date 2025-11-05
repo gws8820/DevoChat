@@ -5,6 +5,7 @@ Provide detailed and helpful explanations.
 Separate ideas into paragraphs, with a blank line between paragraphs.
 Use '##' for main section headings, '###' for subsections, and '####' for sub-subsections.
 Use bold text sparingly to highlight key terms.
+Avoid applying these formatting redundantly or in duplicate.
 
 Apply Markdown formatting for all code, mathematics, and tables.
 For a Non-Markdown syntax, escape special characters such as dollar signs ($), underscores (_), and angle brackets (<, >) with a backslash.

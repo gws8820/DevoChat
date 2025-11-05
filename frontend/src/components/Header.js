@@ -17,6 +17,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
     temperature,
     reason,
     verbosity,
+    memory,
     systemMessage,
     hasImage,
     canControlTemp,
@@ -27,6 +28,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
     setTemperature,
     setReason,
     setVerbosity,
+    setMemory,
     setSystemMessage
   } = useContext(SettingsContext);
 
@@ -280,6 +282,23 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                         />
                       </div>
                     )}
+                  <div className="slider-section">
+                    <div className="slider-label">
+                      <span>대화 기억</span>
+                      <span className="slider-value">
+                        {memory === 0 ? "기억 안함" : `${memory}개`}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={10}
+                      step={1}
+                      value={memory}
+                      onChange={(e) => setMemory(parseInt(e.target.value, 10))}
+                      className="slider"
+                    />
+                  </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -323,7 +342,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                       onChange={(e) => setSystemMessage(e.target.value)}
                       className="system-message-input"
                       placeholder="내용을 입력하세요."
-                      rows={4}
+                      rows={5}
                     />
                   </motion.div>
                 )}

@@ -188,7 +188,7 @@ function AppContent() {
   if (isLoggedIn && !isModelReady) return null;
 
   return (
-    <div style={{ display: "flex", margin: "0", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100dvh", margin: "0", overflow: "hidden" }}>
       {shouldShowLayout && (
         <div
           style={{
@@ -196,7 +196,7 @@ function AppContent() {
             position: "fixed",
             left: 0,
             top: 0,
-            height: "100vh",
+            height: "100dvh",
             zIndex: 1000,
             transform: isSidebarOpen ? "translateX(0)" : "translateX(-100%)",
             transition: "transform 0.3s ease",
@@ -221,8 +221,8 @@ function AppContent() {
             position: "fixed",
             top: 0,
             left: 0,
-            width: "100vw",
-            height: "100vh",
+            width: "100%",
+            height: "100dvh",
             backgroundColor: "rgba(0, 0, 0, 0.3)",
             zIndex: 100,
           }}

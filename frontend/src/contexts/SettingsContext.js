@@ -14,6 +14,7 @@ export const SettingsProvider = ({ children }) => {
   const [temperature, setTemperature] = useState(1);
   const [reason, setReason] = useState(0.5);
   const [verbosity, setVerbosity] = useState(0.5);
+  const [memory, setMemory] = useState(5);
   const [systemMessage, setSystemMessage] = useState("");
   const [isInference, setIsInference] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
@@ -124,7 +125,7 @@ export const SettingsProvider = ({ children }) => {
       setIsDeepResearch(deep_research);
     }
 
-    setCanControlTemp(temperature === true || temperature === "conditional");
+    setCanControlTemp(temperature === true || (temperature === "conditional" && nextIsInference === false));
     setCanControlReason(reason === true && nextIsInference === true);
     setCanControlVerbosity(verbosity === true);
 
@@ -240,6 +241,7 @@ export const SettingsProvider = ({ children }) => {
         temperature,
         reason,
         verbosity,
+        memory,
         systemMessage,
         hasImage,
         isInference,
@@ -265,6 +267,7 @@ export const SettingsProvider = ({ children }) => {
         setTemperature,
         setReason,
         setVerbosity,
+        setMemory,
         setSystemMessage,
         setHasImage,
         setIsDAN,

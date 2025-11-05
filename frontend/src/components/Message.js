@@ -17,6 +17,7 @@ function Message({
   onDelete,
   onRegenerate,
   onSendEditedMessage,
+  setEditingHasImages,
   setScrollTrigger,
   isTouch,
   isLoading,
@@ -30,25 +31,26 @@ function Message({
   const textareaRef = useRef(null);
   
   const startEdit = () => {
-    let textContent = "";
-    if (Array.isArray(content)) {
-      textContent = content.find((item) => item.type === "text")?.text || "";
-    } else if (typeof content === "string") {
-      textContent = content;
-    } else if (content != null) {
-      textContent = String(content);
-    }
+    let textContent = content.find((item) => item.type === "text")?.text || "";
     setEditText(textContent);
     setIsEditing(true);
+    if (setEditingHasImages) {
+      const hasImages = content.some((item) => item.type === "image");
+      setEditingHasImages(hasImages);
+    }
   };
 
   const cancelEdit = () => {
     setIsEditing(false);
     setEditText("");
+    if (setEditingHasImages) {
+      setEditingHasImages(false);
+    }
   };
 
   useEffect(() => {
     cancelEdit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
 
   const saveEdit = useCallback(() => {
@@ -277,6 +279,7 @@ Message.propTypes = {
   onRegenerate: PropTypes.func,
   onEdit: PropTypes.func,
   onSendEditedMessage: PropTypes.func,
+  setEditingHasImages: PropTypes.func,
   setScrollTrigger: PropTypes.func,
   isTouch: PropTypes.bool,
   isLoading: PropTypes.bool,

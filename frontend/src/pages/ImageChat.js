@@ -33,6 +33,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [scrollTrigger, setScrollTrigger] = useState(0);
+  const [editingHasImages, setEditingHasImages] = useState(false);
   const [deleteIndex, setdeleteIndex] = useState(null);
   const [confirmModal, setConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -52,9 +53,8 @@ function ImageChat({ isTouch, chatMessageRef }) {
 
   useEffect(() => {
     const hasUploadedImages = uploadedFiles.length > 0;
-    switchImageMode(hasUploadedImages);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploadedFiles, switchImageMode]);
+    switchImageMode(hasUploadedImages || editingHasImages);
+  }, [uploadedFiles, editingHasImages, switchImageMode]);
 
   const addAssistantMessage = useCallback((content) => {
     const newMessage = { 
@@ -240,6 +240,8 @@ function ImageChat({ isTouch, chatMessageRef }) {
           throw new Error("선택한 모델이 유효하지 않습니다.");
         }
 
+        console.log("selectedModel", selectedModel);
+
         const response = await fetch(
           `${process.env.REACT_APP_FASTAPI_URL}${selectedModel.endpoint}`,
           {
@@ -348,14 +350,11 @@ function ImageChat({ isTouch, chatMessageRef }) {
     [deleteMessages, sendMessage]
   );
 
-  const handleRegenerate = useCallback(
-    (startIndex) => {
-      const previousMessage = messages[startIndex - 1];
-      if (!previousMessage) return;
-      
-      resendMesage(previousMessage.content, startIndex - 1);
+  const sendEditedMessage = useCallback(
+    (idx, updatedContent) => {
+      resendMesage(updatedContent, idx);
     },
-    [messages, resendMesage]
+    [resendMesage]
   );
 
   const handleDelete = useCallback((idx) => {
@@ -396,14 +395,15 @@ function ImageChat({ isTouch, chatMessageRef }) {
               role={msg.role}
               content={msg.content}
               onDelete={handleDelete}
-              onRegenerate={handleRegenerate}
+              onSendEditedMessage={sendEditedMessage}
+              setEditingHasImages={setEditingHasImages}
               setScrollTrigger={setScrollTrigger}
               isTouch={isTouch}
               isLoading={isLoading}
               isLastMessage={idx === messages.length - 1}
               shouldRender={idx >= messages.length - 6}
             />
-          )), [messages, handleDelete, handleRegenerate, isTouch, isLoading]
+          )), [messages, handleDelete, sendEditedMessage, isTouch, isLoading]
         )}
 
         <AnimatePresence>

@@ -32,7 +32,7 @@ async def gemini_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
     response = await client.aio.models.generate_content(
       model=request.model,
       contents=contents,
-      config=types.GenerateContentConfig(response_modalities=["TEXT", "IMAGE"])
+      config=types.GenerateContentConfig(response_modalities=["IMAGE"])
     )
 
     if not response or not getattr(response, "candidates", None):

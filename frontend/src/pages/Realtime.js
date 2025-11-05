@@ -261,8 +261,10 @@ const Realtime = () => {
     
     setIsConnecting(true);
     cleanup();
+
     updateRealtimeModel(newModel);
-  }, [realtimeModel, cleanup, updateRealtimeModel]);
+    setIsMicEnabled(true);
+  }, [realtimeModel, cleanup, updateRealtimeModel, setIsMicEnabled]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

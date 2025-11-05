@@ -162,24 +162,13 @@ input:focus {
 
 .active-conversation {
     background-color: #f3f3f3;
-}
+} 
 
 .star-icon {
     display: flex;
     flex-shrink: 0;
-    opacity: 0;
     font-size: 18px;
-    color: #d0d0d0;
-    transition: opacity 0.1s ease-in-out, color 0.1s ease-in-out;
-}
-
-.star-icon.no-click {
-    pointer-events: none;
-}
-
-.star-icon.hidden {
-    opacity: 0;
-    pointer-events: none;
+    color: #ffd700;
 }
 
 .no-result {
@@ -192,25 +181,6 @@ input:focus {
     color: #666;
     font-size: 14px;
     text-align: center;
-}
-
-@media (hover: hover) {
-    .conversation-item:hover .star-icon:not(.disabled) {
-        opacity: 1;
-    }
-
-    .star-icon:hover {
-        color: #ffd700;
-    }
-
-    .star-icon.starred:hover {
-        color: #d0d0d0;
-    }
-}
-
-.star-icon.starred {
-    opacity: 1;
-    color: #ffd700;
 }
 
 .context-menu {

@@ -59,7 +59,7 @@
       "model_name": "gpt-realtime:verse",
       "model_alias": "Verse",
       "model_gender": "male",
-      "description": "명료료한 목소리의 내레이터"
+      "description": "명료한 목소리의 내레이터"
     }
   ]
 }

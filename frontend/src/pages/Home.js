@@ -33,19 +33,14 @@ function Home({ isTouch }) {
   const {
     models,
     model,
-    isInference,
-    isSearch,
-    isDeepResearch,
     canReadImage,
+    updateModel,
     setTemperature,
     setReason,
     setVerbosity,
     setSystemMessage,
     setIsDAN,
     setHasImage,
-    toggleInference,
-    toggleSearch,
-    toggleDeepResearch
   } = useContext(SettingsContext);
 
   const { addConversation } = useContext(ConversationsContext);
@@ -74,9 +69,7 @@ function Home({ isTouch }) {
   }, []);
 
   useEffect(() => {
-    if (isInference) toggleInference();
-    if (isSearch) toggleSearch();
-    if (isDeepResearch) toggleDeepResearch();
+    updateModel(model);
     
     setTemperature(1);
     setReason(0.5);

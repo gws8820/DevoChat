@@ -29,7 +29,6 @@ const ConversationItem = React.memo(({
   handleTouchStart,
   handleTouchEnd,
   handleTouchMove,
-  toggleStar,
   isTouch
 }) => {
   const isRenaming = renamingConversationId === conv.conversation_id;
@@ -114,13 +113,11 @@ const ConversationItem = React.memo(({
             )}
           </>
         )}
-
-        <div 
-          className={`star-icon ${conv.starred ? `starred ${isTouch ? 'no-click' : ''}` : isTouch ? 'no-click hidden' : ''}`}  
-          onClick={isTouch ? undefined : (e) => {toggleStar(conv.conversation_id, e)}}
-        >
-          <IoMdStar />
-        </div>
+        {conv.starred && (
+          <span className="star-icon">
+            <IoMdStar />
+          </span>
+        )}
       </div>
     </motion.li>
   );
@@ -540,13 +537,13 @@ function Sidebar({
             <LuSquarePen />
             새 대화
           </div>
-          <div className="new-task" onClick={handleRealtimeConversation}>
-            <LuAudioLines />
-            실시간 대화
-          </div>
           <div className="new-task" onClick={handleImageGeneration}>
             <LuImage />
             이미지 생성
+          </div>
+          <div className="new-task" onClick={handleRealtimeConversation}>
+            <LuAudioLines />
+            음성 대화
           </div>
         </div>
 
@@ -593,7 +590,6 @@ function Sidebar({
                         handleTouchStart={handleTouchStart}
                         handleTouchEnd={handleTouchEnd}
                         handleTouchMove={handleTouchMove}
-                        toggleStar={toggleStar}
                         isTouch={isTouch}
                       />
                     ))

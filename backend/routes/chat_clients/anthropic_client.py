@@ -242,7 +242,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         return
     
     user_message = {"role": "user", "content": request.user_message}
-    conversation = get_conversation(user, request.conversation_id)
+    conversation = get_conversation(user, request.conversation_id, request.memory)
     conversation.append(user_message)
 
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])

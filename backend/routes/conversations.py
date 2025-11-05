@@ -94,6 +94,7 @@ async def get_conversation(conversation_id: str, current_user: User = Depends(ge
         "temperature": doc.get("temperature", 1),
         "reason": doc.get("reason", 0),
         "verbosity": doc.get("verbosity", 0),
+        "memory": doc.get("memory", 5),
         "system_message": doc.get("system_message", ""),
         "inference": doc.get("inference", False),
         "search": doc.get("search", False),
