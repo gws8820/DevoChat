@@ -1,4 +1,5 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+@import url('https://cdn.jsdelivr.net/npm/@kfonts/d2coding@0.2.0/index.min.css');
 
 body {
   margin: 0;
@@ -15,6 +16,6 @@ body, button, textarea, input {
   -webkit-tap-highlight-color: transparent;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+.code-block, pre, code {
+  font-family: Consolas, 'D2Coding', monospace !important;
 }

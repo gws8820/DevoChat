@@ -15,8 +15,9 @@ from ..common import (
     get_conversation, save_conversation,
     normalize_assistant_content,
     getReason, getVerbosity,
-    
     MAX_VERBOSITY_TOKENS,
+    STREAM_COOLDOWN_SECONDS,
+    
     AliasRequest, CHAT_ALIAS_PROMPT, IMAGE_ALIAS_PROMPT,
     save_alias
 )
@@ -185,6 +186,23 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     response_text = ""
     token_usage = None
     
+    buffered_chunks = []
+    loop = asyncio.get_running_loop()
+    last_flush_time = loop.time()
+    client_disconnected = False
+
+    def flush_buffer(force: bool = False):
+        nonlocal buffered_chunks, last_flush_time
+        if not buffered_chunks:
+            return None
+        now_time = loop.time()
+        if not force and STREAM_COOLDOWN_SECONDS > 0 and (now_time - last_flush_time) < STREAM_COOLDOWN_SECONDS:
+            return None
+        combined = ''.join(buffered_chunks)
+        buffered_chunks.clear()
+        last_flush_time = now_time
+        return combined
+    
     try:
         client = Client(api_key=os.getenv('GEMINI_API_KEY'))
         
@@ -192,19 +210,11 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             "system_instruction": instructions,
             "temperature": request.temperature if request.control.temperature else 1.0
         }
-        
-        if request.control.verbosity and request.verbosity:
-            config_params["max_output_tokens"] = getVerbosity(request.verbosity, "tokens")
-        else:
-            config_params["max_output_tokens"] = MAX_VERBOSITY_TOKENS
-
         if request.control.reason and request.reason:
-            reason_tokens = getReason(request.reason, "tokens")
-            config_params["max_output_tokens"] += reason_tokens
-            config_params["thinking_config"] = types.ThinkingConfig(
-                thinking_budget=reason_tokens,
-                include_thoughts=True
-            )
+            thinking_level = getReason(request.reason, "binary")
+            config_params["thinking_config"] = types.ThinkingConfig(thinking_level=thinking_level, include_thoughts=True)
+        else:
+            config_params["thinking_config"] = types.ThinkingConfig(thinking_level="minimal")
             
         if request.search:
             config_params["tools"] = [types.Tool(google_search = types.GoogleSearch())]
@@ -222,8 +232,12 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             if chunk is None:
                 break
             if await fastapi_request.is_disconnected():
+                client_disconnected = True
                 break
             if isinstance(chunk, dict):
+                pending = flush_buffer(force=True)
+                if pending:
+                    yield f"data: {json.dumps({'content': pending})}\n\n"
                 if "error" in chunk:
                     yield f"data: {json.dumps(chunk)}\n\n"
                     break
@@ -231,7 +245,15 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                     token_usage = chunk
             else:
                 response_text += chunk
-                yield f"data: {json.dumps({'content': chunk})}\n\n"
+                buffered_chunks.append(chunk)
+                pending = flush_buffer()
+                if pending:
+                    yield f"data: {json.dumps({'content': pending})}\n\n"
+
+        if not client_disconnected:
+            pending = flush_buffer(force=True)
+            if pending:
+                yield f"data: {json.dumps({'content': pending})}\n\n"
 
         if not stream_task.done():
             stream_task.cancel()
@@ -250,12 +272,11 @@ async def get_chat_alias(request: AliasRequest, user: User = Depends(get_current
     try:
         client = Client(api_key=os.getenv('GEMINI_API_KEY'))
         response = await client.aio.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=[request.text],
             config=types.GenerateContentConfig(
                 system_instruction=CHAT_ALIAS_PROMPT,
-                temperature=0.1,
-                max_output_tokens=10
+                temperature=0.1
             )
         )
         alias = response.text.strip()
@@ -271,12 +292,11 @@ async def get_image_alias(request: AliasRequest, user: User = Depends(get_curren
     try:
         client = Client(api_key=os.getenv('GEMINI_API_KEY'))
         response = await client.aio.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=[request.text],
             config=types.GenerateContentConfig(
                 system_instruction=IMAGE_ALIAS_PROMPT,
-                temperature=0.1,
-                max_output_tokens=10
+                temperature=0.1
             )
         )
         alias = response.text.strip()

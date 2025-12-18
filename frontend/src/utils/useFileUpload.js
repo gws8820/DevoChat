@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-export const useFileUpload = (initialFiles = []) => {
+export const useFileUpload = (initialFiles = [], userInfo = null) => {
   const [uploadedFiles, setUploadedFiles] = useState(initialFiles);
   
   const maxFileSize = 10 * 1024 * 1024;
@@ -95,22 +95,23 @@ export const useFileUpload = (initialFiles = []) => {
   );
 
   const processFiles = useCallback(
-    async (files, onError, imageSupport, maxAllowed = 10) => {
-      let acceptedFiles = [];
-      const currentCount = uploadedFiles.length;
-      const remaining = maxAllowed - currentCount;
-      
+    async (files, onError, imageSupport) => {
       const imageFiles = files.filter((file) => file.type.startsWith("image/"));
       if (imageFiles.length > 0 && !imageSupport) {
         onError?.("해당 모델은 이미지 업로드를 지원하지 않습니다.");
         return;
       }
       
-      if (files.length > remaining) {
-        onError?.(`최대 ${maxAllowed}개까지 업로드할 수 있습니다.`);
-        acceptedFiles = files.slice(0, remaining);
-      } else {
-        acceptedFiles = files;
+      let acceptedFiles = files;
+      if (!userInfo?.admin) {
+        const currentCount = uploadedFiles.length;
+        const maxAllowed = 10;
+        const remaining = maxAllowed - currentCount;
+        
+        if (files.length > remaining) {
+          onError?.(`최대 ${maxAllowed}개까지 업로드할 수 있습니다.`);
+          acceptedFiles = files.slice(0, remaining);
+        }
       }
       
       const filePairs = acceptedFiles.map((file) => {
@@ -153,7 +154,7 @@ export const useFileUpload = (initialFiles = []) => {
       
       return uploadedFiles;
     },
-    [uploadedFiles, uploadFiles, setUploadedFiles]
+    [uploadedFiles, uploadFiles, setUploadedFiles, userInfo]
   );
   
   const removeFile = useCallback((fileId) => {

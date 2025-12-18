@@ -1,6 +1,6 @@
 from xai_sdk import AsyncClient
 from xai_sdk.chat import assistant, system, user, image
-from xai_sdk.search import SearchParameters
+from xai_sdk.tools import web_search, mcp
 
 import os
 import json
@@ -9,6 +9,7 @@ import base64
 import copy
 from fastapi import Depends, Request
 from fastapi.responses import StreamingResponse
+from typing import Any, Dict, Optional, List
 from ..auth import User, get_current_user
 from ..common import (
     ChatRequest, router,
@@ -16,9 +17,42 @@ from ..common import (
     check_user_permissions,
     get_conversation, save_conversation,
     normalize_assistant_content,
-    getReason, getVerbosity
+    getReason, getVerbosity,
+    STREAM_COOLDOWN_SECONDS
 )
 from logging_util import logger
+
+def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dict[str, Any]], Optional[str]]:
+    try:
+        config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "config", "mcp_servers.json"))
+        with open(config_path, "r", encoding="utf-8") as f:
+            mcp_server_configs = json.load(f)
+    except Exception as ex:
+        logger.error(f"MCP_SERVER_FETCH_ERROR: {str(ex)}")
+        return [], "서버 오류가 발생했습니다."
+    
+    server_list = []
+    
+    for server_id in server_ids:
+        if server_id not in mcp_server_configs:
+            logger.warning(json.dumps({"event": "INVALID_MCP_SERVER_ERROR", "username": current_user.name, "server_id": server_id}, ensure_ascii=False, indent=2))
+            continue
+        
+        server_config = mcp_server_configs[server_id]
+        
+        if server_config.get("admin") and not current_user.admin:
+            logger.warning(json.dumps({"event": "MCP_SERVER_PERMISSION_ERROR", "username": current_user.name, "server_id": server_id}, ensure_ascii=False, indent=2))
+            return [], "잘못된 접근입니다."
+        
+        mcp_server = mcp (
+            server_url = server_config["url"],
+            server_label = server_config["name"],
+            authorization = server_config["authorization_token"]
+        )
+        
+        server_list.append(mcp_server)
+    
+    return server_list, None
 
 def normalize_user_content(part):
     if part.get("type") == "text":
@@ -75,7 +109,27 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                         is_thinking = True
                         await chunk_queue.put('<think>\n')
                     await chunk_queue.put(chunk.reasoning_content)
-                
+                    
+                if chunk.tool_calls:
+                    for tool_call in chunk.tool_calls:
+                        tool_use_id = tool_call.id
+                        tool_info = tool_call.function
+                        
+                        server_name = ""
+                        tool_name = ""
+                        
+                        if "." in tool_info.name:
+                            parts = tool_info.name.split(".")
+                            server_name = parts[0]
+                            tool_name = parts[1]
+                        else:
+                            server_name = "xAI"
+                            tool_name = tool_info.name
+                        
+                        result = tool_info.arguments
+                        
+                        await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n")
+                        
                 if chunk.content:
                     if is_thinking:
                         await chunk_queue.put('\n</think>\n\n')
@@ -168,13 +222,31 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     response_text = ""
     token_usage = None
     
+    buffered_chunks = []
+    loop = asyncio.get_running_loop()
+    last_flush_time = loop.time()
+    client_disconnected = False
+
+    def flush_buffer(force: bool = False):
+        nonlocal buffered_chunks, last_flush_time
+        if not buffered_chunks:
+            return None
+        now_time = loop.time()
+        if not force and STREAM_COOLDOWN_SECONDS > 0 and (now_time - last_flush_time) < STREAM_COOLDOWN_SECONDS:
+            return None
+        combined = ''.join(buffered_chunks)
+        buffered_chunks.clear()
+        last_flush_time = now_time
+        return combined
+    
     try:
         client = AsyncClient(api_key=os.getenv('GROK_API_KEY'))
         
         parameters = {
             "model": request.model,
             "temperature": request.temperature if request.control.temperature else 1.0,
-            "messages": formatted_messages
+            "messages": formatted_messages,
+            "tools": []
         }
         
         if request.control.verbosity and request.verbosity:
@@ -184,10 +256,14 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             parameters["reasoning_effort"] = getReason(request.reason, "binary")
             
         if request.search:
-            parameters["search_parameters"] = SearchParameters(
-                mode="on",
-                return_citations=True,
-            )
+            parameters["tools"].append(web_search())
+            
+        if len(request.mcp) > 0:
+            mcp_servers, error = get_mcp_servers(request.mcp, user)
+            if error:
+                yield f"data: {json.dumps({'error': error})}\n\n"
+                return
+            parameters["tools"].extend(mcp_servers)
         
         chunk_queue = asyncio.Queue()
         stream_task = asyncio.create_task(process_stream(chunk_queue, request, parameters, fastapi_request, client))
@@ -196,8 +272,12 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             if chunk is None:
                 break
             if await fastapi_request.is_disconnected():
+                client_disconnected = True
                 break
             if isinstance(chunk, dict):
+                pending = flush_buffer(force=True)
+                if pending:
+                    yield f"data: {json.dumps({'content': pending})}\n\n"
                 if "error" in chunk:
                     yield f"data: {json.dumps(chunk)}\n\n"
                     break
@@ -205,7 +285,15 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                     token_usage = chunk
             else:
                 response_text += chunk
-                yield f"data: {json.dumps({'content': chunk})}\n\n"
+                buffered_chunks.append(chunk)
+                pending = flush_buffer()
+                if pending:
+                    yield f"data: {json.dumps({'content': pending})}\n\n"
+
+        if not client_disconnected:
+            pending = flush_buffer(force=True)
+            if pending:
+                yield f"data: {json.dumps({'content': pending})}\n\n"
 
         if not stream_task.done():
             stream_task.cancel()

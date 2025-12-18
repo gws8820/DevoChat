@@ -15,6 +15,7 @@ from ..common import (
     get_conversation, save_conversation,
     normalize_assistant_content,
     getReason, getVerbosity,
+    STREAM_COOLDOWN_SECONDS,
     
     ApiSettings
 )
@@ -76,17 +77,20 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                 if await fastapi_request.is_disconnected():
                     return
                 
-                if hasattr(chunk.choices[0].delta, 'reasoning_content'):
+                choices = getattr(chunk, "choices", None) or []
+                delta = getattr(choices[0], "delta", None) if choices else None
+                
+                if hasattr(delta, 'reasoning_content'):
                     if not is_thinking:
                         is_thinking = True
                         await chunk_queue.put('<think>\n')
-                    await chunk_queue.put(chunk.choices[0].delta.reasoning_content)
+                    await chunk_queue.put(delta.reasoning_content)
                 
-                if chunk.choices[0].delta.content:
+                if hasattr(delta, 'content'):
                     if is_thinking:
                         await chunk_queue.put('\n</think>\n\n')
                         is_thinking = False
-                    await chunk_queue.put(chunk.choices[0].delta.content)
+                    await chunk_queue.put(delta.content)
                 
                 if chunk.usage:
                     input_tokens = chunk.usage.prompt_tokens or 0
@@ -164,6 +168,23 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
     response_text = ""
     token_usage = None
     
+    buffered_chunks = []
+    loop = asyncio.get_running_loop()
+    last_flush_time = loop.time()
+    client_disconnected = False
+
+    def flush_buffer(force: bool = False):
+        nonlocal buffered_chunks, last_flush_time
+        if not buffered_chunks:
+            return None
+        now_time = loop.time()
+        if not force and STREAM_COOLDOWN_SECONDS > 0 and (now_time - last_flush_time) < STREAM_COOLDOWN_SECONDS:
+            return None
+        combined = ''.join(buffered_chunks)
+        buffered_chunks.clear()
+        last_flush_time = now_time
+        return combined
+    
     try:
         async with AsyncOpenAI(
             api_key=settings.api_key,
@@ -190,8 +211,12 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
                 if chunk is None:
                     break
                 if await fastapi_request.is_disconnected():
+                    client_disconnected = True
                     break
                 if isinstance(chunk, dict):
+                    pending = flush_buffer(force=True)
+                    if pending:
+                        yield f"data: {json.dumps({'content': pending})}\n\n"
                     if "error" in chunk:
                         yield f"data: {json.dumps(chunk)}\n\n"
                         break
@@ -199,7 +224,15 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
                         token_usage = chunk
                 else:
                     response_text += chunk
-                    yield f"data: {json.dumps({'content': chunk})}\n\n"
+                    buffered_chunks.append(chunk)
+                    pending = flush_buffer()
+                    if pending:
+                        yield f"data: {json.dumps({'content': pending})}\n\n"
+
+            if not client_disconnected:
+                pending = flush_buffer(force=True)
+                if pending:
+                    yield f"data: {json.dumps({'content': pending})}\n\n"
 
             if not stream_task.done():
                 stream_task.cancel()
@@ -229,26 +262,26 @@ async def perplexity_endpoint(chat_request: ChatRequest, fastapi_request: Reques
     )
     return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
 
+@router.post("/chat/deepseek")
+async def deepseek_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+    settings = ApiSettings(
+        api_key=os.getenv('DEEPSEEK_API_KEY'),
+        base_url="https://api.deepseek.com/v1"
+    )
+    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
+
+@router.post("/chat/novita")
+async def novita_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+    settings = ApiSettings(
+        api_key=os.getenv('NOVITA_API_KEY'),
+        base_url="https://api.novita.ai/openai"
+    )
+    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
+
 @router.post("/chat/fireworks")
 async def fireworks_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     settings = ApiSettings(
         api_key=os.getenv('FIREWORKS_API_KEY'),
         base_url="https://api.fireworks.ai/inference/v1"
-    )
-    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
-
-@router.post("/chat/friendli")
-async def friendli_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('FRIENDLI_API_KEY'),
-        base_url="https://api.friendli.ai/serverless/v1"
-    )
-    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
-
-@router.post("/chat/adotx")
-async def adotx_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('ADOTX_API_KEY'),
-        base_url="https://guest-api.sktax.chat/v1"
     )
     return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")

@@ -22,7 +22,8 @@ function ImageChat({ isTouch, chatMessageRef }) {
     canEditImage,
     updateImageModel,
     switchImageMode,
-    setAlias
+    setAlias,
+    setHasImage
   } = useContext(SettingsContext);
 
   const { updateConversation } = useContext(ConversationsContext);
@@ -54,7 +55,8 @@ function ImageChat({ isTouch, chatMessageRef }) {
   useEffect(() => {
     const hasUploadedImages = uploadedFiles.length > 0;
     switchImageMode(hasUploadedImages || editingHasImages);
-  }, [uploadedFiles, editingHasImages, switchImageMode]);
+    setHasImage(hasUploadedImages || editingHasImages);
+  }, [uploadedFiles, editingHasImages, switchImageMode, setHasImage]);
 
   const addAssistantMessage = useCallback((content) => {
     const newMessage = { 
@@ -225,7 +227,10 @@ function ImageChat({ isTouch, chatMessageRef }) {
 
       setMessages((prev) => [...prev, userMessage]);
       setInputText("");
-      setUploadedFiles([]);
+      setUploadedFiles((prev) => {
+        prev.forEach((file) => { if (file.preview) URL.revokeObjectURL(file.preview) });
+        return [];
+      });
       setIsLoading(true);
       setTimeout(() => {
         setScrollTrigger((v) => v + 1);
@@ -425,12 +430,14 @@ function ImageChat({ isTouch, chatMessageRef }) {
 
         {isLoading && (
           <motion.div
-            className="chat-message loading"
+            className="chat-message"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}
           >
-            이미지 생성 중...
+            <div className="image-block">
+              <span className="image-generating">이미지 생성 중...</span>
+            </div>
           </motion.div>
         )}
         <div ref={bottomRef} />

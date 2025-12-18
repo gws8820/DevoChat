@@ -43,17 +43,18 @@ function Register() {
     try {
       const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/register`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password })
       });
-    if (!res.ok) {
-      let detail = null;
-      try { detail = (await res.json())?.detail; } catch {}
-      throw new Error(detail || "알 수 없는 오류가 발생했습니다.");
-    }
-    setConfirmModal(true);
+      if (!res.ok) {
+        let detail = null;
+        try { detail = (await res.json())?.detail; } catch {}
+        throw new Error(detail || "알 수 없는 오류가 발생했습니다.");
+      }
+      setConfirmModal(true);
     } catch (error) {
-    setToastMessage(error.message || "알 수 없는 오류가 발생했습니다.");
+      setToastMessage(error.message || "알 수 없는 오류가 발생했습니다.");
       setShowToast(true);
     }
   }
@@ -117,10 +118,10 @@ function Register() {
       <AnimatePresence>
         {confirmModal && (
           <Modal
-            message="회원가입 성공! 로그인 페이지로 이동합니다."
+            message="회원가입이 완료되었습니다."
             onConfirm={() => {
-              setConfirmModal(null);
-              navigate("/login");
+              setConfirmModal(false);
+              window.location.href = "/";
             }}
             showCancelButton={false}
           />

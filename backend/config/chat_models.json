@@ -1,14 +1,14 @@
 {
-  "default": "gemini-flash-latest",
+  "default": "gemini-3-flash-preview",
   "models": [
     {
-      "model_name": "gpt-5",
-      "model_alias": "GPT 5",
+      "model_name": "gpt-5.2",
+      "model_alias": "GPT 5.2",
       "description": "고성능 GPT 모델",
       "endpoint": "/chat/gpt",
       "billing": {
-        "in_billing": "1.25",
-        "out_billing": "10"
+        "in_billing": "1.75",
+        "out_billing": "14"
       },
       "capabilities": {
         "stream": true,
@@ -19,7 +19,7 @@
         "mcp": true
       },
       "controls": {
-        "temperature": false,
+        "temperature": "conditional",
         "reason": true,
         "verbosity": true,
         "system_message": true
@@ -27,13 +27,13 @@
       "admin": false
     },
     {
-      "model_name": "gpt-5-pro-2025-10-06",
-      "model_alias": "GPT 5 Pro",
+      "model_name": "gpt-5.2-pro",
+      "model_alias": "GPT 5.2 Pro",
       "description": "최고 성능 GPT 모델",
       "endpoint": "/chat/gpt",
       "billing": {
-        "in_billing": "15",
-        "out_billing": "120"
+        "in_billing": "21",
+        "out_billing": "168"
       },
       "capabilities": {
         "stream": false,
@@ -77,38 +77,38 @@
       "admin": false
     },
     {
-      "model_name": "gpt-4.1",
-      "model_alias": "GPT 4.1",
-      "description": "표준 GPT 모델",
-      "endpoint": "/chat/gpt",
+      "model_name": "gemini-3-pro-preview",
+      "model_alias": "Gemini 3 Pro",
+      "description": "고성능 Gemini 모델",
+      "endpoint": "/chat/gemini",
       "billing": {
         "in_billing": "2",
-        "out_billing": "8"
+        "out_billing": "12"
       },
       "capabilities": {
         "stream": true,
         "image": true,
-        "inference": false,
+        "inference": true,
         "search": "toggle",
         "deep_research": false,
-        "mcp": true
+        "mcp": false
       },
       "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
+        "temperature": false,
+        "reason": true,
+        "verbosity": false,
         "system_message": true
       },
       "admin": false
     },
     {
-      "model_name": "gemini-flash-latest",
-      "model_alias": "Gemini 2.5 Flash",
-      "description": "표준 Gemini 모델",
+      "model_name": "gemini-3-flash-preview",
+      "model_alias": "Gemini 3 Flash",
+      "description": "최신 Gemini 모델",
       "endpoint": "/chat/gemini",
       "billing": {
-        "in_billing": "0.3",
-        "out_billing": "2.5"
+        "in_billing": "0.5",
+        "out_billing": "3"
       },
       "capabilities": {
         "stream": true,
@@ -127,33 +127,8 @@
       "admin": false
     },
     {
-      "model_name": "gemini-2.5-pro",
-      "model_alias": "Gemini 2.5 Pro",
-      "description": "고성능 Gemini 모델",
-      "endpoint": "/chat/gemini",
-      "billing": {
-        "in_billing": "1.25",
-        "out_billing": "10"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": true,
-        "search": "toggle",
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": true,
-        "verbosity": false,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "grok-4-fast-non-reasoning",
-      "model_alias": "Grok 4",
+      "model_name": "grok-4-1-fast-non-reasoning",
+      "model_alias": "Grok 4.1",
       "description": "고성능 Grok 모델",
       "endpoint": "/chat/grok",
       "billing": {
@@ -161,7 +136,7 @@
         "out_billing": "0.5"
       },
       "variants": {
-        "inference": "grok-4-fast-reasoning"
+        "inference": "grok-4.1-fast-reasoning"
       },
       "capabilities": {
         "stream": true,
@@ -169,7 +144,7 @@
         "inference": "switch",
         "search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -180,8 +155,8 @@
       "admin": false
     },
     {
-      "model_name": "grok-4-fast-reasoning",
-      "model_alias": "Grok 4",
+      "model_name": "grok-4-1-fast-reasoning",
+      "model_alias": "Grok 4.1",
       "description": "고성능 Grok 모델",
       "endpoint": "/chat/grok",
       "billing": {
@@ -189,7 +164,7 @@
         "out_billing": "0.5"
       },
       "variants": {
-        "base": "grok-4-fast-non-reasoning"
+        "base": "grok-4.1-fast-non-reasoning"
       },
       "capabilities": {
         "stream": true,
@@ -197,7 +172,7 @@
         "inference": "switch",
         "search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -208,7 +183,7 @@
       "admin": false
     },
     {
-      "model_name": "claude-sonnet-4-5-20250929",
+      "model_name": "claude-sonnet-4-5",
       "model_alias": "Claude 4.5 Sonnet",
       "description": "고성능 Claude 모델",
       "endpoint": "/chat/claude",
@@ -233,38 +208,13 @@
       "admin": false
     },
     {
-      "model_name": "claude-3-7-sonnet-latest",
-      "model_alias": "Claude 3.7 Sonnet",
-      "description": "언어 특화 Claude 모델",
-      "endpoint": "/chat/claude",
-      "billing": {
-        "in_billing": "3",
-        "out_billing": "15"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": "toggle",
-        "search": "toggle",
-        "deep_research": false,
-        "mcp": true
-      },
-      "controls": {
-        "temperature": "conditional",
-        "reason": true,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "claude-opus-4-1-20250805",
-      "model_alias": "Claude 4.1 Opus",
+      "model_name": "claude-opus-4-5",
+      "model_alias": "Claude 4.5 Opus",
       "description": "최고 성능 Claude 모델",
       "endpoint": "/chat/claude",
       "billing": {
-        "in_billing": "15",
-        "out_billing": "75"
+        "in_billing": "5",
+        "out_billing": "25"
       },
       "capabilities": {
         "stream": true,
@@ -283,13 +233,206 @@
       "admin": true
     },
     {
-      "model_name": "accounts/fireworks/models/deepseek-v3p1-terminus",
-      "model_alias": "Deepseek 3.1",
-      "description": "최신 Deepseek 모델",
-      "endpoint": "/chat/fireworks",
+      "model_name": "claude-haiku-4-5",
+      "model_alias": "Claude 4.5 Haiku",
+      "description": "경량 Claude 모델",
+      "endpoint": "/chat/claude",
       "billing": {
-        "in_billing": "0.56",
-        "out_billing": "1.68"
+        "in_billing": "1",
+        "out_billing": "5"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": "toggle",
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": true
+      },
+      "controls": {
+        "temperature": "conditional",
+        "reason": true,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "deepseek-chat",
+      "model_alias": "Deepseek 3.2",
+      "description": "최신 Deepseek 모델",
+      "endpoint": "/chat/deepseek",
+      "billing": {
+        "in_billing": "0.28",
+        "out_billing": "0.42"
+      },
+      "variants": {
+        "inference": "deepseek-reasoner"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": false,
+        "inference": "toggle",
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "deepseek-reasoner",
+      "model_alias": "Deepseek 3.2",
+      "description": "최신 Deepseek 모델",
+      "endpoint": "/chat/deepseek",
+      "billing": {
+        "in_billing": "0.28",
+        "out_billing": "0.42"
+      },
+      "variants": {
+        "base": "deepseek-chat"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": false,
+        "inference": "toggle",
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "moonshotai/kimi-k2-0905",
+      "model_alias": "Kimi K2",
+      "description": "최신 Kimi 모델",
+      "endpoint": "/chat/novita",
+      "billing": {
+        "in_billing": "0.6",
+        "out_billing": "2.5"
+      },
+      "variants": {
+        "inference": "moonshotai/kimi-k2-thinking"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": false,
+        "inference": "switch",
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "moonshotai/kimi-k2-thinking",
+      "model_alias": "Kimi K2",
+      "description": "최신 Kimi 모델",
+      "endpoint": "/chat/novita",
+      "billing": {
+        "in_billing": "0.6",
+        "out_billing": "2.5"
+      },
+      "variants": {
+        "base": "moonshotai/kimi-k2-0905"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": false,
+        "inference": "switch",
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "qwen/qwen3-vl-235b-a22b-instruct",
+      "model_alias": "Qwen 3",
+      "description": "최신 Qwen 모델",
+      "endpoint": "/chat/novita",
+      "billing": {
+        "in_billing": "0.3",
+        "out_billing": "1.5"
+      },
+      "variants": {
+        "inference": "qwen/qwen3-vl-235b-a22b-thinking"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": "switch",
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "qwen/qwen3-vl-235b-a22b-thinking",
+      "model_alias": "Qwen 3",
+      "description": "최신 Qwen 모델",
+      "endpoint": "/chat/novita",
+      "billing": {
+        "in_billing": "0.98",
+        "out_billing": "3.95"
+      },
+      "variants": {
+        "base": "qwen/qwen3-vl-235b-a22b-instruct"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": "switch",
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "zai-org/glm-4.6",
+      "model_alias": "GLM 4.6",
+      "description": "최신 GLM 모델",
+      "endpoint": "/chat/novita",
+      "billing": {
+        "in_billing": "0.6",
+        "out_billing": "2.2"
       },
       "capabilities": {
         "stream": true,
@@ -308,17 +451,17 @@
       "admin": false
     },
     {
-      "model_name": "accounts/fireworks/models/kimi-k2-instruct-0905",
-      "model_alias": "Kimi K2",
-      "description": "최신 Kimi 모델",
-      "endpoint": "/chat/fireworks",
+      "model_name": "mistral-large-latest",
+      "model_alias": "Mistral Large 3",
+      "description": "고성능 Mistral 모델",
+      "endpoint": "/chat/mistral",
       "billing": {
-        "in_billing": "0.57",
-        "out_billing": "2.3"
+        "in_billing": "0.5",
+        "out_billing": "1.5"
       },
       "capabilities": {
         "stream": true,
-        "image": false,
+        "image": true,
         "inference": false,
         "search": false,
         "deep_research": false,
@@ -333,21 +476,18 @@
       "admin": false
     },
     {
-      "model_name": "accounts/fireworks/models/qwen3-vl-235b-a22b-instruct",
-      "model_alias": "Qwen 3",
-      "description": "최신 Qwen 모델",
-      "endpoint": "/chat/fireworks",
+      "model_name": "mistral-medium-latest",
+      "model_alias": "Mistral Medium 3.1",
+      "description": "표준 Mistral 모델",
+      "endpoint": "/chat/mistral",
       "billing": {
-        "in_billing": "0.22",
-        "out_billing": "0.88"
-      },
-      "variants": {
-        "inference": "accounts/fireworks/models/qwen3-vl-235b-a22b-thinking"
+        "in_billing": "0.4",
+        "out_billing": "2"
       },
       "capabilities": {
         "stream": true,
-        "image": false,
-        "inference": "switch",
+        "image": true,
+        "inference": false,
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -361,21 +501,18 @@
       "admin": false
     },
     {
-      "model_name": "accounts/fireworks/models/qwen3-vl-235b-a22b-thinking",
-      "model_alias": "Qwen 3",
-      "description": "최신 Qwen 모델",
-      "endpoint": "/chat/fireworks",
+      "model_name": "openai/gpt-oss-120b",
+      "model_alias": "GPT-OSS 120B",
+      "description": "오픈소스 GPT 모델",
+      "endpoint": "/chat/novita",
       "billing": {
-        "in_billing": "0.22",
-        "out_billing": "0.88"
-      },
-      "variants": {
-        "base": "accounts/fireworks/models/qwen3-vl-235b-a22b-instruct"
+        "in_billing": "0.05",
+        "out_billing": "0.25"
       },
       "capabilities": {
         "stream": true,
         "image": false,
-        "inference": "switch",
+        "inference": true,
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -530,144 +667,13 @@
       "admin": false
     },
     {
-      "model_name": "mistral-medium-2505",
-      "model_alias": "Mistral Medium",
-      "description": "표준 Mistral 모델",
-      "endpoint": "/chat/mistral",
-      "billing": {
-        "in_billing": "0.4",
-        "out_billing": "2"
-      },
-      "variants": {
-        "inference": "magistral-medium-2506"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": "switch",
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "magistral-medium-2506",
-      "model_alias": "Magistral Medium",
-      "description": "추론 Mistral 모델",
-      "endpoint": "/chat/mistral",
-      "billing": {
-        "in_billing": "2",
-        "out_billing": "5"
-      },
-      "variants": {
-        "base": "mistral-medium-2505"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": false,
-        "inference": "switch",
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "accounts/fireworks/models/llama4-maverick-instruct-basic",
+      "model_name": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
       "model_alias": "Llama 4 Maverick",
       "description": "표준 Llama 모델",
-      "endpoint": "/chat/fireworks",
+      "endpoint": "/chat/novita",
       "billing": {
-        "in_billing": "0.22",
-        "out_billing": "0.88"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": false,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "accounts/fireworks/models/glm-4p6",
-      "model_alias": "GLM-4.6",
-      "description": "최신 GLM 모델",
-      "endpoint": "/chat/fireworks",
-      "billing": {
-        "in_billing": "1.2",
-        "out_billing": "1.2"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": true,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "LGAI-EXAONE/EXAONE-4.0-32B",
-      "model_alias": "EXAONE 4.0",
-      "description": "최신 EXAONE 모델",
-      "endpoint": "/chat/friendli",
-      "billing": {
-        "in_billing": "1",
-        "out_billing": "1"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": false,
-        "inference": false,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "ax4",
-      "model_alias": "A.X 4.0",
-      "description": "최신 에이닷 모델",
-      "endpoint": "/chat/adotx",
-      "billing": {
-        "in_billing": "0",
-        "out_billing": "0"
+        "in_billing": "0.17",
+        "out_billing": "0.85"
       },
       "capabilities": {
         "stream": true,

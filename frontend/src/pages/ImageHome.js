@@ -22,7 +22,8 @@ function ImageHome({ isTouch }) {
   const {
     canEditImage,
     maxImageInput,
-    switchImageMode
+    switchImageMode,
+    setHasImage
   } = useContext(SettingsContext);
 
   const { addConversation } = useContext(ConversationsContext);
@@ -38,6 +39,7 @@ function ImageHome({ isTouch }) {
   useEffect(() => {
     const hasUploadedImages = uploadedFiles.length > 0;
     switchImageMode(hasUploadedImages);
+    setHasImage(hasUploadedImages);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uploadedFiles, switchImageMode]);
 

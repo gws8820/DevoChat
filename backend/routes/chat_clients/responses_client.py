@@ -15,7 +15,8 @@ from ..common import (
     check_user_permissions,
     get_conversation, save_conversation,
     normalize_assistant_content,
-    getReason, getVerbosity
+    getReason, getVerbosity,
+    STREAM_COOLDOWN_SECONDS
 )
 from logging_util import logger
 
@@ -191,7 +192,8 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                             tool_name = tool_info["tool_name"]
                             
                             is_error = getattr(chunk.item, "status", "") != "completed"
-                            result = getattr(chunk.item, "action", None).query or ""
+                            action = getattr(chunk.item, "action", None)
+                            result = getattr(action, "query", "") if action else ""
                             
                             await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n")
         else:
@@ -245,6 +247,23 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     response_text = ""
     token_usage = None
     
+    buffered_chunks = []
+    loop = asyncio.get_running_loop()
+    last_flush_time = loop.time()
+    client_disconnected = False
+
+    def flush_buffer(force: bool = False):
+        nonlocal buffered_chunks, last_flush_time
+        if not buffered_chunks:
+            return None
+        now_time = loop.time()
+        if not force and STREAM_COOLDOWN_SECONDS > 0 and (now_time - last_flush_time) < STREAM_COOLDOWN_SECONDS:
+            return None
+        combined = ''.join(buffered_chunks)
+        buffered_chunks.clear()
+        last_flush_time = now_time
+        return combined
+    
     try:
         async with AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY')) as client:
             parameters = {
@@ -285,8 +304,12 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 if chunk is None:
                     break
                 if await fastapi_request.is_disconnected():
+                    client_disconnected = True
                     break
                 if isinstance(chunk, dict):
+                    pending = flush_buffer(force=True)
+                    if pending:
+                        yield f"data: {json.dumps({'content': pending})}\n\n"
                     if "error" in chunk:
                         yield f"data: {json.dumps(chunk)}\n\n"
                         break
@@ -294,7 +317,15 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                         token_usage = chunk
                 else:
                     response_text += chunk
-                    yield f"data: {json.dumps({'content': chunk})}\n\n"
+                    buffered_chunks.append(chunk)
+                    pending = flush_buffer()
+                    if pending:
+                        yield f"data: {json.dumps({'content': pending})}\n\n"
+
+            if not client_disconnected:
+                pending = flush_buffer(force=True)
+                if pending:
+                    yield f"data: {json.dumps({'content': pending})}\n\n"
 
             if not stream_task.done():
                 stream_task.cancel()

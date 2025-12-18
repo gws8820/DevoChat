@@ -12,7 +12,7 @@ import Toast from "../components/Toast";
 import InputContainer from "../components/InputContainer";
 import "../styles/Common.css";
 
-function Chat({ isTouch, chatMessageRef }) {
+function Chat({ isTouch, chatMessageRef, userInfo }) {
   const { conversation_id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -21,7 +21,6 @@ function Chat({ isTouch, chatMessageRef }) {
   const [inputText, setInputText] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [scrollTrigger, setScrollTrigger] = useState(0);
   const [userFixedScroll, setUserFixedScroll] = useState(false);
@@ -35,7 +34,7 @@ function Chat({ isTouch, chatMessageRef }) {
     setUploadedFiles,
     processFiles, 
     removeFile
-  } = useFileUpload([]);
+  } = useFileUpload([], userInfo);
 
   const abortControllerRef = useRef(null);
   const lastScrollTopRef = useRef(0);
@@ -81,8 +80,6 @@ function Chat({ isTouch, chatMessageRef }) {
   const generateMessageId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   const updateAssistantMessage = useCallback((message, isComplete = false) => {
-    setIsThinking(prev => prev ? false : prev);
-    
     setMessages((prev) => {
       const lastMsg = prev[prev.length - 1];
       if (lastMsg && lastMsg.role === "assistant") {
@@ -155,7 +152,10 @@ function Chat({ isTouch, chatMessageRef }) {
       
       setMessages((prev) => [...prev, userMessage]);
       setInputText("");
-      setUploadedFiles([]);
+      setUploadedFiles((prev) => {
+        prev.forEach((file) => { if (file.preview) URL.revokeObjectURL(file.preview) });
+        return [];
+      });
       setIsLoading(true);
       setTimeout(() => {
         setScrollTrigger((v) => v + 1);
@@ -261,12 +261,6 @@ function Chat({ isTouch, chatMessageRef }) {
         if (!selectedModel) {
           throw new Error("선택한 모델이 유효하지 않습니다.");
         }
-        if (isInference) {
-          setIsThinking(true);
-          setTimeout(() => {
-            setScrollTrigger((v) => v + 1);
-          }, 1100);
-        }
   
         const response = await fetch(
           `${process.env.REACT_APP_FASTAPI_URL}${selectedModel.endpoint}`,
@@ -349,7 +343,6 @@ function Chat({ isTouch, chatMessageRef }) {
         if (err.name === "AbortError") return;
         setErrorMessage("메시지 전송 중 오류가 발생했습니다: " + err.message);
       } finally {
-        setIsThinking(prev => prev ? false : prev);
         setIsLoading(false);
         abortControllerRef.current = null;
       }
@@ -533,7 +526,7 @@ function Chat({ isTouch, chatMessageRef }) {
   }, [conversation_id, location.state]);
 
   useEffect(() => {
-    const hasImageHistory = messages.slice(-10).some((msg) => 
+    const hasImageHistory = messages.slice(-8).some((msg) => 
       Array.isArray(msg.content) && msg.content.some((item) => item.type === "image")
     );
 
@@ -711,17 +704,6 @@ function Chat({ isTouch, chatMessageRef }) {
             />
           )}
         </AnimatePresence>
-
-        {isThinking && (
-          <motion.div
-            className="chat-message loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}
-          >
-            생각하는 중...
-          </motion.div>
-        )}
       </div>
 
       <InputContainer

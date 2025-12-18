@@ -10,10 +10,11 @@ import "../styles/Header.css";
 
 function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   const { 
-    imageModel, 
-    imageModels, 
-    updateImageModel,
-    alias
+    imageModels,
+    imageModel,
+    alias,
+    hasImage,
+    updateImageModel
   } = useContext(SettingsContext);
   
   const location = useLocation();
@@ -28,6 +29,7 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
   const modelModalRef = useRef(null);
   
   let imageModelsList = imageModels.filter((m) => {
+    if (hasImage && !m.capabilities.image.type) return false;
     if (m.variants?.base) return false;
     return true;
   });

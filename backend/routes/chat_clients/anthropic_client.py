@@ -16,8 +16,8 @@ from ..common import (
     get_conversation, save_conversation,
     normalize_assistant_content,
     getReason, getVerbosity,
-    
-    MAX_VERBOSITY_TOKENS
+    MAX_VERBOSITY_TOKENS,
+    STREAM_COOLDOWN_SECONDS
 )
 from logging_util import logger
 
@@ -260,6 +260,23 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     response_text = ""
     token_usage = None
     
+    buffered_chunks = []
+    loop = asyncio.get_running_loop()
+    last_flush_time = loop.time()
+    client_disconnected = False
+
+    def flush_buffer(force: bool = False):
+        nonlocal buffered_chunks, last_flush_time
+        if not buffered_chunks:
+            return None
+        now_time = loop.time()
+        if not force and STREAM_COOLDOWN_SECONDS > 0 and (now_time - last_flush_time) < STREAM_COOLDOWN_SECONDS:
+            return None
+        combined = ''.join(buffered_chunks)
+        buffered_chunks.clear()
+        last_flush_time = now_time
+        return combined
+    
     try:
         async with anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) as client:
             parameters = {
@@ -304,8 +321,12 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 if chunk is None:
                     break
                 if await fastapi_request.is_disconnected():
+                    client_disconnected = True
                     break
                 if isinstance(chunk, dict):
+                    pending = flush_buffer(force=True)
+                    if pending:
+                        yield f"data: {json.dumps({'content': pending})}\n\n"
                     if "error" in chunk:
                         yield f"data: {json.dumps(chunk)}\n\n"
                         break
@@ -313,7 +334,15 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                         token_usage = chunk
                 else:
                     response_text += chunk
-                    yield f"data: {json.dumps({'content': chunk})}\n\n"
+                    buffered_chunks.append(chunk)
+                    pending = flush_buffer()
+                    if pending:
+                        yield f"data: {json.dumps({'content': pending})}\n\n"
+
+            if not client_disconnected:
+                pending = flush_buffer(force=True)
+                if pending:
+                    yield f"data: {json.dumps({'content': pending})}\n\n"
 
             if not stream_task.done():
                 stream_task.cancel()

@@ -68,7 +68,7 @@ app.add_middleware(LoggingMiddleware)
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    message = "Claude 4.5 Sonnet 모델이 추가되었습니다!"
+    message = "Gemini 3 Flash가 추가되었습니다!"
     hash = base64.b64encode(message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(
@@ -165,9 +165,6 @@ async def get_image_models(user: User = Depends(get_current_user)):
 
 @app.get("/realtime_models", response_model=dict)
 async def get_realtime_models(user: User = Depends(get_current_user)):
-    if user.trial:
-        raise HTTPException(status_code=403, detail="체험판 유저는 Realtime API 사용이 불가합니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요.")
-    
     try:
         with open("config/realtime_models.json", "r", encoding="utf-8") as f:
             models_data = json.load(f)

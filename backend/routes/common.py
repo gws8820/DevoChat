@@ -23,7 +23,7 @@ class ChatRequest(BaseModel):
     temperature: float = 1.0
     reason: float = 0
     verbosity: float = 0
-    memory: int = 5
+    memory: int = 4
     system_message: str = ""
     user_message: List[Dict[str, Any]] = []
     inference: bool = False
@@ -58,6 +58,8 @@ conversation_collection = db.conversations
 
 MAX_VERBOSITY_TOKENS = 8192
 MAX_REASON_TOKENS = 16384
+
+STREAM_COOLDOWN_SECONDS = 0.1
 
 default_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'default_prompt.txt')
 try:
@@ -138,12 +140,12 @@ def getVerbosity(verbosity_value: float, format_type: str) -> Any:
         return int(verbosity_value * MAX_VERBOSITY_TOKENS)
     
     elif format_type == "binary":
-        return "low" if verbosity_value <= 0.5 else "high"
+        return "low" if verbosity_value < 0.5 else "high"
     
     elif format_type == "tertiary":
-        if verbosity_value <= 0.33:
+        if verbosity_value < 0.33:
             return "low"
-        elif verbosity_value <= 0.66:
+        elif verbosity_value < 0.66:
             return "medium"
         else:
             return "high"
@@ -158,12 +160,12 @@ def getReason(reason_value: float, format_type: str) -> Any:
         return int(reason_value * MAX_REASON_TOKENS)
     
     elif format_type == "binary":
-        return "low" if reason_value <= 0.5 else "high"
+        return "low" if reason_value < 0.5 else "high"
     
     elif format_type == "tertiary":
-        if reason_value <= 0.33:
+        if reason_value < 0.33:
             return "low"
-        elif reason_value <= 0.66:
+        elif reason_value < 0.66:
             return "medium"
         else:
             return "high"
@@ -314,7 +316,7 @@ def save_image_conversation(user: User, request: ImageGenerateRequest, image_byt
     if user.trial:
         user_collection.update_one(
             {"_id": ObjectId(user.user_id)},
-            {"$inc": {"trial_remaining": -1}}
+            {"$inc": {"trial_remaining": -2}}
         )
     else:
         user_collection.update_one(

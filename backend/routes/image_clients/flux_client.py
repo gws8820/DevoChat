@@ -60,7 +60,7 @@ async def flux_endpoint(request: ImageGenerateRequest, user: User = Depends(get_
         
         request_data = {
             "prompt": prompt,
-            "safety_tolerance": 6,
+            "safety_tolerance": 5,
             "prompt_upsampling": False
         }
         
@@ -77,7 +77,14 @@ async def flux_endpoint(request: ImageGenerateRequest, user: User = Depends(get_
                     request_data["input_image_3"] = image_b64
                 elif i == 3:
                     request_data["input_image_4"] = image_b64
-        
+                elif i == 4:
+                    request_data["input_image_5"] = image_b64
+                elif i == 5:
+                    request_data["input_image_6"] = image_b64
+                elif i == 6:
+                    request_data["input_image_7"] = image_b64
+                elif i == 7:
+                    request_data["input_image_8"] = image_b64        
         headers = {
             "x-key": os.getenv('FLUX_API_KEY'),
             "Content-Type": "application/json"

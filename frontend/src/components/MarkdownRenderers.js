@@ -9,6 +9,8 @@ import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { GoCopy, GoCheck } from "react-icons/go";
+import { GoChevronRight, GoChevronUp } from "react-icons/go";
+import { motion, AnimatePresence } from "framer-motion";
 import ToolBlock from "./ToolBlock";
 import "../styles/Message.css";
 import "katex/dist/katex.min.css";
@@ -45,6 +47,71 @@ export const InlineCode = React.memo(({ children, ...props }) => {
     <code className="inline-code" {...props}>
       {children}
     </code>
+  );
+});
+
+export const ThinkBlock = React.memo(({ children, isThinkClosed = false, isLoading = false, isLastMessage = false }) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const isThinking = !isThinkClosed && isLoading && isLastMessage;
+
+  return (
+    <>
+      <div 
+        className="think-toggle" 
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        {isThinking ? (
+          <span className="thinking">생각하는 중</span>
+        ) : (
+          <>
+            <span>{isExpanded ? '생각 닫기' : '생각 열기'}</span>
+            {isExpanded ? <GoChevronUp strokeWidth={1} /> : <GoChevronRight strokeWidth={1} />}
+          </>
+        )}
+      </div>
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div 
+            className="think-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+});
+
+export const CitationsBlock = React.memo(({ children }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <>
+      <div 
+        className="citations-toggle" 
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <span>{isExpanded ? '출처 닫기' : '출처 열기'}</span>
+        {isExpanded ? <GoChevronUp strokeWidth={1} /> : <GoChevronRight strokeWidth={1} />}
+      </div>
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div 
+            className="citations-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 });
 
@@ -163,20 +230,34 @@ function parseSpecialBlocks(rawContent) {
   const normalize = (content, tag, className) => {
     const openCount = (content.match(new RegExp(`<${tag}>`, 'gi')) || []).length;
     const closeCount = (content.match(new RegExp(`</${tag}>`, 'gi')) || []).length;
+    const hasTag = openCount + closeCount > 0;
+    const isClosed = hasTag ? closeCount >= openCount && closeCount > 0 : false;
+
+    let updatedContent = content;
     if (openCount > closeCount) {
-      content += `</${tag}>`;
+      updatedContent += `</${tag}>`;
     }
-    return content.replace(
+    updatedContent = updatedContent.replace(
       new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'gi'),
       (match) => `<div class="${className}">${match.replace(new RegExp(`</?${tag}>`, 'gi'), "")}</div>`
     );
+
+    return { content: updatedContent, state: { hasTag, isClosed } };
   };
   
   let result = rawContent;
-  result = normalize(result, 'think', 'think-block');
-  result = normalize(result, 'citations', 'citations-block');
+  const thinkResult = normalize(result, 'think', 'think-block');
+  result = thinkResult.content;
+  const citationsResult = normalize(result, 'citations', 'citations-block');
+  result = citationsResult.content;
 
-  return result;
+  return {
+    content: result,
+    states: {
+      think: thinkResult.state,
+      citations: citationsResult.state,
+    },
+  };
 }
 
 function parseToolBlocks(rawContent, isLoading, isLastMessage) {
@@ -266,19 +347,19 @@ function parseToolBlocks(rawContent, isLoading, isLastMessage) {
 }
 
 const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = false, isLastMessage = false }) => {
-  const { finalContent, toolData } = useMemo(() => {
+  const { finalContent, toolData, thinkState } = useMemo(() => {
     let parsedContent = content
       .replace(/\\\[/g, "$$")
       .replace(/\\\]/g, "$$")
       .replace(/\\\(/g, "$")
       .replace(/\\\)/g, "$");
-    parsedContent = parseSpecialBlocks(parsedContent);
-    const { content: finalContent, toolData } = parseToolBlocks(parsedContent, isLoading, isLastMessage);
-    return { finalContent, toolData };
+    const { content: contentWithSpecialBlocks, states } = parseSpecialBlocks(parsedContent);
+    const { content: finalContent, toolData } = parseToolBlocks(contentWithSpecialBlocks, isLoading, isLastMessage);
+    return { finalContent, toolData, thinkState: states?.think ?? { hasTag: false, isClosed: false } };
   }, [content, isLoading, isLastMessage]);
 
-  const dynamicDataRef = useRef({ isComplete, toolData, isLoading, isLastMessage });
-  dynamicDataRef.current = { isComplete, toolData, isLoading, isLastMessage };
+  const dynamicDataRef = useRef({ isComplete, toolData, isLoading, isLastMessage, thinkState });
+  dynamicDataRef.current = { isComplete, toolData, isLoading, isLastMessage, thinkState };
 
   const components = useMemo(() => {
     return {
@@ -300,7 +381,7 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
       th: Th,
       td: Td,
       hr: () => null,
-      div: ({ className, ...props }) => {
+      div: ({ className, children, ...props }) => {
         if (className === "tool-block") {
           const toolId = props['data-tool-id'];
           const { toolData: currentToolData, isLoading: currentIsLoading, isLastMessage: currentIsLastMessage } = dynamicDataRef.current;
@@ -310,6 +391,21 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
           }
           const toolData = currentToolData[toolId];
           return <ToolBlock toolData={toolData} isLoading={currentIsLoading} isLastMessage={currentIsLastMessage} />;
+        }
+        if (className === "think-block") {
+          const { isLoading: currentIsLoading, isLastMessage: currentIsLastMessage, thinkState: currentThinkState } = dynamicDataRef.current;
+          return (
+            <ThinkBlock
+              isThinkClosed={currentThinkState?.isClosed}
+              isLoading={currentIsLoading}
+              isLastMessage={currentIsLastMessage}
+            >
+              {children}
+            </ThinkBlock>
+          );
+        }
+        if (className === "citations-block") {
+          return <CitationsBlock>{children}</CitationsBlock>;
         }
         return <div className={className} {...props} />;
       },

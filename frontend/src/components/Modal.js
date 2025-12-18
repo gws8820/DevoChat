@@ -22,7 +22,7 @@ function Modal({ message, onConfirm, onCancel, showCancelButton = true }) {
             </button>
           )}
           <button
-            className={`button ${showCancelButton ? 'highlight' : ''}`}
+            className={`button ${showCancelButton ? 'confirm' : ''}`}
             onClick={() => onConfirm()}
           >
             확인

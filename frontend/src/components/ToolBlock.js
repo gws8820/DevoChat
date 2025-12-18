@@ -30,7 +30,7 @@ const ToolBlock = React.memo(({ toolData }) => {
     return null;
   };
 
-  const hasResult = toolData.type === 'tool_result' && toolData.result.trim();
+  const hasResult = toolData.type === 'tool_result' && toolData.result;
 
   return (
     <div className="tool-block">

@@ -14,7 +14,7 @@ export const SettingsProvider = ({ children }) => {
   const [temperature, setTemperature] = useState(1);
   const [reason, setReason] = useState(0.5);
   const [verbosity, setVerbosity] = useState(0.5);
-  const [memory, setMemory] = useState(5);
+  const [memory, setMemory] = useState(4);
   const [systemMessage, setSystemMessage] = useState("");
   const [isInference, setIsInference] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
@@ -149,7 +149,15 @@ export const SettingsProvider = ({ children }) => {
       const variants = selectedModel?.variants;
       const targetModel = nextIsInference ? variants?.inference : variants?.base;
       if (targetModel) {
-        updateModel(targetModel);
+        updateModel(
+          targetModel,
+          {
+            isInference: nextIsInference,
+            isSearch,
+            isDeepResearch
+          }
+        );
+        return;
       }
     } 
 

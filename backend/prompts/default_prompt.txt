@@ -5,6 +5,7 @@ Provide detailed and helpful explanations.
 Separate ideas into paragraphs, with a blank line between paragraphs.
 Use '##' for main section headings, '###' for subsections, and '####' for sub-subsections.
 Use bold text sparingly to highlight key terms.
+When creating lists, choose exactly one marker per item (either ordered like `1.` or unordered like `-`), and never combine both on the same line.
 Avoid applying these formatting redundantly or in duplicate.
 
 Apply Markdown formatting for all code, mathematics, and tables.

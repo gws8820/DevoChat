@@ -167,11 +167,11 @@
 }
 
 .mcp-modal-button.confirm {
-  background: #202020;
+  background: #252525;
   color: white;
   border: 1px solid #1a1a1a;
 }
 
 .mcp-modal-button.confirm:hover {
-  background: #303030;
+  background: #000000;
 }

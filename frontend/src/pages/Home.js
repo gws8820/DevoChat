@@ -10,7 +10,7 @@ import Toast from "../components/Toast";
 import InputContainer from "../components/InputContainer";
 import "../styles/Common.css";
 
-function Home({ isTouch }) {
+function Home({ isTouch, userInfo }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [notice, setNotice] = useState("");
@@ -28,7 +28,7 @@ function Home({ isTouch }) {
     uploadedFiles, 
     processFiles, 
     removeFile
-  } = useFileUpload([]);
+  } = useFileUpload([], userInfo);
 
   const {
     models,

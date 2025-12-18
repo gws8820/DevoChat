@@ -61,7 +61,32 @@ async def register(user: RegisterUser):
         "created_at": datetime.now(timezone.utc)
     }
     result = collection.insert_one(new_user)
-    return {"message": "Registration Success!", "user_id": str(result.inserted_id)}
+    
+    token = jwt.encode(
+        {
+            "user_id": str(result.inserted_id),
+            "name": new_user["name"],
+            "email": new_user["email"],
+            "admin": new_user["admin"],
+            "exp": datetime.now(timezone.utc) + timedelta(days=30)
+        },
+        AUTH_KEY,
+        algorithm=ALGORITHM
+    )
+    
+    response = JSONResponse(content={
+        "message": "Registration Success!",
+        "user_id": str(result.inserted_id),
+        "name": new_user["name"]
+    })
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        samesite='Lax',
+        max_age=60 * 60 * 24 * 30
+    )
+    return response
 
 @router.post("/login")
 async def login(user: LoginUser):

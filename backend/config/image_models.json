@@ -2,8 +2,20 @@
   "default": "gemini-2.5-flash-image",
   "models": [
     {
+      "model_name": "gemini-3-pro-image-preview",
+      "model_alias": "Nano Banana Pro",
+      "description": "Google",
+      "endpoint": "/image/google/gemini",
+      "billing": {
+        "in_billing": "0.002",
+        "out_billing": "0.134"
+      },
+      "capabilities": { "image": { "type": true, "max_input": 10 } },
+      "admin": false
+    },
+    {
       "model_name": "gemini-2.5-flash-image",
-      "model_alias": "Gemini 2.5 Image",
+      "model_alias": "Nano Banana",
       "description": "Google",
       "endpoint": "/image/google/gemini",
       "billing": {
@@ -26,31 +38,31 @@
       "admin": false
     },
     {
-      "model_name": "bytedance/seedream-v4",
-      "model_alias": "Seedream V4",
+      "model_name": "bytedance/seedream-v4.5",
+      "model_alias": "Seedream 4.5",
       "description": "BytePlus",
       "endpoint": "/image/wavespeed",
       "billing": {
         "in_billing": "0",
-        "out_billing": "0.027"
+        "out_billing": "0.04"
       },
       "variants": {
-        "image": "bytedance/seedream-v4/edit"
+        "image": "bytedance/seedream-v4.5/edit"
       },
       "capabilities": { "image": { "type": "switch" } },
       "admin": false
     },
     {
-      "model_name": "bytedance/seedream-v4/edit",
-      "model_alias": "Seedream V4 Edit",
+      "model_name": "bytedance/seedream-v4.5/edit",
+      "model_alias": "Seedream 4.5",
       "description": "BytePlus",
       "endpoint": "/image/wavespeed",
       "billing": {
         "in_billing": "0",
-        "out_billing": "0.027"
+        "out_billing": "0.04"
       },
       "variants": {
-        "base": "bytedance/seedream-v4"
+        "base": "bytedance/seedream-v4.5"
       },
       "capabilities": { "image": { "type": "switch", "max_input": 10 } },
       "admin": false
@@ -72,7 +84,7 @@
     },
     {
       "model_name": "wavespeed-ai/qwen-image/edit-plus",
-      "model_alias": "Qwen Image Edit",
+      "model_alias": "Qwen Image",
       "description": "Alibaba",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -102,7 +114,7 @@
     },
     {
       "model_name": "alibaba/wan-2.5/image-edit",
-      "model_alias": "Wan 2.5 Image Edit",
+      "model_alias": "Wan 2.5 Image",
       "description": "Alibaba",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -116,27 +128,15 @@
       "admin": false
     },
     {
-      "model_name": "flux-kontext-pro",
-      "model_alias": "Flux Kontext Pro",
+      "model_name": "flux-2-pro",
+      "model_alias": "Flux 2 Pro",
       "description": "Black Forest Labs",
       "endpoint": "/image/flux",
       "billing": {
         "in_billing": "0",
-        "out_billing": "0.04"
+        "out_billing": "0.045"
       },
-      "capabilities": { "image": { "type": true, "max_input": 4 } },
-      "admin": false
-    },
-    {
-      "model_name": "flux-pro-1.1",
-      "model_alias": "Flux Pro 1.1",
-      "description": "Black Forest Labs",
-      "endpoint": "/image/flux",
-      "billing": {
-        "in_billing": "0",
-        "out_billing": "0.04"
-      },
-      "capabilities": { "image": { "type": false } },
+      "capabilities": { "image": { "type": true, "max_input": 8 } },
       "admin": false
     },
     {

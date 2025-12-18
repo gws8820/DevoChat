@@ -48,7 +48,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   const systemMessageRef = useRef(null);
 
   let modelsList = models.filter((m) => {
-    if (hasImage && !m.capabilities?.image) return false;
+    if (hasImage && !m.capabilities.image) return false;
     if (m.variants?.base) return false;
     return true;
   });
@@ -286,16 +286,16 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                     <div className="slider-label">
                       <span>대화 기억</span>
                       <span className="slider-value">
-                        {memory === 0 ? "기억 안함" : `${memory}개`}
+                        {memory === 0 ? "기억 안함" : `${memory}턴`}
                       </span>
                     </div>
                     <input
                       type="range"
                       min={0}
-                      max={10}
+                      max={8}
                       step={1}
                       value={memory}
-                      onChange={(e) => setMemory(parseInt(e.target.value, 10))}
+                      onChange={(e) => setMemory(parseInt(e.target.value))}
                       className="slider"
                     />
                   </div>
