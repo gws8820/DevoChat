@@ -26,10 +26,11 @@ async def get_conversations(current_user: User = Depends(get_current_user)):
     user_id = current_user.user_id
     cursor = conversations_collection.find(
         {"user_id": user_id},
-        {"_id": 1, "user_id": 1, "conversation_id": 1, "type": 1, "alias": 1, "starred": 1, "starred_at": 1, "created_at": 1}
+        {"_id": 1, "user_id": 1, "conversation_id": 1, "type": 1, "alias": 1, "starred": 1, "starred_at": 1, "created_at": 1, "updated_at": 1}
     ).sort([
         ("starred", -1),
         ("starred_at", -1),
+        ("updated_at", -1),
         ("created_at", -1)
     ])
     conversations = []
@@ -42,7 +43,8 @@ async def get_conversations(current_user: User = Depends(get_current_user)):
             "alias": doc.get("alias", ""),
             "starred": doc["starred"],
             "starred_at": doc.get("starred_at").isoformat() if doc.get("starred_at") else None,
-            "created_at": doc.get("created_at").isoformat() if doc.get("created_at") else None
+            "created_at": doc.get("created_at").isoformat() if doc.get("created_at") else None,
+            "updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else None
         })
     return {"conversations": conversations}
 
@@ -60,8 +62,11 @@ async def get_user_conversations(
     
     cursor = conversations_collection.find(
         {"user_id": user_id},
-        {"_id": 1, "user_id": 1, "conversation_id": 1, "type": 1, "alias": 1, "model": 1, "created_at": 1}
-    ).sort("created_at", -1)
+        {"_id": 1, "user_id": 1, "conversation_id": 1, "type": 1, "alias": 1, "model": 1, "created_at": 1, "updated_at": 1}
+    ).sort([
+        ("updated_at", -1),
+        ("created_at", -1)
+    ])
     
     conversations = []
     for doc in cursor:
@@ -72,7 +77,8 @@ async def get_user_conversations(
             "type": doc["type"],
             "alias": doc.get("alias", ""),
             "model": doc["model"],
-            "created_at": doc.get("created_at").isoformat() if doc.get("created_at") else None
+            "created_at": doc.get("created_at").isoformat() if doc.get("created_at") else None,
+            "updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else None
         })
     
     return {"conversations": conversations}
@@ -144,7 +150,8 @@ async def create_new_conversation(current_user: User = Depends(get_current_user)
         "conversation": [],
         "starred": False,
         "starred_at": None,
-        "created_at": datetime.now(timezone.utc)
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc)
     }
     
     try:
@@ -155,7 +162,8 @@ async def create_new_conversation(current_user: User = Depends(get_current_user)
     return {
         "message": "New conversation created",
         "conversation_id": conversation_id,
-        "created_at": new_conversation["created_at"].isoformat()
+        "created_at": new_conversation["created_at"].isoformat(),
+        "updated_at": new_conversation["updated_at"].isoformat()
     }
     
 @router.post("/image/new_conversation", response_model=dict)
@@ -171,7 +179,8 @@ async def create_new_image_conversation(current_user: User = Depends(get_current
         "conversation": [],
         "starred": False,
         "starred_at": None,
-        "created_at": datetime.now(timezone.utc)
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc)
     }
     try:
         conversations_collection.insert_one(new_conversation)
@@ -180,7 +189,8 @@ async def create_new_image_conversation(current_user: User = Depends(get_current
     return {
         "message": "New image conversation created",
         "conversation_id": conversation_id,
-        "created_at": new_conversation["created_at"].isoformat()
+        "created_at": new_conversation["created_at"].isoformat(),
+        "updated_at": new_conversation["updated_at"].isoformat()
     }
 
 @router.put("/conversation/{conversation_id}/rename", response_model=dict)

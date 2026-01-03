@@ -258,6 +258,62 @@
       "admin": false
     },
     {
+      "model_name": "qwen/qwen3-vl-235b-a22b-instruct",
+      "model_alias": "Qwen 3",
+      "description": "최신 Qwen 모델",
+      "endpoint": "/chat/novita",
+      "billing": {
+        "in_billing": "0.3",
+        "out_billing": "1.5"
+      },
+      "variants": {
+        "inference": "qwen/qwen3-vl-235b-a22b-thinking"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": "switch",
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "qwen/qwen3-vl-235b-a22b-thinking",
+      "model_alias": "Qwen 3",
+      "description": "최신 Qwen 모델",
+      "endpoint": "/chat/novita",
+      "billing": {
+        "in_billing": "0.98",
+        "out_billing": "3.95"
+      },
+      "variants": {
+        "base": "qwen/qwen3-vl-235b-a22b-instruct"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": "switch",
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
       "model_name": "deepseek-chat",
       "model_alias": "Deepseek 3.2",
       "description": "최신 Deepseek 모델",
@@ -356,62 +412,6 @@
       "capabilities": {
         "stream": true,
         "image": false,
-        "inference": "switch",
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "qwen/qwen3-vl-235b-a22b-instruct",
-      "model_alias": "Qwen 3",
-      "description": "최신 Qwen 모델",
-      "endpoint": "/chat/novita",
-      "billing": {
-        "in_billing": "0.3",
-        "out_billing": "1.5"
-      },
-      "variants": {
-        "inference": "qwen/qwen3-vl-235b-a22b-thinking"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": "switch",
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "qwen/qwen3-vl-235b-a22b-thinking",
-      "model_alias": "Qwen 3",
-      "description": "최신 Qwen 모델",
-      "endpoint": "/chat/novita",
-      "billing": {
-        "in_billing": "0.98",
-        "out_billing": "3.95"
-      },
-      "variants": {
-        "base": "qwen/qwen3-vl-235b-a22b-instruct"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": true,
         "inference": "switch",
         "search": false,
         "deep_research": false,

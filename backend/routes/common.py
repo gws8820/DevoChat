@@ -7,6 +7,7 @@ from pymongo import MongoClient
 from fastapi import APIRouter
 from pydantic import BaseModel
 from bson import ObjectId
+from datetime import datetime, timezone
 from typing import Any, List, Dict, Optional
 from .auth import User
 from logging_util import logger
@@ -294,7 +295,8 @@ def save_conversation(user: User, user_message, response_text, token_usage, requ
                 "search": request.search,
                 "deep_research": request.deep_research,
                 "dan": request.dan,
-                "mcp": request.mcp
+                "mcp": request.mcp,
+                "updated_at": datetime.now(timezone.utc)
             }
         }
     )
@@ -335,7 +337,10 @@ def save_image_conversation(user: User, request: ImageGenerateRequest, image_byt
                     "$each": [user_message, assistant_message]
                 }
             },
-            "$set": {"model": request.model}
+            "$set": {
+                "model": request.model,
+                "updated_at": datetime.now(timezone.utc)
+            }
         }
     )
 

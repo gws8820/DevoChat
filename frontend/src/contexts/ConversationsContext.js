@@ -46,7 +46,7 @@ export function ConversationsProvider({ children }) {
     setConversations([]);
   };
 
-  const updateConversation = (conversation_id, newAlias, isLoading = undefined) => {
+  const updateAlias = (conversation_id, newAlias, isLoading = undefined) => {
     setConversations((prevConversations) =>
       prevConversations.map((conv) =>
         conv.conversation_id === conversation_id
@@ -55,6 +55,16 @@ export function ConversationsProvider({ children }) {
               alias: newAlias,
               ...(isLoading !== undefined && { isLoading })
             }
+          : conv
+      )
+    );
+  };
+
+  const updateTimestamp = (conversation_id, updated_at) => {
+    setConversations((prevConversations) =>
+      prevConversations.map((conv) =>
+        conv.conversation_id === conversation_id
+          ? { ...conv, updated_at }
           : conv
       )
     );
@@ -79,7 +89,8 @@ export function ConversationsProvider({ children }) {
       addConversation,
       deleteConversation,
       deleteAllConversation,
-      updateConversation,
+      updateAlias,
+      updateTimestamp,
       toggleStarConversation
     }}>
       {children}

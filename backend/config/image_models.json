@@ -37,6 +37,19 @@
       "capabilities": { "image": { "type": false } },
       "admin": false
     },
+
+    {
+      "model_name": "gpt-image-1.5",
+      "model_alias": "GPT Image 1.5",
+      "description": "OpenAI",
+      "endpoint": "/image/openai",
+      "billing": {
+        "in_billing": "0.01",
+        "out_billing": "0.034"
+      },
+      "capabilities": { "image": { "type": true, "max_input": 1 } },
+      "admin": false
+    },
     {
       "model_name": "bytedance/seedream-v4.5",
       "model_alias": "Seedream 4.5",
@@ -77,13 +90,13 @@
         "out_billing": "0.02"
       },
       "variants": {
-        "image": "wavespeed-ai/qwen-image/edit-plus"
+        "image": "wavespeed-ai/qwen-image/edit-2511"
       },
       "capabilities": { "image": { "type": "switch" } },
       "admin": false
     },
     {
-      "model_name": "wavespeed-ai/qwen-image/edit-plus",
+      "model_name": "wavespeed-ai/qwen-image/edit-2511",
       "model_alias": "Qwen Image",
       "description": "Alibaba",
       "endpoint": "/image/wavespeed",
@@ -98,8 +111,8 @@
       "admin": false
     },
     {
-      "model_name": "alibaba/wan-2.5/text-to-image",
-      "model_alias": "Wan 2.5",
+      "model_name": "alibaba/wan-2.6/text-to-image",
+      "model_alias": "Wan 2.6",
       "description": "Alibaba",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -107,14 +120,14 @@
         "out_billing": "0.03"
       },
       "variants": {
-        "image": "alibaba/wan-2.5/image-edit"
+        "image": "alibaba/wan-2.6/image-edit"
       },
       "capabilities": { "image": { "type": "switch" } },
       "admin": false
     },
     {
-      "model_name": "alibaba/wan-2.5/image-edit",
-      "model_alias": "Wan 2.5 Image",
+      "model_name": "alibaba/wan-2.6/image-edit",
+      "model_alias": "Wan 2.6 Image",
       "description": "Alibaba",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -122,7 +135,7 @@
         "out_billing": "0.03"
       },
       "variants": {
-        "base": "alibaba/wan-2.5/text-to-image"
+        "base": "alibaba/wan-2.6/text-to-image"
       },
       "capabilities": { "image": { "type": "switch", "max_input": 2 } },
       "admin": false
@@ -149,18 +162,6 @@
         "out_billing": "0.07"
       },
       "capabilities": { "image": { "type": false } },
-      "admin": false
-    },
-    {
-      "model_name": "gpt-image-1",
-      "model_alias": "GPT Image 1",
-      "description": "OpenAI",
-      "endpoint": "/image/openai",
-      "billing": {
-        "in_billing": "0.01",
-        "out_billing": "0.042"
-      },
-      "capabilities": { "image": { "type": true, "max_input": 1 } },
       "admin": false
     }
   ]

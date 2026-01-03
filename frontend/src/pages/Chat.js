@@ -72,7 +72,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
 
   const {
     fetchConversations,
-    updateConversation
+    updateAlias,
+    updateTimestamp
   } = useContext(ConversationsContext);
 
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
@@ -338,6 +339,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           }
           partialData = lines[lines.length - 1];
         }
+        
         updateAssistantMessage(assistantText, true);
       } catch (err) {
         if (err.name === "AbortError") return;
@@ -345,6 +347,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       } finally {
         setIsLoading(false);
         abortControllerRef.current = null;
+
+        updateTimestamp(conversation_id, new Date().toISOString());
       }
     },
     [
@@ -357,6 +361,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       memory,
       systemMessage,
       updateAssistantMessage,
+      updateTimestamp,
       setErrorMessage,
       isInference,
       isSearch,
@@ -461,10 +466,10 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
               const aliasData = await aliasResponse.json();
               if (aliasData && aliasData.alias) {
                 setAlias(aliasData.alias);
-                updateConversation(conversation_id, aliasData.alias, false);
+                updateAlias(conversation_id, aliasData.alias, false);
               }
             } catch (err) {
-              updateConversation(conversation_id, "새 대화", false);
+              updateAlias(conversation_id, "새 대화", false);
             }
           })();
         }

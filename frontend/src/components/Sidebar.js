@@ -159,7 +159,7 @@ function Sidebar({
     isLoadingChat, 
     deleteConversation, 
     deleteAllConversation, 
-    updateConversation, 
+    updateAlias, 
     toggleStarConversation 
   } = useContext(ConversationsContext);
 
@@ -174,7 +174,9 @@ function Sidebar({
         return new Date(b.starred_at) - new Date(a.starred_at);
       }
       
-      return new Date(b.created_at) - new Date(a.created_at);
+      const timeA = a.updated_at ? new Date(a.updated_at) : new Date(a.created_at);
+      const timeB = b.updated_at ? new Date(b.updated_at) : new Date(b.created_at);
+      return timeB - timeA;
     });
   }, [conversations]);
 
@@ -279,7 +281,7 @@ function Sidebar({
 
   const handleRename = useCallback(async (conversation_id, newAlias) => {
     try {
-      updateConversation(conversation_id, newAlias);
+      updateAlias(conversation_id, newAlias);
       setRenamingConversationId(null);
       setRenameInputValue("");
   
@@ -304,7 +306,7 @@ function Sidebar({
       setToastMessage("대화 이름 편집에 실패했습니다.");
       setShowToast(true);
     }
-  }, [updateConversation, currentConversationId, setAlias]);
+  }, [updateAlias, currentConversationId, setAlias]);
 
   const handleDelete = useCallback(async (conversation_id) => {
     try {

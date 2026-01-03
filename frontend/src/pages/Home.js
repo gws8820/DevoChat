@@ -120,6 +120,7 @@ function Home({ isTouch, userInfo }) {
           starred: false,
           starred_at: null,
           created_at: data.created_at,
+          updated_at: data.updated_at,
           isLoading: true
         };
         addConversation(newConversation);

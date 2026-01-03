@@ -26,7 +26,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
     setHasImage
   } = useContext(SettingsContext);
 
-  const { updateConversation } = useContext(ConversationsContext);
+  const { updateAlias, updateTimestamp } = useContext(ConversationsContext);
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
@@ -116,10 +116,10 @@ function ImageChat({ isTouch, chatMessageRef }) {
               const aliasData = await aliasResponse.json();
               if (aliasData && aliasData.alias) {
                 setAlias(aliasData.alias);
-                updateConversation(conversation_id, aliasData.alias, false);
+                updateAlias(conversation_id, aliasData.alias, false);
               }
             } catch (err) {
-              updateConversation(conversation_id, "새 대화", false);
+              updateAlias(conversation_id, "새 대화", false);
             }
           })();
         } 
@@ -290,12 +290,15 @@ function ImageChat({ isTouch, chatMessageRef }) {
       } finally {
         setIsLoading(false);
         abortControllerRef.current = null;
+        
+        updateTimestamp(conversation_id, new Date().toISOString());
       }
     },
     [
       conversation_id,
       imageModel,
       imageModels,
+      updateTimestamp,
       canEditImage,
       maxImageInput,
       uploadedFiles,

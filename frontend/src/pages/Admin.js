@@ -239,7 +239,7 @@ function Admin() {
                 <tr>
                   <th>대화 제목</th>
                   <th>모델</th>
-                  <th>생성일</th>
+                  <th>대화일</th>
                 </tr>
               </thead>
               <tbody>
@@ -259,7 +259,7 @@ function Admin() {
                         </button>
                       </td>
                       <td>{conv.model || '-'}</td>
-                      <td>{formatDate(conv.created_at)}</td>
+                      <td>{formatDate(conv.updated_at || conv.created_at)}</td>
                     </tr>
                   ))
                 )}

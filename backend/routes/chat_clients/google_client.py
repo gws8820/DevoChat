@@ -218,7 +218,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             
         if request.search:
             config_params["tools"] = [types.Tool(google_search = types.GoogleSearch())]
-        
+            
         parameters = {
             "model": request.model,
             "contents": formatted_messages,
@@ -272,14 +272,14 @@ async def get_chat_alias(request: AliasRequest, user: User = Depends(get_current
     try:
         client = Client(api_key=os.getenv('GEMINI_API_KEY'))
         response = await client.aio.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
             contents=[request.text],
             config=types.GenerateContentConfig(
                 system_instruction=CHAT_ALIAS_PROMPT,
-                temperature=0.1
+                thinking_config=types.ThinkingConfig(thinking_level="minimal")
             )
         )
-        alias = response.text.strip()
+        alias = response.text.strip()[:15]
         save_alias(user, request.conversation_id, alias)
         
         return {"alias": alias}
@@ -292,14 +292,13 @@ async def get_image_alias(request: AliasRequest, user: User = Depends(get_curren
     try:
         client = Client(api_key=os.getenv('GEMINI_API_KEY'))
         response = await client.aio.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3-flash-preview",
             contents=[request.text],
             config=types.GenerateContentConfig(
-                system_instruction=IMAGE_ALIAS_PROMPT,
-                temperature=0.1
+                system_instruction=IMAGE_ALIAS_PROMPT
             )
         )
-        alias = response.text.strip()
+        alias = response.text.strip()[:15]
         save_alias(user, request.conversation_id, alias)
         
         return {"alias": alias}

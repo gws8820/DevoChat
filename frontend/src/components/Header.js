@@ -292,7 +292,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                     <input
                       type="range"
                       min={0}
-                      max={8}
+                      max={10}
                       step={1}
                       value={memory}
                       onChange={(e) => setMemory(parseInt(e.target.value))}
