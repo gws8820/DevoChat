@@ -1,10 +1,9 @@
 // Login.js
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import Toast from "../components/Toast";
 import "../styles/Auth.css";
-import logo from "../logo.png";
+import logo from "../resources/logo.png";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -60,12 +59,7 @@ function Login() {
   }
 
   return (
-    <motion.div
-      className="auth-container"
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4 }}
-    >
+    <div className="auth-container">
       <div className="auth-logo">
         <img src={logo} alt="DEVOCHAT" className="logo-image" />
       </div>
@@ -116,7 +110,7 @@ function Login() {
         isVisible={showToast}
         onClose={() => setShowToast(false)}
       />
-    </motion.div>
+    </div>
   );
 }
 

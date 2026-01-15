@@ -1,6 +1,7 @@
 // src/App.js
 import { useEffect, useState, useCallback, useRef, useContext, useMemo } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { BarLoader } from "react-spinners";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import ImageHeader from "./components/ImageHeader";
@@ -17,7 +18,7 @@ import Toast from "./components/Toast";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { SettingsContext } from "./contexts/SettingsContext";
 import { ConversationsProvider, ConversationsContext } from "./contexts/ConversationsContext";
-import logo from "./logo.png";
+import logo from "./resources/logo.png";
 
 function App() {
   return (
@@ -59,7 +60,7 @@ function AppContent() {
   }, [location.pathname]);
 
   const chatMessageRef = useRef(null);
-  const { fetchConversations } = useContext(ConversationsContext);
+  const { fetchConversations, isLoadingChat } = useContext(ConversationsContext);
   const { isModelReady } = useContext(SettingsContext);
 
   useEffect(() => {
@@ -184,8 +185,18 @@ function AppContent() {
     };
   }, [isTouch]);
 
-  if (isLoggedIn === null) return null;
-  if (isLoggedIn && !isModelReady) return null;
+  if (isLoggedIn === null || !isModelReady || isLoadingChat) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100dvh", justifyContent: "center", alignItems: "center" }}>
+        <div style={{ width: "300px", display: "flex", justifyContent: "center", marginBottom: "20px" }}>
+          <img src={logo} alt="DEVOCHAT" className="logo-image" />
+        </div>
+        <div>
+          <BarLoader width={200} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", height: "100dvh", margin: "0", overflow: "hidden" }}>

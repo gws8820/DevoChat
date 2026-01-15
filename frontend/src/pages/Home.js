@@ -197,7 +197,7 @@ function Home({ isTouch, userInfo }) {
       onDrop={handleDrop}
     >
       <div className="welcome-container">
-        <motion.div
+      <motion.div
           className="welcome-message"
           initial={{ y: 8, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -210,7 +210,6 @@ function Home({ isTouch, userInfo }) {
       <InputContainer
         isTouch={isTouch}
         placeholder="내용 입력"
-        extraClassName="main-input-container"
         inputText={inputText}
         setInputText={setInputText}
         isLoading={isLoading}

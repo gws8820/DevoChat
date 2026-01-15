@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ClipLoader } from "react-spinners";
+import { PulseLoader } from "react-spinners";
 import { motion } from "framer-motion";
 import '../styles/Admin.css';
 
@@ -195,7 +195,7 @@ function Admin() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        <ClipLoader loading={true} size={50} />
+        <PulseLoader loading={true} size={20} />
       </motion.div>
     );
   }
@@ -230,7 +230,7 @@ function Admin() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <ClipLoader loading={true} size={50} />
+            <PulseLoader loading={true} size={20} />
           </motion.div>
         ) : (
           <div className="admin-table-container">

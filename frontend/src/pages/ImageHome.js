@@ -156,7 +156,6 @@ function ImageHome({ isTouch }) {
       <ImageInputContainer
         isTouch={isTouch}
         placeholder="프롬프트 입력"
-        extraClassName="main-input-container"
         inputText={inputText}
         setInputText={setInputText}
         isLoading={isLoading}

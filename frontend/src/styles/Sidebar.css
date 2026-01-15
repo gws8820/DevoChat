@@ -189,6 +189,14 @@ input:focus {
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     z-index: 101;
     border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+    pointer-events: none;
+}
+
+.context-menu.visible {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .context-menu ul {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, useContext } 
 import { useParams, useLocation } from "react-router-dom";
 import { IoImageOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipLoader } from "react-spinners";
+import { PulseLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { useFileUpload } from "../utils/useFileUpload";
@@ -390,7 +390,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
             marginBottom: "30px",
           }}
         >
-          <ClipLoader loading={true} size={50} />
+          <PulseLoader loading={true} size={20} />
         </motion.div>
       )}
 
@@ -436,7 +436,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
             className="chat-message"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}
+            transition={{ duration: 0.3, delay: 1, ease: "easeOut" }}
           >
             <div className="image-block">
               <span className="image-generating">이미지 생성 중...</span>

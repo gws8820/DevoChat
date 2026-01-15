@@ -3,7 +3,6 @@ import { GoImage } from "react-icons/go";
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipLoader } from "react-spinners";
 import { FaPaperPlane, FaStop } from "react-icons/fa";
 import Toast from "./Toast";
 import "../styles/InputContainer.css";
@@ -11,7 +10,6 @@ import "../styles/InputContainer.css";
 function ImageInputContainer({
   isTouch,
   placeholder,
-  extraClassName = "",
   inputText,
   setInputText,
   isLoading,
@@ -110,9 +108,9 @@ function ImageInputContainer({
 
   return (
     <motion.div
-      className={`input-container ${extraClassName}`}
-      initial={{ y: 8, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
+      className="input-container"
+      initial={{ y: 8 }}
+      animate={{ y: 0 }}
       transition={{ duration: 0.3 }}
     >
       <div className="content-container">
@@ -152,7 +150,7 @@ function ImageInputContainer({
                     )}
                     {!file.content && (
                       <div className="file-upload-overlay">
-                        <ClipLoader size={20} />
+                        <ImSpinner8 className="spinner" />
                       </div>
                     )}
                   </motion.div>

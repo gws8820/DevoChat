@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ClipLoader } from "react-spinners";
+import { PulseLoader } from "react-spinners";
 import { motion } from "framer-motion";
 import Message from "../components/Message";
 import "../styles/Common.css";
@@ -61,7 +61,7 @@ function View() {
             marginBottom: "30px",
           }}
         >
-          <ClipLoader loading={true} size={50} />
+          <PulseLoader loading={true} size={20} />
         </motion.div>
       )}
       <div className="chat-messages view">

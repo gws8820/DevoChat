@@ -81,7 +81,7 @@
       "admin": false
     },
     {
-      "model_name": "wavespeed-ai/qwen-image/text-to-image",
+      "model_name": "wavespeed-ai/qwen-image/text-to-image-2512",
       "model_alias": "Qwen Image",
       "description": "Alibaba",
       "endpoint": "/image/wavespeed",
@@ -105,7 +105,7 @@
         "out_billing": "0.02"
       },
       "variants": {
-        "base": "wavespeed-ai/qwen-image/text-to-image"
+        "base": "wavespeed-ai/qwen-image/text-to-image-2512"
       },
       "capabilities": { "image": { "type": "switch", "max_input": 3 } },
       "admin": false

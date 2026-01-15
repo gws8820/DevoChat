@@ -5,7 +5,6 @@ import { RiMenuLine } from "react-icons/ri";
 import { LuSearch, LuSquarePen, LuAudioLines, LuImage } from "react-icons/lu";
 import { IoMdStar } from "react-icons/io";
 import { FaUserCircle } from "react-icons/fa";
-import { ClipLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,7 +12,7 @@ import Modal from "./Modal";
 import Tooltip from "./Tooltip";
 import Toast from "./Toast";
 import SearchModal from "./SearchModal";
-import logo from "../logo.png";
+import logo from "../resources/logo.png";
 import "../styles/Sidebar.css";
 
 const ConversationItem = React.memo(({
@@ -38,9 +37,6 @@ const ConversationItem = React.memo(({
     <motion.li
       key={conv.conversation_id}
       layout
-      initial={false}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, y: -20 }}
       transition={{ 
         type: "tween",
         duration: 0.3,
@@ -91,25 +87,13 @@ const ConversationItem = React.memo(({
         ) : (
           <>
             {conv.isLoading ? (
-              <motion.span
-                key="loading"
-                className="loading-text"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
+              <span key="loading" className="loading-text">
                 로딩 중...
-              </motion.span>
+              </span>
             ) : (
-              <motion.span
-                key="alias"
-                className="conversation-text"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
+              <span key="alias" className="conversation-text">
                 {conv.alias}
-              </motion.span>
+              </span>
             )}
           </>
         )}
@@ -156,7 +140,6 @@ function Sidebar({
   const { setAlias } = useContext(SettingsContext); 
   const { 
     conversations, 
-    isLoadingChat, 
     deleteConversation, 
     deleteAllConversation, 
     updateAlias, 
@@ -475,8 +458,6 @@ function Sidebar({
       setSearchQuery("");
   }, [isSidebarOpen]);
 
-  
-
   const handleCustomAction = useCallback((action) => {
     if (action === "star") {
       if (selectedConversationId) {
@@ -549,60 +530,38 @@ function Sidebar({
           </div>
         </div>
 
-        <div className={`conversation-container ${isLoadingChat ? "loading" : ""}`}>
-          {isLoadingChat ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <ClipLoader loading={true} size={40} />
-            </motion.div>
-          ) : (
-            <>
-              <div className="conversation-header">
-                대화 기록
+        <div className="conversation-container">
+          <div className="conversation-header">
+            대화 기록
+          </div>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            {sortedConversations.length > 0 ? (
+              sortedConversations
+                .slice()
+                .map((conv) => (
+                  <ConversationItem
+                    key={conv.conversation_id}
+                    conv={conv}
+                    currentConversationId={currentConversationId}
+                    renamingConversationId={renamingConversationId}
+                    renameInputValue={renameInputValue}
+                    setRenameInputValue={setRenameInputValue}
+                    handleRename={handleRename}
+                    setRenamingConversationId={setRenamingConversationId}
+                    handleNavigate={handleNavigate}
+                    handleConversationContextMenu={handleConversationContextMenu}
+                    handleTouchStart={handleTouchStart}
+                    handleTouchEnd={handleTouchEnd}
+                    handleTouchMove={handleTouchMove}
+                    isTouch={isTouch}
+                  />
+                ))
+            ) : (
+              <div className="no-result">
+                {conversations.length === 0 ? "대화 내역이 없습니다." : "검색 결과가 없습니다."}
               </div>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-                style={{ 
-                  height: '100%', 
-                  display: 'flex', 
-                  flexDirection: 'column'
-                }}
-              >
-                {sortedConversations.length > 0 ? (
-                  sortedConversations
-                    .slice()
-                    .map((conv) => (
-                      <ConversationItem
-                        key={conv.conversation_id}
-                        conv={conv}
-                        currentConversationId={currentConversationId}
-                        renamingConversationId={renamingConversationId}
-                        renameInputValue={renameInputValue}
-                        setRenameInputValue={setRenameInputValue}
-                        handleRename={handleRename}
-                        setRenamingConversationId={setRenamingConversationId}
-                        handleNavigate={handleNavigate}
-                        handleConversationContextMenu={handleConversationContextMenu}
-                        handleTouchStart={handleTouchStart}
-                        handleTouchEnd={handleTouchEnd}
-                        handleTouchMove={handleTouchMove}
-                        isTouch={isTouch}
-                      />
-                    ))
-                ) : (
-                  <div className="no-result">
-                    {conversations.length === 0 ? "대화 내역이 없습니다." : "검색 결과가 없습니다."}
-                  </div>
-                )}
-              </motion.div>
-            </>
-          )}
+            )}
+          </div>
         </div>
 
         <div className="user-container" ref={userContainerRef}>
@@ -661,35 +620,28 @@ function Sidebar({
         onSelectConversation={(id) => handleNavigate(id)}
       />
 
-      <AnimatePresence>
-        {contextMenu.visible && (
-          <motion.div
-            className="context-menu"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: "absolute",
-              top: contextMenu.y,
-              left: contextMenu.x,
-            }}
-          >
-            <ul>
-              {selectedConversationId && (
-                <>
-                  {conversations.find(c => c.conversation_id === selectedConversationId)?.starred ? (
-                    <li onClick={() => handleCustomAction("star")}>즐겨찾기 해제</li>
-                  ) : (
-                    <li onClick={() => handleCustomAction("star")}>즐겨찾기</li>
-                  )}
-                  <li onClick={() => handleCustomAction("rename")}>이름 편집</li>
-                  <li onClick={() => handleCustomAction("delete")}>삭제</li>
-                </>
+      <div
+        className={`context-menu ${contextMenu.visible ? "visible" : ""}`}
+        style={{
+          position: "absolute",
+          top: contextMenu.y,
+          left: contextMenu.x,
+        }}
+      >
+        <ul>
+          {selectedConversationId && (
+            <>
+              {conversations.find(c => c.conversation_id === selectedConversationId)?.starred ? (
+                <li onClick={() => handleCustomAction("star")}>즐겨찾기 해제</li>
+              ) : (
+                <li onClick={() => handleCustomAction("star")}>즐겨찾기</li>
               )}
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <li onClick={() => handleCustomAction("rename")}>이름 편집</li>
+              <li onClick={() => handleCustomAction("delete")}>삭제</li>
+            </>
+          )}
+        </ul>
+      </div>
 
       <AnimatePresence>
         {showModal && (

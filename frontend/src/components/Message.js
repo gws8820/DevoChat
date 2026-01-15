@@ -107,8 +107,9 @@ function Message({
     return (
       <motion.div
         className={`user-wrap ${isEditing ? "editing" : ""}`}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
       >
         <div className="message-file-area">
           {content.map((item, idx) => {
@@ -256,7 +257,7 @@ function Message({
         className={`chat-message error ${shouldRender ? 'visible' : ''}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.8, ease: "easeOut" }}
+        transition={{ duration: 0.3, delay: 1, ease: "easeOut" }}
       >
         <div style={{ marginRight: "7px" }}>{content}</div>
         <div className="refresh-wrap">

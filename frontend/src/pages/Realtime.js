@@ -2,11 +2,21 @@ import React, { useState, useEffect, useRef, useCallback, useContext } from 'rea
 import { useNavigate } from "react-router-dom";
 import { IoMic, IoMicOff, IoClose } from "react-icons/io5";
 import { LuUserRoundCog } from "react-icons/lu";
-import { ClipLoader } from "react-spinners";
+import { SyncLoader } from "react-spinners";
 import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
+import bootSound from "../resources/boot.mp3";
 import "../styles/Realtime.css";
 import "../styles/Header.css";
+
+const TURN_DETECTION = {
+  type: "server_vad",
+  threshold: 0.6,
+  prefix_padding_ms: 300,
+  silence_duration_ms: 500,
+  create_response: true,
+  interrupt_response: true
+};
 
 const Realtime = () => {
   const { 
@@ -17,6 +27,7 @@ const Realtime = () => {
   
   const [isMicEnabled, setIsMicEnabled] = useState(true);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [isUiReady, setIsUiReady] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isModelSpeaking, setIsModelSpeaking] = useState(false);
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
@@ -28,8 +39,35 @@ const Realtime = () => {
   const combinedAudioRef = useRef(null);
   const animationFrameRef = useRef(null);
   const modelModalRef = useRef(null);
+  const bootAudioRef = useRef(null);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isConnecting) {
+      setIsUiReady(false);
+      return;
+    }
+    const t = setTimeout(() => setIsUiReady(true), 200);
+    return () => clearTimeout(t);
+  }, [isConnecting]);
+
+  useEffect(() => {
+    const audio = new Audio(bootSound);
+    bootAudioRef.current = audio;
+    return () => {
+      audio.pause();
+      audio.src = "";
+      bootAudioRef.current = null;
+    };
+  }, []);
+
+  const playBootSound = useCallback(() => {
+    const audio = bootAudioRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }, []);
 
   const cleanup = useCallback(() => {
     if (peerConnection.current) {
@@ -69,13 +107,9 @@ const Realtime = () => {
 
     const renderFrame = () => {
       analyser.getByteFrequencyData(dataArray);
-      const logBins = [0];
-      for (let i = 1; i <= 4; i++) {
-        logBins.push(Math.floor(bufferLength ** (i / 4)));
-      }
-    
+
       let totalAmplitude = 0;
-      for (let i = 0; i < dataArray.length; i++) {
+      for (let i = 2; i <= 200; i++) {
         totalAmplitude += dataArray[i];
       }
       
@@ -90,16 +124,25 @@ const Realtime = () => {
           bar.style.height = `${minHeight}px`;
         });
       } else {
+        const ranges = [
+          [2, 7, 0.5],
+          [8, 70, 1.5],
+          [71, 200, 1.5]
+        ];
+
         bars.forEach((bar, index) => {
-          const startBin = logBins[index];
-          const endBin = logBins[index + 1];
+          const [start, end, boost] = ranges[index];
           let sum = 0;
-          const count = endBin - startBin || 1;
-          for (let i = startBin; i < endBin; i++) {
+          const count = end - start + 1;
+          
+          for (let i = start; i <= end; i++) {
             sum += dataArray[i];
           }
+          
           const average = sum / count;
-          const barHeightPx = minHeight + (average / 255) * (maxHeight - minHeight);
+          const finalValue = Math.min(average * boost, 255);
+          
+          const barHeightPx = minHeight + (finalValue / 255) * (maxHeight - minHeight);
           bar.style.height = `${barHeightPx}px`;
         });
       }
@@ -176,6 +219,17 @@ const Realtime = () => {
       };
 
       dataChannel.current = peerConnection.current.createDataChannel('oai-events');
+      dataChannel.current.onopen = () => {
+        try {
+          dataChannel.current?.send(JSON.stringify({
+            type: "session.update",
+            session: { 
+              turn_detection: TURN_DETECTION,
+              instructions: "You should answer in Korean unless otherwise specified."
+            }
+          }));
+        } catch (e) {}
+      };
 
       dataChannel.current.onmessage = (event) => {
         try {
@@ -222,12 +276,13 @@ const Realtime = () => {
       }
       const answer = { type: 'answer', sdp: await sdpResponse.text() };
       await peerConnection.current.setRemoteDescription(answer);
+      playBootSound();
       setIsConnecting(false);
     } catch (err) {
       cleanup();
       navigate("/", { state: { errorModal: err.message } });
     }
-  }, [navigate, addAudioTrack, cleanup]);
+  }, [navigate, addAudioTrack, cleanup, playBootSound]);
 
   useEffect(() => {
     connectToSession(realtimeModel);
@@ -252,7 +307,13 @@ const Realtime = () => {
 
   const handleGoBack = useCallback((e) => {
     cleanup();
-    setTimeout(() => navigate(-1), 300);
+    setTimeout(() => {
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        window.location.href = 'https://devochat.com';
+      }
+    }, 300);
   }, [navigate, cleanup]);
 
   const handleModelChange = useCallback(async (newModel) => {
@@ -286,18 +347,25 @@ const Realtime = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
         >
-          {isConnecting ? (
+          {!isUiReady ? (
             <div className="spinner-container">
-              <ClipLoader size={60} />
+              <SyncLoader size={60} />
             </div>
           ) : (
             <>
-              <div className="realtime-models-icon" onClick={() => setIsModelModalOpen(true)}>
+              <motion.div 
+                key="realtime-models-icon"
+                className="realtime-models-icon" 
+                onClick={() => setIsModelModalOpen(true)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
                 <LuUserRoundCog />
-              </div>
+              </motion.div>
 
               <div className="audio-bars-container">
-                <div className="audio-bar"></div>
                 <div className="audio-bar"></div>
                 <div className="audio-bar"></div>
                 <div className="audio-bar"></div>
@@ -309,9 +377,9 @@ const Realtime = () => {
                     <motion.div
                       key="transcript-container"
                       className="transcript-container"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
                       transition={{ duration: 0.3 }}
                     >
                       {transcript}
@@ -323,10 +391,10 @@ const Realtime = () => {
                   <motion.div
                     key="realtime-function-container"
                     className="realtime-function-container"
-                    initial={{ y: 10 }}
-                    animate={{ y: 0 }}
-                    exit={{ y: 10 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
                   >
                     <div onClick={toggleMicrophone} className={`realtime-function ${isMicEnabled ? 'mic-enabled' : 'mic-disabled'}`}>
                       {isMicEnabled ? <IoMic /> : <IoMicOff />}

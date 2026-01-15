@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ClipLoader } from "react-spinners";
 import '../styles/MCPModal.css';
 
 const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList }) => {
@@ -79,45 +78,39 @@ const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList }) => {
             </div>
 
             <div className="mcp-modal-body">
-              {loading && (
-                <div className="mcp-loading-container">
-                  <ClipLoader loading={true} size={40} />
-                </div>
-              )}
-              
-              {error && (
+              {error? (
                 <div className="mcp-error-container">
                   <div className="mcp-error-text">{error}</div>
                 </div>
+              ) : (
+                availableServers.map((server) => (
+                  <div
+                      key={server.id}
+                      className={`mcp-server-item ${selectedServers.includes(server.id) ? 'selected' : ''}`}
+                      onClick={() => handleServerToggle(server.id)}
+                  >
+                    <div className="mcp-server-icon">
+                      <img 
+                        src={`${process.env.REACT_APP_FASTAPI_URL}${server.icon}`} 
+                        alt=""
+                        height={35}
+                      />
+                    </div>
+                    
+                    <div className="mcp-server-name">
+                      {server.name.replace(/_/g, ' ')}
+                    </div>
+                    <div className="mcp-server-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedServers.includes(server.id)}
+                        onChange={() => handleServerToggle(server.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  </div>
+                ))
               )}
-              
-              {!loading && !error && availableServers.map((server) => (
-                <div
-                    key={server.id}
-                    className={`mcp-server-item ${selectedServers.includes(server.id) ? 'selected' : ''}`}
-                    onClick={() => handleServerToggle(server.id)}
-                >
-                  <div className="mcp-server-icon">
-                    <img 
-                      src={`${process.env.REACT_APP_FASTAPI_URL}${server.icon}`} 
-                      alt=""
-                      height={35}
-                    />
-                  </div>
-                  
-                  <div className="mcp-server-name">
-                    {server.name.replace(/_/g, ' ')}
-                  </div>
-                  <div className="mcp-server-checkbox">
-                    <input
-                      type="checkbox"
-                      checked={selectedServers.includes(server.id)}
-                      onChange={() => handleServerToggle(server.id)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                </div>
-              ))}
             </div>
 
             <div className="mcp-modal-footer">

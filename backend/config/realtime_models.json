@@ -1,5 +1,5 @@
 {
-  "default": "gpt-realtime-mini:marin",
+  "default": "gpt-realtime-mini:coral",
   "models": [
     {
       "model_name": "gpt-realtime-mini:marin",

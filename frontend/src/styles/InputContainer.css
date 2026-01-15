@@ -16,11 +16,6 @@
     -webkit-touch-callout: none;
 }
 
-.main-input-container {
-    top: 50%;
-    transform: translateY(-50%);
-}
-
 .content-container {
     width: 100%;
     min-width: 0;

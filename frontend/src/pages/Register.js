@@ -1,11 +1,11 @@
 // Register.js
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import Modal from "../components/Modal";
 import Toast from "../components/Toast";
 import "../styles/Auth.css";
-import logo from "../logo.png";
+import logo from "../resources/logo.png";
 
 function Register() {
   const [name, setName] = useState("");
@@ -60,12 +60,7 @@ function Register() {
   }
 
   return (
-    <motion.div
-      className="auth-container"
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4 }}
-    >
+    <div className="auth-container">
       <div className="auth-logo">
         <img src={logo} alt="DEVOCHAT" className="logo-image" />
       </div>
@@ -134,7 +129,7 @@ function Register() {
         isVisible={showToast}
         onClose={() => setShowToast(false)}
       />
-    </motion.div>
+    </div>
   );
 }
 

@@ -4,7 +4,6 @@ import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
 import { FiPaperclip, FiMic, FiServer } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipLoader } from "react-spinners";
 import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { SettingsContext } from "../contexts/SettingsContext";
 import MCPModal from "./MCPModal";
@@ -14,7 +13,6 @@ import "../styles/InputContainer.css";
 function InputContainer({
   isTouch,
   placeholder,
-  extraClassName = "",
   inputText,
   setInputText,
   isLoading,
@@ -238,11 +236,12 @@ function InputContainer({
   }, [setMCPList]);
 
   return (
-    <motion.div
-      className={`input-container ${extraClassName}`}
-      initial={{ y: 8, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
+    <motion.div 
+      className="input-container"
+      initial={{ y: 8 }}
+      animate={{ y: 0 }}
       transition={{ duration: 0.3 }}
+      layout
     >
       <div className="content-container">
         <AnimatePresence>
@@ -274,7 +273,7 @@ function InputContainer({
                         <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
                         {!file.content && (
                           <div className="file-upload-overlay">
-                            <ClipLoader size={20} />
+                            <ImSpinner8 className="spinner" />
                           </div>
                         )}
                       </div>
@@ -284,7 +283,7 @@ function InputContainer({
                         <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
                         {!file.content && (
                           <div className="file-upload-overlay">
-                            <ClipLoader size={20} />
+                            <ImSpinner8 className="spinner" />
                           </div>
                         )}
                       </div>
@@ -301,9 +300,9 @@ function InputContainer({
             {isRecording && (
               <motion.div
                 className="recording-indicator"
-                initial={{ y: 5, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 5, opacity: 0 }}
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
                 <div className="recording-dot"></div>

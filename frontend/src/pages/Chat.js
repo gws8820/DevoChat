@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { IoImageOutline, IoAttach } from "react-icons/io5";
-import { ClipLoader } from "react-spinners";
+import { PulseLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -668,7 +668,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
             marginBottom: "30px",
           }}
         >
-          <ClipLoader loading={true} size={50} />
+          <PulseLoader loading={true} size={20} />
         </motion.div>
       )}
       

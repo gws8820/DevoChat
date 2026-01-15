@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { CiWarning } from "react-icons/ci";
 import { GoCopy, GoCheck } from "react-icons/go";
@@ -9,10 +10,10 @@ function Toast({
   type, 
   message, 
   isVisible, 
-  onClose
+  onClose,
 }) {
   React.useEffect(() => {
-    if (isVisible > 0) {
+    if (isVisible) {
       const timer = setTimeout(() => {
         onClose?.();
       }, 2000);
@@ -52,7 +53,7 @@ function Toast({
     }
   };
 
-  return (
+  const content = (
     <AnimatePresence>
       {isVisible && message && (
         <div className="toast-wrapper">
@@ -70,6 +71,12 @@ function Toast({
       )}
     </AnimatePresence>
   );
+
+  if (typeof document !== "undefined" && document.body) {
+    return createPortal(content, document.body);
+  }
+
+  return content;
 }
 
 export default Toast; 
