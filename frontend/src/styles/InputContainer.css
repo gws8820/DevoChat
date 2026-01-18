@@ -286,11 +286,11 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    margin: 4px;
+    margin: 8px;
     padding: 0;
     width: 42px;
     height: 42px;
-    font-size: 18px;
+    font-size: 20px;
     border: none;
     cursor: pointer;
     transition: background-color 0.2s ease;
@@ -307,41 +307,6 @@
 
 .send-button:hover {
     background-color: #f0f0f0;
-}
-
-.loading-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.spinner {
-    font-size: 20px;
-    animation: spin 1s linear infinite;
-    transition: opacity 0.2s ease, visibility 0.2s ease;
-}
-
-.stop-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    font-size: 15px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translate(-50%, -50%);
-    transition: opacity 0.2s ease, visibility 0.2s ease;
-}
-
-.send-button:hover .spinner {
-    opacity: 0;
-    visibility: hidden;
-}
-
-.send-button:hover .stop-icon {
-    display: block;
-    opacity: 1;
-    visibility: visible;
 }
 
 @keyframes spin {

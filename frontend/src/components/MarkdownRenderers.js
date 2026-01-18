@@ -60,14 +60,8 @@ export const ThinkBlock = React.memo(({ children, isThinkClosed = false, isLoadi
         className="think-toggle" 
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        {isThinking ? (
-          <span className="thinking">생각하는 중</span>
-        ) : (
-          <>
-            <span>{isExpanded ? '생각 닫기' : '생각 열기'}</span>
-            {isExpanded ? <GoChevronUp strokeWidth={1} /> : <GoChevronRight strokeWidth={1} />}
-          </>
-        )}
+        {isThinking ? '생각하는 중' : isExpanded ? '생각 닫기' : '생각 열기'}
+        {isExpanded ? <GoChevronUp strokeWidth={1} /> : <GoChevronRight strokeWidth={1} />}
       </div>
       <AnimatePresence initial={false}>
         {isExpanded && (

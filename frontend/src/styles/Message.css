@@ -33,6 +33,7 @@
   flex-direction: column;
   word-break: break-all;
   content-visibility: auto;
+  overflow: hidden;
 }
 
 .chat-message.visible {
@@ -125,7 +126,7 @@
 
 .message-function {
   display: flex;
-  margin: 0 14px;
+  margin: 0 2px;
   font-size: 14px;
   gap: 10px;
   color: #aaaaaa;
@@ -207,7 +208,7 @@
   overflow-y: hidden;
 }
 
-.think-toggle, .citations-toggle, .image-block {
+.think-toggle, .citations-toggle {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -216,12 +217,6 @@
   color: rgb(100, 100, 100);
   cursor: pointer;
   user-select: none;
-}
-
-.think-toggle {
-  width: fit-content;
-  max-width: 70px;
-  overflow: visible;
 }
 
 .citations-toggle {
@@ -236,25 +231,6 @@
 
 .think-content {
   margin-top: 10px;
-}
-
-.thinking, .image-generating {
-  width: 200px;
-  color: transparent;
-  background-image: linear-gradient(90deg, rgb(90, 90, 90) 0%, rgb(120, 120, 120) 30%, rgb(200, 200, 200) 50%, rgb(120, 120, 120) 70%, rgb(90, 90, 90) 100%);
-  background-size: 200% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  animation: think-shimmer 5.5s linear infinite;
-}
-
-@keyframes think-shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
 }
 
 .code-block {

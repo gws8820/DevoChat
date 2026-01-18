@@ -68,7 +68,7 @@ app.add_middleware(LoggingMiddleware)
 
 @app.get("/notice", response_model=NoticeResponse)
 async def get_notice():
-    message = "Gemini 3 Flash가 추가되었습니다!"
+    message = ""
     hash = base64.b64encode(message.encode('utf-8')).decode('utf-8')
     
     return NoticeResponse(

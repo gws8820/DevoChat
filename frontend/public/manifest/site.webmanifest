@@ -1,0 +1,41 @@
+{
+  "name": "DevoChat",
+  "short_name": "DevoChat",
+  "description": "통합 AI 채팅 플랫폼",
+  "icons": [
+    {
+      "src": "/manifest/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/manifest/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "shortcuts": [
+    {
+      "name": "이미지 생성",
+      "short_name": "이미지 생성",
+      "description": "이미지를 생성합니다.",
+      "url": "/image",
+      "icons": [{ "src": "/manifest/image-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "음성 대화",
+      "short_name": "음성 대화",
+      "description": "음성 대화를 시작합니다.",
+      "url": "/realtime",
+      "icons": [{ "src": "/manifest/realtime-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

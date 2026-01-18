@@ -3,12 +3,8 @@
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
     width: 100%;
+    height: 100dvh;
     background: white;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -44,18 +40,21 @@
     color: rgb(220, 60, 140);
 }
 
-.audio-bars-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
+.black-circle {
+    width: 80px;
+    height: 80px;
+    background-color: black;
+    border-radius: 50%;
 }
-  
-.audio-bar {
-    width: 60px;
-    background-color: rgb(0, 0, 0);
-    border-radius: 50px;
-    transition: height 0.1s ease;
+
+.orb-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 230px;
+    margin-bottom: 60px;
+    transition: transform 0.3s ease-out;
 }
 
 .bottom-ui-container {
@@ -69,14 +68,16 @@
 }
 
 .transcript-container {
-    width: 600px;
+    width: min(70%, 600px);
     font-size: 14px;
+    font-weight: 500;
     text-align: center;
     line-height: 1.4;
-    color: rgb(110, 110, 110);
+    color: rgb(120, 120, 120);
     pointer-events: none;
     display: -webkit-box;
     -webkit-box-orient: vertical;
+    line-clamp: 4;
     -webkit-line-clamp: 4;
     overflow: hidden;
 }
@@ -118,9 +119,5 @@
 
     .bottom-ui-container {
         gap: 20px;
-    }
-    
-    .transcript-container {
-        width: 250px;
     }
 }

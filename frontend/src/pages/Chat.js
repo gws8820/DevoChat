@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { IoImageOutline, IoAttach } from "react-icons/io5";
-import { PulseLoader } from "react-spinners";
+import { PulseLoader, HashLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -691,6 +691,12 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
               shouldRender={idx >= messages.length - 6}
             />
           )), [messages, handleDelete, handleRegenerate, sendEditedMessage, isTouch, isLoading]
+        )}
+
+        {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
+          <div style={{ margin: "7px 14px" }}>
+            <HashLoader size={16} speedMultiplier={0.5} />
+          </div>
         )}
 
         <AnimatePresence>

@@ -36,6 +36,7 @@ function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [isResponsive, setIsResponsive] = useState(window.innerWidth <= 768);
+  const [isTransitionEnabled, setIsTransitionEnabled] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userSidebarOpen, setUserSidebarOpen] = useState(null);
   const [isTouch, setIsTouch] = useState(false);
@@ -70,6 +71,13 @@ function AppContent() {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsTransitionEnabled(true);
+    }, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -200,6 +208,7 @@ function AppContent() {
 
   return (
     <div style={{ display: "flex", height: "100dvh", margin: "0", overflow: "hidden" }}>
+      {/* Sidebar Container */}
       {shouldShowLayout && (
         <div
           style={{
@@ -210,7 +219,7 @@ function AppContent() {
             height: "100dvh",
             zIndex: 1000,
             transform: isSidebarOpen ? "translateX(0)" : "translateX(-100%)",
-            transition: "transform 0.3s ease",
+            transition: isTransitionEnabled ? "transform 0.3s ease" : "none",
             willChange: "transform",
             backfaceVisibility: "hidden",
           }}
@@ -225,6 +234,7 @@ function AppContent() {
         </div>
       )}
 
+      {/* Sidebar Overlay */}
       {shouldShowLayout && isSidebarOpen && isResponsive && (
         <div
           onClick={toggleSidebar}
@@ -240,6 +250,7 @@ function AppContent() {
         />
       )}
 
+      {/* Main Container */}
       <div
         style={{ 
           width: "100%",

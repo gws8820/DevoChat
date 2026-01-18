@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, useContext } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { IoImageOutline } from "react-icons/io5";
+import { PulseLoader, HashLoader } from "react-spinners";
 import { motion, AnimatePresence } from "framer-motion";
-import { PulseLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { useFileUpload } from "../utils/useFileUpload";
-import ImageInputContainer from "../components/ImageInputContainer";
+import ImageInputContainer from "../components/ImageInputContainer"; 
 import Message from "../components/Message";
 import Modal from "../components/Modal";
 import Toast from "../components/Toast";
@@ -431,17 +431,10 @@ function ImageChat({ isTouch, chatMessageRef }) {
           )}
         </AnimatePresence>
 
-        {isLoading && (
-          <motion.div
-            className="chat-message"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, delay: 1, ease: "easeOut" }}
-          >
-            <div className="image-block">
-              <span className="image-generating">이미지 생성 중...</span>
-            </div>
-          </motion.div>
+        {isLoading && messages[messages.length - 1].role === "user" && (
+          <div style={{ margin: "7px 14px" }}>
+            <HashLoader size={16} speedMultiplier={0.5} />
+          </div>
         )}
         <div ref={bottomRef} />
       </div>

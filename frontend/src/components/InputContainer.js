@@ -3,8 +3,8 @@ import { GoPlus, GoGlobe, GoLightBulb, GoTelescope, GoUnlock } from "react-icons
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
 import { FiPaperclip, FiMic, FiServer } from "react-icons/fi";
+import { PiPaperPlaneRightFill, PiStopFill } from "react-icons/pi";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPaperPlane, FaStop } from "react-icons/fa";
 import { SettingsContext } from "../contexts/SettingsContext";
 import MCPModal from "./MCPModal";
 import Toast from "./Toast";
@@ -241,7 +241,6 @@ function InputContainer({
       initial={{ y: 8 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.3 }}
-      layout
     >
       <div className="content-container">
         <AnimatePresence>
@@ -435,14 +434,7 @@ function InputContainer({
         disabled={uploadingFiles || isRecording}
         aria-label={isLoading ? "전송 중단" : "메시지 전송"}
       >
-        {isLoading ? (
-          <div className="loading-container">
-            <ImSpinner8 className="spinner" />
-            <FaStop className="stop-icon" />
-          </div>
-        ) : (
-          <FaPaperPlane />
-        )}
+        {isLoading ? <PiStopFill /> : <PiPaperPlaneRightFill />}
       </button>
 
       <input

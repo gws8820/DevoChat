@@ -59,7 +59,7 @@ function Home({ isTouch, userInfo }) {
         setNoticeHash(hash);
         
         const storedHash = localStorage.getItem('noticeHash');
-        if (!storedHash || storedHash !== hash) {
+        if (hash && (!storedHash || storedHash !== hash)) {
           setConfirmModal(true);
         }
       } catch (error) {}

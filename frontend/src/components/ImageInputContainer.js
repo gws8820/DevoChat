@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { GoImage } from "react-icons/go";
 import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
+import { PiPaperPlaneRightFill, PiStopFill } from "react-icons/pi";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaPaperPlane, FaStop } from "react-icons/fa";
 import Toast from "./Toast";
 import "../styles/InputContainer.css";
 
@@ -197,14 +197,7 @@ function ImageInputContainer({
         disabled={uploadingFiles}
         aria-label={isLoading ? "전송 중단" : "메시지 전송"}
       >
-        {isLoading ? (
-          <div className="loading-container">
-            <ImSpinner8 className="spinner" />
-            <FaStop className="stop-icon" />
-          </div>
-        ) : (
-          <FaPaperPlane />
-        )}
+        {isLoading ? <PiStopFill /> : <PiPaperPlaneRightFill />}
       </button>
 
       <input
@@ -234,5 +227,3 @@ function ImageInputContainer({
 }
 
 export default ImageInputContainer;
-
-

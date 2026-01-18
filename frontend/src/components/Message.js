@@ -90,7 +90,11 @@ function Message({
           .replace(/<\/?citations>/gi, '')
           .replace(/\n$/, "");
       }
-      await navigator.clipboard.writeText(textToCopy);
+      await navigator.clipboard.writeText(
+        textToCopy.replace(/\\u([0-9a-fA-F]{4})/g, (_, code) =>
+          String.fromCharCode(parseInt(code, 16))
+        )
+      );
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
     } catch (err) {

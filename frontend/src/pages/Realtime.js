@@ -2,32 +2,22 @@ import React, { useState, useEffect, useRef, useCallback, useContext } from 'rea
 import { useNavigate } from "react-router-dom";
 import { IoMic, IoMicOff, IoClose } from "react-icons/io5";
 import { LuUserRoundCog } from "react-icons/lu";
-import { SyncLoader } from "react-spinners";
 import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
+import Orb from "../components/Orb";
 import bootSound from "../resources/boot.mp3";
 import "../styles/Realtime.css";
 import "../styles/Header.css";
 
-const TURN_DETECTION = {
-  type: "server_vad",
-  threshold: 0.6,
-  prefix_padding_ms: 300,
-  silence_duration_ms: 500,
-  create_response: true,
-  interrupt_response: true
-};
-
 const Realtime = () => {
-  const { 
-    realtimeModels, 
-    realtimeModel, 
-    updateRealtimeModel 
+  const {
+    realtimeModels,
+    realtimeModel,
+    updateRealtimeModel
   } = useContext(SettingsContext);
-  
+
   const [isMicEnabled, setIsMicEnabled] = useState(true);
   const [isConnecting, setIsConnecting] = useState(true);
-  const [isUiReady, setIsUiReady] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isModelSpeaking, setIsModelSpeaking] = useState(false);
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
@@ -42,15 +32,6 @@ const Realtime = () => {
   const bootAudioRef = useRef(null);
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isConnecting) {
-      setIsUiReady(false);
-      return;
-    }
-    const t = setTimeout(() => setIsUiReady(true), 200);
-    return () => clearTimeout(t);
-  }, [isConnecting]);
 
   useEffect(() => {
     const audio = new Audio(bootSound);
@@ -109,42 +90,16 @@ const Realtime = () => {
       analyser.getByteFrequencyData(dataArray);
 
       let totalAmplitude = 0;
-      for (let i = 2; i <= 200; i++) {
+      for (let i = 1; i <= 200; i++) {
         totalAmplitude += dataArray[i];
       }
       
-      const threshold = 1000;
-      const minHeight = 60;
-      const maxHeight = 240;
+      const averageAmplitude = totalAmplitude / 200;
+      const scale = 1 + Math.min(averageAmplitude / 128, 1) * 0.1;
       
-      const bars = document.querySelectorAll('.audio-bar');
-      
-      if (totalAmplitude < threshold) {
-        bars.forEach(bar => {
-          bar.style.height = `${minHeight}px`;
-        });
-      } else {
-        const ranges = [
-          [2, 7, 0.5],
-          [8, 70, 1.5],
-          [71, 200, 1.5]
-        ];
-
-        bars.forEach((bar, index) => {
-          const [start, end, boost] = ranges[index];
-          let sum = 0;
-          const count = end - start + 1;
-          
-          for (let i = start; i <= end; i++) {
-            sum += dataArray[i];
-          }
-          
-          const average = sum / count;
-          const finalValue = Math.min(average * boost, 255);
-          
-          const barHeightPx = minHeight + (finalValue / 255) * (maxHeight - minHeight);
-          bar.style.height = `${barHeightPx}px`;
-        });
+      const circle = document.querySelector('.orb-container');
+      if (circle) {
+        circle.style.transform = `scale(${scale})`;
       }
       
       animationFrameRef.current = requestAnimationFrame(renderFrame);
@@ -219,21 +174,36 @@ const Realtime = () => {
       };
 
       dataChannel.current = peerConnection.current.createDataChannel('oai-events');
-      dataChannel.current.onopen = () => {
-        try {
-          dataChannel.current?.send(JSON.stringify({
-            type: "session.update",
-            session: { 
-              turn_detection: TURN_DETECTION,
-              instructions: "You should answer in Korean unless otherwise specified."
-            }
-          }));
-        } catch (e) {}
-      };
-
       dataChannel.current.onmessage = (event) => {
         try {
           const realtimeEvent = JSON.parse(event.data);
+
+          if (realtimeEvent.type === 'error') {
+            console.error("Realtime API Error:", realtimeEvent);
+          }
+
+          if (realtimeEvent.type === 'session.created') {
+            const updateEvent = {
+              type: "session.update",
+              session: { 
+                type: "realtime",
+                instructions: "Answer in Korean unless otherwise specified.",
+                audio: {
+                  input: {
+                    turn_detection: {
+                      type: "semantic_vad",
+                      eagerness: "low"
+                    }
+                  }
+                }
+              }
+            };
+            dataChannel.current.send(JSON.stringify(updateEvent));
+          }
+
+          if (realtimeEvent.type === 'session.updated') {
+            console.log("Session updated:", realtimeEvent);
+          }
 
           if (realtimeEvent.type === 'response.created') {
             setTranscript("");
@@ -256,7 +226,7 @@ const Realtime = () => {
             setTimeout(() => setTranscript(""), 3000);
           }
         } catch (error) {
-          console.error('Parsing error:', error);
+          console.error("Parsing error:", error);
         }
       };
       
@@ -347,66 +317,69 @@ const Realtime = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
         >
-          {!isUiReady ? (
-            <div className="spinner-container">
-              <SyncLoader size={60} />
-            </div>
-          ) : (
-            <>
-              <motion.div 
-                key="realtime-models-icon"
-                className="realtime-models-icon" 
-                onClick={() => setIsModelModalOpen(true)}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
+          <AnimatePresence mode="wait">
+            {isConnecting ? (
+              <div
+                key="orb"
+                className="orb-container"
               >
-                <LuUserRoundCog />
-              </motion.div>
-
-              <div className="audio-bars-container">
-                <div className="audio-bar"></div>
-                <div className="audio-bar"></div>
-                <div className="audio-bar"></div>
+                <motion.div
+                  className="black-circle"
+                  initial={{ scale: 1 }}
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+                  }}
+                  exit={{
+                    scale: 2.3,
+                    transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
+                  }}
+                />
               </div>
+            ) : (
+              <>
+                <Orb hue={0} hoverIntensity={0} backgroundColor="#ffffff" />
 
-              <div className="bottom-ui-container">
-                <AnimatePresence>
-                  {isModelSpeaking && transcript && (
-                    <motion.div
-                      key="transcript-container"
-                      className="transcript-container"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {transcript}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <motion.div 
+                  key="realtime-models-icon"
+                  className="realtime-models-icon" 
+                  onClick={() => setIsModelModalOpen(true)}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <LuUserRoundCog />
+                </motion.div>
 
-                <AnimatePresence>
-                  <motion.div
-                    key="realtime-function-container"
-                    className="realtime-function-container"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
+                <div className="bottom-ui-container">
+                  <AnimatePresence>
+                    {isModelSpeaking && transcript && (
+                      <motion.div
+                        key="transcript-container"
+                        className="transcript-container"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {transcript}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="realtime-function-container">
                     <div onClick={toggleMicrophone} className={`realtime-function ${isMicEnabled ? 'mic-enabled' : 'mic-disabled'}`}>
                       {isMicEnabled ? <IoMic /> : <IoMicOff />}
                     </div>
                     <div onClick={handleGoBack} className="realtime-function stop">
                       <IoClose />
                     </div>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </>
-          )}
+                  </div>
+                </div>
+              </>
+            )}
+          </AnimatePresence>
         </motion.div>
       </AnimatePresence>
 
