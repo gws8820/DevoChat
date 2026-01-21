@@ -40,6 +40,13 @@
   content-visibility: visible;
 }
 
+.chat-loading-circle {
+  width: 12px;
+  height: 12px;
+  background-color: black;
+  border-radius: 50%;
+}
+
 .user-wrap {
   display: flex;
   flex-direction: column;
@@ -126,7 +133,7 @@
 
 .message-function {
   display: flex;
-  margin: 0 2px;
+  margin: 0 14px;
   font-size: 14px;
   gap: 10px;
   color: #aaaaaa;
@@ -166,7 +173,7 @@
 }
 
 .chat-message p:empty {
-  margin: 5px 0;
+  margin: 0;
 }
 
 .chat-message h1, h2, h3, h4 {
@@ -208,19 +215,47 @@
   overflow-y: hidden;
 }
 
-.think-toggle, .citations-toggle {
+.think-toggle, .citations-toggle, .image-generating {
   display: flex;
   align-items: center;
   gap: 4px;
   font-weight: 600;
   font-size: 13px;
   color: rgb(100, 100, 100);
-  cursor: pointer;
   user-select: none;
+}
+
+.think-toggle.thinking, .image-generating {
+  background: linear-gradient(to right, rgb(100, 100, 100) 0%, rgb(100, 100, 100) 40%, rgb(255, 255, 255) 50%, rgb(100, 100, 100) 60%, rgb(100, 100, 100) 100%);
+  background-size: 200% auto;
+  color: rgb(100, 100, 100);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.think-toggle {
+  cursor: pointer;
 }
 
 .citations-toggle {
   margin-top: 10px;
+  cursor: pointer;
+}
+
+.image-generating {
+  width: fit-content;
+  margin-left: 14px;
 }
 
 .think-content, .citations-content {
@@ -387,6 +422,14 @@ textarea:focus {
   
   .message-file-area .file-object, .message-file-area .image-object {
     margin: 0 5px 2px;
+  }
+
+  .message-function {
+    margin-right: 0;
+  }
+
+  .image-generating {
+    margin-left: 5px;
   }
 
   .edit-buttons {

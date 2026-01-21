@@ -51,7 +51,8 @@ function AppContent() {
       isLoggedIn && (
         location.pathname === '/' ||
         location.pathname.startsWith('/chat/') ||
-        location.pathname.startsWith('/image')
+        location.pathname.startsWith('/image') ||
+        location.pathname.startsWith('/realtime')
       )
     );
   }, [isLoggedIn, location.pathname]);

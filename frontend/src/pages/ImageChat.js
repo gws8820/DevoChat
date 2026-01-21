@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, useContext } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { IoImageOutline } from "react-icons/io5";
-import { PulseLoader, HashLoader } from "react-spinners";
+import { PulseLoader } from "react-spinners";
 import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
@@ -245,8 +245,6 @@ function ImageChat({ isTouch, chatMessageRef }) {
           throw new Error("선택한 모델이 유효하지 않습니다.");
         }
 
-        console.log("selectedModel", selectedModel);
-
         const response = await fetch(
           `${process.env.REACT_APP_FASTAPI_URL}${selectedModel.endpoint}`,
           {
@@ -274,13 +272,15 @@ function ImageChat({ isTouch, chatMessageRef }) {
           setErrorMessage("이미지 생성에 실패했습니다: " + result.detail);
           return;
         }
-        
+
         if (result.content) {
           addAssistantMessage({
             type: "image",
             content: result.content,
             name: result.name
           });
+          
+          updateTimestamp(conversation_id, new Date().toISOString());
         } else {
           setErrorMessage("이미지 생성에 실패했습니다.");
         }
@@ -290,8 +290,6 @@ function ImageChat({ isTouch, chatMessageRef }) {
       } finally {
         setIsLoading(false);
         abortControllerRef.current = null;
-        
-        updateTimestamp(conversation_id, new Date().toISOString());
       }
     },
     [
@@ -431,10 +429,15 @@ function ImageChat({ isTouch, chatMessageRef }) {
           )}
         </AnimatePresence>
 
-        {isLoading && messages[messages.length - 1].role === "user" && (
-          <div style={{ margin: "7px 14px" }}>
-            <HashLoader size={16} speedMultiplier={0.5} />
-          </div>
+        {isLoading && (
+          <motion.div
+            className="image-generating"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}
+          >
+            이미지 생성 중...
+          </motion.div>
         )}
         <div ref={bottomRef} />
       </div>

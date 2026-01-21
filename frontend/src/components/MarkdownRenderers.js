@@ -51,15 +51,12 @@ export const InlineCode = React.memo(({ children, ...props }) => {
 });
 
 export const ThinkBlock = React.memo(({ children, isThinkClosed = false, isLoading = false, isLastMessage = false }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const isThinking = !isThinkClosed && isLoading && isLastMessage;
 
   return (
     <>
-      <div 
-        className="think-toggle" 
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
+      <div className={`think-toggle ${isThinking ? 'thinking' : ''}`} onClick={() => setIsExpanded(!isExpanded)}>
         {isThinking ? '생각하는 중' : isExpanded ? '생각 닫기' : '생각 열기'}
         {isExpanded ? <GoChevronUp strokeWidth={1} /> : <GoChevronRight strokeWidth={1} />}
       </div>
@@ -152,7 +149,12 @@ export const TempCodeBlock = React.memo(({ className, children, ...props }) => {
 export const CodeBlock = React.memo(({ className, children, ...props }) => {
   const [copied, setCopied] = React.useState(false);
   const match = /language-(\w+)/.exec(className || "");
-  const language = match ? match[1] : "text";
+  let language = match ? match[1] : "text";
+  const displayLanguage = language;
+
+  if (language === "systemverilog" || language === "sv") {
+    language = "verilog";
+  }
 
   const handleCopy = async () => {
     try {
@@ -168,7 +170,7 @@ export const CodeBlock = React.memo(({ className, children, ...props }) => {
     <div className="code-block">
       <div className="code-header-wrap">
         <div className="code-header">
-          <span className="code-type">{language}</span>
+          <span className="code-type">{displayLanguage}</span>
           <button className="copy-button" onClick={handleCopy}>
             {copied ? <GoCheck /> : <GoCopy />}
           </button>

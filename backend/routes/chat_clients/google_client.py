@@ -186,22 +186,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     response_text = ""
     token_usage = None
     
-    buffered_chunks = []
-    loop = asyncio.get_running_loop()
-    last_flush_time = loop.time()
     client_disconnected = False
-
-    def flush_buffer(force: bool = False):
-        nonlocal buffered_chunks, last_flush_time
-        if not buffered_chunks:
-            return None
-        now_time = loop.time()
-        if not force and STREAM_COOLDOWN_SECONDS > 0 and (now_time - last_flush_time) < STREAM_COOLDOWN_SECONDS:
-            return None
-        combined = ''.join(buffered_chunks)
-        buffered_chunks.clear()
-        last_flush_time = now_time
-        return combined
     
     try:
         client = Client(api_key=os.getenv('GEMINI_API_KEY'))
@@ -227,6 +212,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         
         chunk_queue = asyncio.Queue()
         stream_task = asyncio.create_task(process_stream(chunk_queue, request, parameters, fastapi_request, client))
+        
         while True:
             chunk = await chunk_queue.get()
             if chunk is None:
@@ -234,26 +220,28 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             if await fastapi_request.is_disconnected():
                 client_disconnected = True
                 break
+
             if isinstance(chunk, dict):
-                pending = flush_buffer(force=True)
-                if pending:
-                    yield f"data: {json.dumps({'content': pending})}\n\n"
                 if "error" in chunk:
                     yield f"data: {json.dumps(chunk)}\n\n"
                     break
                 elif chunk.get("type") == "token_usage":
                     token_usage = chunk
             else:
-                response_text += chunk
-                buffered_chunks.append(chunk)
-                pending = flush_buffer()
-                if pending:
-                    yield f"data: {json.dumps({'content': pending})}\n\n"
+                text_chunk = chunk
+                response_text += text_chunk
+                
+                step = 3
+                for i in range(0, len(text_chunk), step):
+                    if await fastapi_request.is_disconnected():
+                        client_disconnected = True
+                        break
+                    
+                    sub_chunk = text_chunk[i:i+step]
+                    yield f"data: {json.dumps({'content': sub_chunk})}\n\n"
 
-        if not client_disconnected:
-            pending = flush_buffer(force=True)
-            if pending:
-                yield f"data: {json.dumps({'content': pending})}\n\n"
+            if client_disconnected:
+                break
 
         if not stream_task.done():
             stream_task.cancel()

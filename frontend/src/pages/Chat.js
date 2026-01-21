@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { IoImageOutline, IoAttach } from "react-icons/io5";
-import { PulseLoader, HashLoader } from "react-spinners";
+import { PulseLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -303,6 +303,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           }
           return;
         }
+
+        updateTimestamp(conversation_id, new Date().toISOString());
   
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
@@ -347,8 +349,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       } finally {
         setIsLoading(false);
         abortControllerRef.current = null;
-
-        updateTimestamp(conversation_id, new Date().toISOString());
       }
     },
     [
@@ -694,8 +694,15 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         )}
 
         {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-          <div style={{ margin: "7px 14px" }}>
-            <HashLoader size={16} speedMultiplier={0.5} />
+          <div style={{ margin: isInference ? "12px 14px 24px" : "18px 14px 32px" }}>
+             <motion.div
+                className="chat-loading-circle"
+                initial={{ scale: 1 }}
+                animate={{
+                  scale: [1, 1.1, 1],
+                  transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+                }}
+             />
           </div>
         )}
 
