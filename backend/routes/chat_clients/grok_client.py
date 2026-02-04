@@ -18,7 +18,8 @@ from ..common import (
     get_conversation, save_conversation,
     normalize_assistant_content,
     getReason, getVerbosity,
-    STREAM_COOLDOWN_SECONDS
+    STREAM_COOLDOWN_SECONDS,
+    RawChunk
 )
 from logging_util import logger
 
@@ -128,7 +129,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                         
                         result = tool_info.arguments
                         
-                        await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n")
+                        await chunk_queue.put(RawChunk(
+                            f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n"
+                        ))
                         
                 if chunk.content:
                     if is_thinking:
@@ -185,11 +188,15 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
         logger.error(f"STREAM_ERROR: {str(ex)}")
         await chunk_queue.put({"error": str(ex)})
     finally:
+        if is_thinking:
+            await chunk_queue.put('\n</think>\n\n')
+        
         if citations:
-            await chunk_queue.put('\n<citations>')
+            citations_text = "\n<citations>"
             for idx, item in enumerate(citations, 1):
-                await chunk_queue.put(f"\n\n[{idx}] {item}")
-            await chunk_queue.put('</citations>\n')
+                citations_text += f"\n\n[{idx}] {item}"
+            citations_text += "</citations>\n"
+            await chunk_queue.put(RawChunk(citations_text))
                 
         await chunk_queue.put(None)
 
@@ -265,6 +272,11 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                     break
                 elif chunk.get("type") == "token_usage":
                     token_usage = chunk
+                    continue
+            if isinstance(chunk, RawChunk):
+                text_chunk = chunk.content
+                response_text += text_chunk
+                yield f"data: {json.dumps({'content': text_chunk})}\n\n"
             else:
                 text_chunk = chunk
                 response_text += text_chunk

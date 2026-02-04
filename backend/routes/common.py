@@ -48,6 +48,10 @@ class ApiSettings(BaseModel):
     api_key: str
     base_url: str
     headers: Optional[Dict[str, str]] = None
+
+class RawChunk:
+    def __init__(self, content: str):
+        self.content = content
     
 load_dotenv()
 router = APIRouter()

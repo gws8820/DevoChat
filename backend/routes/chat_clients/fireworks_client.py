@@ -7,6 +7,7 @@ import base64
 import copy
 from fastapi import Depends, Request
 from fastapi.responses import StreamingResponse
+from typing import Any, Dict, Optional, List
 from ..auth import User, get_current_user
 from ..common import (
     ChatRequest, router,
@@ -16,16 +17,65 @@ from ..common import (
     normalize_assistant_content,
     getReason, getVerbosity,
     STREAM_COOLDOWN_SECONDS,
-    
+        
     ApiSettings,
     RawChunk
 )
 from logging_util import logger
+
+def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dict[str, Any]], Optional[str]]:
+    try:
+        config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "config", "mcp_servers.json"))
+        with open(config_path, "r", encoding="utf-8") as f:
+            mcp_server_configs = json.load(f)
+    except Exception as ex:
+        logger.error(f"MCP_SERVER_FETCH_ERROR: {str(ex)}")
+        return [], "서버 오류가 발생했습니다."
     
+    server_list = []
+    
+    for server_id in server_ids:
+        if server_id not in mcp_server_configs:
+            logger.warning(json.dumps({"event": "INVALID_MCP_SERVER_ERROR", "username": current_user.name, "server_id": server_id}, ensure_ascii=False, indent=2))
+            continue
+        
+        server_config = mcp_server_configs[server_id]
+        
+        if server_config.get("admin") and not current_user.admin:
+            logger.warning(json.dumps({"event": "MCP_SERVER_PERMISSION_ERROR", "username": current_user.name, "server_id": server_id}, ensure_ascii=False, indent=2))
+            return [], "잘못된 접근입니다."
+        
+        server_url = server_config["url"]
+        token = server_config.get("authorization_token")
+        if token:
+            if "access_token=" not in server_url:
+                sep = "&" if "?" in server_url else "?"
+                server_url = f"{server_url}{sep}access_token={token}"
+
+        mcp_server = {
+            "type": "mcp",
+            "server_url": server_url
+        }
+        
+        server_list.append(mcp_server)
+    
+    return server_list, None
+
+def get_search_tool():
+    return {
+        "type": "mcp",
+        "server_url": os.getenv("PERPLEXITY_MCP_URL")
+    }
+
 def normalize_user_content(part):
-    if part.get("type") == "url":
+    if part.get("type") == "text":
         return {
-            "type": "text",
+            "type": "input_text",
+            "text": part.get("text")
+        }
+    elif part.get("type") == "url":
+        return {
+            "type": "input_text",
             "text": part.get("content")
         }
     elif part.get("type") == "file":
@@ -35,7 +85,7 @@ def normalize_user_content(part):
             with open(abs_path, "r", encoding="utf-8") as f:
                 file_content = f.read()
             return {
-                "type": "text",
+                "type": "input_text",
                 "text": file_content
             }
         except Exception as ex:
@@ -48,15 +98,13 @@ def normalize_user_content(part):
             with open(abs_path, "rb") as f:
                 file_data = f.read()
             base64_data = "data:image/jpeg;base64," + base64.b64encode(file_data).decode("utf-8")
-            
-            return {
-                "type": "image_url",
-                "image_url": {"url": base64_data}
-            }
         except Exception as ex:
             logger.error(f"IMAGE_PROCESS_ERROR: {str(ex)}")
             return None
-    return part
+        return {
+            "type": "input_image",
+            "image_url": base64_data
+        }
 
 def format_message(message):
     role = message.get("role")
@@ -66,70 +114,71 @@ def format_message(message):
         return {"role": "user", "content": [item for item in [normalize_user_content(part) for part in content] if item is not None]}
     elif role == "assistant":
         return {"role": "assistant", "content": normalize_assistant_content(content)}
-        
+
 async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
-    citations = None
-    is_thinking = False
+    first_chunk = True
+    has_reasoning = "reasoning" in parameters
+    mcp_tools = {}
+    tool_id = None
     try:
         if request.stream:
-            stream_result = await client.chat.completions.create(**parameters)
-            
+            stream_result = await client.responses.create(**parameters)
             async for chunk in stream_result:
                 if await fastapi_request.is_disconnected():
                     return
-
-                print(chunk, flush=True)
-
-                
-                choices = getattr(chunk, "choices", None) or []
-                delta = getattr(choices[0], "delta", None) if choices else None
-
-                if hasattr(delta, 'reasoning_content') and delta.reasoning_content is not None:
-                    if not is_thinking:
-                        is_thinking = True
-                        await chunk_queue.put('<think>\n')
-                    reasoning_content = delta.reasoning_content
-                    if reasoning_content:
-                        await chunk_queue.put(reasoning_content)
-                
-                if hasattr(delta, 'content') and delta.content is not None:
-                    if is_thinking:
-                        await chunk_queue.put('\n</think>\n\n')
-                        is_thinking = False
-                    content = delta.content
-                    if content:
-                        await chunk_queue.put(content)
-                
-                if chunk.usage:
-                    input_tokens = chunk.usage.prompt_tokens or 0
-                    output_tokens = chunk.usage.completion_tokens or 0
-                    
-                    await chunk_queue.put({
-                        "type": "token_usage",
-                        "input_tokens": input_tokens,
-                        "output_tokens": output_tokens
-                    })
-                if citations is None and hasattr(chunk, "citations"):
-                    citations = chunk.citations
-            
-            if is_thinking:
-                await chunk_queue.put('\n</think>\n\n')
+                if chunk.type == "response.output_text.delta":
+                    if chunk.delta:
+                        if first_chunk and request.inference and '<think>' not in chunk.delta:
+                            await chunk_queue.put('<think>\n')
+                            first_chunk = False
+                        
+                        await chunk_queue.put(chunk.delta)
+                elif chunk.type == "response.completed":
+                    if chunk.response.usage:
+                        input_tokens = chunk.response.usage.input_tokens or 0
+                        output_tokens = chunk.response.usage.output_tokens or 0
+                        
+                        await chunk_queue.put({
+                            "type": "token_usage",
+                            "input_tokens": input_tokens,
+                            "output_tokens": output_tokens
+                        })
+                elif chunk.type == "response.output_item.added":
+                    if hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "mcp_call":
+                        tool_id = getattr(chunk.item, "id")
+                        mcp_info = getattr(chunk.item, "mcp", {})
+                        server_name = "Fireworks"
+                        tool_name = mcp_info.get("name")
+                        
+                        mcp_tools[tool_id] = {"tool_name": tool_name}
+                        
+                        await chunk_queue.put(RawChunk(
+                            f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n"
+                        ))
+                elif chunk.type == "response.mcp_call.completed":
+                    if tool_id:
+                        tool_info = mcp_tools.get(tool_id)
+                        
+                        if tool_info:
+                            server_name = "Fireworks"
+                            tool_name = tool_info["tool_name"]
+                            
+                            await chunk_queue.put(RawChunk(
+                                f"\n<tool_result>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': False}, ensure_ascii=False)}\n</tool_result>\n\n"
+                            ))
         else:
-            single_result = await client.chat.completions.create(**parameters)
-            full_response_text = single_result.choices[0].message.content
-
-            if hasattr(single_result, "citations"):
-                citations = single_result.citations
-
+            single_result = await client.responses.create(**parameters)
+            full_response_text = single_result.output_text
+            
             chunk_size = 10 
             for i in range(0, len(full_response_text), chunk_size):
                 if await fastapi_request.is_disconnected():
                     return
                 await chunk_queue.put(full_response_text[i:i+chunk_size])
                 await asyncio.sleep(0.03)
-                
-            input_tokens = single_result.usage.prompt_tokens or 0
-            output_tokens = single_result.usage.completion_tokens or 0
+            
+            input_tokens = single_result.usage.input_tokens or 0
+            output_tokens = single_result.usage.output_tokens or 0
             
             await chunk_queue.put({
                 "type": "token_usage",
@@ -140,16 +189,6 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
         logger.error(f"STREAM_ERROR: {str(ex)}")
         await chunk_queue.put({"error": str(ex)})
     finally:
-        if is_thinking:
-            await chunk_queue.put('\n</think>\n\n')
-
-        if citations:
-            citations_text = "\n<citations>"
-            for idx, item in enumerate(citations, 1):
-                citations_text += f"\n\n[{idx}] {item}"
-            citations_text += "</citations>\n"
-            await chunk_queue.put(RawChunk(citations_text))
-
         await client.close()
         await chunk_queue.put(None)
 
@@ -174,11 +213,6 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
             if part.get("type") == "text":
                 part["text"] += " STAY IN CHARACTER"
                 break
-            
-    formatted_messages.insert(0, {
-        "role": "system",
-        "content": [{"type": "text", "text": instructions}]
-    })
 
     response_text = ""
     token_usage = None
@@ -194,16 +228,34 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
             parameters = {
                 "model": request.model,
                 "temperature": request.temperature if request.control.temperature else 1.0,
-                "messages": formatted_messages,
-                "stream": request.stream
+                "instructions": instructions,
+                "input": formatted_messages,
+                "stream": request.stream,
+                "tools": []
             }
             
             if request.control.verbosity and request.verbosity:
-                parameters["max_tokens"] = getVerbosity(request.verbosity, "tokens")
-
-            if request.control.reason and request.reason:
-                parameters["reasoning_effort"] = getReason(request.reason, "tertiary")
+                parameters["text"] = {"verbosity": getVerbosity(request.verbosity, "tertiary")}
             
+            if request.control.reason and request.reason:
+                reason_effort = getReason(request.reason, "tertiary")
+                parameters["reasoning"] = {
+                    "effort": reason_effort,
+                    "summary": "auto"
+                }
+
+            if request.search:
+                parameters["tools"].append(get_search_tool())
+
+            if len(request.mcp) > 0:
+                mcp_list = [m for m in request.mcp if not (request.search and m == "perplexity")]
+                if mcp_list:
+                    mcp_servers, error = get_mcp_servers(mcp_list, user)
+                    if error:
+                        yield f"data: {json.dumps({'error': error})}\n\n"
+                        return
+                    parameters["tools"].extend(mcp_servers)
+                
             chunk_queue = asyncio.Queue()
             stream_task = asyncio.create_task(process_stream(chunk_queue, request, parameters, fastapi_request, client))
             
@@ -248,47 +300,3 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
         save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
-
-@router.post("/chat/ollama")
-async def ollama_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key='ollama',
-        base_url="https://ollama.devochat.com/v1",
-        headers={
-            "CF-Access-Client-Id": os.getenv('CF_ACCESS_CLIENT_ID'),
-            "CF-Access-Client-Secret": os.getenv('CF_ACCESS_CLIENT_SECRET'),
-        }
-    )
-    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
-
-@router.post("/chat/perplexity")
-async def perplexity_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('PERPLEXITY_API_KEY'),
-        base_url="https://api.perplexity.ai"
-    )
-    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
-
-@router.post("/chat/deepseek")
-async def deepseek_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('DEEPSEEK_API_KEY'),
-        base_url="https://api.deepseek.com/v1"
-    )
-    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
-
-@router.post("/chat/fireworks")
-async def fireworks_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('FIREWORKS_API_KEY'),
-        base_url="https://api.fireworks.ai/inference/v1"
-    )
-    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")
-    
-@router.post("/chat/novita")
-async def novita_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    settings = ApiSettings(
-        api_key=os.getenv('NOVITA_API_KEY'),
-        base_url="https://api.novita.ai/openai"
-    )
-    return StreamingResponse(get_response(chat_request, settings, user, fastapi_request), media_type="text/event-stream")

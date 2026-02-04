@@ -81,6 +81,18 @@
       "admin": false
     },
     {
+      "model_name": "kwaivgi/kling-image-o1",
+      "model_alias": "Kling Image O1",
+      "description": "Kuaishou",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.028"
+      },
+      "capabilities": { "image": { "type": true, "max_input": 10 } },
+      "admin": false
+    },
+    {
       "model_name": "wavespeed-ai/qwen-image/text-to-image-2512",
       "model_alias": "Qwen Image",
       "description": "Alibaba",

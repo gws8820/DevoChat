@@ -15,7 +15,8 @@ from ..common import (
     get_conversation, save_conversation,
     normalize_assistant_content,
     getReason, getVerbosity,
-    STREAM_COOLDOWN_SECONDS
+    STREAM_COOLDOWN_SECONDS,
+    RawChunk
 )
 from logging_util import logger
 
@@ -167,6 +168,11 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                         break
                     elif chunk.get("type") == "token_usage":
                         token_usage = chunk
+                        continue
+                if isinstance(chunk, RawChunk):
+                    text_chunk = chunk.content
+                    response_text += text_chunk
+                    yield f"data: {json.dumps({'content': text_chunk})}\n\n"
                 else:
                     text_chunk = chunk
                     response_text += text_chunk
@@ -179,7 +185,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                         
                         sub_chunk = text_chunk[i:i+step]
                         yield f"data: {json.dumps({'content': sub_chunk})}\n\n"
-
+                
                 if client_disconnected:
                     break
 

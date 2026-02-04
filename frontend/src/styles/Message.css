@@ -184,8 +184,7 @@
   width: 100%;
   box-sizing: border-box;
   margin: 4px 0;
-  padding-left: 10px;
-  list-style-position: inside;
+  padding-left: 30px;
 }
 
 .chat-message > ol,

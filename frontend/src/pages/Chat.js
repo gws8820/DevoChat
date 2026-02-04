@@ -5,6 +5,7 @@ import { PulseLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { parse as parseTld } from "tldts";
 import { useFileUpload } from "../utils/useFileUpload";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
@@ -163,29 +164,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       }, 0);
 
       const extractUrls = (message) => {
-        const validTlds = [
-          ".com", ".net", ".org", ".info", ".biz", ".xyz", ".tech", ".io", ".ai", ".gg", 
-          ".tv", ".me", ".app", ".dev", ".shop", ".store", ".co", ".kr", ".us", ".uk", 
-          ".eu", ".de", ".fr", ".jp", ".cn", ".au", ".ca", ".in", ".es", ".it", ".nl", 
-          ".se", ".no", ".fi", ".pl", ".ch", ".be", ".at"
-        ];
-        
-        const tldPattern = validTlds
-          .sort((a, b) => b.length - a.length)
-          .map(tld => tld.replace(/\./g, "\\."))
-          .join("|");
-        
-        const urlPattern = new RegExp(
-          `(?:https?:\\/\\/|http:\\/\\/|www\\.)?` +
-          `[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?` +
-          `(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*` +
-          `(?:${tldPattern})` +
-          `(?::\\d{1,5})?` +
-          `(?:\\/[A-Za-z0-9._~\\-/%+&=:;,@!?'*]*)?` +
-          `(?:\\?[A-Za-z0-9._~\\-/%&=+,:;@!?'*]*)?` +
-          `(?:#[A-Za-z0-9._~\\-/%&=+,:;@!?'*]*)?`,
-          "gi"
-        );
+        const urlPattern =
+          /(?:https?:\/\/|www\.)[^\s<>()]+|(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,63}(?::\d{1,5})?(?:\/[^\s<>()]*)?/gi;
         
         const cleanUrl = (url) => {
           if (!url) return url;
@@ -197,12 +177,49 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           }
           return url;
         };
+
+        const isValidDomainByPSL = (host) => {
+          const r = parseTld(host);
+          if (!r) return false;
+          if (r.isIp === true) return false;
+          return Boolean(r.domain && r.publicSuffix);
+        };
+
+        const normalizeAndValidate = (raw) => {
+          if (!raw) return null;
+          if (raw.includes("@")) return null;
+
+          const tryValidate = (candidate) => {
+            try {
+              const withScheme =
+                candidate.startsWith("http://") || candidate.startsWith("https://")
+                  ? candidate
+                  : "https://" + candidate;
+              const u = new URL(withScheme);
+              return isValidDomainByPSL(u.hostname);
+            } catch {
+              return false;
+            }
+          };
+
+          let candidate = cleanUrl(raw);
+          if (!candidate) return null;
+          if (tryValidate(candidate)) return candidate;
+
+          const maxTrim = Math.min(30, candidate.length);
+          for (let i = 1; i <= maxTrim; i++) {
+            const trimmed = candidate.slice(0, -i);
+            if (trimmed.length < 4) break;
+            if (tryValidate(trimmed)) return trimmed;
+          }
+
+          return null;
+        };
         
         const matches = message.match(urlPattern) || [];
         const urls = matches
-          .filter(match => !match.includes('@'))
-          .map(match => cleanUrl(match))
-          .filter(url => url && url.length > 3);
+          .map((match) => normalizeAndValidate(match))
+          .filter((url) => url && url.length > 3);
         
         return [...new Set(urls)];
       };

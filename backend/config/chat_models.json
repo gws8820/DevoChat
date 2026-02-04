@@ -258,16 +258,41 @@
       "admin": false
     },
     {
-      "model_name": "qwen/qwen3-vl-235b-a22b-instruct",
+      "model_name": "fireworks/kimi-k2p5",
+      "model_alias": "Kimi K2.5",
+      "description": "최신 Kimi 모델",
+      "endpoint": "/chat/fireworks",
+      "billing": {
+        "in_billing": "0.6",
+        "out_billing": "3.0"
+      },
+      "capabilities": {
+        "stream": true,
+        "image": true,
+        "inference": false,
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "fireworks/qwen3-vl-235b-a22b-instruct",
       "model_alias": "Qwen 3",
       "description": "최신 Qwen 모델",
-      "endpoint": "/chat/novita",
+      "endpoint": "/chat/fireworks",
       "billing": {
-        "in_billing": "0.3",
-        "out_billing": "1.5"
+        "in_billing": "0.22",
+        "out_billing": "0.88"
       },
       "variants": {
-        "inference": "qwen/qwen3-vl-235b-a22b-thinking"
+        "inference": "fireworks/qwen3-vl-235b-a22b-thinking"
       },
       "capabilities": {
         "stream": true,
@@ -286,16 +311,16 @@
       "admin": false
     },
     {
-      "model_name": "qwen/qwen3-vl-235b-a22b-thinking",
+      "model_name": "fireworks/qwen3-vl-235b-a22b-thinking",
       "model_alias": "Qwen 3",
       "description": "최신 Qwen 모델",
-      "endpoint": "/chat/novita",
+      "endpoint": "/chat/fireworks",
       "billing": {
-        "in_billing": "0.98",
-        "out_billing": "3.95"
+        "in_billing": "0.22",
+        "out_billing": "0.88"
       },
       "variants": {
-        "base": "qwen/qwen3-vl-235b-a22b-instruct"
+        "base": "fireworks/qwen3-vl-235b-a22b-instruct"
       },
       "capabilities": {
         "stream": true,
@@ -370,66 +395,10 @@
       "admin": false
     },
     {
-      "model_name": "moonshotai/kimi-k2-0905",
-      "model_alias": "Kimi K2",
-      "description": "최신 Kimi 모델",
-      "endpoint": "/chat/novita",
-      "billing": {
-        "in_billing": "0.6",
-        "out_billing": "2.5"
-      },
-      "variants": {
-        "inference": "moonshotai/kimi-k2-thinking"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": false,
-        "inference": "switch",
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "moonshotai/kimi-k2-thinking",
-      "model_alias": "Kimi K2",
-      "description": "최신 Kimi 모델",
-      "endpoint": "/chat/novita",
-      "billing": {
-        "in_billing": "0.6",
-        "out_billing": "2.5"
-      },
-      "variants": {
-        "base": "moonshotai/kimi-k2-0905"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": false,
-        "inference": "switch",
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "zai-org/glm-4.6",
-      "model_alias": "GLM 4.6",
+      "model_name": "fireworks/glm-4p7",
+      "model_alias": "GLM 4.7",
       "description": "최신 GLM 모델",
-      "endpoint": "/chat/novita",
+      "endpoint": "/chat/fireworks",
       "billing": {
         "in_billing": "0.6",
         "out_billing": "2.2"
@@ -437,7 +406,7 @@
       "capabilities": {
         "stream": true,
         "image": false,
-        "inference": true,
+        "inference": false,
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -501,18 +470,18 @@
       "admin": false
     },
     {
-      "model_name": "openai/gpt-oss-120b",
+      "model_name": "fireworks/gpt-oss-120b",
       "model_alias": "GPT-OSS 120B",
       "description": "오픈소스 GPT 모델",
-      "endpoint": "/chat/novita",
+      "endpoint": "/chat/fireworks",
       "billing": {
-        "in_billing": "0.05",
-        "out_billing": "0.25"
+        "in_billing": "0.15",
+        "out_billing": "0.6"
       },
       "capabilities": {
         "stream": true,
         "image": false,
-        "inference": true,
+        "inference": false,
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -655,31 +624,6 @@
         "image": true,
         "inference": "switch",
         "search": true,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "meta-llama/llama-4-maverick-17b-128e-instruct-fp8",
-      "model_alias": "Llama 4 Maverick",
-      "description": "표준 Llama 모델",
-      "endpoint": "/chat/novita",
-      "billing": {
-        "in_billing": "0.17",
-        "out_billing": "0.85"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": false,
-        "inference": false,
-        "search": false,
         "deep_research": false,
         "mcp": false
       },

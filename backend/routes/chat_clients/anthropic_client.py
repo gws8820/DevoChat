@@ -17,7 +17,8 @@ from ..common import (
     normalize_assistant_content,
     getReason, getVerbosity,
     MAX_VERBOSITY_TOKENS,
-    STREAM_COOLDOWN_SECONDS
+    STREAM_COOLDOWN_SECONDS,
+    RawChunk
 )
 from logging_util import logger
 
@@ -127,7 +128,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                                 "tool_name": tool_name
                             }
                             
-                            await chunk_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
+                            await chunk_queue.put(RawChunk(
+                                f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n"
+                            ))
                         elif getattr(chunk.content_block, "type", "") == "mcp_tool_result":
                             tool_use_id = getattr(chunk.content_block, "tool_use_id")
                             tool_info = mcp_tools.get(tool_use_id)
@@ -142,7 +145,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             for result in result_block:
                                 tool_result += result.text
                             
-                            await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': tool_result}, ensure_ascii=False)}\n</tool_result>\n\n")
+                            await chunk_queue.put(RawChunk(
+                                f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': tool_result}, ensure_ascii=False)}\n</tool_result>\n\n"
+                            ))
                         elif getattr(chunk.content_block, "type", "") == "server_tool_use":
                             tool_id = getattr(chunk.content_block, "id")
                             tool_name = getattr(chunk.content_block, "name")
@@ -153,7 +158,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                                 "tool_name": tool_name
                             }
                             
-                            await chunk_queue.put(f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n")
+                            await chunk_queue.put(RawChunk(
+                                f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n"
+                            ))
                         elif getattr(chunk.content_block, "type", "") == "web_search_tool_result":
                             tool_use_id = getattr(chunk.content_block, "tool_use_id")
                             tool_info = mcp_tools.get(tool_use_id)
@@ -168,16 +175,22 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                                 citations.append(item.url)
                             
                             result = '\n'.join(tool_result)
-                            await chunk_queue.put(f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': False, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n")
+                            await chunk_queue.put(RawChunk(
+                                f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': False, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n"
+                            ))
                     elif chunk.type == "content_block_stop":
                         if is_thinking:
                             await chunk_queue.put('\n</think>\n\n')
                             is_thinking = False
                 if hasattr(chunk, "delta"):
                     if hasattr(chunk.delta, "thinking"):
-                        await chunk_queue.put(chunk.delta.thinking)
+                        thinking = chunk.delta.thinking
+                        if thinking:
+                            await chunk_queue.put(thinking)
                     elif hasattr(chunk.delta, "text"):
-                        await chunk_queue.put(chunk.delta.text)
+                        text = chunk.delta.text
+                        if text:
+                            await chunk_queue.put(text)
                 if hasattr(chunk, "usage"):
                     usage = chunk.usage
                     input_tokens = usage.input_tokens or 0
@@ -226,11 +239,15 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
         logger.error(f"STREAM_ERROR: {str(ex)}")
         await chunk_queue.put({"error": str(ex)})
     finally:
+        if is_thinking:
+            await chunk_queue.put('\n</think>\n\n')
+
         if citations:
-            await chunk_queue.put('\n<citations>')
+            citations_text = "\n<citations>"
             for idx, item in enumerate(citations, 1):
-                await chunk_queue.put(f"\n\n[{idx}] {item}")
-            await chunk_queue.put('</citations>\n')
+                citations_text += f"\n\n[{idx}] {item}"
+            citations_text += "</citations>\n"
+            await chunk_queue.put(RawChunk(citations_text))
 
         await client.close()
         await chunk_queue.put(None)
@@ -314,6 +331,11 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                         break
                     elif chunk.get("type") == "token_usage":
                         token_usage = chunk
+                        continue
+                if isinstance(chunk, RawChunk):
+                    text_chunk = chunk.content
+                    response_text += text_chunk
+                    yield f"data: {json.dumps({'content': text_chunk})}\n\n"
                 else:
                     text_chunk = chunk
                     response_text += text_chunk

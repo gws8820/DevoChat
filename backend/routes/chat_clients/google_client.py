@@ -19,7 +19,8 @@ from ..common import (
     STREAM_COOLDOWN_SECONDS,
     
     AliasRequest, CHAT_ALIAS_PROMPT, IMAGE_ALIAS_PROMPT,
-    save_alias
+    save_alias,
+    RawChunk
 )
 from logging_util import logger
 
@@ -86,14 +87,19 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                     if hasattr(candidate, 'content') and candidate.content.parts:
                         for part in candidate.content.parts:
                             if hasattr(part, 'text'):
-                                if hasattr(part, 'thought') and part.thought and not is_thinking:
+                                if not part.text:
+                                    continue
+
+                                is_thought = hasattr(part, 'thought') and part.thought is True
+                                if is_thought and not is_thinking:
                                     is_thinking = True
                                     await chunk_queue.put('<think>\n')
-                                elif hasattr(part, 'thought') and not part.thought and is_thinking:
+                                elif is_thinking and (not hasattr(part, 'thought') or not part.thought):
                                     is_thinking = False
                                     await chunk_queue.put('\n</think>\n\n')
-                                
-                                await chunk_queue.put(part.text)
+                                text = part.text
+                                if text:
+                                    await chunk_queue.put(text)
                                 
                 if hasattr(chunk, 'usage_metadata'):
                     usage_metadata = chunk.usage_metadata
@@ -153,11 +159,15 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
         logger.error(f"STREAM_ERROR: {str(ex)}")
         await chunk_queue.put({"error": str(ex)})
     finally:
+        if is_thinking:
+            await chunk_queue.put('\n</think>\n\n')
+            
         if citations:
-            await chunk_queue.put('\n<citations>')
+            citations_text = "\n<citations>"
             for idx, item in enumerate(citations, 1):
-                await chunk_queue.put(f"\n\n[{idx}] {item}")
-            await chunk_queue.put('</citations>\n')
+                citations_text += f"\n\n[{idx}] {item}"
+            citations_text += "</citations>\n"
+            await chunk_queue.put(RawChunk(citations_text))
             
         await chunk_queue.put(None)
 
@@ -227,6 +237,11 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                     break
                 elif chunk.get("type") == "token_usage":
                     token_usage = chunk
+                    continue
+            if isinstance(chunk, RawChunk):
+                text_chunk = chunk.content
+                response_text += text_chunk
+                yield f"data: {json.dumps({'content': text_chunk})}\n\n"
             else:
                 text_chunk = chunk
                 response_text += text_chunk

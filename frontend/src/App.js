@@ -302,6 +302,7 @@ function AppContent() {
           <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />
           <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <Login />} />
           <Route path="/register" element={isLoggedIn ? <Navigate to="/" /> : <Register />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
 

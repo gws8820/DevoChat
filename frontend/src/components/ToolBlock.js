@@ -38,7 +38,7 @@ const ToolBlock = React.memo(({ toolData }) => {
         <div className="tool-content">
           {renderIcon()}
           <div className="tool-info">
-            <span className="tool-server-name">{toolData.server_name.replace(/_/g, ' ')}</span>
+            <span className="tool-server-name">{toolData.server_name?.replace(/_/g, ' ')}</span>
             <span className="tool-tool-name">{toolData.tool_name}</span>
           </div>
         </div>
