@@ -117,69 +117,67 @@ devochat/
 │   │   ├── components/                 # UI 컴포넌트
 │   │   │   ├── Header.js               # 메인 헤더
 │   │   │   ├── ImageHeader.js          # 이미지 생성 페이지 헤더
-│   │   │   ├── Sidebar.js              # 사이드바 네비게이션
-│   │   │   ├── Message.js              # 메시지 렌더링
-│   │   │   ├── InputContainer.js       # 채팅 입력 컨테이너
 │   │   │   ├── ImageInputContainer.js  # 이미지 생성 입력 컨테이너
+│   │   │   ├── InputContainer.js       # 채팅 입력 컨테이너
+│   │   │   ├── MarkdownRenderers.js    # 마크다운 렌더러
 │   │   │   ├── MCPModal.js             # MCP 서버 선택 모달
-│   │   │   ├── SearchModal.js          # 검색 모달
+│   │   │   ├── Message.js              # 메시지 렌더링
 │   │   │   ├── Modal.js                # 범용 모달
+│   │   │   ├── Orb.js                  # 실시간 대화 시각화
+│   │   │   ├── SearchModal.js          # 검색 모달
+│   │   │   ├── Sidebar.js              # 사이드바 네비게이션
 │   │   │   ├── Toast.js                # 알림 메시지
-│   │   │   ├── Tooltip.js              # 도구 설명
 │   │   │   ├── ToolBlock.js            # MCP 도구 블록
-│   │   │   └── MarkdownRenderers.js    # 마크다운 렌더러
-│   │   ├── pages/                      # 페이지 컴포넌트
-│   │   │   ├── Home.js                 # 홈 페이지
-│   │   │   ├── Chat.js                 # 메인 채팅 페이지
-│   │   │   ├── ImageHome.js            # 이미지 생성 홈
-│   │   │   ├── ImageChat.js            # 이미지 생성 페이지
-│   │   │   ├── Realtime.js             # 실시간 대화 페이지
-│   │   │   ├── View.js                 # 대화 뷰어 페이지
-│   │   │   ├── Admin.js                # 관리자 페이지
-│   │   │   ├── Login.js                # 로그인 페이지
-│   │   │   └── Register.js             # 회원가입 페이지
+│   │   │   └── Tooltip.js              # 도구 설명
 │   │   ├── contexts/                   # 상태 관리
-│   │   │   ├── SettingsContext.js      # 모델/설정 상태
-│   │   │   └── ConversationsContext.js # 대화 목록 상태
+│   │   │   ├── ConversationsContext.js # 대화 목록 상태
+│   │   │   └── SettingsContext.js      # 모델/설정 상태
+│   │   ├── pages/                      # 페이지 컴포넌트
+│   │   │   ├── Admin.js                # 관리자 페이지
+│   │   │   ├── Chat.js                 # 메인 채팅 페이지
+│   │   │   ├── Home.js                 # 홈 페이지
+│   │   │   ├── ImageChat.js            # 이미지 생성 페이지
+│   │   │   ├── ImageHome.js            # 이미지 생성 홈
+│   │   │   ├── Login.js                # 로그인 페이지
+│   │   │   ├── Realtime.js             # 실시간 대화 페이지
+│   │   │   ├── Register.js             # 회원가입 페이지
+│   │   │   └── View.js                 # 대화 뷰어 페이지
+│   │   ├── resources/                  # 정적 리소스
+│   │   ├── styles/                     # CSS 스타일시트
 │   │   ├── utils/                      # 유틸리티 함수
 │   │   │   └── useFileUpload.js        # 파일 업로드 훅
-│   │   ├── styles/                     # CSS 스타일시트
-│   │   │   ├── Common.css              # 공통 스타일
-│   │   │   ├── Header.css              # 헤더 스타일
-│   │   │   ├── Sidebar.css             # 사이드바 스타일
-│   │   │   └── ...
 │   │   └── App.js                      # 메인 앱 컴포넌트
 │
 ├── backend/                            # FastAPI 백엔드
-│   ├── main.py                         # FastAPI 애플리케이션 진입점
-│   ├── routes/                         # API 라우터
-│   │   ├── auth.py                     # 인증/권한 관리
-│   │   ├── conversations.py            # 대화 관리 API
-│   │   ├── uploads.py                  # 파일 업로드 처리
-│   │   ├── realtime.py                 # 실시간 통신
-│   │   ├── common.py                   # 공통 유틸리티
-│   │   ├── chat_clients/               # 텍스트 AI 모델 클라이언트
-│   │   │   ├── openai_client.py
-│   │   │   ├── anthropic_client.py
-│   │   │   ├── google_client.py
-│   │   │   ├── mistral_client.py
-│   │   │   ├── grok_client.py
-│   │   │   └── responses_client.py
-│   │   └── image_clients/              # 이미지 생성 AI 모델 클라이언트
-│   │       ├── openai_client.py
-│   │       ├── flux_client.py
-│   │       ├── google_client.py
-│   │       ├── grok_client.py
-│   │       └── wavespeed_client.py
-│   ├── chat_models.json                # 텍스트 AI 모델 설정
-│   ├── image_models.json               # 이미지 생성 AI 모델 설정
-│   ├── realtime_models.json            # 실시간 대화 모델 설정
-│   ├── mcp_servers.json                # MCP 서버 설정
+│   ├── config/                         # 설정 파일
+│   │   ├── chat_models.json            # 텍스트 AI 모델 설정
+│   │   ├── image_models.json           # 이미지 생성 AI 모델 설정
+│   │   ├── mcp_servers.json            # MCP 서버 설정
+│   │   └── realtime_models.json        # 실시간 대화 모델 설정
 │   ├── prompts/                        # 시스템 프롬프트
-│   ├── uploads/                        # 업로드된 파일 저장소
-│   ├── generated/                      # 생성된 이미지 저장소
-│   ├── logs/                           # 로그 파일
-│   └── .venv/                          # Python 가상환경
+│   ├── routes/                         # API 라우터
+│   │   ├── chat_clients/               # 텍스트 AI 모델 클라이언트
+│   │   │   ├── anthropic_client.py
+│   │   │   ├── fireworks_client.py
+│   │   │   ├── google_client.py
+│   │   │   ├── grok_client.py
+│   │   │   ├── mistral_client.py
+│   │   │   ├── openai_client.py
+│   │   │   └── responses_client.py
+│   │   ├── image_clients/              # 이미지 생성 AI 모델 클라이언트
+│   │   │   ├── flux_client.py
+│   │   │   ├── google_client.py
+│   │   │   ├── grok_client.py
+│   │   │   ├── openai_client.py
+│   │   │   └── wavespeed_client.py
+│   │   ├── auth.py                     # 인증/권한 관리
+│   │   ├── common.py                   # 공통 유틸리티
+│   │   ├── conversations.py            # 대화 관리 API
+│   │   ├── realtime.py                 # 실시간 통신
+│   │   └── uploads.py                  # 파일 업로드 처리
+│   ├── logging_util.py                 # 로깅 유틸리티
+│   ├── main.py                         # FastAPI 애플리케이션 진입점
+│   └── requirements.txt                # Python 의존성
 ```
 
 ## 기술 스택

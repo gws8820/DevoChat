@@ -117,69 +117,67 @@ devochat/
 │   │   ├── components/                 # UI components
 │   │   │   ├── Header.js               # Main header
 │   │   │   ├── ImageHeader.js          # Image generation page header
-│   │   │   ├── Sidebar.js              # Sidebar navigation
-│   │   │   ├── Message.js              # Message rendering
-│   │   │   ├── InputContainer.js       # Chat input container
 │   │   │   ├── ImageInputContainer.js  # Image generation input container
+│   │   │   ├── InputContainer.js       # Chat input container
+│   │   │   ├── MarkdownRenderers.js    # Markdown renderers
 │   │   │   ├── MCPModal.js             # MCP server selection modal
-│   │   │   ├── SearchModal.js          # Search modal
+│   │   │   ├── Message.js              # Message rendering
 │   │   │   ├── Modal.js                # Generic modal
+│   │   │   ├── Orb.js                  # Real-time conversation visualization
+│   │   │   ├── SearchModal.js          # Search modal
+│   │   │   ├── Sidebar.js              # Sidebar navigation
 │   │   │   ├── Toast.js                # Notification messages
-│   │   │   ├── Tooltip.js              # Tooltips
 │   │   │   ├── ToolBlock.js            # MCP tool block
-│   │   │   └── MarkdownRenderers.js    # Markdown renderers
-│   │   ├── pages/                      # Page components
-│   │   │   ├── Home.js                 # Home page
-│   │   │   ├── Chat.js                 # Main chat page
-│   │   │   ├── ImageHome.js            # Image generation home
-│   │   │   ├── ImageChat.js            # Image generation page
-│   │   │   ├── Realtime.js             # Real-time conversation page
-│   │   │   ├── View.js                 # Conversation viewer page
-│   │   │   ├── Admin.js                # Admin page
-│   │   │   ├── Login.js                # Login page
-│   │   │   └── Register.js             # Registration page
+│   │   │   └── Tooltip.js              # Tooltips
 │   │   ├── contexts/                   # State management
-│   │   │   ├── SettingsContext.js      # Model/settings state
-│   │   │   └── ConversationsContext.js # Conversations list state
+│   │   │   ├── ConversationsContext.js # Conversations list state
+│   │   │   └── SettingsContext.js      # Model/settings state
+│   │   ├── pages/                      # Page components
+│   │   │   ├── Admin.js                # Admin page
+│   │   │   ├── Chat.js                 # Main chat page
+│   │   │   ├── Home.js                 # Home page
+│   │   │   ├── ImageChat.js            # Image generation page
+│   │   │   ├── ImageHome.js            # Image generation home
+│   │   │   ├── Login.js                # Login page
+│   │   │   ├── Realtime.js             # Real-time conversation page
+│   │   │   ├── Register.js             # Registration page
+│   │   │   └── View.js                 # Conversation viewer page
+│   │   ├── resources/                  # Static resources
+│   │   ├── styles/                     # CSS stylesheets
 │   │   ├── utils/                      # Utility functions
 │   │   │   └── useFileUpload.js        # File upload hook
-│   │   ├── styles/                     # CSS stylesheets
-│   │   │   ├── Common.css              # Common styles
-│   │   │   ├── Header.css              # Header styles
-│   │   │   ├── Sidebar.css             # Sidebar styles
-│   │   │   └── ...
 │   │   └── App.js                      # Main app component
 │
 ├── backend/                            # FastAPI backend
-│   ├── main.py                         # FastAPI application entry point
-│   ├── routes/                         # API routers
-│   │   ├── auth.py                     # Authentication/authorization management
-│   │   ├── conversations.py            # Conversation management API
-│   │   ├── uploads.py                  # File upload handling
-│   │   ├── realtime.py                 # Real-time communication
-│   │   ├── common.py                   # Common utilities
-│   │   ├── chat_clients/               # Text AI model clients
-│   │   │   ├── openai_client.py
-│   │   │   ├── anthropic_client.py
-│   │   │   ├── google_client.py
-│   │   │   ├── mistral_client.py
-│   │   │   ├── grok_client.py
-│   │   │   └── responses_client.py
-│   │   └── image_clients/              # Image generation AI model clients
-│   │       ├── openai_client.py
-│   │       ├── flux_client.py
-│   │       ├── google_client.py
-│   │       ├── grok_client.py
-│   │       └── wavespeed_client.py
-│   ├── chat_models.json                # Text AI model settings
-│   ├── image_models.json               # Image generation AI model settings
-│   ├── realtime_models.json            # Real-time conversation model settings
-│   ├── mcp_servers.json                # MCP server settings
+│   ├── config/                         # Configuration files
+│   │   ├── chat_models.json            # Text AI model settings
+│   │   ├── image_models.json           # Image generation AI model settings
+│   │   ├── mcp_servers.json            # MCP server settings
+│   │   └── realtime_models.json        # Real-time conversation model settings
 │   ├── prompts/                        # System prompts
-│   ├── uploads/                        # Uploaded files storage
-│   ├── generated/                      # Generated images storage
-│   ├── logs/                           # Log files
-│   └── .venv/                          # Python virtual environment
+│   ├── routes/                         # API routers
+│   │   ├── chat_clients/               # Text AI model clients
+│   │   │   ├── anthropic_client.py
+│   │   │   ├── fireworks_client.py
+│   │   │   ├── google_client.py
+│   │   │   ├── grok_client.py
+│   │   │   ├── mistral_client.py
+│   │   │   ├── openai_client.py
+│   │   │   └── responses_client.py
+│   │   ├── image_clients/              # Image generation AI model clients
+│   │   │   ├── flux_client.py
+│   │   │   ├── google_client.py
+│   │   │   ├── grok_client.py
+│   │   │   ├── openai_client.py
+│   │   │   └── wavespeed_client.py
+│   │   ├── auth.py                     # Authentication/authorization management
+│   │   ├── common.py                   # Common utilities
+│   │   ├── conversations.py            # Conversation management API
+│   │   ├── realtime.py                 # Real-time communication
+│   │   └── uploads.py                  # File upload handling
+│   ├── logging_util.py                 # Logging utility
+│   ├── main.py                         # FastAPI application entry point
+│   └── requirements.txt                # Python dependencies
 ```
 
 ## Tech Stack
