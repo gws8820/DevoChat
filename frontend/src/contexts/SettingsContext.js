@@ -26,8 +26,7 @@ export const SettingsProvider = ({ children }) => {
   const [canControlReason, setCanControlReason] = useState(false);
   const [canControlVerbosity, setCanControlVerbosity] = useState(false);
   const [canControlSystemMessage, setCanControlSystemMessage] = useState(false);
-  const [canReadImage, setCanReadImage] = useState(false); // Can Read Image (Chat Mode)
-  const [canEditImage, setCanEditImage] = useState(false); // Can Edit Image (Image Mode)
+  const [canVision, setCanVision] = useState(false);
   const [canToggleInference, setCanToggleInference] = useState(false);
   const [canToggleSearch, setCanToggleSearch] = useState(false);
   const [canToggleDeepResearch, setCanToggleDeepResearch] = useState(false);
@@ -86,7 +85,7 @@ export const SettingsProvider = ({ children }) => {
     const inference = selectedModel?.capabilities?.inference;
     const search = selectedModel?.capabilities?.search;
     const deep_research = selectedModel?.capabilities?.deep_research;
-    const image = selectedModel?.capabilities?.image;
+    const vision = selectedModel?.capabilities?.vision;
     const mcp = selectedModel?.capabilities?.mcp;
 
     let nextIsInference;
@@ -132,7 +131,7 @@ export const SettingsProvider = ({ children }) => {
     setCanControlSystemMessage(system_message);
     if (!system_message) setIsDAN(false);
 
-    setCanReadImage(image);
+    setCanVision(vision);
     setCanToggleMCP(mcp);
     setMCPList(mcp ? mcpList : []);
   };
@@ -202,11 +201,10 @@ export const SettingsProvider = ({ children }) => {
     const selectedImageModel = imageModelsArray.find(m => m.model_name === newImageModel);
     setImageModel(newImageModel);
     
-    const imageConfig = selectedImageModel?.capabilities?.image;
-    const type = imageConfig?.type;
-    const maxInput = imageConfig?.max_input;
+    const vision = selectedImageModel?.capabilities?.vision;
+    const maxInput = selectedImageModel?.capabilities?.max_input;
     
-    setCanEditImage(type === "switch" || type === true);
+    setCanVision(vision === "switch" || vision === true);
     setMaxImageInput(maxInput);
   };
 
@@ -216,13 +214,12 @@ export const SettingsProvider = ({ children }) => {
 
   const switchImageMode = (hasUploadedImages) => {
     const selectedImageModel = imageModels.find(m => m.model_name === imageModel);
-    const imageConfig = selectedImageModel?.capabilities?.image;
-    const type = imageConfig?.type;
+    const vision = selectedImageModel?.capabilities?.vision;
     
-    if (type === "switch") {
+    if (vision === "switch") {
       const variants = selectedImageModel?.variants;
       if (hasUploadedImages) {
-        const targetModel = variants?.image;
+        const targetModel = variants?.vision;
         if (targetModel) {
           updateImageModel(targetModel);
         }
@@ -261,12 +258,11 @@ export const SettingsProvider = ({ children }) => {
         canControlReason,
         canControlVerbosity,
         canControlSystemMessage,
-        canEditImage,
         canToggleInference, 
         canToggleSearch,
         canToggleDeepResearch, 
         canToggleMCP,
-        canReadImage,
+        canVision,
         maxImageInput,
         updateModel,
         updateImageModel,

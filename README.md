@@ -2,6 +2,8 @@
 
 *English | [한국어](README.ko.md)*
 
+> ⚠️ **Breaking Change**: `capabilities.image` key has been renamed to `capabilities.vision`. Please update your configuration files.
+
 ### Unified AI Chat Platform
 DevoChat is a web application that allows you to use various multimodal AI models and MCP (Model Context Protocol) servers through a single interface. Check out the [live demo](https://devochat.com).
 
@@ -271,7 +273,7 @@ Define the AI models available in the application and their properties through t
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "toggle",
         "search": "toggle",
         "deep_research": false
@@ -295,7 +297,7 @@ Define the AI models available in the application and their properties through t
       },
       "capabilities": {
         "stream": true,
-        "image": false,
+        "vision": false,
         "inference": false,
         "search": false,
         "deep_research": false
@@ -322,7 +324,7 @@ Define the AI models available in the application and their properties through t
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": true,
         "search": false,
         "deep_research": "switch"
@@ -354,7 +356,7 @@ Define the AI models available in the application and their properties through t
 | `variants` | Defines models to switch to for `"switch"` type |
 | `capabilities` | Defines the features supported by the model |
 | `capabilities.stream` | Whether streaming response is supported |
-| `capabilities.image` | Whether image processing is supported |
+| `capabilities.vision` | Whether image input is supported |
 | `capabilities.inference` | Whether inference is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.search` | Whether web search is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.deep_research` | Whether Deep Research is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
@@ -401,10 +403,8 @@ Define the image generation AI models available in the application and their pro
         "out_billing": "0.08"
       },
       "capabilities": { 
-        "image": { 
-          "type": true, 
-          "max_input": 4 
-        } 
+        "vision": true, 
+        "max_input": 4 
       },
       "admin": false
     },
@@ -418,12 +418,10 @@ Define the image generation AI models available in the application and their pro
         "out_billing": "0.03"
       },
       "variants": {
-        "image": "seededit-3-0-i2i-250628"
+        "vision": "seededit-3-0-i2i-250628"
       },
       "capabilities": { 
-        "image": { 
-          "type": "switch" 
-        } 
+        "vision": "switch"
       },
       "admin": false
     }
@@ -435,8 +433,8 @@ Define the image generation AI models available in the application and their pro
 
 | Parameter | Description |
 |---------|------|
-| `capabilities.image.type` | Whether image input is supported. `true`: supported, `false`: not supported, `"switch"`: switch to variant model |
-| `capabilities.image.max_input` | Maximum number of images that can be input simultaneously |
+| `capabilities.vision` | Whether image input is supported. `true`: supported, `false`: not supported, `"switch"`: switch to variant model |
+| `capabilities.max_input` | Maximum number of images that can be input simultaneously |
 
 ### Model Switching System (Variants)
 

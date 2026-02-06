@@ -12,7 +12,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "toggle",
         "search": "toggle",
         "deep_research": false,
@@ -37,7 +37,7 @@
       },
       "capabilities": {
         "stream": false,
-        "image": true,
+        "vision": true,
         "inference": true,
         "search": true,
         "deep_research": false,
@@ -62,7 +62,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "toggle",
         "search": "toggle",
         "deep_research": false,
@@ -87,7 +87,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": true,
         "search": "toggle",
         "deep_research": false,
@@ -112,7 +112,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "toggle",
         "search": "toggle",
         "deep_research": false,
@@ -140,7 +140,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "switch",
         "search": "toggle",
         "deep_research": false,
@@ -168,7 +168,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "switch",
         "search": "toggle",
         "deep_research": false,
@@ -183,33 +183,8 @@
       "admin": false
     },
     {
-      "model_name": "claude-sonnet-4-5",
-      "model_alias": "Claude 4.5 Sonnet",
-      "description": "고성능 Claude 모델",
-      "endpoint": "/chat/claude",
-      "billing": {
-        "in_billing": "3",
-        "out_billing": "15"
-      },
-      "capabilities": {
-        "stream": true,
-        "image": true,
-        "inference": "toggle",
-        "search": "toggle",
-        "deep_research": false,
-        "mcp": true
-      },
-      "controls": {
-        "temperature": "conditional",
-        "reason": true,
-        "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "claude-opus-4-5",
-      "model_alias": "Claude 4.5 Opus",
+      "model_name": "claude-opus-4-6",
+      "model_alias": "Claude 4.6 Opus",
       "description": "최고 성능 Claude 모델",
       "endpoint": "/chat/claude",
       "billing": {
@@ -218,7 +193,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "toggle",
         "search": "toggle",
         "deep_research": false,
@@ -233,6 +208,31 @@
       "admin": true
     },
     {
+      "model_name": "claude-sonnet-4-5",
+      "model_alias": "Claude 4.5 Sonnet",
+      "description": "고성능 Claude 모델",
+      "endpoint": "/chat/claude",
+      "billing": {
+        "in_billing": "3",
+        "out_billing": "15"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": true,
+        "inference": "toggle",
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": true
+      },
+      "controls": {
+        "temperature": "conditional",
+        "reason": true,
+        "verbosity": true,
+        "system_message": true
+      },
+      "admin": false
+    },
+    {
       "model_name": "claude-haiku-4-5",
       "model_alias": "Claude 4.5 Haiku",
       "description": "경량 Claude 모델",
@@ -243,7 +243,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "toggle",
         "search": "toggle",
         "deep_research": false,
@@ -268,7 +268,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": false,
         "search": false,
         "deep_research": false,
@@ -296,7 +296,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "switch",
         "search": false,
         "deep_research": false,
@@ -324,7 +324,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "switch",
         "search": false,
         "deep_research": false,
@@ -352,7 +352,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": false,
+        "vision": false,
         "inference": "toggle",
         "search": false,
         "deep_research": false,
@@ -380,7 +380,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": false,
+        "vision": false,
         "inference": "toggle",
         "search": false,
         "deep_research": false,
@@ -405,7 +405,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": false,
+        "vision": false,
         "inference": false,
         "search": false,
         "deep_research": false,
@@ -430,7 +430,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": false,
         "search": false,
         "deep_research": false,
@@ -455,7 +455,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": false,
         "search": false,
         "deep_research": false,
@@ -480,7 +480,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": false,
+        "vision": false,
         "inference": false,
         "search": false,
         "deep_research": false,
@@ -509,7 +509,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "switch",
         "search": true,
         "deep_research": "switch",
@@ -537,7 +537,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "switch",
         "search": true,
         "deep_research": false,
@@ -565,7 +565,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": true,
         "search": true,
         "deep_research": "switch",
@@ -593,7 +593,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "switch",
         "search": true,
         "deep_research": false,
@@ -621,7 +621,7 @@
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "switch",
         "search": true,
         "deep_research": false,

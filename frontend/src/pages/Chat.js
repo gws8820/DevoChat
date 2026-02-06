@@ -54,7 +54,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     isDeepResearch,
     isDAN,
     mcpList,
-    canReadImage,
+    canVision,
     canControlTemp,
     canControlReason,
     canControlVerbosity,
@@ -660,9 +660,9 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       await processFiles(files, (errorMessage) => {
         setToastMessage(errorMessage);
         setShowToast(true);
-      }, canReadImage);
+      }, canVision);
     },
-    [processFiles, canReadImage]
+    [processFiles, canVision]
   );
 
   return (
@@ -766,7 +766,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
             transition={{ duration: 0.1 }}
           >
             <div className="drag-container">
-              {canReadImage ? (
+              {canVision ? (
                 <>
                   <IoImageOutline style={{ fontSize: "40px" }} />
                   <div className="drag-text">여기에 파일 또는 이미지를 추가하세요</div>

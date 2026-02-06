@@ -68,7 +68,7 @@ function InputContainer({
     canToggleSearch,
     canToggleDeepResearch,
     canToggleMCP,
-    canReadImage,
+    canVision,
     setIsDAN,
     setMCPList,
     toggleInference,
@@ -108,10 +108,10 @@ function InputContainer({
       }
       if (filesToUpload.length > 0) {
         e.preventDefault();
-        await processFiles(filesToUpload, notifyError, canReadImage);
+        await processFiles(filesToUpload, notifyError, canVision);
       }
     },
-    [processFiles, canReadImage, notifyError]
+    [processFiles, canVision, notifyError]
   );
 
   const handlePlusButtonClick = useCallback((e) => {
@@ -448,7 +448,7 @@ function InputContainer({
           await processFiles(files, (errorMessage) => {
             setToastMessage(errorMessage);
             setShowToast(true);
-          }, canReadImage);
+          }, canVision);
           e.target.value = "";
         }}
       />

@@ -48,7 +48,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   const systemMessageRef = useRef(null);
 
   let modelsList = models.filter((m) => {
-    if (hasImage && !m.capabilities.image) return false;
+    if (hasImage && !m.capabilities.vision) return false;
     if (m.variants?.base) return false;
     return true;
   });
@@ -375,7 +375,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                     <div className="model-alias">
                       {m.model_alias}
                       <div className="model-badge">
-                        {m.capabilities?.image && (
+                        {m.capabilities?.vision && (
                           <RiImage2Line className="image-badge" />
                         )}
                         {m.capabilities?.mcp && (

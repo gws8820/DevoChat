@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useContext } from "react";
 import { useLocation } from 'react-router-dom';
-import { RiMenuLine, RiArrowRightSLine, RiShare2Line } from "react-icons/ri";
+import { RiMenuLine, RiArrowRightSLine, RiShare2Line, RiImage2Line } from "react-icons/ri";
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from 'uuid';
 import Tooltip from "./Tooltip";
@@ -29,7 +29,7 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
   const modelModalRef = useRef(null);
   
   let imageModelsList = imageModels.filter((m) => {
-    if (hasImage && !m.capabilities.image.type) return false;
+    if (hasImage && !m.capabilities.vision) return false;
     if (m.variants?.base) return false;
     return true;
   });
@@ -161,7 +161,14 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
                       setIsModelModalOpen(false);
                     }}
                   >
-                    <div className="model-alias">{m.model_alias}</div>
+                    <div className="model-alias">
+                      {m.model_alias}
+                      <div className="model-badge">
+                        {m.capabilities?.vision && (
+                          <RiImage2Line className="image-badge" />
+                        )}
+                      </div>
+                    </div>
                     <div className="model-description">{m.description}</div>
                     <div className="model-pricing">{parseFloat(((parseFloat(m.billing?.in_billing) + parseFloat(m.billing?.out_billing)) * 100).toFixed(1))}$ / 100회</div>
                   </div>

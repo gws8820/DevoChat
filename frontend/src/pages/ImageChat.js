@@ -19,7 +19,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
     imageModel, 
     imageModels, 
     maxImageInput,
-    canEditImage,
+    canVision,
     updateImageModel,
     switchImageMode,
     setAlias,
@@ -178,7 +178,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
       e.preventDefault();
       setIsDragActive(false);
       const files = Array.from(e.dataTransfer.files);
-      if (!canEditImage) {
+      if (!canVision) {
         e.stopPropagation();
         return;
       }
@@ -192,9 +192,9 @@ function ImageChat({ isTouch, chatMessageRef }) {
       await processFiles(imageFiles, (errorMessage) => {
         setToastMessage(errorMessage);
         setShowToast(true);
-      }, canEditImage, maxImageInput);
+      }, canVision, maxImageInput);
     },
-    [processFiles, canEditImage, maxImageInput]
+    [processFiles, canVision, maxImageInput]
   );
 
   const sendMessage = useCallback(
@@ -207,7 +207,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
         return;
       }
 
-      if (canEditImage && files.length > maxImageInput) {
+      if (canVision && files.length > maxImageInput) {
         setToastMessage(`이미지는 최대 ${maxImageInput}개까지 업로드할 수 있습니다.`);
         setShowToast(true);
         return;
@@ -297,7 +297,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
       imageModel,
       imageModels,
       updateTimestamp,
-      canEditImage,
+      canVision,
       maxImageInput,
       uploadedFiles,
       setUploadedFiles,
@@ -454,12 +454,12 @@ function ImageChat({ isTouch, chatMessageRef }) {
         processFiles={processFiles}
         removeFile={removeFile}
         uploadingFiles={uploadingFiles}
-        canEditImage={canEditImage}
+        canVision={canVision}
         maxImageInput={maxImageInput}
       />
 
       <AnimatePresence>
-        {isDragActive && canEditImage && (
+        {isDragActive && canVision && (
           <motion.div
             key="drag-overlay"
             className="drag-overlay"

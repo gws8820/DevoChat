@@ -20,7 +20,7 @@ function ImageHome({ isTouch }) {
   const abortControllerRef = useRef(null);
 
   const {
-    canEditImage,
+    canVision,
     maxImageInput,
     switchImageMode,
     setHasImage
@@ -116,7 +116,7 @@ function ImageHome({ isTouch }) {
       e.preventDefault();
       setIsDragActive(false);
       const files = Array.from(e.dataTransfer.files);
-      if (!canEditImage) {
+      if (!canVision) {
         e.stopPropagation();
         return;
       }
@@ -130,9 +130,9 @@ function ImageHome({ isTouch }) {
       await processFiles(imageFiles, (errorMessage) => {
         setToastMessage(errorMessage);
         setShowToast(true);
-      }, canEditImage, maxImageInput);
+      }, canVision, maxImageInput);
     },
-    [processFiles, canEditImage, maxImageInput]
+    [processFiles, canVision, maxImageInput]
   );
 
   return (
@@ -165,12 +165,12 @@ function ImageHome({ isTouch }) {
         processFiles={processFiles}
         removeFile={removeFile}
         uploadingFiles={uploadingFiles}
-        canEditImage={canEditImage}
+        canVision={canVision}
         maxImageInput={maxImageInput}
       />
 
       <AnimatePresence>
-        {isDragActive && canEditImage && (
+        {isDragActive && canVision && (
           <motion.div
             key="drag-overlay"
             className="drag-overlay"

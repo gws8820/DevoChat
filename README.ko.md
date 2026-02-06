@@ -2,6 +2,8 @@
 
 *[English](README.md) | 한국어*
 
+> ⚠️ **Breaking Change**: `capabilities.image` 키가 `capabilities.vision`으로 변경되었습니다. 설정 파일을 업데이트해 주세요.
+
 ### 통합 AI 대화 플랫폼
 DevoChat은 다양한 멀티모달 AI 모델과 MCP (Model Context Protocol) 서버를 하나의 인터페이스에서 사용할 수 있는 웹 애플리케이션입니다. [여기](https://devochat.com)에서 라이브 데모를 확인하세요.
 
@@ -271,7 +273,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": "toggle",
         "search": "toggle",
         "deep_research": false
@@ -295,7 +297,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       },
       "capabilities": {
         "stream": true,
-        "image": false,
+        "vision": false,
         "inference": false,
         "search": false,
         "deep_research": false
@@ -322,7 +324,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       },
       "capabilities": {
         "stream": true,
-        "image": true,
+        "vision": true,
         "inference": true,
         "search": false,
         "deep_research": "switch"
@@ -354,7 +356,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `variants` | `"switch"` 타입일 때 전환할 모델을 정의합니다. |
 | `capabilities` | 모델이 지원하는 기능들을 정의합니다. |
 | `capabilities.stream` | 스트리밍 응답 지원 여부입니다. |
-| `capabilities.image` | 이미지 처리 기능 지원 여부입니다. |
+| `capabilities.vision` | 이미지 입력 기능 지원 여부입니다. |
 | `capabilities.inference` | 추론 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.search` | 웹 검색 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.deep_research` | Deep Research 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
@@ -401,10 +403,8 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "out_billing": "0.08"
       },
       "capabilities": { 
-        "image": { 
-          "type": true, 
-          "max_input": 4 
-        } 
+        "vision": true, 
+        "max_input": 4 
       },
       "admin": false
     },
@@ -418,12 +418,10 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "out_billing": "0.03"
       },
       "variants": {
-        "image": "seededit-3-0-i2i-250628"
+        "vision": "seededit-3-0-i2i-250628"
       },
       "capabilities": { 
-        "image": { 
-          "type": "switch" 
-        } 
+        "vision": "switch"
       },
       "admin": false
     }
@@ -435,8 +433,8 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 | 파라미터 | 설명 |
 |---------|------|
-| `capabilities.image.type` | 이미지 입력 지원 여부입니다. `true`: 지원, `false`: 미지원, `"switch"`: 모델 동적 전환 |
-| `capabilities.image.max_input` | 동시에 입력 가능한 최대 이미지 수입니다. |
+| `capabilities.vision` | 이미지 입력 지원 여부입니다. `true`: 지원, `false`: 미지원, `"switch"`: 모델 동적 전환 |
+| `capabilities.max_input` | 동시에 입력 가능한 최대 이미지 수입니다. |
 
 ### 모델 전환 시스템 (Variants)
 

@@ -19,7 +19,7 @@ function ImageInputContainer({
   processFiles,
   removeFile,
   uploadingFiles,
-  canEditImage,
+  canVision,
   maxImageInput,
 }) {
   
@@ -35,11 +35,11 @@ function ImageInputContainer({
     const textarea = textAreaRef.current;
     if (textarea) {
       textarea.style.height = "auto";
-      const calculatedHeight = Math.max(textarea.scrollHeight, canEditImage ? 40 : 80);
+      const calculatedHeight = Math.max(textarea.scrollHeight, canVision ? 40 : 80);
       const newHeight = Math.min(calculatedHeight, 250);
       textarea.style.height = `${newHeight}px`;
     }
-  }, [canEditImage]);
+  }, [canVision]);
 
   useEffect(() => {
     adjustTextareaHeight();
@@ -65,10 +65,10 @@ function ImageInputContainer({
       }
       if (filesToUpload.length > 0) {
         e.preventDefault();
-        await processFiles(filesToUpload, notifyError, canEditImage, maxImageInput);
+        await processFiles(filesToUpload, notifyError, canVision, maxImageInput);
       }
     },
-    [processFiles, notifyError, canEditImage, maxImageInput]
+    [processFiles, notifyError, canVision, maxImageInput]
   );
 
   const handleImageButtonClick = useCallback((e) => {
@@ -175,7 +175,7 @@ function ImageInputContainer({
         </div>
 
         <div className="button-area">
-          {canEditImage && (
+          {canVision && (
             <div className="function-button-container" ref={optionsRef}>
               <motion.div
                 className="function-button"
@@ -211,7 +211,7 @@ function ImageInputContainer({
           await processFiles(files, (errorMessage) => {
             setToastMessage(errorMessage);
             setShowToast(true);
-          }, canEditImage, maxImageInput);
+          }, canVision, maxImageInput);
           e.target.value = "";
         }}
       />
