@@ -16,29 +16,29 @@ class ControlFlags(BaseModel):
     temperature: bool = True
     reason: bool = True
     verbosity: bool = True
-    system_message: bool = True
+    instructions: bool = True
 
 class ChatRequest(BaseModel):
     conversation_id: str
     model: str
-    temperature: float = 1.0
-    reason: float = 0
-    verbosity: float = 0
-    memory: int = 4
-    system_message: str = ""
-    user_message: List[Dict[str, Any]] = []
-    inference: bool = False
+    reasoning: bool = False
     search: bool = False
     deep_research: bool = False
     dan: bool = False
     mcp: List[str] = []
     stream: bool = True
     control: ControlFlags = ControlFlags()
+    temperature: float = 1.0
+    reason: float = 0
+    verbosity: float = 0
+    memory: int = 4
+    instructions: str = ""
+    message: List[Dict[str, Any]]
 
 class ImageGenerateRequest(BaseModel):
     conversation_id: str
     model: str
-    prompt: List[Dict[str, Any]]
+    message: List[Dict[str, Any]]
 
 class AliasRequest(BaseModel):
     conversation_id: str
@@ -63,8 +63,6 @@ conversation_collection = db.conversations
 
 MAX_VERBOSITY_TOKENS = 8192
 MAX_REASON_TOKENS = 16384
-
-STREAM_COOLDOWN_SECONDS = 0.1
 
 default_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'default_prompt.txt')
 try:
@@ -110,7 +108,7 @@ def check_user_permissions(user: User, request: ChatRequest):
         return "해당 모델을 사용할 권한이 없습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요.", None, None
     if not user.admin and len(request.mcp) > 3:
         return "MCP 서버는 최대 3개까지 선택할 수 있습니다.", None, None
-    if not request.user_message:
+    if not request.message:
         return "메시지가 비어 있습니다. 내용을 입력해 주세요.", None, None
     return None, in_billing, out_billing
 
@@ -126,7 +124,7 @@ def check_image_user_permissions(user: User, request: ImageGenerateRequest):
         return "체험판이 종료되었습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요.", None, None
     if not user.admin and (in_billing + out_billing) >= 0.1:
         return "해당 모델을 사용할 권한이 없습니다.\n\n자세한 정보는 admin@shilvister.net으로 문의해 주세요.", None, None
-    if not request.prompt:
+    if not request.message:
         return "프롬프트가 비어 있습니다. 내용을 입력해 주세요.", None, None
     return None, in_billing, out_billing
     
@@ -290,16 +288,16 @@ def save_conversation(user: User, user_message, response_text, token_usage, requ
             },
             "$set": {
                 "model": request.model,
-                "temperature": request.temperature,
-                "reason": request.reason,
-                "verbosity": request.verbosity,
-                "memory": request.memory,
-                "system_message": request.system_message,
-                "inference": request.inference,
+                "reasoning": request.reasoning,
                 "search": request.search,
                 "deep_research": request.deep_research,
                 "dan": request.dan,
                 "mcp": request.mcp,
+                "temperature": request.temperature,
+                "reason": request.reason,
+                "verbosity": request.verbosity,
+                "memory": request.memory,
+                "instructions": request.instructions,
                 "updated_at": datetime.now(timezone.utc)
             }
         }
@@ -329,8 +327,8 @@ def save_image_conversation(user: User, request: ImageGenerateRequest, image_byt
             {"_id": ObjectId(user.user_id)},
             {"$inc": {"billing": billing}}
         )
-    
-    user_message = {"role": "user", "content": request.prompt}
+
+    user_message = {"role": "user", "content": request.message}
     assistant_message = {"role": "assistant", "content": image_data}
 
     conversation_collection.update_one(

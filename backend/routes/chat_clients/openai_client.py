@@ -9,16 +9,14 @@ from fastapi import Depends, Request
 from fastapi.responses import StreamingResponse
 from ..auth import User, get_current_user
 from ..common import (
-    ChatRequest, router,
+    ChatRequest, router, RawChunk,
     DEFAULT_PROMPT, DAN_PROMPT,
     check_user_permissions,
     get_conversation, save_conversation,
     normalize_assistant_content,
     getReason, getVerbosity,
-    STREAM_COOLDOWN_SECONDS,
     
-    ApiSettings,
-    RawChunk
+    ApiSettings
 )
 from logging_util import logger
     
@@ -77,9 +75,6 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
             async for chunk in stream_result:
                 if await fastapi_request.is_disconnected():
                     return
-
-                print(chunk, flush=True)
-
                 
                 choices = getattr(chunk, "choices", None) or []
                 delta = getattr(choices[0], "delta", None) if choices else None
@@ -159,15 +154,15 @@ async def get_response(request: ChatRequest, settings: ApiSettings, user: User, 
         yield f"data: {json.dumps({'error': error_message})}\n\n"
         return
     
-    user_message = {"role": "user", "content": request.user_message}
+    user_message = {"role": "user", "content": request.message}
     conversation = get_conversation(user, request.conversation_id, request.memory)
     conversation.append(user_message)
 
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
     instructions = DEFAULT_PROMPT
-    if request.control.system_message and request.system_message:
-        instructions += "\n\n" + request.system_message
+    if request.control.instructions and request.instructions:
+        instructions += "\n\n" + request.instructions
     if request.dan and DAN_PROMPT:
         instructions += "\n\n" + DAN_PROMPT
         for part in reversed(formatted_messages[-1]["content"]):

@@ -46,11 +46,11 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "build:next": "BUILD_PATH=build_next react-scripts build",
-    "deploy": "bash -lc 'set -e; STAMP=$(date +%Y%m%d_%H%M%S); RELEASE_DIR=/home/gws8820/devochat/frontend/releases/$STAMP; mkdir -p \"$RELEASE_DIR\"; BUILD_PATH=\"$RELEASE_DIR\" npm run --silent build; [ -f \"$RELEASE_DIR/index.html\" ] || exit 1; if [ -L /home/gws8820/devochat/frontend/build ]; then ln -sfn \"$RELEASE_DIR\" /home/gws8820/devochat/frontend/build; else rm -rf /home/gws8820/devochat/frontend/build; ln -sfnT \"$RELEASE_DIR\" /home/gws8820/devochat/frontend/build; fi'",
-    "release:prune": "find /home/gws8820/devochat/frontend/releases -maxdepth 1 -mindepth 1 -type d -mtime +14 -exec rm -rf {} +",
-    "release:list": "ls -td /home/gws8820/devochat/frontend/releases/* | cat",
-    "release:current": "readlink -f /home/gws8820/devochat/frontend/build | cat",
-    "release:rollback": "bash -lc 'set -e; list=( $(ls -td /home/gws8820/devochat/frontend/releases/*) ); [ \"${#list[@]}\" -ge 2 ] || exit 1; target=\"${list[1]}\"; if [ -L /home/gws8820/devochat/frontend/build ]; then ln -sfn \"$target\" /home/gws8820/devochat/frontend/build; else rm -rf /home/gws8820/devochat/frontend/build; ln -sfnT \"$target\" /home/gws8820/devochat/frontend/build; fi'"
+    "deploy": "bash -lc 'set -e; STAMP=$(date +%Y%m%d_%H%M%S); RELEASE_DIR=/home/gws8820/Apps/devochat/frontend/releases/$STAMP; mkdir -p \"$RELEASE_DIR\"; BUILD_PATH=\"$RELEASE_DIR\" npm run --silent build; [ -f \"$RELEASE_DIR/index.html\" ] || exit 1; if [ -L /home/gws8820/Apps/devochat/frontend/build ]; then ln -sfn \"$RELEASE_DIR\" /home/gws8820/Apps/devochat/frontend/build; else rm -rf /home/gws8820/Apps/devochat/frontend/build; ln -sfnT \"$RELEASE_DIR\" /home/gws8820/Apps/devochat/frontend/build; fi'",
+    "release:prune": "find /home/gws8820/Apps/devochat/frontend/releases -maxdepth 1 -mindepth 1 -type d -mtime +14 -exec rm -rf {} +",
+    "release:list": "ls -td /home/gws8820/Apps/devochat/frontend/releases/* | cat",
+    "release:current": "readlink -f /home/gws8820/Apps/devochat/frontend/build | cat",
+    "release:rollback": "bash -lc 'set -e; list=( $(ls -td /home/gws8820/Apps/devochat/frontend/releases/*) ); [ \"${#list[@]}\" -ge 2 ] || exit 1; target=\"${list[1]}\"; if [ -L /home/gws8820/Apps/devochat/frontend/build ]; then ln -sfn \"$target\" /home/gws8820/Apps/devochat/frontend/build; else rm -rf /home/gws8820/Apps/devochat/frontend/build; ln -sfnT \"$target\" /home/gws8820/Apps/devochat/frontend/build; fi'"
   },
   "eslintConfig": {
     "extends": [

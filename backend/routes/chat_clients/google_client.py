@@ -9,18 +9,15 @@ from fastapi import Depends, Request
 from fastapi.responses import StreamingResponse
 from ..auth import User, get_current_user
 from ..common import (
-    ChatRequest, router,
+    ChatRequest, router, RawChunk,
     DEFAULT_PROMPT, DAN_PROMPT,
     check_user_permissions,
     get_conversation, save_conversation,
     normalize_assistant_content,
-    getReason, getVerbosity,
-    MAX_VERBOSITY_TOKENS,
-    STREAM_COOLDOWN_SECONDS,
+    getReason,
     
     AliasRequest, CHAT_ALIAS_PROMPT, IMAGE_ALIAS_PROMPT,
-    save_alias,
-    RawChunk
+    save_alias
 )
 from logging_util import logger
 
@@ -177,15 +174,15 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         yield f"data: {json.dumps({'error': error_message})}\n\n"
         return
     
-    user_message = {"role": "user", "content": request.user_message}
+    user_message = {"role": "user", "content": request.message}
     conversation = get_conversation(user, request.conversation_id, request.memory)
     conversation.append(user_message)
 
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
 
     instructions = DEFAULT_PROMPT
-    if request.control.system_message and request.system_message:
-        instructions += "\n\n" + request.system_message
+    if request.control.instructions and request.instructions:
+        instructions += "\n\n" + request.instructions
     if request.dan and DAN_PROMPT:
         instructions += "\n\n" + DAN_PROMPT
         for part in reversed(formatted_messages[-1].parts):

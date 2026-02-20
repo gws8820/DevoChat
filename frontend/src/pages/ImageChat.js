@@ -137,7 +137,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
           updateImageModel(data.model);
           setAlias(data.alias);
 
-          const initialMessages = (data.messages).map((m) => {
+          const initialMessages = (data.conversation).map((m) => {
             const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
             return messageWithId;
           });
@@ -253,7 +253,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
             body: JSON.stringify({
               conversation_id,
               model: selectedModel.model_name,
-              prompt: contentParts
+              message: contentParts
             }),
             credentials: "include",
             signal: controller.signal,

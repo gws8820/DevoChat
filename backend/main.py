@@ -265,7 +265,7 @@ async def get_mcp_servers(user: User = Depends(get_current_user)):
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error occured while fetching MCP servers: {str(ex)}")
 
-@app.get("/id/{share_id}", response_class=HTMLResponse)
+@app.get("/share/{share_id}", response_class=HTMLResponse)
 async def get_shared_page(share_id: str):
     file_path = os.path.join("shared_pages", f"{share_id}.html")
     

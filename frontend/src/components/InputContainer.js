@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
 import { GoPlus, GoGlobe, GoLightBulb, GoTelescope, GoUnlock } from "react-icons/go";
-import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
 import { FiPaperclip, FiMic, FiServer } from "react-icons/fi";
 import { PiPaperPlaneRightFill, PiStopFill } from "react-icons/pi";
@@ -58,20 +57,20 @@ function InputContainer({
   };
 
   const {
-    isInference,
+    isReasoning,
     isSearch,
     isDeepResearch,
     isDAN,
     mcpList,
     canControlSystemMessage,
-    canToggleInference,
+    canToggleReasoning,
     canToggleSearch,
     canToggleDeepResearch,
     canToggleMCP,
     canVision,
     setIsDAN,
     setMCPList,
-    toggleInference,
+    toggleReasoning,
     toggleSearch,
     toggleDeepResearch,
   } = useContext(SettingsContext);
@@ -272,7 +271,7 @@ function InputContainer({
                         <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
                         {!file.content && (
                           <div className="file-upload-overlay">
-                            <ImSpinner8 className="spinner" />
+                            <span className="spinner" style={{ "--spinner-size": "1.2em", "--spinner-width": "1.8px" }} />
                           </div>
                         )}
                       </div>
@@ -282,7 +281,7 @@ function InputContainer({
                         <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
                         {!file.content && (
                           <div className="file-upload-overlay">
-                            <ImSpinner8 className="spinner" />
+                            <span className="spinner" style={{ "--spinner-size": "1.2em", "--spinner-width": "1.8px" }} />
                           </div>
                         )}
                       </div>
@@ -379,11 +378,11 @@ function InputContainer({
                 <span className="button-text">검색</span>
               </motion.div>
             )}
-            {canToggleInference && (
+            {canToggleReasoning && (
               <motion.div
-                key="inference"
-                className={`function-button ${isInference ? "active" : ""}`}
-                onClick={toggleInference}
+                key="reasoning"
+                className={`function-button ${isReasoning ? "active" : ""}`}
+                onClick={toggleReasoning}
                 initial={{ x: -20, opacity: 0, scale: 0.8 }}
                 animate={{ x: 0, opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}

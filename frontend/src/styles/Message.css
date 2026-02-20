@@ -217,10 +217,12 @@
 .think-toggle, .citations-toggle, .image-generating {
   display: flex;
   align-items: center;
+  margin-top: 6px;
   gap: 4px;
   font-weight: 600;
   font-size: 13px;
   color: rgb(100, 100, 100);
+  cursor: pointer;
   user-select: none;
 }
 
@@ -243,18 +245,10 @@
   }
 }
 
-.think-toggle {
-  cursor: pointer;
-}
-
-.citations-toggle {
-  margin-top: 10px;
-  cursor: pointer;
-}
-
 .image-generating {
   width: fit-content;
   margin-left: 14px;
+  cursor: not-allowed;
 }
 
 .think-content, .citations-content {

@@ -61,7 +61,7 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
       });
 
       try {
-        await navigator.clipboard.writeText(`https://share.devochat.com/id/${uniqueId}`);
+        await navigator.clipboard.writeText(`https://api.devochat.com/share/${uniqueId}`);
         setToastMessage("공유 링크가 복사되었습니다.");
         setToastType("copy");
         setShowToast(true);

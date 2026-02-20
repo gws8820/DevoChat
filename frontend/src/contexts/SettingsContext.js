@@ -15,8 +15,8 @@ export const SettingsProvider = ({ children }) => {
   const [reason, setReason] = useState(0.5);
   const [verbosity, setVerbosity] = useState(0.5);
   const [memory, setMemory] = useState(4);
-  const [systemMessage, setSystemMessage] = useState("");
-  const [isInference, setIsInference] = useState(false);
+  const [instructions, setInstructions] = useState("");
+  const [isReasoning, setIsReasoning] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
   const [isDeepResearch, setIsDeepResearch] = useState(false);
   const [isDAN, setIsDAN] = useState(false);
@@ -27,7 +27,7 @@ export const SettingsProvider = ({ children }) => {
   const [canControlVerbosity, setCanControlVerbosity] = useState(false);
   const [canControlSystemMessage, setCanControlSystemMessage] = useState(false);
   const [canVision, setCanVision] = useState(false);
-  const [canToggleInference, setCanToggleInference] = useState(false);
+  const [canToggleReasoning, setCanToggleReasoning] = useState(false);
   const [canToggleSearch, setCanToggleSearch] = useState(false);
   const [canToggleDeepResearch, setCanToggleDeepResearch] = useState(false);
   const [canToggleMCP, setCanToggleMCP] = useState(false);
@@ -81,27 +81,27 @@ export const SettingsProvider = ({ children }) => {
     const temperature = selectedModel?.controls?.temperature;
     const reason = selectedModel?.controls?.reason;
     const verbosity = selectedModel?.controls?.verbosity;
-    const system_message = selectedModel?.controls?.system_message;
-    const inference = selectedModel?.capabilities?.inference;
+    const instructions = selectedModel?.controls?.instructions;
+    const reasoning = selectedModel?.capabilities?.reasoning;
     const search = selectedModel?.capabilities?.search;
     const deep_research = selectedModel?.capabilities?.deep_research;
     const vision = selectedModel?.capabilities?.vision;
     const mcp = selectedModel?.capabilities?.mcp;
 
-    let nextIsInference;
+    let nextIsReasoning;
 
-    if (inference === "toggle" || inference === "switch") {
-      setCanToggleInference(true);
+    if (reasoning === "toggle" || reasoning === "switch") {
+      setCanToggleReasoning(true);
       if (modelConfig) {
-        setIsInference(modelConfig.isInference);
-        nextIsInference = modelConfig.isInference;
+        setIsReasoning(modelConfig.isReasoning);
+        nextIsReasoning = modelConfig.isReasoning;
       } else {
-        nextIsInference = isInference;
+        nextIsReasoning = isReasoning;
       }
     } else {
-      setCanToggleInference(false);
-      setIsInference(inference);
-      nextIsInference = inference;
+      setCanToggleReasoning(false);
+      setIsReasoning(reasoning);
+      nextIsReasoning = reasoning;
     }
 
     if (search === "toggle" || search === "switch") {
@@ -124,46 +124,46 @@ export const SettingsProvider = ({ children }) => {
       setIsDeepResearch(deep_research);
     }
 
-    setCanControlTemp(temperature === true || (temperature === "conditional" && nextIsInference === false));
-    setCanControlReason(reason === true && nextIsInference === true);
+    setCanControlTemp(temperature === true || (temperature === "conditional" && nextIsReasoning === false));
+    setCanControlReason(reason === true && nextIsReasoning === true);
     setCanControlVerbosity(verbosity === true);
 
-    setCanControlSystemMessage(system_message);
-    if (!system_message) setIsDAN(false);
+    setCanControlSystemMessage(instructions);
+    if (!instructions) setIsDAN(false);
 
     setCanVision(vision);
     setCanToggleMCP(mcp);
     setMCPList(mcp ? mcpList : []);
   };
 
-  const toggleInference = () => {
+  const toggleReasoning = () => {
     const selectedModel = models.find(m => m.model_name === model);
-    const inference = selectedModel?.capabilities?.inference;
+    const reasoning = selectedModel?.capabilities?.reasoning;
     const temperature = selectedModel?.controls?.temperature;
     const reason = selectedModel?.controls?.reason;
-    
-    const nextIsInference = !isInference;
 
-    if (inference === "switch") {
+    const nextIsReasoning = !isReasoning;
+
+    if (reasoning === "switch") {
       const variants = selectedModel?.variants;
-      const targetModel = nextIsInference ? variants?.inference : variants?.base;
+      const targetModel = nextIsReasoning ? variants?.reasoning : variants?.base;
       if (targetModel) {
         updateModel(
           targetModel,
           {
-            isInference: nextIsInference,
+            isReasoning: nextIsReasoning,
             isSearch,
             isDeepResearch
           }
         );
         return;
       }
-    } 
+    }
 
-    setIsInference(nextIsInference);
+    setIsReasoning(nextIsReasoning);
 
-    setCanControlTemp(temperature === true || (temperature === "conditional" && !nextIsInference));
-    setCanControlReason(reason === true && nextIsInference === true);
+    setCanControlTemp(temperature === true || (temperature === "conditional" && !nextIsReasoning));
+    setCanControlReason(reason === true && nextIsReasoning === true);
   };
 
   const toggleSearch = () => {
@@ -247,9 +247,9 @@ export const SettingsProvider = ({ children }) => {
         reason,
         verbosity,
         memory,
-        systemMessage,
+        instructions,
         hasImage,
-        isInference,
+        isReasoning,
         isSearch,
         isDeepResearch,
         isDAN,
@@ -258,9 +258,9 @@ export const SettingsProvider = ({ children }) => {
         canControlReason,
         canControlVerbosity,
         canControlSystemMessage,
-        canToggleInference, 
+        canToggleReasoning,
         canToggleSearch,
-        canToggleDeepResearch, 
+        canToggleDeepResearch,
         canToggleMCP,
         canVision,
         maxImageInput,
@@ -272,11 +272,11 @@ export const SettingsProvider = ({ children }) => {
         setReason,
         setVerbosity,
         setMemory,
-        setSystemMessage,
+        setInstructions,
         setHasImage,
         setIsDAN,
         setMCPList,
-        toggleInference,
+        toggleReasoning,
         toggleSearch,
         toggleDeepResearch,
         switchImageMode

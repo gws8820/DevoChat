@@ -18,7 +18,7 @@ async def gemini_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
       
     contents: list = []
     
-    for part in request.prompt:
+    for part in request.message:
       if part.get("type") == "text":
         contents.append(part.get("text"))
 
@@ -58,7 +58,7 @@ async def imagen_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
     if error_message:
       raise HTTPException(status_code=403, detail=error_message)
       
-    prompt = "\n\n".join(part.get("text") for part in request.prompt)
+    prompt = "\n\n".join(part.get("text") for part in request.message)
     
     response = await client.aio.models.generate_images(
       model=request.model,

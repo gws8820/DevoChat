@@ -57,6 +57,22 @@
     color: black;
 }
 
+.spinner {
+    display: inline-block;
+    width: var(--spinner-size, 1em);
+    height: var(--spinner-size, 1em);
+    border: var(--spinner-width, 1.6px) solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    box-sizing: border-box;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 @media (max-width: 768px) {
     .welcome-container {
         flex-grow: 1;

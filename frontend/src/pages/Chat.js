@@ -48,8 +48,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     reason,
     verbosity,
     memory,
-    systemMessage,
-    isInference,
+    instructions,
+    isReasoning,
     isSearch,
     isDeepResearch,
     isDAN,
@@ -65,7 +65,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     setReason,
     setVerbosity,
     setMemory,
-    setSystemMessage,
+    setInstructions,
     setIsDAN,
     setHasImage,
     setMCPList
@@ -288,15 +288,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
             body: JSON.stringify({
               conversation_id,
               model: selectedModel.model_name,
-              in_billing: selectedModel.in_billing,
-              out_billing: selectedModel.out_billing,
-              temperature: temperature,
-              reason: reason,
-              verbosity: verbosity,
-              memory: memory,
-              system_message: systemMessage,
-              user_message: contentParts,
-              inference: isInference,
+              reasoning: isReasoning,
               search: isSearch,
               deep_research: isDeepResearch,
               dan: isDAN,
@@ -306,8 +298,14 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
                 temperature: canControlTemp,
                 reason: canControlReason,
                 verbosity: canControlVerbosity,
-                system_message: canControlSystemMessage,
+                instructions: canControlSystemMessage,
               },
+              temperature: temperature,
+              reason: reason,
+              verbosity: verbosity,
+              memory: memory,
+              instructions,
+              message: contentParts,
             }),
             credentials: "include",
             signal: controller.signal,
@@ -376,11 +374,11 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       reason,
       verbosity,
       memory,
-      systemMessage,
+      instructions,
       updateAssistantMessage,
       updateTimestamp,
       setErrorMessage,
-      isInference,
+      isReasoning,
       isSearch,
       isDeepResearch,
       isDAN,
@@ -508,21 +506,22 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           const data = await res.json();
           
           updateModel(data.model, {
-            isInference: data.inference,
+            isReasoning: data.reasoning,
             isSearch: data.search,
             isDeepResearch: data.deep_research
           });
 
           setAlias(data.alias);
+          setInstructions(data.instructions);
+
+          setIsDAN(data.dan);
+          setMCPList(data.mcp);
           setTemperature(data.temperature);
           setReason(data.reason);
           setVerbosity(data.verbosity);
           setMemory(data.memory);
-          setSystemMessage(data.system_message);
-          setIsDAN(data.dan);
-          setMCPList(data.mcp);
 
-          const initialMessages = data.messages.map((m) => {
+          const initialMessages = data.conversation.map((m) => {
             const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
             return m.role === "assistant" ? { ...messageWithId, isComplete: true } : messageWithId;
           });
@@ -711,7 +710,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         )}
 
         {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-          <div style={{ margin: isInference ? "12px 14px 24px" : "18px 14px 32px" }}>
+          <div style={{ margin: isReasoning ? "18px 14px 22.5px" : "18px 14px 32px" }}>
              <motion.div
                 className="chat-loading-circle"
                 initial={{ scale: 1 }}

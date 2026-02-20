@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { GoImage } from "react-icons/go";
-import { ImSpinner8 } from "react-icons/im";
 import { BiX } from "react-icons/bi";
 import { PiPaperPlaneRightFill, PiStopFill } from "react-icons/pi";
 import { motion, AnimatePresence } from "framer-motion";
@@ -150,7 +149,7 @@ function ImageInputContainer({
                     )}
                     {!file.content && (
                       <div className="file-upload-overlay">
-                        <ImSpinner8 className="spinner" />
+                        <span className="spinner" style={{ "--spinner-size": "1.2em", "--spinner-width": "1.8px" }} />
                       </div>
                     )}
                   </motion.div>

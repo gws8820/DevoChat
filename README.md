@@ -2,7 +2,10 @@
 
 *English | [한국어](README.ko.md)*
 
-> ⚠️ **Breaking Change**: `capabilities.image` key has been renamed to `capabilities.vision`. Please update your configuration files.
+> ⚠️ **Breaking Change**:
+> - `capabilities.image` key has been renamed to `capabilities.vision`
+> - `capabilities.inference` key has been renamed to `capabilities.reasoning`
+> - Please update your configuration files.
 
 ### Unified AI Chat Platform
 DevoChat is a web application that allows you to use various multimodal AI models and MCP (Model Context Protocol) servers through a single interface. Check out the [live demo](https://devochat.com).
@@ -23,7 +26,7 @@ DevoChat is a web application that allows you to use various multimodal AI model
 
 - **Model Switching Architecture**
   - Allows immediate addition of various AI models to the system through JSON modification without code changes.
-  - Supports toggling of additional features like inference, search, and deep research for hybrid models.
+  - Supports toggling of additional features like reasoning, search, and deep research for hybrid models.
   - Enables linking separate provider models (e.g., Qwen3-235B-A22B-Instruct-2507, Qwen3-235B-A22B-Thinking-2507) with a "switch" variant to function as a single hybrid model.
 
 - **Web-based MCP Client**
@@ -272,7 +275,7 @@ Define the AI models available in the application and their properties through t
       "capabilities": {
         "stream": true,
         "vision": true,
-        "inference": "toggle",
+        "reasoning": "toggle",
         "search": "toggle",
         "deep_research": false
       },
@@ -280,7 +283,7 @@ Define the AI models available in the application and their properties through t
         "temperature": "conditional",
         "reason": true,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -296,7 +299,7 @@ Define the AI models available in the application and their properties through t
       "capabilities": {
         "stream": true,
         "vision": false,
-        "inference": false,
+        "reasoning": false,
         "search": false,
         "deep_research": false
       },
@@ -304,7 +307,7 @@ Define the AI models available in the application and their properties through t
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -323,7 +326,7 @@ Define the AI models available in the application and their properties through t
       "capabilities": {
         "stream": true,
         "vision": true,
-        "inference": true,
+        "reasoning": true,
         "search": false,
         "deep_research": "switch"
       },
@@ -331,7 +334,7 @@ Define the AI models available in the application and their properties through t
         "temperature": false,
         "reason": true,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     }
@@ -355,7 +358,7 @@ Define the AI models available in the application and their properties through t
 | `capabilities` | Defines the features supported by the model |
 | `capabilities.stream` | Whether streaming response is supported |
 | `capabilities.vision` | Whether image input is supported |
-| `capabilities.inference` | Whether inference is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
+| `capabilities.reasoning` | Whether reasoning is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.search` | Whether web search is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.deep_research` | Whether Deep Research is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.mcp` | Whether MCP server integration is supported. Possible values: `true`, `false` |
@@ -363,7 +366,7 @@ Define the AI models available in the application and their properties through t
 | `controls.temperature` | Whether temperature adjustment is possible. Possible values: `true`, `false`, `"conditional"` |
 | `controls.reason` | Whether Reasoning Effect adjustment is possible. Possible values: `true`, `false` |
 | `controls.verbosity` | Whether response length control is possible. Possible values: `true`, `false` |
-| `controls.system_message` | Whether system message setting is possible. Possible values: `true`, `false` |
+| `controls.instructions` | Whether custom instructions setting is possible. Possible values: `true`, `false` |
 | `admin` | If `true`, only admin users can access/select this model |
 
 ### Value Description
@@ -380,8 +383,8 @@ For hybrid models, users can turn this feature on or off as needed.
 #### switch
 When a user toggles this feature, it switches to another individual model. Dynamic switching occurs to models defined in the `variants` object.
 
-#### conditional  
-Available in standard mode, but not available in inference mode.
+#### conditional
+Available in standard mode, but not available in reasoning mode.
 
 ### image_models.json Configuration
 
@@ -443,11 +446,11 @@ You can define various variants of models through the `variants` object.
 {
   "model_name": "sonar",
   "variants": {
-    "inference": "sonar-reasoning",
+    "reasoning": "sonar-reasoning",
     "deep_research": "sonar-deep-research"
   },
   "capabilities": {
-    "inference": "switch",
+    "reasoning": "switch",
     "deep_research": "switch"
   }
 },
@@ -457,7 +460,7 @@ You can define various variants of models through the `variants` object.
     "base": "sonar"
   },
   "capabilities": {
-    "inference": "switch"
+    "reasoning": "switch"
   }
 }
 ```

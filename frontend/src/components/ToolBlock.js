@@ -1,6 +1,5 @@
 import React from 'react';
 import { GoCheck, GoX, GoChevronDown, GoChevronUp } from 'react-icons/go';
-import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToolBlockState } from './MarkdownRenderers';
 import '../styles/ToolBlock.css';
@@ -17,7 +16,7 @@ const ToolBlock = React.memo(({ toolData }) => {
   const renderIcon = () => {
     if (toolData.type === 'tool_use') {
       return toolData.isValid ? 
-        <AiOutlineLoading3Quarters className="tool-icon loading" /> :
+        <span className="tool-icon loading spinner" /> :
         <GoX className="tool-icon error" />;
     }
     
@@ -36,7 +35,9 @@ const ToolBlock = React.memo(({ toolData }) => {
     <div className="tool-block">
       <div className="tool-header">
         <div className="tool-content">
-          {renderIcon()}
+          <div className="tool-status">
+            {renderIcon()}
+          </div>
           <div className="tool-info">
             <span className="tool-server-name">{toolData.server_name?.replace(/_/g, ' ')}</span>
             <span className="tool-tool-name">{toolData.tool_name}</span>

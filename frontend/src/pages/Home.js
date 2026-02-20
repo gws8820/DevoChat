@@ -38,7 +38,7 @@ function Home({ isTouch, userInfo }) {
     setTemperature,
     setReason,
     setVerbosity,
-    setSystemMessage,
+    setInstructions,
     setIsDAN,
     setHasImage,
   } = useContext(SettingsContext);
@@ -74,7 +74,7 @@ function Home({ isTouch, userInfo }) {
     setTemperature(1);
     setReason(0.5);
     setVerbosity(0.5);
-    setSystemMessage("");
+    setInstructions("");
     setIsDAN(false);
     setHasImage(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps

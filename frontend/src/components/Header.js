@@ -18,7 +18,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
     reason,
     verbosity,
     memory,
-    systemMessage,
+    instructions,
     hasImage,
     canControlTemp,
     canControlReason,
@@ -29,7 +29,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
     setReason,
     setVerbosity,
     setMemory,
-    setSystemMessage
+    setInstructions
   } = useContext(SettingsContext);
 
   const location = useLocation();
@@ -45,7 +45,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
 
   const modelModalRef = useRef(null);
   const controlPanelRef = useRef(null);
-  const systemMessageRef = useRef(null);
+  const instructionsRef = useRef(null);
 
   let modelsList = models.filter((m) => {
     if (hasImage && !m.capabilities.vision) return false;
@@ -85,7 +85,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
       });
 
       try {
-        await navigator.clipboard.writeText(`https://share.devochat.com/id/${uniqueId}`);
+        await navigator.clipboard.writeText(`https://api.devochat.com/share/${uniqueId}`);
         setToastMessage("공유 링크가 복사되었습니다.");
         setToastType("copy");
         setShowToast(true);
@@ -147,8 +147,8 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
       }
       if (
         isSystemMessageOpen &&
-        systemMessageRef.current &&
-        !systemMessageRef.current.contains(event.target) &&
+        instructionsRef.current &&
+        !instructionsRef.current.contains(event.target) &&
         !event.target.closest(".system-message-icon")
       ) {
         setIsSystemMessageOpen(false);
@@ -328,7 +328,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                 {isSystemMessageOpen && (
                   <motion.div
                     className="system-message-container"
-                    ref={systemMessageRef}
+                    ref={instructionsRef}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -338,8 +338,8 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                       <span>시스템 지시어 설정</span>
                     </div>
                     <textarea
-                      value={systemMessage}
-                      onChange={(e) => setSystemMessage(e.target.value)}
+                      value={instructions}
+                      onChange={(e) => setInstructions(e.target.value)}
                       className="system-message-input"
                       placeholder="내용을 입력하세요."
                       rows={5}

@@ -12,8 +12,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "toggle",
         "vision": true,
-        "inference": "toggle",
         "search": "toggle",
         "deep_research": false,
         "mcp": true
@@ -22,7 +22,7 @@
         "temperature": "conditional",
         "reason": true,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -37,8 +37,8 @@
       },
       "capabilities": {
         "stream": false,
+        "reasoning": true,
         "vision": true,
-        "inference": true,
         "search": true,
         "deep_research": false,
         "mcp": true
@@ -47,7 +47,7 @@
         "temperature": false,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": true
     },
@@ -62,8 +62,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "toggle",
         "vision": true,
-        "inference": "toggle",
         "search": "toggle",
         "deep_research": false,
         "mcp": true
@@ -72,13 +72,13 @@
         "temperature": false,
         "reason": true,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "gemini-3-pro-preview",
-      "model_alias": "Gemini 3 Pro",
+      "model_name": "gemini-3.1-pro-preview",
+      "model_alias": "Gemini 3.1 Pro",
       "description": "고성능 Gemini 모델",
       "endpoint": "/chat/gemini",
       "billing": {
@@ -87,8 +87,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": true,
         "vision": true,
-        "inference": true,
         "search": "toggle",
         "deep_research": false,
         "mcp": false
@@ -97,7 +97,7 @@
         "temperature": false,
         "reason": true,
         "verbosity": false,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -112,8 +112,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "toggle",
         "vision": true,
-        "inference": "toggle",
         "search": "toggle",
         "deep_research": false,
         "mcp": false
@@ -122,7 +122,7 @@
         "temperature": true,
         "reason": true,
         "verbosity": false,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -136,12 +136,12 @@
         "out_billing": "0.5"
       },
       "variants": {
-        "inference": "grok-4.1-fast-reasoning"
+        "reasoning": "grok-4.1-fast-reasoning"
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "switch",
         "vision": true,
-        "inference": "switch",
         "search": "toggle",
         "deep_research": false,
         "mcp": true
@@ -150,7 +150,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -168,8 +168,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "switch",
         "vision": true,
-        "inference": "switch",
         "search": "toggle",
         "deep_research": false,
         "mcp": true
@@ -178,7 +178,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -193,8 +193,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "toggle",
         "vision": true,
-        "inference": "toggle",
         "search": "toggle",
         "deep_research": false,
         "mcp": true
@@ -203,13 +203,13 @@
         "temperature": "conditional",
         "reason": true,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": true
     },
     {
-      "model_name": "claude-sonnet-4-5",
-      "model_alias": "Claude 4.5 Sonnet",
+      "model_name": "claude-sonnet-4-6",
+      "model_alias": "Claude 4.6 Sonnet",
       "description": "고성능 Claude 모델",
       "endpoint": "/chat/claude",
       "billing": {
@@ -218,8 +218,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "toggle",
         "vision": true,
-        "inference": "toggle",
         "search": "toggle",
         "deep_research": false,
         "mcp": true
@@ -228,7 +228,7 @@
         "temperature": "conditional",
         "reason": true,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -243,8 +243,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "toggle",
         "vision": true,
-        "inference": "toggle",
         "search": "toggle",
         "deep_research": false,
         "mcp": true
@@ -253,12 +253,37 @@
         "temperature": "conditional",
         "reason": true,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "fireworks/kimi-k2p5",
+      "model_name": "fireworks/glm-5",
+      "model_alias": "GLM 5",
+      "description": "최신 GLM 모델",
+      "endpoint": "/chat/fireworks",
+      "billing": {
+        "in_billing": "1",
+        "out_billing": "3.2"
+      },
+      "capabilities": {
+        "stream": true,
+        "reasoning": false,
+        "vision": false,
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "instructions": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "accounts/fireworks/models/kimi-k2p5",
       "model_alias": "Kimi K2.5",
       "description": "최신 Kimi 모델",
       "endpoint": "/chat/fireworks",
@@ -268,8 +293,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": false,
         "vision": true,
-        "inference": false,
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -278,26 +303,23 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "fireworks/qwen3-vl-235b-a22b-instruct",
-      "model_alias": "Qwen 3",
-      "description": "최신 Qwen 모델",
+      "model_name": "accounts/fireworks/models/minimax-m2p5",
+      "model_alias": "MiniMax M2.5",
+      "description": "최신 MiniMax 모델",
       "endpoint": "/chat/fireworks",
       "billing": {
-        "in_billing": "0.22",
-        "out_billing": "0.88"
-      },
-      "variants": {
-        "inference": "fireworks/qwen3-vl-235b-a22b-thinking"
+        "in_billing": "0.3",
+        "out_billing": "1.2"
       },
       "capabilities": {
         "stream": true,
-        "vision": true,
-        "inference": "switch",
+        "reasoning": true,
+        "vision": false,
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -306,35 +328,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "fireworks/qwen3-vl-235b-a22b-thinking",
-      "model_alias": "Qwen 3",
-      "description": "최신 Qwen 모델",
-      "endpoint": "/chat/fireworks",
-      "billing": {
-        "in_billing": "0.22",
-        "out_billing": "0.88"
-      },
-      "variants": {
-        "base": "fireworks/qwen3-vl-235b-a22b-instruct"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": true,
-        "inference": "switch",
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -348,12 +342,12 @@
         "out_billing": "0.42"
       },
       "variants": {
-        "inference": "deepseek-reasoner"
+        "reasoning": "deepseek-reasoner"
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "toggle",
         "vision": false,
-        "inference": "toggle",
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -362,7 +356,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -380,8 +374,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "toggle",
         "vision": false,
-        "inference": "toggle",
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -390,32 +384,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "fireworks/glm-4p7",
-      "model_alias": "GLM 4.7",
-      "description": "최신 GLM 모델",
-      "endpoint": "/chat/fireworks",
-      "billing": {
-        "in_billing": "0.6",
-        "out_billing": "2.2"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": false,
-        "inference": false,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -430,8 +399,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": false,
         "vision": true,
-        "inference": false,
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -440,7 +409,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -455,8 +424,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": false,
         "vision": true,
-        "inference": false,
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -465,7 +434,63 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "fireworks/qwen3-vl-235b-a22b-instruct",
+      "model_alias": "Qwen 3",
+      "description": "최신 Qwen 모델",
+      "endpoint": "/chat/fireworks",
+      "billing": {
+        "in_billing": "0.22",
+        "out_billing": "0.88"
+      },
+      "variants": {
+        "reasoning": "fireworks/qwen3-vl-235b-a22b-thinking"
+      },
+      "capabilities": {
+        "stream": true,
+        "reasoning": "switch",
+        "vision": true,
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "instructions": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "fireworks/qwen3-vl-235b-a22b-thinking",
+      "model_alias": "Qwen 3",
+      "description": "최신 Qwen 모델",
+      "endpoint": "/chat/fireworks",
+      "billing": {
+        "in_billing": "0.22",
+        "out_billing": "0.88"
+      },
+      "variants": {
+        "base": "fireworks/qwen3-vl-235b-a22b-instruct"
+      },
+      "capabilities": {
+        "stream": true,
+        "reasoning": "switch",
+        "vision": true,
+        "search": false,
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "instructions": true
       },
       "admin": false
     },
@@ -480,8 +505,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": false,
         "vision": false,
-        "inference": false,
         "search": false,
         "deep_research": false,
         "mcp": false
@@ -490,7 +515,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -504,13 +529,13 @@
         "out_billing": "1"
       },
       "variants": {
-        "inference": "sonar-reasoning",
-        "deep_research": "sonar-deep-research"
+        "deep_research": "sonar-deep-research",
+        "reasoning": "sonar-reasoning"
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "switch",
         "vision": true,
-        "inference": "switch",
         "search": true,
         "deep_research": "switch",
         "mcp": false
@@ -519,7 +544,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -537,8 +562,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "switch",
         "vision": true,
-        "inference": "switch",
         "search": true,
         "deep_research": false,
         "mcp": false
@@ -547,7 +572,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -565,8 +590,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": true,
         "vision": true,
-        "inference": true,
         "search": true,
         "deep_research": "switch",
         "mcp": false
@@ -575,7 +600,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -589,12 +614,12 @@
         "out_billing": "15"
       },
       "variants": {
-        "inference": "sonar-reasoning-pro"
+        "reasoning": "sonar-reasoning-pro"
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "switch",
         "vision": true,
-        "inference": "switch",
         "search": true,
         "deep_research": false,
         "mcp": false
@@ -603,7 +628,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -621,8 +646,8 @@
       },
       "capabilities": {
         "stream": true,
+        "reasoning": "switch",
         "vision": true,
-        "inference": "switch",
         "search": true,
         "deep_research": false,
         "mcp": false
@@ -631,7 +656,7 @@
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     }

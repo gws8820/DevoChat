@@ -6,7 +6,7 @@ import Message from "../components/Message";
 import "../styles/Common.css";
 
 function View() {
-  const { type, conversation_id } = useParams();
+  const { conversation_id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -18,7 +18,7 @@ function View() {
   useEffect(() => {
     const initializeChat = async () => {
       try {
-        const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/${type}/conversation/${conversation_id}`, {
+        const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/view/${conversation_id}`, {
           credentials: "include"
         });
         if (!res.ok) {
@@ -30,7 +30,7 @@ function View() {
           return;
         }
         const data = await res.json();
-        const updatedMessages = data.messages.map((m) => {
+        const updatedMessages = data.conversation.map((m) => {
           const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
           return m.role === "assistant" ? { ...messageWithId, isComplete: true } : messageWithId;
         });
@@ -44,7 +44,7 @@ function View() {
 
     initializeChat();
     // eslint-disable-next-line
-  }, [type, conversation_id, location.state]);
+  }, [conversation_id, location.state]);
 
   return (
     <div className="container">

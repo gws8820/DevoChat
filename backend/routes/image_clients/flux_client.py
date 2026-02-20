@@ -48,7 +48,7 @@ async def flux_endpoint(request: ImageGenerateRequest, user: User = Depends(get_
         text_parts = []
         image_parts = []
         
-        for part in request.prompt:
+        for part in request.message:
             if part.get("type") == "text":
                 text_parts.append(part.get("text"))
             elif part.get("type") == "image":

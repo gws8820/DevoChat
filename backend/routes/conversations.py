@@ -97,17 +97,33 @@ async def get_conversation(conversation_id: str, current_user: User = Depends(ge
         "conversation_id": doc["conversation_id"],
         "alias": doc.get("alias", ""),
         "model": doc.get("model", ""),
-        "temperature": doc.get("temperature", 1),
-        "reason": doc.get("reason", 0),
-        "verbosity": doc.get("verbosity", 0),
-        "memory": doc.get("memory", 4),
-        "system_message": doc.get("system_message", ""),
-        "inference": doc.get("inference", False),
+        "reasoning": doc.get("reasoning", False),
         "search": doc.get("search", False),
         "deep_research": doc.get("deep_research", False),
         "dan": doc.get("dan", False),
         "mcp": doc.get("mcp", []),
-        "messages": doc.get("conversation", [])
+        "temperature": doc.get("temperature", 1),
+        "reason": doc.get("reason", 0),
+        "verbosity": doc.get("verbosity", 0),
+        "memory": doc.get("memory", 4),
+        "instructions": doc.get("instructions", ""),
+        "conversation": doc.get("conversation", [])
+    }
+
+@router.get("/view/{conversation_id}", response_model=dict)
+async def get_view_conversation(conversation_id: str, current_user: User = Depends(get_current_user)):
+    doc = conversations_collection.find_one({"conversation_id": conversation_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if doc["user_id"] != current_user.user_id and not current_user.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this conversation"
+        )
+    return {
+        "conversation_id": doc["conversation_id"],
+        "alias": doc.get("alias", ""),
+        "conversation": doc.get("conversation", [])
     }
 
 @router.get("/image/conversation/{conversation_id}", response_model=dict)
@@ -124,7 +140,7 @@ async def get_image_conversation(conversation_id: str, current_user: User = Depe
         "conversation_id": doc["conversation_id"],
         "alias": doc.get("alias", ""),
         "model": doc.get("model", ""),
-        "messages": doc.get("conversation", [])
+        "conversation": doc.get("conversation", [])
     }
     
 @router.post("/chat/new_conversation", response_model=dict)
@@ -138,15 +154,16 @@ async def create_new_conversation(current_user: User = Depends(get_current_user)
         "type": "chat",
         "alias": None,
         "model": None,
-        "temperature": None,
-        "reason": None,
-        "verbosity": None,
-        "system_message": None,
-        "inference": None,
+        "reasoning": None,
         "search": None,
         "deep_research": None,
         "dan": None,
         "mcp": None,
+        "temperature": None,
+        "reason": None,
+        "verbosity": None,
+        "memory": None,
+        "instructions": None,
         "conversation": [],
         "starred": False,
         "starred_at": None,

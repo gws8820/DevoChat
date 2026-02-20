@@ -15,7 +15,7 @@ async def grok_endpoint(request: ImageGenerateRequest, user: User = Depends(get_
         if error_message:
             raise HTTPException(status_code=403, detail=error_message)
         
-        prompt = "\n\n".join(part.get("text") for part in request.prompt)
+        prompt = "\n\n".join(part.get("text") for part in request.message)
         
         request_data = {
             "model": request.model,

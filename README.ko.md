@@ -2,7 +2,10 @@
 
 *[English](README.md) | 한국어*
 
-> ⚠️ **Breaking Change**: `capabilities.image` 키가 `capabilities.vision`으로 변경되었습니다. 설정 파일을 업데이트해 주세요.
+> ⚠️ **Breaking Change**:
+> - `capabilities.image` 키가 `capabilities.vision`으로 변경되었습니다.
+> - `capabilities.inference` 키가 `capabilities.reasoning`으로 변경되었습니다.
+> - 설정 파일을 업데이트해 주세요.
 
 ### 통합 AI 대화 플랫폼
 DevoChat은 다양한 멀티모달 AI 모델과 MCP (Model Context Protocol) 서버를 하나의 인터페이스에서 사용할 수 있는 웹 애플리케이션입니다. [여기](https://devochat.com)에서 라이브 데모를 확인하세요.
@@ -272,7 +275,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       "capabilities": {
         "stream": true,
         "vision": true,
-        "inference": "toggle",
+        "reasoning": "toggle",
         "search": "toggle",
         "deep_research": false
       },
@@ -280,7 +283,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "temperature": "conditional",
         "reason": true,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -296,7 +299,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       "capabilities": {
         "stream": true,
         "vision": false,
-        "inference": false,
+        "reasoning": false,
         "search": false,
         "deep_research": false
       },
@@ -304,7 +307,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "temperature": true,
         "reason": false,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     },
@@ -323,7 +326,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       "capabilities": {
         "stream": true,
         "vision": true,
-        "inference": true,
+        "reasoning": true,
         "search": false,
         "deep_research": "switch"
       },
@@ -331,7 +334,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "temperature": false,
         "reason": true,
         "verbosity": true,
-        "system_message": true
+        "instructions": true
       },
       "admin": false
     }
@@ -355,7 +358,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `capabilities` | 모델이 지원하는 기능들을 정의합니다. |
 | `capabilities.stream` | 스트리밍 응답 지원 여부입니다. |
 | `capabilities.vision` | 이미지 입력 기능 지원 여부입니다. |
-| `capabilities.inference` | 추론 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
+| `capabilities.reasoning` | 추론 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.search` | 웹 검색 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.deep_research` | Deep Research 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.mcp` | MCP 서버 연동 지원 여부입니다. 가능한 값: `true`, `false` |
@@ -363,7 +366,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `controls.temperature` | Temperature 조절 가능 여부입니다. 가능한 값: `true`, `false`, `"conditional"` |
 | `controls.reason` | Reasoning Effect 조절 가능 여부입니다. 가능한 값: `true`, `false` |
 | `controls.verbosity` | 답변 길이(verbosity) 조절 가능 여부입니다. 가능한 값: `true`, `false` |
-| `controls.system_message` | 시스템 메시지 설정 가능 여부입니다. 가능한 값: `true`, `false` |
+| `controls.instructions` | 커스텀 지시사항 설정 가능 여부입니다. 가능한 값: `true`, `false` |
 | `admin` | `true`인 경우, 관리자만 해당 모델을 선택/사용할 수 있습니다. |
 
 ### 값 설명
@@ -380,7 +383,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 #### switch
 사용자가 해당 기능을 토글할 때 다른 개별 모델로 전환됩니다. `variants` 객체에 정의된 모델로 동적 전환이 이루어집니다.
 
-#### conditional  
+#### conditional
 표준 모드에서는 사용할 수 있으나, 추론 모드에서는 사용할 수 없습니다.
 
 ### image_models.json 설정
@@ -443,11 +446,11 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 {
   "model_name": "sonar",
   "variants": {
-    "inference": "sonar-reasoning",
+    "reasoning": "sonar-reasoning",
     "deep_research": "sonar-deep-research"
   },
   "capabilities": {
-    "inference": "switch",
+    "reasoning": "switch",
     "deep_research": "switch"
   }
 },
@@ -457,7 +460,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
     "base": "sonar"
   },
   "capabilities": {
-    "inference": "switch"
+    "reasoning": "switch"
   }
 }
 ```

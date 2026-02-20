@@ -297,7 +297,7 @@ function AppContent() {
           <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} userInfo={userInfo} /> : <Navigate to="/login" />} />
           <Route path="/image" element={isLoggedIn ? <ImageHome isTouch={isTouch} /> : <Navigate to="/login" />} />
           <Route path="/image/:conversation_id" element={isLoggedIn ? <ImageChat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
-          <Route path="/view/:type/:conversation_id" element={isLoggedIn ? <View /> : <Navigate to="/login" />} />
+          <Route path="/view/:conversation_id" element={isLoggedIn ? <View /> : <Navigate to="/login" />} />
           <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
           <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />
           <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <Login />} />
