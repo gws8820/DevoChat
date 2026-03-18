@@ -1,4 +1,4 @@
-from mistralai import Mistral
+from openai import AsyncOpenAI
 
 import os
 import json
@@ -11,13 +11,13 @@ from ..auth import User, get_current_user
 from ..common import (
     ChatRequest, router, RawChunk,
     DEFAULT_PROMPT, DAN_PROMPT,
-    check_user_permissions,
-    get_conversation, save_conversation,
+    check_chat_user_permissions,
+    get_chat_conversation, save_chat_conversation,
     normalize_assistant_content,
-    getVerbosity
+    getReason, getVerbosity
 )
 from logging_util import logger
-
+    
 def normalize_user_content(part):
     if part.get("type") == "url":
         return {
@@ -64,27 +64,65 @@ def format_message(message):
         return {"role": "assistant", "content": normalize_assistant_content(content)}
         
 async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
+    citations = []
+    is_reasoning = False
+    reasoning_done = False
     try:
         if request.stream:
-            stream_result = await client.chat.stream_async(**parameters)
-            
+            stream_result = await client.chat.completions.create(**parameters)
+
             async for chunk in stream_result:
                 if await fastapi_request.is_disconnected():
                     return
-                if chunk.data.choices[0].delta.content:
-                    await chunk_queue.put(chunk.data.choices[0].delta.content)
-                if chunk.data.usage:
-                    input_tokens = chunk.data.usage.prompt_tokens or 0
-                    output_tokens = chunk.data.usage.completion_tokens or 0
-                    
+
+                choices = getattr(chunk, "choices", None) or []
+                delta = getattr(choices[0], "delta", None) if choices else None
+
+                reasoning = getattr(delta, 'reasoning', None)
+                if reasoning and not reasoning_done:
+                    if not is_reasoning:
+                        is_reasoning = True
+                        await chunk_queue.put('<think>\n')
+                    await chunk_queue.put(reasoning)
+
+                content = getattr(delta, 'content', None)
+                if content:
+                    if is_reasoning:
+                        await chunk_queue.put('\n</think>\n\n')
+                        is_reasoning = False
+                        reasoning_done = True
+                    await chunk_queue.put(content)
+
+                if chunk.usage:
+                    input_tokens = chunk.usage.prompt_tokens or 0
+                    output_tokens = chunk.usage.completion_tokens or 0
+                    details = getattr(chunk.usage, 'completion_tokens_details', None)
+                    reasoning_tokens = getattr(details, 'reasoning_tokens', 0) or 0
+
                     await chunk_queue.put({
                         "type": "token_usage",
                         "input_tokens": input_tokens,
-                        "output_tokens": output_tokens
+                        "output_tokens": output_tokens,
+                        "reasoning_tokens": reasoning_tokens
                     })
+
+                annotations = getattr(delta, 'annotations', None) or []
+                for annotation in annotations:
+                    if annotation.get('type') == 'url_citation':
+                        url = annotation.get('url_citation', {}).get('url')
+                        citations.append(url)
+
+            if is_reasoning:
+                await chunk_queue.put('\n</think>\n\n')
         else:
-            single_result = await client.chat.complete_async(**parameters)
+            single_result = await client.chat.completions.create(**parameters)
             full_response_text = single_result.choices[0].message.content
+
+            annotations = getattr(single_result.choices[0].message, 'annotations', None) or []
+            for annotation in annotations:
+                if annotation.get('type') == 'url_citation':
+                    url = annotation.get('url_citation', {}).get('url')
+                    citations.append(url)
 
             chunk_size = 10 
             for i in range(0, len(full_response_text), chunk_size):
@@ -92,7 +130,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                     return
                 await chunk_queue.put(full_response_text[i:i+chunk_size])
                 await asyncio.sleep(0.03)
-            
+                
             input_tokens = single_result.usage.prompt_tokens or 0
             output_tokens = single_result.usage.completion_tokens or 0
             
@@ -105,16 +143,27 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
         logger.error(f"STREAM_ERROR: {str(ex)}")
         await chunk_queue.put({"error": str(ex)})
     finally:
+        if is_reasoning:
+            await chunk_queue.put('\n</think>\n\n')
+
+        if citations:
+            citations_text = "\n<citations>"
+            for idx, item in enumerate(citations, 1):
+                citations_text += f"\n\n[{idx}] {item}"
+            citations_text += "</citations>\n"
+            await chunk_queue.put(RawChunk(citations_text))
+
+        await client.close()
         await chunk_queue.put(None)
 
 async def get_response(request: ChatRequest, user: User, fastapi_request: Request):
-    error_message, in_billing, out_billing = check_user_permissions(user, request)
+    error_message, in_billing, out_billing = check_chat_user_permissions(user, request)
     if error_message:
         yield f"data: {json.dumps({'error': error_message})}\n\n"
         return
     
     user_message = {"role": "user", "content": request.message}
-    conversation = get_conversation(user, request.conversation_id, request.memory)
+    conversation = get_chat_conversation(user, request.conversation_id, request.memory)
     conversation.append(user_message)
 
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
@@ -140,19 +189,39 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     client_disconnected = False
     
     try:
-        async with Mistral(api_key=os.getenv("MISTRAL_API_KEY")) as client:
+        async with AsyncOpenAI(
+            api_key=os.getenv('OPENROUTER_API_KEY'),
+            base_url="https://openrouter.ai/api/v1"
+        ) as client:
             parameters = {
                 "model": request.model,
                 "temperature": request.temperature if request.control.temperature else 1.0,
                 "messages": formatted_messages,
-                "stream": request.stream
+                "stream": request.stream,
+                "extra_body": {
+                    "reasoning": {
+                        "effort": "none"
+                    }
+                }
             }
             
             if request.control.verbosity and request.verbosity:
                 parameters["max_tokens"] = getVerbosity(request.verbosity, "tokens")
+
+            if request.control.reason and request.reason:
+                reasoning_effort = getReason(request.reason, "tertiary")
+                parameters["extra_body"] = {
+                    "reasoning": { 
+                        "effort": reasoning_effort 
+                    }
+                }
             
+            if request.search:
+                parameters["model"] = f"{request.model}:online"
+
             chunk_queue = asyncio.Queue()
             stream_task = asyncio.create_task(process_stream(chunk_queue, request, parameters, fastapi_request, client))
+            
             while True:
                 chunk = await chunk_queue.get()
                 if chunk is None:
@@ -193,8 +262,8 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         logger.error(f"RESPONSE_ERROR: {str(ex)}")
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
-        save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
+        save_chat_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
 
-@router.post("/chat/mistral")
-async def mistral_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
+@router.post("/chat/openrouter")
+async def openrouter_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     return StreamingResponse(get_response(chat_request, user, fastapi_request), media_type="text/event-stream")

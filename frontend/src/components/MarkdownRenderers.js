@@ -345,6 +345,7 @@ function parseToolBlocks(rawContent, isLoading, isLastMessage) {
 const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = false, isLastMessage = false }) => {
   const { finalContent, toolData, thinkState } = useMemo(() => {
     let parsedContent = String(content)
+      .replace(/^(#{2,3}) #{2,4}(?= )/gm, "$1")
       .replace(/(^|[\s(])\$(?=\s*\d)/g, "$1\\$")
       .replace(/(^|[\s(])[₩￦](?=\s*\d)/g, "$1₩")
       .replace(/\\\[/g, "$$")

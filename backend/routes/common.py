@@ -44,11 +44,6 @@ class AliasRequest(BaseModel):
     conversation_id: str
     text: str
 
-class ApiSettings(BaseModel):
-    api_key: str
-    base_url: str
-    headers: Optional[Dict[str, str]] = None
-
 class RawChunk:
     def __init__(self, content: str):
         self.content = content
@@ -95,8 +90,8 @@ except FileNotFoundError:
 generated_image_path = os.path.join(os.path.dirname(__file__), "..", "generated/images")
 os.makedirs(generated_image_path, exist_ok=True)
 
-def check_user_permissions(user: User, request: ChatRequest):
-    billing_result = get_model_billing(request.model)
+def check_chat_user_permissions(user: User, request: ChatRequest):
+    billing_result = get_chat_model_billing(request.model)
     if not billing_result:
         return "잘못된 모델입니다.", None, None
     else:
@@ -128,7 +123,7 @@ def check_image_user_permissions(user: User, request: ImageGenerateRequest):
         return "프롬프트가 비어 있습니다. 내용을 입력해 주세요.", None, None
     return None, in_billing, out_billing
     
-def get_conversation(user: User, conversation_id: str, memory):
+def get_chat_conversation(user: User, conversation_id: str, memory):
     conversation = conversation_collection.find_one(
         {"user_id": user.user_id, "conversation_id": conversation_id},
         {"conversation": {"$slice": -memory }}
@@ -183,7 +178,27 @@ def normalize_assistant_content(content):
     
     return content.strip()
 
-def get_model_billing(model_name):
+def get_chat_alias_model() -> str:
+    try:
+        models_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'chat_models.json')
+        with open(models_path, 'r', encoding='utf-8') as f:
+            models_data = json.load(f)
+        return models_data.get('alias')
+    except Exception as ex:
+        logger.error(f"Error reading config/chat_models.json: {str(ex)}")
+        return ''
+
+def get_image_alias_model() -> str:
+    try:
+        models_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'image_models.json')
+        with open(models_path, 'r', encoding='utf-8') as f:
+            models_data = json.load(f)
+        return models_data.get('alias')
+    except Exception as ex:
+        logger.error(f"Error reading config/image_models.json: {str(ex)}")
+        return ''
+
+def get_chat_model_billing(model_name):
     try:
         models_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'chat_models.json')
         with open(models_path, 'r', encoding='utf-8') as f:
@@ -215,7 +230,7 @@ def get_image_model_billing(model_name):
         logger.error(f"Error reading config/image_models.json: {str(ex)}")
         return None
 
-def calculate_billing(user: User, model_name, token_usage, in_billing_rate: float, out_billing_rate: float):
+def calculate_chat_billing(user: User, model_name, token_usage, in_billing_rate: float, out_billing_rate: float):
     if token_usage:
         input_tokens = token_usage.get('input_tokens', 0)
         output_tokens = token_usage.get('output_tokens', 0)
@@ -254,7 +269,7 @@ def calculate_image_billing(user: User, model_name, in_billing_rate: float, out_
         
     return total_cost
 
-def save_conversation(user: User, user_message, response_text, token_usage, request: ChatRequest, in_billing: float, out_billing: float):
+def save_chat_conversation(user: User, user_message, response_text, token_usage, request: ChatRequest, in_billing: float, out_billing: float):
     response_data = {
         "name": user.name,
         "user_id": user.user_id,
@@ -265,7 +280,7 @@ def save_conversation(user: User, user_message, response_text, token_usage, requ
     logger.info(f"ASSISTANT_RESPONSE: {json.dumps(response_data, ensure_ascii=False, indent=2)}")
     
     formatted_response = {"role": "assistant", "content": response_text or "\u200B"}
-    billing = calculate_billing(user, request.model, token_usage, in_billing, out_billing)
+    billing = calculate_chat_billing(user, request.model, token_usage, in_billing, out_billing)
     
     if user.trial:
         user_collection.update_one(

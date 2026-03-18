@@ -430,14 +430,9 @@ function ImageChat({ isTouch, chatMessageRef }) {
         </AnimatePresence>
 
         {isLoading && (
-          <motion.div
-            className="image-generating"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}
-          >
+          <div className="image-generating">
             이미지 생성 중...
-          </motion.div>
+          </div>
         )}
         <div ref={bottomRef} />
       </div>

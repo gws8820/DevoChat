@@ -12,8 +12,8 @@ from ..auth import User, get_current_user
 from ..common import (
     ChatRequest, router, RawChunk,
     DEFAULT_PROMPT, DAN_PROMPT,
-    check_user_permissions,
-    get_conversation, save_conversation,
+    check_chat_user_permissions,
+    get_chat_conversation, save_chat_conversation,
     normalize_assistant_content,
     getReason, getVerbosity,
     MAX_VERBOSITY_TOKENS
@@ -102,7 +102,7 @@ def format_message(message):
         return {"role": "assistant", "content": normalize_assistant_content(content)}
         
 async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, parameters, fastapi_request: Request, client) -> None:
-    is_thinking = False
+    is_reasoning = False
     citations = []
     mcp_tools = {}
     try:
@@ -114,7 +114,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                 if hasattr(chunk, "type"):
                     if chunk.type == "content_block_start" and hasattr(chunk, "content_block"):
                         if getattr(chunk.content_block, "type", "") == "thinking":
-                            is_thinking = True
+                            is_reasoning = True
                             await chunk_queue.put('<think>\n')
                         elif getattr(chunk.content_block, "type", "") == "mcp_tool_use":
                             tool_id = getattr(chunk.content_block, "id")
@@ -177,9 +177,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                                 f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': False, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n"
                             ))
                     elif chunk.type == "content_block_stop":
-                        if is_thinking:
+                        if is_reasoning:
                             await chunk_queue.put('\n</think>\n\n')
-                            is_thinking = False
+                            is_reasoning = False
                 if hasattr(chunk, "delta"):
                     if hasattr(chunk.delta, "thinking"):
                         thinking = chunk.delta.thinking
@@ -237,7 +237,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
         logger.error(f"STREAM_ERROR: {str(ex)}")
         await chunk_queue.put({"error": str(ex)})
     finally:
-        if is_thinking:
+        if is_reasoning:
             await chunk_queue.put('\n</think>\n\n')
 
         if citations:
@@ -251,13 +251,13 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
         await chunk_queue.put(None)
 
 async def get_response(request: ChatRequest, user: User, fastapi_request: Request):
-    error_message, in_billing, out_billing = check_user_permissions(user, request)
+    error_message, in_billing, out_billing = check_chat_user_permissions(user, request)
     if error_message:
         yield f"data: {json.dumps({'error': error_message})}\n\n"
         return
     
     user_message = {"role": "user", "content": request.message}
-    conversation = get_conversation(user, request.conversation_id, request.memory)
+    conversation = get_chat_conversation(user, request.conversation_id, request.memory)
     conversation.append(user_message)
 
     formatted_messages = copy.deepcopy([format_message(m) for m in conversation])
@@ -356,7 +356,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         logger.error(f"RESPONSE_ERROR: {str(ex)}")
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
-        save_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
+        save_chat_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
 
 @router.post("/chat/claude")
 async def claude_endpoint(request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):

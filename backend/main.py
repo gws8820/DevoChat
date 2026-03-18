@@ -15,7 +15,7 @@ import aiofiles
 import aiofiles.os
 from pathlib import Path
 from routes import auth, realtime, conversations, uploads
-from routes.chat_clients import openai_client, grok_client, responses_client, anthropic_client, google_client, mistral_client, fireworks_client
+from routes.chat_clients import openai_client, anthropic_client, google_client, grok_client, openrouter_client
 from routes.image_clients import openai_client, google_client, grok_client, flux_client, wavespeed_client
 from routes.auth import User, get_current_user
 from bs4 import BeautifulSoup
@@ -44,12 +44,10 @@ app.include_router(uploads.router)
 app.include_router(realtime.router)
 
 app.include_router(openai_client.router)
-app.include_router(grok_client.router)
-app.include_router(responses_client.router)
 app.include_router(anthropic_client.router)
 app.include_router(google_client.router)
-app.include_router(mistral_client.router)
-app.include_router(fireworks_client.router)
+app.include_router(grok_client.router)
+app.include_router(openrouter_client.router)
 
 app.include_router(openai_client.router)
 app.include_router(google_client.router)

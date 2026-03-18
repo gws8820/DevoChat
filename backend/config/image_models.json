@@ -1,5 +1,6 @@
 {
   "default": "gemini-2.5-flash-image",
+  "alias": "gemini-3.1-flash-image-preview",
   "models": [
     {
       "model_name": "gemini-3-pro-image-preview",
@@ -9,6 +10,18 @@
       "billing": {
         "in_billing": "0.002",
         "out_billing": "0.134"
+      },
+      "capabilities": { "vision": true, "max_input": 10 },
+      "admin": false
+    },
+    {
+      "model_name": "gemini-3.1-flash-image-preview",
+      "model_alias": "Nano Banana 2",
+      "description": "Google",
+      "endpoint": "/image/google/gemini",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.067"
       },
       "capabilities": { "vision": true, "max_input": 10 },
       "admin": false
@@ -26,19 +39,6 @@
       "admin": false
     },
     {
-      "model_name": "imagen-4.0-fast-generate-001",
-      "model_alias": "Imagen 4.0",
-      "description": "Google",
-      "endpoint": "/image/google/imagen",
-      "billing": {
-        "in_billing": "0",
-        "out_billing": "0.02"
-      },
-      "capabilities": { "vision": false },
-      "admin": false
-    },
-
-    {
       "model_name": "gpt-image-1.5",
       "model_alias": "GPT Image 1.5",
       "description": "OpenAI",
@@ -48,6 +48,18 @@
         "out_billing": "0.034"
       },
       "capabilities": { "vision": true, "max_input": 1 },
+      "admin": false
+    },
+    {
+      "model_name": "grok-imagine-image",
+      "model_alias": "Grok Imagine",
+      "description": "XAI",
+      "endpoint": "/image/grok",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.02"
+      },
+      "capabilities": { "vision": true, "max_input": 3 },
       "admin": false
     },
     {
@@ -81,18 +93,6 @@
       "admin": false
     },
     {
-      "model_name": "kwaivgi/kling-image-o1",
-      "model_alias": "Kling Image O1",
-      "description": "Kuaishou",
-      "endpoint": "/image/wavespeed",
-      "billing": {
-        "in_billing": "0",
-        "out_billing": "0.028"
-      },
-      "capabilities": { "vision": true, "max_input": 10 },
-      "admin": false
-    },
-    {
       "model_name": "wavespeed-ai/qwen-image/text-to-image-2512",
       "model_alias": "Qwen Image",
       "description": "Alibaba",
@@ -120,6 +120,18 @@
         "base": "wavespeed-ai/qwen-image/text-to-image-2512"
       },
       "capabilities": { "vision": "switch", "max_input": 3 },
+      "admin": false
+    },
+    {
+      "model_name": "kwaivgi/kling-image-o1",
+      "model_alias": "Kling Image O1",
+      "description": "Kuaishou",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.028"
+      },
+      "capabilities": { "vision": true, "max_input": 10 },
       "admin": false
     },
     {
@@ -162,18 +174,6 @@
         "out_billing": "0.045"
       },
       "capabilities": { "vision": true, "max_input": 8 },
-      "admin": false
-    },
-    {
-      "model_name": "grok-2-image",
-      "model_alias": "Grok 2 Image",
-      "description": "XAI",
-      "endpoint": "/image/grok",
-      "billing": {
-        "in_billing": "0",
-        "out_billing": "0.07"
-      },
-      "capabilities": { "vision": false },
       "admin": false
     }
   ]

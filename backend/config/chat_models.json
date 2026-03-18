@@ -1,81 +1,7 @@
 {
   "default": "gemini-3-flash-preview",
+  "alias": "gemini-3.1-flash-lite-preview",
   "models": [
-    {
-      "model_name": "gpt-5.2",
-      "model_alias": "GPT 5.2",
-      "description": "고성능 GPT 모델",
-      "endpoint": "/chat/gpt",
-      "billing": {
-        "in_billing": "1.75",
-        "out_billing": "14"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": "toggle",
-        "vision": true,
-        "search": "toggle",
-        "deep_research": false,
-        "mcp": true
-      },
-      "controls": {
-        "temperature": "conditional",
-        "reason": true,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "gpt-5.2-pro",
-      "model_alias": "GPT 5.2 Pro",
-      "description": "최고 성능 GPT 모델",
-      "endpoint": "/chat/gpt",
-      "billing": {
-        "in_billing": "21",
-        "out_billing": "168"
-      },
-      "capabilities": {
-        "stream": false,
-        "reasoning": true,
-        "vision": true,
-        "search": true,
-        "deep_research": false,
-        "mcp": true
-      },
-      "controls": {
-        "temperature": false,
-        "reason": false,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": true
-    },
-    {
-      "model_name": "gpt-5-mini",
-      "model_alias": "GPT 5 mini",
-      "description": "경량 GPT 모델",
-      "endpoint": "/chat/gpt",
-      "billing": {
-        "in_billing": "0.25",
-        "out_billing": "2"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": "toggle",
-        "vision": true,
-        "search": "toggle",
-        "deep_research": false,
-        "mcp": true
-      },
-      "controls": {
-        "temperature": false,
-        "reason": true,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
     {
       "model_name": "gemini-3.1-pro-preview",
       "model_alias": "Gemini 3.1 Pro",
@@ -127,56 +53,75 @@
       "admin": false
     },
     {
-      "model_name": "grok-4-1-fast-non-reasoning",
-      "model_alias": "Grok 4.1",
-      "description": "고성능 Grok 모델",
-      "endpoint": "/chat/grok",
+      "model_name": "gemini-3.1-flash-lite-preview",
+      "model_alias": "Gemini 3.1 Flash Lite",
+      "description": "경량 Gemini 모델",
+      "endpoint": "/chat/gemini",
       "billing": {
-        "in_billing": "0.2",
-        "out_billing": "0.5"
-      },
-      "variants": {
-        "reasoning": "grok-4.1-fast-reasoning"
+        "in_billing": "0.25",
+        "out_billing": "1.5"
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "switch",
+        "reasoning": "toggle",
+        "vision": true,
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": true,
+        "verbosity": false,
+        "instructions": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "gpt-5.4",
+      "model_alias": "GPT 5.4",
+      "description": "고성능 GPT 모델",
+      "endpoint": "/chat/gpt",
+      "billing": {
+        "in_billing": "2.5",
+        "out_billing": "15"
+      },
+      "capabilities": {
+        "stream": true,
+        "reasoning": "toggle",
         "vision": true,
         "search": "toggle",
         "deep_research": false,
         "mcp": true
       },
       "controls": {
-        "temperature": true,
-        "reason": false,
+        "temperature": "conditional",
+        "reason": true,
         "verbosity": true,
         "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "grok-4-1-fast-reasoning",
-      "model_alias": "Grok 4.1",
-      "description": "고성능 Grok 모델",
-      "endpoint": "/chat/grok",
+      "model_name": "gpt-5.4-mini",
+      "model_alias": "GPT 5.4 mini",
+      "description": "경량 GPT 모델",
+      "endpoint": "/chat/gpt",
       "billing": {
-        "in_billing": "0.2",
-        "out_billing": "0.5"
-      },
-      "variants": {
-        "base": "grok-4.1-fast-non-reasoning"
+        "in_billing": "0.75",
+        "out_billing": "4.5"
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "switch",
+        "reasoning": "toggle",
         "vision": true,
         "search": "toggle",
         "deep_research": false,
         "mcp": true
       },
       "controls": {
-        "temperature": true,
-        "reason": false,
+        "temperature": false,
+        "reason": true,
         "verbosity": true,
         "instructions": true
       },
@@ -258,60 +203,116 @@
       "admin": false
     },
     {
-      "model_name": "fireworks/glm-5",
+      "model_name": "grok-4.20-beta-0309-non-reasoning",
+      "model_alias": "Grok 4.2",
+      "description": "고성능 Grok 모델",
+      "endpoint": "/chat/grok",
+      "billing": {
+        "in_billing": "2",
+        "out_billing": "6"
+      },
+      "variants": {
+        "reasoning": "grok-4.20-beta-0309-reasoning"
+      },
+      "capabilities": {
+        "stream": true,
+        "reasoning": "switch",
+        "vision": true,
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": true
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "instructions": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "grok-4.20-beta-0309-reasoning",
+      "model_alias": "Grok 4.2",
+      "description": "고성능 Grok 모델",
+      "endpoint": "/chat/grok",
+      "billing": {
+        "in_billing": "2",
+        "out_billing": "6"
+      },
+      "variants": {
+        "base": "grok-4.20-beta-0309-non-reasoning"
+      },
+      "capabilities": {
+        "stream": true,
+        "reasoning": "switch",
+        "vision": true,
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": true
+      },
+      "controls": {
+        "temperature": true,
+        "reason": false,
+        "verbosity": true,
+        "instructions": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "z-ai/glm-5",
       "model_alias": "GLM 5",
       "description": "최신 GLM 모델",
-      "endpoint": "/chat/fireworks",
+      "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "1",
+        "in_billing": "0.72",
+        "out_billing": "2.3"
+      },
+      "capabilities": {
+        "stream": true,
+        "reasoning": "toggle",
+        "vision": false,
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": true,
+        "verbosity": true,
+        "instructions": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "z-ai/glm-5-turbo",
+      "model_alias": "GLM 5 Turbo",
+      "description": "고성능 GLM 모델",
+      "endpoint": "/chat/openrouter",
+      "billing": {
+        "in_billing": "0.96",
         "out_billing": "3.2"
       },
       "capabilities": {
         "stream": true,
-        "reasoning": false,
+        "reasoning": "toggle",
         "vision": false,
-        "search": false,
+        "search": "toggle",
         "deep_research": false,
         "mcp": false
       },
       "controls": {
         "temperature": true,
-        "reason": false,
+        "reason": true,
         "verbosity": true,
         "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "accounts/fireworks/models/kimi-k2p5",
-      "model_alias": "Kimi K2.5",
-      "description": "최신 Kimi 모델",
-      "endpoint": "/chat/fireworks",
-      "billing": {
-        "in_billing": "0.6",
-        "out_billing": "3.0"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": false,
-        "vision": true,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "accounts/fireworks/models/minimax-m2p5",
-      "model_alias": "MiniMax M2.5",
+      "model_name": "minimax/minimax-m2.7",
+      "model_alias": "MiniMax M2.7",
       "description": "최신 MiniMax 모델",
-      "endpoint": "/chat/fireworks",
+      "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "0.3",
         "out_billing": "1.2"
@@ -320,79 +321,98 @@
         "stream": true,
         "reasoning": true,
         "vision": false,
-        "search": false,
+        "search": "toggle",
         "deep_research": false,
         "mcp": false
       },
       "controls": {
         "temperature": true,
-        "reason": false,
+        "reason": true,
         "verbosity": true,
         "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "deepseek-chat",
+      "model_name": "moonshotai/kimi-k2.5",
+      "model_alias": "Kimi K2.5",
+      "description": "최신 Kimi 모델",
+      "endpoint": "/chat/openrouter",
+      "billing": {
+        "in_billing": "0.45",
+        "out_billing": "2.2"
+      },
+      "capabilities": {
+        "stream": true,
+        "reasoning": "toggle",
+        "vision": true,
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": true,
+        "verbosity": true,
+        "instructions": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "qwen/qwen3.5-397b-a17b",
+      "model_alias": "Qwen 3.5",
+      "description": "최신 Qwen 모델",
+      "endpoint": "/chat/openrouter",
+      "billing": {
+        "in_billing": "0.39",
+        "out_billing": "2.34"
+      },
+      "capabilities": {
+        "stream": true,
+        "reasoning": "toggle",
+        "vision": true,
+        "search": "toggle",
+        "deep_research": false,
+        "mcp": false
+      },
+      "controls": {
+        "temperature": true,
+        "reason": true,
+        "verbosity": true,
+        "instructions": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "deepseek/deepseek-v3.2",
       "model_alias": "Deepseek 3.2",
       "description": "최신 Deepseek 모델",
-      "endpoint": "/chat/deepseek",
+      "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "0.28",
-        "out_billing": "0.42"
-      },
-      "variants": {
-        "reasoning": "deepseek-reasoner"
+        "in_billing": "0.26",
+        "out_billing": "0.38"
       },
       "capabilities": {
         "stream": true,
         "reasoning": "toggle",
         "vision": false,
-        "search": false,
+        "search": "toggle",
         "deep_research": false,
         "mcp": false
       },
       "controls": {
         "temperature": true,
-        "reason": false,
+        "reason": true,
         "verbosity": true,
         "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "deepseek-reasoner",
-      "model_alias": "Deepseek 3.2",
-      "description": "최신 Deepseek 모델",
-      "endpoint": "/chat/deepseek",
-      "billing": {
-        "in_billing": "0.28",
-        "out_billing": "0.42"
-      },
-      "variants": {
-        "base": "deepseek-chat"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": "toggle",
-        "vision": false,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "mistral-large-latest",
+      "model_name": "mistralai/mistral-large-2512",
       "model_alias": "Mistral Large 3",
       "description": "고성능 Mistral 모델",
-      "endpoint": "/chat/mistral",
+      "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "0.5",
         "out_billing": "1.5"
@@ -401,7 +421,7 @@
         "stream": true,
         "reasoning": false,
         "vision": true,
-        "search": false,
+        "search": "toggle",
         "deep_research": false,
         "mcp": false
       },
@@ -414,247 +434,25 @@
       "admin": false
     },
     {
-      "model_name": "mistral-medium-latest",
-      "model_alias": "Mistral Medium 3.1",
-      "description": "표준 Mistral 모델",
-      "endpoint": "/chat/mistral",
-      "billing": {
-        "in_billing": "0.4",
-        "out_billing": "2"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": false,
-        "vision": true,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "fireworks/qwen3-vl-235b-a22b-instruct",
-      "model_alias": "Qwen 3",
-      "description": "최신 Qwen 모델",
-      "endpoint": "/chat/fireworks",
-      "billing": {
-        "in_billing": "0.22",
-        "out_billing": "0.88"
-      },
-      "variants": {
-        "reasoning": "fireworks/qwen3-vl-235b-a22b-thinking"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": "switch",
-        "vision": true,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "fireworks/qwen3-vl-235b-a22b-thinking",
-      "model_alias": "Qwen 3",
-      "description": "최신 Qwen 모델",
-      "endpoint": "/chat/fireworks",
-      "billing": {
-        "in_billing": "0.22",
-        "out_billing": "0.88"
-      },
-      "variants": {
-        "base": "fireworks/qwen3-vl-235b-a22b-instruct"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": "switch",
-        "vision": true,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "fireworks/gpt-oss-120b",
+      "model_name": "openai/gpt-oss-120b",
       "model_alias": "GPT-OSS 120B",
       "description": "오픈소스 GPT 모델",
-      "endpoint": "/chat/fireworks",
+      "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "0.15",
-        "out_billing": "0.6"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": false,
-        "vision": false,
-        "search": false,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "sonar",
-      "model_alias": "Perplexity Sonar",
-      "description": "표준 Perplexity 모델",
-      "endpoint": "/chat/perplexity",
-      "billing": {
-        "in_billing": "1",
-        "out_billing": "1"
-      },
-      "variants": {
-        "deep_research": "sonar-deep-research",
-        "reasoning": "sonar-reasoning"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": "switch",
-        "vision": true,
-        "search": true,
-        "deep_research": "switch",
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "sonar-reasoning",
-      "model_alias": "Perplexity Sonar",
-      "description": "표준 Perplexity 모델",
-      "endpoint": "/chat/perplexity",
-      "billing": {
-        "in_billing": "1",
-        "out_billing": "5"
-      },
-      "variants": {
-        "base": "sonar"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": "switch",
-        "vision": true,
-        "search": true,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "sonar-deep-research",
-      "model_alias": "Perplexity Sonar",
-      "description": "표준 Perplexity 모델",
-      "endpoint": "/chat/perplexity",
-      "billing": {
-        "in_billing": "5",
-        "out_billing": "8"
-      },
-      "variants": {
-        "base": "sonar"
+        "in_billing": "0.04",
+        "out_billing": "0.19"
       },
       "capabilities": {
         "stream": true,
         "reasoning": true,
-        "vision": true,
-        "search": true,
-        "deep_research": "switch",
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "sonar-pro",
-      "model_alias": "Perplexity Sonar Pro",
-      "description": "고성능 Perplexity 모델",
-      "endpoint": "/chat/perplexity",
-      "billing": {
-        "in_billing": "3",
-        "out_billing": "15"
-      },
-      "variants": {
-        "reasoning": "sonar-reasoning-pro"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": "switch",
-        "vision": true,
-        "search": true,
+        "vision": false,
+        "search": "toggle",
         "deep_research": false,
         "mcp": false
       },
       "controls": {
         "temperature": true,
-        "reason": false,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "sonar-reasoning-pro",
-      "model_alias": "Perplexity Sonar Pro",
-      "description": "고성능 Perplexity 모델",
-      "endpoint": "/chat/perplexity",
-      "billing": {
-        "in_billing": "2",
-        "out_billing": "8"
-      },
-      "variants": {
-        "base": "sonar-pro"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": "switch",
-        "vision": true,
-        "search": true,
-        "deep_research": false,
-        "mcp": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
+        "reason": true,
         "verbosity": true,
         "instructions": true
       },
