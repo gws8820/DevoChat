@@ -289,7 +289,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
               conversation_id,
               model: selectedModel.model_name,
               reasoning: isReasoning,
-              search: isSearch,
+              web_search: isSearch,
               deep_research: isDeepResearch,
               dan: isDAN,
               mcp: mcpList,
@@ -507,7 +507,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           
           updateModel(data.model, {
             isReasoning: data.reasoning,
-            isSearch: data.search,
+            isSearch: data.web_search,
             isDeepResearch: data.deep_research
           });
 

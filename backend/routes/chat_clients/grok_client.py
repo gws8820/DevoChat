@@ -231,7 +231,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         if request.control.verbosity and request.verbosity:
             parameters["max_tokens"] = getVerbosity(request.verbosity, "tokens")
         
-        if request.search:
+        if request.web_search:
             parameters["tools"].append(web_search())
             
         if len(request.mcp) > 0:

@@ -15,7 +15,7 @@
         "stream": true,
         "reasoning": true,
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
         "mcp": false
       },
@@ -30,7 +30,7 @@
     {
       "model_name": "gemini-3-flash-preview",
       "model_alias": "Gemini 3 Flash",
-      "description": "최신 Gemini 모델",
+      "description": "기본 Gemini 모델",
       "endpoint": "/chat/gemini",
       "billing": {
         "in_billing": "0.5",
@@ -40,7 +40,7 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
         "mcp": false
       },
@@ -65,7 +65,7 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
         "mcp": false
       },
@@ -80,7 +80,7 @@
     {
       "model_name": "gpt-5.4",
       "model_alias": "GPT 5.4",
-      "description": "고성능 GPT 모델",
+      "description": "기본 GPT 모델",
       "endpoint": "/chat/gpt",
       "billing": {
         "in_billing": "2.5",
@@ -90,7 +90,7 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
         "mcp": true
       },
@@ -115,7 +115,7 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
         "mcp": true
       },
@@ -130,7 +130,7 @@
     {
       "model_name": "claude-opus-4-6",
       "model_alias": "Claude 4.6 Opus",
-      "description": "최고 성능 Claude 모델",
+      "description": "고성능 Claude 모델",
       "endpoint": "/chat/claude",
       "billing": {
         "in_billing": "5",
@@ -140,7 +140,7 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
         "mcp": true
       },
@@ -155,7 +155,7 @@
     {
       "model_name": "claude-sonnet-4-6",
       "model_alias": "Claude 4.6 Sonnet",
-      "description": "고성능 Claude 모델",
+      "description": "기본 Claude 모델",
       "endpoint": "/chat/claude",
       "billing": {
         "in_billing": "3",
@@ -165,7 +165,7 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
         "mcp": true
       },
@@ -190,7 +190,7 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
         "mcp": true
       },
@@ -205,7 +205,7 @@
     {
       "model_name": "grok-4.20-beta-0309-non-reasoning",
       "model_alias": "Grok 4.2",
-      "description": "고성능 Grok 모델",
+      "description": "기본 Grok 모델",
       "endpoint": "/chat/grok",
       "billing": {
         "in_billing": "2",
@@ -218,7 +218,7 @@
         "stream": true,
         "reasoning": "switch",
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
         "mcp": true
       },
@@ -233,7 +233,7 @@
     {
       "model_name": "grok-4.20-beta-0309-reasoning",
       "model_alias": "Grok 4.2",
-      "description": "고성능 Grok 모델",
+      "description": "기본 Grok 모델",
       "endpoint": "/chat/grok",
       "billing": {
         "in_billing": "2",
@@ -246,7 +246,7 @@
         "stream": true,
         "reasoning": "switch",
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
         "mcp": true
       },
@@ -261,7 +261,7 @@
     {
       "model_name": "z-ai/glm-5",
       "model_alias": "GLM 5",
-      "description": "최신 GLM 모델",
+      "description": "기본 GLM 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "0.72",
@@ -271,9 +271,9 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": false,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -296,9 +296,9 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": false,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -311,7 +311,7 @@
     {
       "model_name": "minimax/minimax-m2.7",
       "model_alias": "MiniMax M2.7",
-      "description": "최신 MiniMax 모델",
+      "description": "기본 MiniMax 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "0.3",
@@ -321,9 +321,9 @@
         "stream": true,
         "reasoning": true,
         "vision": false,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -336,7 +336,7 @@
     {
       "model_name": "moonshotai/kimi-k2.5",
       "model_alias": "Kimi K2.5",
-      "description": "최신 Kimi 모델",
+      "description": "기본 Kimi 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "0.45",
@@ -346,9 +346,9 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -361,7 +361,7 @@
     {
       "model_name": "qwen/qwen3.5-397b-a17b",
       "model_alias": "Qwen 3.5",
-      "description": "최신 Qwen 모델",
+      "description": "기본 Qwen 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "0.39",
@@ -371,9 +371,9 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -386,7 +386,7 @@
     {
       "model_name": "deepseek/deepseek-v3.2",
       "model_alias": "Deepseek 3.2",
-      "description": "최신 Deepseek 모델",
+      "description": "기본 Deepseek 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "0.26",
@@ -396,9 +396,9 @@
         "stream": true,
         "reasoning": "toggle",
         "vision": false,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -411,7 +411,7 @@
     {
       "model_name": "mistralai/mistral-large-2512",
       "model_alias": "Mistral Large 3",
-      "description": "고성능 Mistral 모델",
+      "description": "기본 Mistral 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "0.5",
@@ -421,13 +421,38 @@
         "stream": true,
         "reasoning": false,
         "vision": true,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,
         "reason": false,
+        "verbosity": true,
+        "instructions": true
+      },
+      "admin": false
+    },
+    {
+      "model_name": "nvidia/nemotron-3-super-120b-a12b",
+      "model_alias": "Nemotron 3 Super",
+      "description": "기본 Nvidia 모델",
+      "endpoint": "/chat/openrouter",
+      "billing": {
+        "in_billing": "0.3",
+        "out_billing": "0.9"
+      },
+      "capabilities": {
+        "stream": true,
+        "reasoning": "toggle",
+        "vision": false,
+        "web_search": "toggle",
+        "deep_research": false,
+        "mcp": true
+      },
+      "controls": {
+        "temperature": true,
+        "reason": true,
         "verbosity": true,
         "instructions": true
       },
@@ -446,9 +471,9 @@
         "stream": true,
         "reasoning": true,
         "vision": false,
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,

@@ -105,7 +105,7 @@ def format_message(message):
 
 async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
     is_reasoning = False
-    mcp_tools = {}
+    tools = {}
     try:
         if request.stream:
             summary_index = None
@@ -146,7 +146,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                         tool_name = getattr(chunk.item, "name")
                         server_name = getattr(chunk.item, "server_label")
                         
-                        mcp_tools[tool_id] = {
+                        tools[tool_id] = {
                             "server_name": server_name,
                             "tool_name": tool_name
                         }
@@ -159,7 +159,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                         tool_name = "web_search"
                         server_name = "GPT"
                         
-                        mcp_tools[tool_id] = {
+                        tools[tool_id] = {
                             "server_name": server_name,
                             "tool_name": tool_name
                         }
@@ -170,7 +170,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                 elif hasattr(chunk, "type") and chunk.type == "response.output_item.done":
                     if hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "mcp_call":
                         tool_id = getattr(chunk.item, "id")
-                        tool_info = mcp_tools.get(tool_id)
+                        tool_info = tools.get(tool_id)
                         
                         if tool_info:
                             server_name = tool_info["server_name"]
@@ -192,7 +192,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                             ))
                     elif hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "web_search_call":
                         tool_id = getattr(chunk.item, "id")
-                        tool_info = mcp_tools.get(tool_id)
+                        tool_info = tools.get(tool_id)
                         
                         if tool_info:
                             server_name = tool_info["server_name"]
@@ -280,7 +280,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                     "summary": "auto"
                 }
 
-            if request.search:
+            if request.web_search:
                 parameters["tools"] = [{"type": "web_search_preview"}]
                 
             if len(request.mcp) > 0:

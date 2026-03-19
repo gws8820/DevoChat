@@ -275,7 +275,7 @@ Define the AI models available in the application and their properties through t
         "stream": true,
         "vision": true,
         "reasoning": "toggle",
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false
       },
       "controls": {
@@ -299,7 +299,7 @@ Define the AI models available in the application and their properties through t
         "stream": true,
         "vision": false,
         "reasoning": false,
-        "search": false,
+        "web_search": false,
         "deep_research": false
       },
       "controls": {
@@ -326,7 +326,7 @@ Define the AI models available in the application and their properties through t
         "stream": true,
         "vision": true,
         "reasoning": true,
-        "search": false,
+        "web_search": false,
         "deep_research": "switch"
       },
       "controls": {
@@ -358,7 +358,7 @@ Define the AI models available in the application and their properties through t
 | `capabilities.stream` | Whether streaming response is supported |
 | `capabilities.vision` | Whether image input is supported |
 | `capabilities.reasoning` | Whether reasoning is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
-| `capabilities.search` | Whether web search is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
+| `capabilities.web_search` | Whether web search is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.deep_research` | Whether Deep Research is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.mcp` | Whether MCP server integration is supported. Possible values: `true`, `false` |
 | `controls` | Defines user control options supported by the model |

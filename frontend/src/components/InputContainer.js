@@ -365,7 +365,7 @@ function InputContainer({
           <AnimatePresence initial={false}>
             {canToggleSearch && (
               <motion.div
-                key="search"
+                key="web_search"
                 className={`function-button ${isSearch ? "active" : ""}`}
                 onClick={toggleSearch}
                 initial={{ x: -20, opacity: 0, scale: 0.8 }}

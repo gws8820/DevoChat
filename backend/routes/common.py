@@ -22,7 +22,7 @@ class ChatRequest(BaseModel):
     conversation_id: str
     model: str
     reasoning: bool = False
-    search: bool = False
+    web_search: bool = False
     deep_research: bool = False
     dan: bool = False
     mcp: List[str] = []
@@ -304,7 +304,7 @@ def save_chat_conversation(user: User, user_message, response_text, token_usage,
             "$set": {
                 "model": request.model,
                 "reasoning": request.reasoning,
-                "search": request.search,
+                "web_search": request.web_search,
                 "deep_research": request.deep_research,
                 "dan": request.dan,
                 "mcp": request.mcp,

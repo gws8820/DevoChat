@@ -83,7 +83,7 @@ export const SettingsProvider = ({ children }) => {
     const verbosity = selectedModel?.controls?.verbosity;
     const instructions = selectedModel?.controls?.instructions;
     const reasoning = selectedModel?.capabilities?.reasoning;
-    const search = selectedModel?.capabilities?.search;
+    const search = selectedModel?.capabilities?.web_search;
     const deep_research = selectedModel?.capabilities?.deep_research;
     const vision = selectedModel?.capabilities?.vision;
     const mcp = selectedModel?.capabilities?.mcp;
@@ -168,11 +168,11 @@ export const SettingsProvider = ({ children }) => {
 
   const toggleSearch = () => {
     const selectedModel = models.find(m => m.model_name === model);
-    const search = selectedModel?.capabilities?.search;
+    const search = selectedModel?.capabilities?.web_search;
     
     if (search === "switch") {
       const variants = selectedModel?.variants;
-      const targetModel = isSearch ? variants?.base : variants?.search;
+      const targetModel = isSearch ? variants?.base : variants?.web_search;
       if (targetModel) {
         updateModel(targetModel);
       }

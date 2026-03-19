@@ -275,7 +275,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "stream": true,
         "vision": true,
         "reasoning": "toggle",
-        "search": "toggle",
+        "web_search": "toggle",
         "deep_research": false
       },
       "controls": {
@@ -299,7 +299,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "stream": true,
         "vision": false,
         "reasoning": false,
-        "search": false,
+        "web_search": false,
         "deep_research": false
       },
       "controls": {
@@ -326,7 +326,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "stream": true,
         "vision": true,
         "reasoning": true,
-        "search": false,
+        "web_search": false,
         "deep_research": "switch"
       },
       "controls": {
@@ -358,7 +358,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `capabilities.stream` | 스트리밍 응답 지원 여부입니다. |
 | `capabilities.vision` | 이미지 입력 기능 지원 여부입니다. |
 | `capabilities.reasoning` | 추론 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
-| `capabilities.search` | 웹 검색 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
+| `capabilities.web_search` | 웹 검색 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.deep_research` | Deep Research 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.mcp` | MCP 서버 연동 지원 여부입니다. 가능한 값: `true`, `false` |
 | `controls` | 모델이 지원하는 사용자 제어 옵션들을 정의합니다. |

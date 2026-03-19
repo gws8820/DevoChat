@@ -104,7 +104,7 @@ def format_message(message):
 async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, parameters, fastapi_request: Request, client) -> None:
     is_reasoning = False
     citations = []
-    mcp_tools = {}
+    tools = {}
     try:
         if request.stream:
             stream_result = await client.beta.messages.create(**parameters)
@@ -121,7 +121,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             server_name = getattr(chunk.content_block, "server_name")
                             tool_name = getattr(chunk.content_block, "name")
                             
-                            mcp_tools[tool_id] = {
+                            tools[tool_id] = {
                                 "server_name": server_name,
                                 "tool_name": tool_name
                             }
@@ -131,7 +131,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             ))
                         elif getattr(chunk.content_block, "type", "") == "mcp_tool_result":
                             tool_use_id = getattr(chunk.content_block, "tool_use_id")
-                            tool_info = mcp_tools.get(tool_use_id)
+                            tool_info = tools.get(tool_use_id)
                             
                             server_name = tool_info.get("server_name")
                             tool_name = tool_info.get("tool_name")
@@ -151,7 +151,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             tool_name = getattr(chunk.content_block, "name")
                             server_name = "Claude"
                             
-                            mcp_tools[tool_id] = {
+                            tools[tool_id] = {
                                 "server_name": server_name,
                                 "tool_name": tool_name
                             }
@@ -159,9 +159,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             await chunk_queue.put(RawChunk(
                                 f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n"
                             ))
-                        elif getattr(chunk.content_block, "type", "") == "web_search_tool_result":
+                        elif getattr(chunk.content_block, "type", "") == ",":
                             tool_use_id = getattr(chunk.content_block, "tool_use_id")
-                            tool_info = mcp_tools.get(tool_use_id)
+                            tool_info = tools.get(tool_use_id)
                             
                             server_name = tool_info.get("server_name", "Claude")
                             tool_name = tool_info.get("tool_name", "web_search")
@@ -300,7 +300,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                     "budget_tokens": reason_tokens
                 }
 
-            if request.search:
+            if request.web_search:
                 parameters["tools"] = [{
                     "name": "web_search",
                     "type": "web_search_20250305"
