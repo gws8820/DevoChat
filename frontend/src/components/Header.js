@@ -24,12 +24,14 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
     canControlReason,
     canControlVerbosity,
     canControlSystemMessage,
+    isDAN,
     updateModel,
     setTemperature,
     setReason,
     setVerbosity,
     setMemory,
-    setInstructions
+    setInstructions,
+    setIsDAN
   } = useContext(SettingsContext);
 
   const location = useLocation();
@@ -336,6 +338,12 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                   >
                     <div className="system-message-label">
                       <span>시스템 지시어 설정</span>
+                      <span
+                        className={`dan-toggle ${isDAN ? "active" : ""}`}
+                        onClick={() => setIsDAN(!isDAN)}
+                      >
+                        DAN
+                      </span>
                     </div>
                     <textarea
                       value={instructions}
@@ -377,9 +385,6 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                       <div className="model-badge">
                         {m.capabilities?.vision && (
                           <RiImage2Line className="image-badge" />
-                        )}
-                        {m.capabilities?.mcp && (
-                          <span className="mcp-badge">MCP</span>
                         )}
                       </div>
                     </div>

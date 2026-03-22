@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
-import { GoPlus, GoGlobe, GoLightBulb, GoTelescope, GoUnlock } from "react-icons/go";
+import { GoPlus, GoGlobe, GoLightBulb, GoTelescope } from "react-icons/go";
 import { BiX } from "react-icons/bi";
-import { FiPaperclip, FiMic, FiServer } from "react-icons/fi";
+import { FiPaperclip, FiMic, FiCommand } from "react-icons/fi";
 import { PiPaperPlaneRightFill, PiStopFill } from "react-icons/pi";
 import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
@@ -60,15 +60,12 @@ function InputContainer({
     isReasoning,
     isSearch,
     isDeepResearch,
-    isDAN,
     mcpList,
-    canControlSystemMessage,
     canToggleReasoning,
     canToggleSearch,
     canToggleDeepResearch,
     canToggleMCP,
     canVision,
-    setIsDAN,
     setMCPList,
     toggleReasoning,
     toggleSearch,
@@ -351,12 +348,6 @@ function InputContainer({
                     <FiMic />
                     음성 인식
                   </div>
-                  {canToggleMCP && (
-                    <div className="media-option" onClick={handleMCPClick}>
-                      <FiServer style={{ paddingLeft: "0.5px", color: "#5e5bff", strokeWidth: 2.5 }} />
-                      <span className="mcp-text">MCP 서버</span>
-                    </div>
-                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -408,19 +399,19 @@ function InputContainer({
                 <span className="button-text">딥 리서치</span>
               </motion.div>
             )}
-            {canControlSystemMessage && (
+            {canToggleMCP && (
               <motion.div
-                key="dan"
-                className={`function-button ${isDAN ? "active" : ""}`}
-                onClick={() => setIsDAN(!isDAN)}
+                key="mcp"
+                className={`function-button ${mcpList.length > 0 ? "active" : ""}`}
+                onClick={handleMCPClick}
                 initial={{ x: -20, opacity: 0, scale: 0.8 }}
                 animate={{ x: 0, opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ type: "physics", velocity: 200, stiffness: 100, damping: 15 }}
                 layout
               >
-                <GoUnlock style={{ strokeWidth: 0.5 }} />
-                <span className="button-text">DAN</span>
+                <FiCommand style={{ strokeWidth: 2 }} />
+                <span className="button-text">도구</span>
               </motion.div>
             )}
           </AnimatePresence>

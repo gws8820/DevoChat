@@ -74,7 +74,7 @@ const MCPModal = ({ isOpen, onClose, onConfirm, currentMCPList }) => {
         >
           <div className="mcp-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="mcp-modal-header">
-              MCP 서버 선택
+              도구 선택
             </div>
 
             <div className="mcp-modal-body">

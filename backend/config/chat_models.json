@@ -1,12 +1,12 @@
 {
-  "default": "gemini-3-flash-preview",
-  "alias": "gemini-3.1-flash-lite-preview",
+  "default": "google/gemini-3-flash-preview",
+  "alias": "google/gemini-3.1-flash-lite-preview",
   "models": [
     {
-      "model_name": "gemini-3.1-pro-preview",
+      "model_name": "google/gemini-3.1-pro-preview",
       "model_alias": "Gemini 3.1 Pro",
       "description": "고성능 Gemini 모델",
-      "endpoint": "/chat/gemini",
+      "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "2",
         "out_billing": "12"
@@ -17,7 +17,7 @@
         "vision": true,
         "web_search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": false,
@@ -28,10 +28,10 @@
       "admin": false
     },
     {
-      "model_name": "gemini-3-flash-preview",
+      "model_name": "google/gemini-3-flash-preview",
       "model_alias": "Gemini 3 Flash",
       "description": "기본 Gemini 모델",
-      "endpoint": "/chat/gemini",
+      "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "0.5",
         "out_billing": "3"
@@ -42,7 +42,7 @@
         "vision": true,
         "web_search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,
@@ -53,10 +53,10 @@
       "admin": false
     },
     {
-      "model_name": "gemini-3.1-flash-lite-preview",
+      "model_name": "google/gemini-3.1-flash-lite-preview",
       "model_alias": "Gemini 3.1 Flash Lite",
       "description": "경량 Gemini 모델",
-      "endpoint": "/chat/gemini",
+      "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "0.25",
         "out_billing": "1.5"
@@ -67,7 +67,7 @@
         "vision": true,
         "web_search": "toggle",
         "deep_research": false,
-        "mcp": false
+        "mcp": true
       },
       "controls": {
         "temperature": true,

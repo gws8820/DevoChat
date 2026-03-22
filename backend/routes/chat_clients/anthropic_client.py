@@ -111,6 +111,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
             async for chunk in stream_result:
                 if await fastapi_request.is_disconnected():
                     return
+
                 if hasattr(chunk, "type"):
                     if chunk.type == "content_block_start" and hasattr(chunk, "content_block"):
                         if getattr(chunk.content_block, "type", "") == "thinking":
@@ -159,22 +160,39 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             await chunk_queue.put(RawChunk(
                                 f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n"
                             ))
-                        elif getattr(chunk.content_block, "type", "") == ",":
+                        elif getattr(chunk.content_block, "type", "") == "web_search_tool_result":
                             tool_use_id = getattr(chunk.content_block, "tool_use_id")
                             tool_info = tools.get(tool_use_id)
-                            
-                            server_name = tool_info.get("server_name", "Claude")
-                            tool_name = tool_info.get("tool_name", "web_search")
-                            
+
+                            server_name = tool_info.get("server_name", "Claude") if tool_info else "Claude"
+                            tool_name = tool_info.get("tool_name", "web_search") if tool_info else "web_search"
+
                             content = getattr(chunk.content_block, "content", [])
                             tool_result = []
                             for idx, item in enumerate(content, 1):
-                                tool_result.append(f"[{idx}] {item.title}")
-                                citations.append(item.url)
-                            
-                            result = '\n'.join(tool_result)
+                                title = getattr(item, "title", "")
+                                url = getattr(item, "url", "")
+                                tool_result.append(f"[{idx}] {title}")
+                                if url:
+                                    citations.append(url)
+
                             await chunk_queue.put(RawChunk(
-                                f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': False, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n"
+                                f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': False, 'result': '\n'.join(tool_result)}, ensure_ascii=False)}\n</tool_result>\n\n"
+                            ))
+                        elif getattr(chunk.content_block, "type", "") == "code_execution_tool_result":
+                            tool_use_id = getattr(chunk.content_block, "tool_use_id")
+                            tool_info = tools.get(tool_use_id)
+
+                            server_name = tool_info.get("server_name", "Claude") if tool_info else "Claude"
+                            tool_name = tool_info.get("tool_name", "code_execution") if tool_info else "code_execution"
+
+                            content = getattr(chunk.content_block, "content", None)
+                            return_code = getattr(content, "return_code", 0)
+                            is_error = return_code != 0
+                            result = getattr(content, "stderr", "") if is_error else ""
+
+                            await chunk_queue.put(RawChunk(
+                                f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n"
                             ))
                     elif chunk.type == "content_block_stop":
                         if is_reasoning:

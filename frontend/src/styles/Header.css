@@ -141,18 +141,6 @@
     color: #000070;
 }
 
-.mcp-badge {
-    font-size: 11px;
-    font-weight: 700;
-    border-radius: 4px;
-    background: linear-gradient(90deg, #615bff 0%, #e55d87 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    white-space: nowrap;
-}
-
 .model-description {
     margin-top: 8px;
     font-size: 15px;
@@ -271,6 +259,7 @@
 .system-message-label {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     width: 100%;
     margin-bottom: 10px;
     padding: 0 2px;
@@ -278,6 +267,25 @@
     font-weight: 500;
     color: #2c2c2c;
     letter-spacing: -0.02em;
+}
+
+.dan-toggle {
+    margin: 0 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 10px;
+    font-weight: 500;
+    color: #aaa;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dan-toggle.active {
+    background-color: #333;
+    border-color: #333;
+    color: #fff;
 }
 
 .system-message-input {

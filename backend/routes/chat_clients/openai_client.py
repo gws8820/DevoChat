@@ -106,6 +106,7 @@ def format_message(message):
 async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastapi_request: Request, client):
     is_reasoning = False
     tools = {}
+    citations = []
     try:
         if request.stream:
             summary_index = None
@@ -134,12 +135,22 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
                     if chunk.response.usage:
                         input_tokens = chunk.response.usage.input_tokens or 0
                         output_tokens = chunk.response.usage.output_tokens or 0
-                        
+
                         await chunk_queue.put({
                             "type": "token_usage",
                             "input_tokens": input_tokens,
                             "output_tokens": output_tokens
                         })
+
+                    for item in (getattr(chunk.response, "output", None) or []):
+                        if getattr(item, "type", "") == "message":
+                            for content in (getattr(item, "content", None) or []):
+                                if getattr(content, "type", "") == "output_text":
+                                    for annotation in (getattr(content, "annotations", None) or []):
+                                        if getattr(annotation, "type", "") == "url_citation":
+                                            url = getattr(annotation, "url", None)
+                                            if url:
+                                                citations.append(url)
                 elif chunk.type == "response.output_item.added":
                     if hasattr(chunk, "item") and getattr(chunk.item, "type", "") == "mcp_call":
                         tool_id = getattr(chunk.item, "id")
@@ -208,8 +219,18 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
         else:
             single_result = await client.responses.create(**parameters)
             full_response_text = single_result.output_text
-            
-            chunk_size = 10 
+
+            for item in (getattr(single_result, "output", None) or []):
+                if getattr(item, "type", "") == "message":
+                    for content in (getattr(item, "content", None) or []):
+                        if getattr(content, "type", "") == "output_text":
+                            for annotation in (getattr(content, "annotations", None) or []):
+                                if getattr(annotation, "type", "") == "url_citation":
+                                    url = getattr(annotation, "url", None)
+                                    if url:
+                                        citations.append(url)
+
+            chunk_size = 10
             for i in range(0, len(full_response_text), chunk_size):
                 if await fastapi_request.is_disconnected():
                     return
@@ -230,6 +251,14 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
     finally:
         if is_reasoning:
             await chunk_queue.put('\n</think>\n\n')
+
+        if citations:
+            citations_text = "\n<citations>"
+            for idx, item in enumerate(citations, 1):
+                citations_text += f"\n\n[{idx}] {item}"
+            citations_text += "</citations>\n"
+            await chunk_queue.put(RawChunk(citations_text))
+
         await client.close()
         await chunk_queue.put(None)
 
@@ -281,7 +310,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 }
 
             if request.web_search:
-                parameters["tools"] = [{"type": "web_search_preview"}]
+                parameters["tools"] = [{"type": "web_search"}]
                 
             if len(request.mcp) > 0:
                 mcp_servers, error = get_mcp_servers(request.mcp, user)
