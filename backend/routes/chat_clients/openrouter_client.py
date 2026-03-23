@@ -18,7 +18,11 @@ from ..common import (
     check_chat_user_permissions,
     get_chat_conversation, save_chat_conversation,
     normalize_assistant_content,
-    getReason, getVerbosity
+    getReason, getVerbosity,
+
+    AliasRequest, CHAT_ALIAS_PROMPT, IMAGE_ALIAS_PROMPT,
+    get_chat_alias_model, get_image_alias_model,
+    save_alias
 )
 from logging_util import logger
 
@@ -364,3 +368,46 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
 @router.post("/chat/openrouter")
 async def openrouter_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     return StreamingResponse(get_response(chat_request, user, fastapi_request), media_type="text/event-stream")
+
+@router.post("/chat/get_alias")
+async def get_chat_alias(request: AliasRequest, user: User = Depends(get_current_user)):
+    try:
+        async with AsyncOpenAI(
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            base_url="https://openrouter.ai/api/v1"
+        ) as client:
+            result = await client.chat.completions.create(
+                model=get_chat_alias_model(),
+                messages=[
+                    {"role": "system", "content": CHAT_ALIAS_PROMPT},
+                    {"role": "user", "content": request.text}
+                ],
+                extra_body={"reasoning": {"effort": "none"}}
+            )
+        alias = result.choices[0].message.content.strip()[:15]
+        save_alias(user, request.conversation_id, alias)
+        return {"alias": alias}
+    except Exception as ex:
+        logger.error(f"GET_ALIAS_ERROR: {str(ex)}")
+        return {"alias": "새 대화", "error": str(ex)}
+
+@router.post("/image/get_alias")
+async def get_image_alias(request: AliasRequest, user: User = Depends(get_current_user)):
+    try:
+        async with AsyncOpenAI(
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            base_url="https://openrouter.ai/api/v1"
+        ) as client:
+            result = await client.chat.completions.create(
+                model=get_image_alias_model(),
+                messages=[
+                    {"role": "system", "content": IMAGE_ALIAS_PROMPT},
+                    {"role": "user", "content": request.text}
+                ]
+            )
+        alias = result.choices[0].message.content.strip()[:15]
+        save_alias(user, request.conversation_id, alias)
+        return {"alias": alias}
+    except Exception as ex:
+        logger.error(f"GET_ALIAS_ERROR: {str(ex)}")
+        return {"alias": "새 대화", "error": str(ex)}

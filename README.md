@@ -10,30 +10,6 @@
 ### Unified AI Chat Platform
 DevoChat is a web application that allows you to use various multimodal AI models and MCP (Model Context Protocol) servers through a single interface. Check out the [live demo](https://devochat.com).
 
-## Key Features
-
-- **Unified Conversation System**
-  - Uses MongoDB-based unified schema to freely switch between AI models during conversations without losing context.
-  - Provides client layers that normalize data to meet the API requirements of each AI provider.
-  - Offers an integrated management environment for various media files including images, PDFs, and documents.
-
-- **Advanced Conversation Feature**
-  - Provides parameter controls including temperature, reasoning intensity, response length, and system prompt modification.
-  - Supports markdown, LaTeX formula, and code block rendering.
-  - Enables streaming responses and simulates streaming for non-streaming models by sending complete responses in chunks.
-  - Supports image generation via Text-to-Image and Image-to-Image models.
-  - Supports real-time/low-latency STS (Speech-To-Speech) conversations through RealTime API.
-
-- **Model Switching Architecture**
-  - Allows immediate addition of various AI models to the system through JSON modification without code changes.
-  - Supports toggling of additional features like reasoning, search, and deep research for hybrid models.
-  - Enables linking separate provider models (e.g., Qwen3-235B-A22B-Instruct-2507, Qwen3-235B-A22B-Thinking-2507) with a "switch" variant to function as a single hybrid model.
-
-- **Web-based MCP Client**
-  - Connects directly to all types of MCP servers (SSE, Local) from web browsers.
-  - Provides simple access to local MCP servers from anywhere on the web using the [secure-mcp-proxy](https://github.com/gws8820/secure-mcp-proxy) package.
-  - Supports visual monitoring of real-time tool calls and execution processes.
-
 ## Screenshots
 
 <table>
@@ -110,6 +86,30 @@ DevoChat is a web application that allows you to use various multimodal AI model
     </td>
   </tr>
 </table>
+
+## Key Features
+
+- **Unified Conversation System**
+  - Uses MongoDB-based unified schema to freely switch between AI models during conversations without losing context.
+  - Provides client layers that normalize data to meet the API requirements of each AI provider.
+  - Offers an integrated management environment for various media files including images, PDFs, and documents.
+
+- **Advanced Conversation Feature**
+  - Provides parameter controls including temperature, reasoning intensity, response length, and system prompt modification.
+  - Supports markdown, LaTeX formula, and code block rendering.
+  - Enables streaming responses and simulates streaming for non-streaming models by sending complete responses in chunks.
+  - Supports image generation via Text-to-Image and Image-to-Image models.
+  - Supports real-time/low-latency STS (Speech-To-Speech) conversations through RealTime API.
+
+- **Model Switching Architecture**
+  - Allows immediate addition of various AI models to the system through JSON modification without code changes.
+  - Supports toggling of additional features like reasoning, search, and deep research for hybrid models.
+  - Enables linking separate provider models (e.g., Qwen3-235B-A22B-Instruct-2507, Qwen3-235B-A22B-Thinking-2507) with a "switch" variant to function as a single hybrid model.
+
+- **Web-based MCP Client**
+  - Connects directly to all types of MCP servers (SSE, Local) from web browsers.
+  - Provides simple access to local MCP servers from anywhere on the web using the [secure-mcp-proxy](https://github.com/gws8820/secure-mcp-proxy) package.
+  - Supports visual monitoring of real-time tool calls and execution processes.
 
 ## Project Structure
 

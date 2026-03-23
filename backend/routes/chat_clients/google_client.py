@@ -16,10 +16,6 @@ from ..common import (
     get_chat_conversation, save_chat_conversation,
     normalize_assistant_content,
     getReason,
-
-    AliasRequest, CHAT_ALIAS_PROMPT, IMAGE_ALIAS_PROMPT,
-    get_chat_alias_model, get_image_alias_model,
-    save_alias
 )
 from logging_util import logger
 
@@ -255,35 +251,3 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
 async def gemini_endpoint(chat_request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
     return StreamingResponse(get_response(chat_request, user, fastapi_request), media_type="text/event-stream")
 
-@router.post("/chat/get_alias")
-async def get_chat_alias(request: AliasRequest, user: User = Depends(get_current_user)):
-    try:
-        client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
-        interaction = await client.aio.interactions.create(
-            model=get_chat_alias_model(),
-            input=request.text,
-            system_instruction=CHAT_ALIAS_PROMPT,
-            generation_config={"thinking_level": "minimal"}
-        )
-        alias = interaction.outputs[-1].text.strip()[:15]
-        save_alias(user, request.conversation_id, alias)
-        return {"alias": alias}
-    except Exception as ex:
-        logger.error(f"GET_ALIAS_ERROR: {str(ex)}")
-        return {"alias": "새 대화", "error": str(ex)}
-
-@router.post("/image/get_alias")
-async def get_image_alias(request: AliasRequest, user: User = Depends(get_current_user)):
-    try:
-        client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
-        interaction = await client.aio.interactions.create(
-            model=get_image_alias_model(),
-            input=request.text,
-            system_instruction=IMAGE_ALIAS_PROMPT
-        )
-        alias = interaction.outputs[-1].text.strip()[:15]
-        save_alias(user, request.conversation_id, alias)
-        return {"alias": alias}
-    except Exception as ex:
-        logger.error(f"GET_ALIAS_ERROR: {str(ex)}")
-        return {"alias": "새 대화", "error": str(ex)}

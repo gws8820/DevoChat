@@ -1,6 +1,6 @@
 {
   "default": "gemini-2.5-flash-image",
-  "alias": "gemini-3.1-flash-image-preview",
+  "alias": "google/gemini-3.1-flash-lite-preview",
   "models": [
     {
       "model_name": "gemini-3-pro-image-preview",

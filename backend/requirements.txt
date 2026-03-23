@@ -19,6 +19,12 @@ python-dotenv==1.2.1
 python-multipart==0.0.22
 requests==2.32.5
 starlette==0.52.1
-textract==1.6.5
+PyMuPDF==1.27.2.2
+python-docx==1.2.0
+openpyxl==3.1.5
+xlrd==2.0.2
+python-pptx==1.0.2
+pyhwp==0.1b17
+
 uvicorn==0.41.0
 xai-sdk==1.6.1
