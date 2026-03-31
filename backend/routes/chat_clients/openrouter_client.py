@@ -18,7 +18,6 @@ from ..common import (
     check_chat_user_permissions,
     get_chat_conversation, save_chat_conversation,
     normalize_assistant_content,
-    getReason, getVerbosity,
 
     AliasRequest, CHAT_ALIAS_PROMPT, IMAGE_ALIAS_PROMPT,
     get_chat_alias_model, get_image_alias_model,
@@ -300,16 +299,11 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
                 "temperature": request.temperature if request.control.temperature else 1.0,
                 "messages": formatted_messages,
                 "stream": request.stream,
-                "extra_body": {
-                    "reasoning": {"effort": "none"}
-                }
+                "extra_body": {"reasoning": {"effort": "none"}}
             }
 
-            if request.control.verbosity and request.verbosity:
-                parameters["max_tokens"] = getVerbosity(request.verbosity, "tokens")
-
             if request.control.reason and request.reason:
-                parameters["extra_body"]["reasoning"] = {"effort": getReason(request.reason, "tertiary")}
+                parameters["extra_body"]["reasoning"] = {"effort": request.reason}
 
             if request.web_search:
                 parameters["extra_body"]["plugins"] = [{"id": "web"}]

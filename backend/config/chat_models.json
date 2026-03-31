@@ -21,7 +21,7 @@
       },
       "controls": {
         "temperature": false,
-        "reason": true,
+        "reason": ["low", "medium", "high", "xhigh"],
         "verbosity": false,
         "instructions": true
       },
@@ -46,7 +46,7 @@
       },
       "controls": {
         "temperature": true,
-        "reason": true,
+        "reason": ["low", "medium", "high", "xhigh"],
         "verbosity": false,
         "instructions": true
       },
@@ -71,7 +71,7 @@
       },
       "controls": {
         "temperature": true,
-        "reason": true,
+        "reason": ["low", "medium", "high", "xhigh"],
         "verbosity": false,
         "instructions": true
       },
@@ -96,8 +96,8 @@
       },
       "controls": {
         "temperature": "conditional",
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": ["low", "medium", "high"],
         "instructions": true
       },
       "admin": false
@@ -121,8 +121,8 @@
       },
       "controls": {
         "temperature": false,
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": ["low", "medium", "high"],
         "instructions": true
       },
       "admin": false
@@ -146,8 +146,8 @@
       },
       "controls": {
         "temperature": "conditional",
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "max"],
+        "verbosity": false,
         "instructions": true
       },
       "admin": true
@@ -171,8 +171,8 @@
       },
       "controls": {
         "temperature": "conditional",
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high"],
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
@@ -188,7 +188,7 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "toggle",
+        "reasoning": false,
         "vision": true,
         "web_search": "toggle",
         "deep_research": false,
@@ -196,14 +196,14 @@
       },
       "controls": {
         "temperature": "conditional",
-        "reason": true,
-        "verbosity": true,
+        "reason": false,
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "grok-4.20-beta-0309-non-reasoning",
+      "model_name": "grok-4.20-0309-non-reasoning",
       "model_alias": "Grok 4.2",
       "description": "기본 Grok 모델",
       "endpoint": "/chat/grok",
@@ -212,7 +212,7 @@
         "out_billing": "6"
       },
       "variants": {
-        "reasoning": "grok-4.20-beta-0309-reasoning"
+        "reasoning": "grok-4.20-0309-reasoning"
       },
       "capabilities": {
         "stream": true,
@@ -225,13 +225,13 @@
       "controls": {
         "temperature": true,
         "reason": false,
-        "verbosity": true,
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "grok-4.20-beta-0309-reasoning",
+      "model_name": "grok-4.20-0309-reasoning",
       "model_alias": "Grok 4.2",
       "description": "기본 Grok 모델",
       "endpoint": "/chat/grok",
@@ -240,7 +240,7 @@
         "out_billing": "6"
       },
       "variants": {
-        "base": "grok-4.20-beta-0309-non-reasoning"
+        "base": "grok-4.20-0309-non-reasoning"
       },
       "capabilities": {
         "stream": true,
@@ -253,7 +253,7 @@
       "controls": {
         "temperature": true,
         "reason": false,
-        "verbosity": true,
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
@@ -277,8 +277,8 @@
       },
       "controls": {
         "temperature": true,
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
@@ -302,8 +302,8 @@
       },
       "controls": {
         "temperature": true,
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
@@ -327,8 +327,8 @@
       },
       "controls": {
         "temperature": true,
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
@@ -352,20 +352,20 @@
       },
       "controls": {
         "temperature": true,
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "qwen/qwen3.5-397b-a17b",
-      "model_alias": "Qwen 3.5",
+      "model_name": "qwen/qwen3.6-plus-preview:free",
+      "model_alias": "Qwen 3.6 Plus",
       "description": "기본 Qwen 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "0.39",
-        "out_billing": "2.34"
+        "in_billing": "0",
+        "out_billing": "0"
       },
       "capabilities": {
         "stream": true,
@@ -377,8 +377,8 @@
       },
       "controls": {
         "temperature": true,
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
@@ -402,8 +402,8 @@
       },
       "controls": {
         "temperature": true,
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
@@ -428,19 +428,19 @@
       "controls": {
         "temperature": true,
         "reason": false,
-        "verbosity": true,
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "nvidia/nemotron-3-super-120b-a12b",
+      "model_name": "nvidia/nemotron-3-super-120b-a12b:free",
       "model_alias": "Nemotron 3 Super",
       "description": "기본 Nvidia 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "0.3",
-        "out_billing": "0.9"
+        "in_billing": "0",
+        "out_billing": "0"
       },
       "capabilities": {
         "stream": true,
@@ -452,33 +452,8 @@
       },
       "controls": {
         "temperature": true,
-        "reason": true,
-        "verbosity": true,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "openai/gpt-oss-120b",
-      "model_alias": "GPT-OSS 120B",
-      "description": "오픈소스 GPT 모델",
-      "endpoint": "/chat/openrouter",
-      "billing": {
-        "in_billing": "0.04",
-        "out_billing": "0.19"
-      },
-      "capabilities": {
-        "stream": true,
-        "reasoning": true,
-        "vision": false,
-        "web_search": "toggle",
-        "deep_research": false,
-        "mcp": true
-      },
-      "controls": {
-        "temperature": true,
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": false,
         "instructions": true
       },
       "admin": false

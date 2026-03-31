@@ -35,7 +35,7 @@ function ImageInputContainer({
     if (textarea) {
       textarea.style.height = "auto";
       const calculatedHeight = Math.max(textarea.scrollHeight, canVision ? 40 : 80);
-      const newHeight = Math.min(calculatedHeight, 250);
+      const newHeight = Math.min(calculatedHeight, 380);
       textarea.style.height = `${newHeight}px`;
     }
   }, [canVision]);

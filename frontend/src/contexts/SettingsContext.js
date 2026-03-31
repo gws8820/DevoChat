@@ -2,6 +2,20 @@ import React, { createContext, useState, useEffect } from "react";
  
 export const SettingsContext = createContext();
 
+const DEFAULT_CONTROL_VALUES = {
+  temperature: 1,
+  reason: "medium",
+  verbosity: "medium",
+  memory: 4,
+  instructions: ""
+};
+
+const DEFAULT_MODEL_FLAGS = {
+  isReasoning: false,
+  isSearch: false,
+  isDeepResearch: false
+};
+
 export const SettingsProvider = ({ children }) => {
   const [model, setModel] = useState("");
   const [imageModel, setImageModel] = useState("");
@@ -11,11 +25,13 @@ export const SettingsProvider = ({ children }) => {
   const [realtimeModels, setRealtimeModels] = useState([]);
   const [isModelReady, setIsModelReady] = useState(false);
   const [alias, setAlias] = useState("");
-  const [temperature, setTemperature] = useState(1);
-  const [reason, setReason] = useState(0.5);
-  const [verbosity, setVerbosity] = useState(0.5);
-  const [memory, setMemory] = useState(4);
-  const [instructions, setInstructions] = useState("");
+  const [temperature, setTemperature] = useState(DEFAULT_CONTROL_VALUES.temperature);
+  const [reason, setReason] = useState(DEFAULT_CONTROL_VALUES.reason);
+  const [verbosity, setVerbosity] = useState(DEFAULT_CONTROL_VALUES.verbosity);
+  const [defaultModel, setDefaultModel] = useState("");
+  const [defaultImageModel, setDefaultImageModel] = useState("");
+  const [memory, setMemory] = useState(DEFAULT_CONTROL_VALUES.memory);
+  const [instructions, setInstructions] = useState(DEFAULT_CONTROL_VALUES.instructions);
   const [isReasoning, setIsReasoning] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
   const [isDeepResearch, setIsDeepResearch] = useState(false);
@@ -33,107 +49,66 @@ export const SettingsProvider = ({ children }) => {
   const [canToggleMCP, setCanToggleMCP] = useState(false);
   const [maxImageInput, setMaxImageInput] = useState(1);
 
-  const fetchModels = async () => {
-    try {
-      const [modelsRes, imageModelsRes, realtimeModelsRes] = await Promise.all([
-        fetch(`${process.env.REACT_APP_FASTAPI_URL}/chat_models`, { credentials: "include" }),
-        fetch(`${process.env.REACT_APP_FASTAPI_URL}/image_models`, { credentials: "include" }),
-        fetch(`${process.env.REACT_APP_FASTAPI_URL}/realtime_models`, { credentials: "include" })
-      ]);
-      if (!modelsRes.ok || !imageModelsRes.ok || !realtimeModelsRes.ok) {
-        setModels([]);
-        setImageModels([]);
-        setRealtimeModels([]);
-        return;
-      }
+  const applyModelSelection = (selectedModel, modelConfig = {}) => {
+    if (!selectedModel) return;
 
-      const modelsData = await modelsRes.json();
-      const imageModelsData = await imageModelsRes.json();
-      const realtimeModelsData = await realtimeModelsRes.json();
+    const temperatureControl = selectedModel?.controls?.temperature;
+    const reasonLevels = Array.isArray(selectedModel?.controls?.reason) ? selectedModel.controls.reason : [];
+    const verbosityLevels = Array.isArray(selectedModel?.controls?.verbosity) ? selectedModel.controls.verbosity : [];
+    const canUseInstructions = Boolean(selectedModel?.controls?.instructions);
+    const reasoningCapability = selectedModel?.capabilities?.reasoning;
+    const searchCapability = selectedModel?.capabilities?.web_search;
+    const deepResearchCapability = selectedModel?.capabilities?.deep_research;
+    const visionCapability = selectedModel?.capabilities?.vision;
+    const mcpCapability = selectedModel?.capabilities?.mcp;
 
-      setModels(modelsData?.models);
-      setImageModels(imageModelsData?.models);
-      setRealtimeModels(realtimeModelsData?.models);
+    const canToggleReasoning = reasoningCapability === "toggle" || reasoningCapability === "switch";
+    const canToggleSearch = searchCapability === "toggle" || searchCapability === "switch";
+    const canToggleDeepResearch = deepResearchCapability === "toggle" || deepResearchCapability === "switch";
 
-      updateModel(modelsData.default, null, modelsData.models);
-      updateImageModel(imageModelsData.default, imageModelsData.models);
-      updateRealtimeModel(realtimeModelsData.default, realtimeModelsData.models);
+    const nextIsReasoning = canToggleReasoning
+      ? modelConfig.isReasoning ?? isReasoning
+      : Boolean(reasoningCapability);
+    const nextIsSearch = canToggleSearch
+      ? modelConfig.isSearch ?? isSearch
+      : Boolean(searchCapability);
+    const nextIsDeepResearch = canToggleDeepResearch
+      ? modelConfig.isDeepResearch ?? isDeepResearch
+      : Boolean(deepResearchCapability);
 
-    } catch (error) {
-      setModels([]);
-      setImageModels([]);
-      setRealtimeModels([]);
-    } finally {
-      setIsModelReady(true);
-    }
+    setModel(selectedModel.model_name);
+    setCanToggleReasoning(canToggleReasoning);
+    setIsReasoning(nextIsReasoning);
+    setCanToggleSearch(canToggleSearch);
+    setIsSearch(nextIsSearch);
+    setCanToggleDeepResearch(canToggleDeepResearch);
+    setIsDeepResearch(nextIsDeepResearch);
+
+    setCanControlTemp(temperatureControl === true || (temperatureControl === "conditional" && nextIsReasoning === false));
+    setCanControlReason(reasonLevels.length > 0 && nextIsReasoning === true);
+    setCanControlVerbosity(verbosityLevels.length > 0);
+    setCanControlSystemMessage(canUseInstructions);
+    if (!canUseInstructions) setIsDAN(false);
+
+    setCanVision(visionCapability === true || visionCapability === "switch");
+    setCanToggleMCP(Boolean(mcpCapability));
+    setMCPList(mcpCapability ? mcpList : []);
   };
 
-  useEffect(() => {
-    fetchModels();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const applyImageModelSelection = (selectedImageModel) => {
+    if (!selectedImageModel) return;
 
-  const updateModel = (newModel, modelConfig, initialModelsList) => {
-    const modelsArray = initialModelsList || models;
-    const selectedModel = modelsArray.find(m => m.model_name === newModel);
-    setModel(newModel);
-    
-    const temperature = selectedModel?.controls?.temperature;
-    const reason = selectedModel?.controls?.reason;
-    const verbosity = selectedModel?.controls?.verbosity;
-    const instructions = selectedModel?.controls?.instructions;
-    const reasoning = selectedModel?.capabilities?.reasoning;
-    const search = selectedModel?.capabilities?.web_search;
-    const deep_research = selectedModel?.capabilities?.deep_research;
-    const vision = selectedModel?.capabilities?.vision;
-    const mcp = selectedModel?.capabilities?.mcp;
+    const vision = selectedImageModel?.capabilities?.vision;
+    const maxInput = selectedImageModel?.capabilities?.max_input;
 
-    let nextIsReasoning;
+    setImageModel(selectedImageModel.model_name);
+    setCanVision(vision === "switch" || vision === true);
+    setMaxImageInput(maxInput);
+  };
 
-    if (reasoning === "toggle" || reasoning === "switch") {
-      setCanToggleReasoning(true);
-      if (modelConfig) {
-        setIsReasoning(modelConfig.isReasoning);
-        nextIsReasoning = modelConfig.isReasoning;
-      } else {
-        nextIsReasoning = isReasoning;
-      }
-    } else {
-      setCanToggleReasoning(false);
-      setIsReasoning(reasoning);
-      nextIsReasoning = reasoning;
-    }
-
-    if (search === "toggle" || search === "switch") {
-      setCanToggleSearch(true);
-      if (modelConfig) {
-        setIsSearch(modelConfig.isSearch);
-      }
-    } else {
-      setCanToggleSearch(false);
-      setIsSearch(search);
-    }
-
-    if (deep_research === "toggle" || deep_research === "switch") {
-      setCanToggleDeepResearch(true);
-      if (modelConfig) {
-        setIsDeepResearch(modelConfig.isDeepResearch);
-      }
-    } else {
-      setCanToggleDeepResearch(false);
-      setIsDeepResearch(deep_research);
-    }
-
-    setCanControlTemp(temperature === true || (temperature === "conditional" && nextIsReasoning === false));
-    setCanControlReason(reason === true && nextIsReasoning === true);
-    setCanControlVerbosity(verbosity === true);
-
-    setCanControlSystemMessage(instructions);
-    if (!instructions) setIsDAN(false);
-
-    setCanVision(vision);
-    setCanToggleMCP(mcp);
-    setMCPList(mcp ? mcpList : []);
+  const updateModel = (newModel, modelConfig = {}) => {
+    const selectedModel = models.find(m => m.model_name === newModel);
+    applyModelSelection(selectedModel, modelConfig);
   };
 
   const toggleReasoning = () => {
@@ -163,54 +138,122 @@ export const SettingsProvider = ({ children }) => {
     setIsReasoning(nextIsReasoning);
 
     setCanControlTemp(temperature === true || (temperature === "conditional" && !nextIsReasoning));
-    setCanControlReason(reason === true && nextIsReasoning === true);
+    setCanControlReason(Array.isArray(reason) && reason.length > 0 && nextIsReasoning === true);
   };
 
   const toggleSearch = () => {
     const selectedModel = models.find(m => m.model_name === model);
     const search = selectedModel?.capabilities?.web_search;
+    const nextIsSearch = !isSearch;
     
     if (search === "switch") {
       const variants = selectedModel?.variants;
       const targetModel = isSearch ? variants?.base : variants?.web_search;
       if (targetModel) {
-        updateModel(targetModel);
+        updateModel(targetModel, {
+          isReasoning,
+          isSearch: nextIsSearch,
+          isDeepResearch
+        });
+        return;
       }
     }
     
-    setIsSearch(!isSearch);
+    setIsSearch(nextIsSearch);
   };
 
   const toggleDeepResearch = () => {
     const selectedModel = models.find(m => m.model_name === model);
     const deep_research = selectedModel?.capabilities?.deep_research;
+    const nextIsDeepResearch = !isDeepResearch;
     
     if (deep_research === "switch") {
       const variants = selectedModel?.variants;
       const targetModel = isDeepResearch ? variants?.base : variants?.deep_research;
       if (targetModel) {
-        updateModel(targetModel);
+        updateModel(targetModel, {
+          isReasoning,
+          isSearch,
+          isDeepResearch: nextIsDeepResearch
+        });
+        return;
       }
     }
     
-    setIsDeepResearch(!isDeepResearch);
+    setIsDeepResearch(nextIsDeepResearch);
   };
 
-  const updateImageModel = (newImageModel, initialImageModelsList) => {
-    const imageModelsArray = initialImageModelsList || imageModels;
-    const selectedImageModel = imageModelsArray.find(m => m.model_name === newImageModel);
-    setImageModel(newImageModel);
-    
-    const vision = selectedImageModel?.capabilities?.vision;
-    const maxInput = selectedImageModel?.capabilities?.max_input;
-    
-    setCanVision(vision === "switch" || vision === true);
-    setMaxImageInput(maxInput);
+  const updateImageModel = (newImageModel) => {
+    const selectedImageModel = imageModels.find(m => m.model_name === newImageModel);
+    applyImageModelSelection(selectedImageModel);
   };
 
-  const updateRealtimeModel = (newRealtimeModel, initialRealtimeModelsList) => {
+  const updateRealtimeModel = (newRealtimeModel) => {
     setRealtimeModel(newRealtimeModel);
   };
+
+  const resetSettings = () => {
+    if (defaultModel) {
+      updateModel(defaultModel, DEFAULT_MODEL_FLAGS);
+    }
+
+    if (defaultImageModel) {
+      updateImageModel(defaultImageModel);
+    }
+
+    setTemperature(DEFAULT_CONTROL_VALUES.temperature);
+    setReason(DEFAULT_CONTROL_VALUES.reason);
+    setVerbosity(DEFAULT_CONTROL_VALUES.verbosity);
+    setMemory(DEFAULT_CONTROL_VALUES.memory);
+    setInstructions(DEFAULT_CONTROL_VALUES.instructions);
+    setIsDAN(false);
+    setHasImage(false);
+    setMCPList([]);
+  };
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const [modelsRes, imageModelsRes, realtimeModelsRes] = await Promise.all([
+          fetch(`${process.env.REACT_APP_FASTAPI_URL}/chat_models`, { credentials: "include" }),
+          fetch(`${process.env.REACT_APP_FASTAPI_URL}/image_models`, { credentials: "include" }),
+          fetch(`${process.env.REACT_APP_FASTAPI_URL}/realtime_models`, { credentials: "include" })
+        ]);
+        if (!modelsRes.ok || !imageModelsRes.ok || !realtimeModelsRes.ok) {
+          setModels([]);
+          setImageModels([]);
+          setRealtimeModels([]);
+          return;
+        }
+
+        const modelsData = await modelsRes.json();
+        const imageModelsData = await imageModelsRes.json();
+        const realtimeModelsData = await realtimeModelsRes.json();
+
+        setModels(modelsData?.models);
+        setImageModels(imageModelsData?.models);
+        setRealtimeModels(realtimeModelsData?.models);
+        setDefaultModel(modelsData.default);
+        setDefaultImageModel(imageModelsData.default);
+
+        const selectedDefaultModel = modelsData?.models?.find(m => m.model_name === modelsData.default);
+        const selectedDefaultImageModel = imageModelsData?.models?.find(m => m.model_name === imageModelsData.default);
+
+        applyModelSelection(selectedDefaultModel);
+        applyImageModelSelection(selectedDefaultImageModel);
+        updateRealtimeModel(realtimeModelsData.default);
+      } catch (error) {
+        setModels([]);
+        setImageModels([]);
+        setRealtimeModels([]);
+      } finally {
+        setIsModelReady(true);
+      }
+    };
+
+    fetchModels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const switchImageMode = (hasUploadedImages) => {
     const selectedImageModel = imageModels.find(m => m.model_name === imageModel);
@@ -279,7 +322,8 @@ export const SettingsProvider = ({ children }) => {
         toggleReasoning,
         toggleSearch,
         toggleDeepResearch,
-        switchImageMode
+        switchImageMode,
+        resetSettings
       }}
     >
       {children}

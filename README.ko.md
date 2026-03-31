@@ -280,8 +280,8 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       },
       "controls": {
         "temperature": "conditional",
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
@@ -305,7 +305,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       "controls": {
         "temperature": true,
         "reason": false,
-        "verbosity": true,
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
@@ -331,8 +331,8 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       },
       "controls": {
         "temperature": false,
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": ["low", "medium", "high"],
         "instructions": true
       },
       "admin": false
@@ -363,8 +363,8 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `capabilities.mcp` | MCP 서버 연동 지원 여부입니다. 가능한 값: `true`, `false` |
 | `controls` | 모델이 지원하는 사용자 제어 옵션들을 정의합니다. |
 | `controls.temperature` | Temperature 조절 가능 여부입니다. 가능한 값: `true`, `false`, `"conditional"` |
-| `controls.reason` | Reasoning Effect 조절 가능 여부입니다. 가능한 값: `true`, `false` |
-| `controls.verbosity` | 답변 길이(verbosity) 조절 가능 여부입니다. 가능한 값: `true`, `false` |
+| `controls.reason` | 선택 가능한 추론 강도 레벨을 정의합니다. 가능한 값: `false` 또는 문자열 배열 (예: `["low", "medium", "high"]`, `["low", "medium", "high", "xhigh"]`, `["low", "medium", "high", "max"]`) |
+| `controls.verbosity` | 선택 가능한 답변 길이 레벨을 정의합니다. 가능한 값: `false` 또는 문자열 배열 (예: `["low", "medium", "high"]`) |
 | `controls.instructions` | 커스텀 지시사항 설정 가능 여부입니다. 가능한 값: `true`, `false` |
 | `admin` | `true`인 경우, 관리자만 해당 모델을 선택/사용할 수 있습니다. |
 
@@ -384,6 +384,9 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 #### conditional
 표준 모드에서는 사용할 수 있으나, 추론 모드에서는 사용할 수 없습니다.
+
+#### 문자열 배열
+`controls.reason`와 `controls.verbosity`에서 사용되며, UI에 노출할 선택 가능한 레벨 목록을 정의합니다.
 
 ### image_models.json 설정
 

@@ -15,7 +15,6 @@ from ..common import (
     check_chat_user_permissions,
     get_chat_conversation, save_chat_conversation,
     normalize_assistant_content,
-    getReason,
 )
 from logging_util import logger
 
@@ -184,8 +183,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             "temperature": request.temperature if request.control.temperature else 1.0
         }
         if request.control.reason and request.reason:
-            thinking_level = getReason(request.reason, "binary")
-            generation_config["thinking_level"] = thinking_level
+            generation_config["thinking_level"] = request.reason
             generation_config["thinking_summaries"] = "auto"
         else:
             generation_config["thinking_level"] = "minimal"

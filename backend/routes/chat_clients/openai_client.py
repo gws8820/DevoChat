@@ -15,7 +15,6 @@ from ..common import (
     check_chat_user_permissions,
     get_chat_conversation, save_chat_conversation,
     normalize_assistant_content,
-    getReason, getVerbosity
 )
 from logging_util import logger
 
@@ -300,12 +299,11 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             }
             
             if request.control.verbosity and request.verbosity:
-                parameters["text"] = {"verbosity": getVerbosity(request.verbosity, "tertiary")}
-            
+                parameters["text"] = {"verbosity": request.verbosity}
+
             if request.control.reason and request.reason:
-                reasoning_effort = getReason(request.reason, "tertiary")
                 parameters["reasoning"] = {
-                    "effort": reasoning_effort,
+                    "effort": request.reason,
                     "summary": "auto"
                 }
 

@@ -63,7 +63,7 @@ function AppContent() {
 
   const chatMessageRef = useRef(null);
   const { fetchConversations, isLoadingChat } = useContext(ConversationsContext);
-  const { isModelReady } = useContext(SettingsContext);
+  const { isModelReady, resetSettings } = useContext(SettingsContext);
 
   useEffect(() => {
     const handleResize = () => {
@@ -122,6 +122,14 @@ function AppContent() {
       }
     }
   }, [isResponsive, userSidebarOpen]);
+
+  useEffect(() => {
+    if (!isModelReady) return;
+    if (location.pathname === "/" || location.pathname === "/image") {
+      resetSettings();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isModelReady, location.pathname]);
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarOpen(prev => {

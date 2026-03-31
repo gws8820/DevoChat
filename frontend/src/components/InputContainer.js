@@ -41,7 +41,7 @@ function InputContainer({
     if (textarea) {
       textarea.style.height = "auto";
       const calculatedHeight = Math.max(textarea.scrollHeight, 40);
-      const newHeight = Math.min(calculatedHeight, 250);
+      const newHeight = Math.min(calculatedHeight, 380);
       textarea.style.height = `${newHeight}px`;
     }
   }, []);

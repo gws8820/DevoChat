@@ -34,6 +34,10 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
     setIsDAN
   } = useContext(SettingsContext);
 
+  const selectedModel = models.find(m => m.model_name === model);
+  const reasonLevels = Array.isArray(selectedModel?.controls?.reason) ? selectedModel.controls.reason : [];
+  const verbosityLevels = Array.isArray(selectedModel?.controls?.verbosity) ? selectedModel.controls.verbosity : [];
+
   const location = useLocation();
   const match = location.pathname.match(/^\/(?:chat|image)\/([^/]+)/);
   const conversation_id = match?.[1];
@@ -57,10 +61,6 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
 
   const currentModelAlias = models.find((m) => m.model_name === model)?.model_alias || "모델 선택";
 
-  const toPercent = (value, max = 1) => {
-    const pct = Math.round((value / max) * 100);
-    return `${pct}%`;
-  };
 
   const handleShare = async () => {
     try {
@@ -230,14 +230,14 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                         <div className="slider-label">
                           <span>창의성</span>
                           <span className="slider-value">
-                            {toPercent(temperature, 2)}
+                            {parseFloat(temperature).toFixed(1)}
                           </span>
                         </div>
                         <input
                           type="range"
-                          min={0.01}
+                          min={0.1}
                           max={2}
-                          step={0.01}
+                          step={0.1}
                           value={temperature}
                           onChange={(e) =>
                             setTemperature(parseFloat(e.target.value))
@@ -250,17 +250,15 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                       <div className="slider-section">
                         <div className="slider-label">
                           <span>추론 강도</span>
-                          <span className="slider-value">
-                            {toPercent(reason)}
-                          </span>
+                          <span className="slider-value">{reason}</span>
                         </div>
                         <input
                           type="range"
-                          min={0.01}
-                          max={1}
-                          step={0.01}
-                          value={reason}
-                          onChange={(e) => setReason(parseFloat(e.target.value))}
+                          min={0}
+                          max={reasonLevels.length - 1}
+                          step={1}
+                          value={reasonLevels.indexOf(reason)}
+                          onChange={(e) => setReason(reasonLevels[parseInt(e.target.value)])}
                           className="slider"
                         />
                       </div>
@@ -269,17 +267,15 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                       <div className="slider-section">
                         <div className="slider-label">
                           <span>답변 길이</span>
-                          <span className="slider-value">
-                            {toPercent(verbosity)}
-                          </span>
+                          <span className="slider-value">{verbosity}</span>
                         </div>
                         <input
                           type="range"
-                          min={0.01}
-                          max={1}
-                          step={0.01}
-                          value={verbosity}
-                          onChange={(e) => setVerbosity(parseFloat(e.target.value))}
+                          min={0}
+                          max={verbosityLevels.length - 1}
+                          step={1}
+                          value={verbosityLevels.indexOf(verbosity)}
+                          onChange={(e) => setVerbosity(verbosityLevels[parseInt(e.target.value)])}
                           className="slider"
                         />
                       </div>
@@ -294,7 +290,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                     <input
                       type="range"
                       min={0}
-                      max={10}
+                      max={12}
                       step={1}
                       value={memory}
                       onChange={(e) => setMemory(parseInt(e.target.value))}

@@ -29,8 +29,8 @@ class ChatRequest(BaseModel):
     stream: bool = True
     control: ControlFlags = ControlFlags()
     temperature: float = 1.0
-    reason: float = 0
-    verbosity: float = 0
+    reason: str = ""
+    verbosity: str = ""
     memory: int = 4
     instructions: str = ""
     message: List[Dict[str, Any]]
@@ -56,8 +56,6 @@ db = mongo_client.chat_db
 user_collection = db.users
 conversation_collection = db.conversations
 
-MAX_VERBOSITY_TOKENS = 8192
-MAX_REASON_TOKENS = 16384
 
 default_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'default_prompt.txt')
 try:
@@ -130,45 +128,6 @@ def get_chat_conversation(user: User, conversation_id: str, memory):
     )
     return conversation.get("conversation", [])
 
-def getVerbosity(verbosity_value: float, format_type: str) -> Any:
-    if verbosity_value == 0:
-        return None
-        
-    if format_type == "tokens":
-        return int(verbosity_value * MAX_VERBOSITY_TOKENS)
-    
-    elif format_type == "binary":
-        return "low" if verbosity_value < 0.5 else "high"
-    
-    elif format_type == "tertiary":
-        if verbosity_value < 0.33:
-            return "low"
-        elif verbosity_value < 0.66:
-            return "medium"
-        else:
-            return "high"
-    
-    return None
-
-def getReason(reason_value: float, format_type: str) -> Any:
-    if reason_value == 0:
-        return None
-        
-    if format_type == "tokens":
-        return int(reason_value * MAX_REASON_TOKENS)
-    
-    elif format_type == "binary":
-        return "low" if reason_value < 0.5 else "high"
-    
-    elif format_type == "tertiary":
-        if reason_value < 0.33:
-            return "low"
-        elif reason_value < 0.66:
-            return "medium"
-        else:
-            return "high"
-    
-    return None
 
 def normalize_assistant_content(content):
     content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)

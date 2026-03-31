@@ -16,8 +16,7 @@ from ..common import (
     DEFAULT_PROMPT, DAN_PROMPT,
     check_chat_user_permissions,
     get_chat_conversation, save_chat_conversation,
-    normalize_assistant_content,
-    getVerbosity
+    normalize_assistant_content
 )
 from logging_util import logger
 
@@ -227,9 +226,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             "messages": formatted_messages,
             "tools": []
         }
-        
-        if request.control.verbosity and request.verbosity:
-            parameters["max_tokens"] = getVerbosity(request.verbosity, "tokens")
         
         if request.web_search:
             parameters["tools"].append(web_search())

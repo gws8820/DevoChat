@@ -36,7 +36,7 @@ BINARY_SIGNATURES = [
     b'MZ', b'\x7fELF', b'\xca\xfe\xba\xbe',
     b'PK\x03\x04', b'\x50\x4b\x03\x04', b'Rar!',
 ]
-TEXT_ENCODINGS = ['utf-8', 'cp949', 'euc-kr', 'latin-1']
+TEXT_ENCODINGS = ['utf-8-sig', 'utf-16', 'utf-8', 'cp949', 'euc-kr']
 
 class WebContent(BaseModel):
     unique_id: str
@@ -105,19 +105,12 @@ def extract_text(data: bytes, ext: str, filename: str) -> str:
                     parts.extend(el.text for el in root.iter() if el.tag.endswith('}t') and 'hancom.co.kr/hwpml' in el.tag and el.text)
             return "\n".join(parts).strip()
 
-        if b'\x00' in data:
-            raise HTTPException(status_code=422, detail=f"Binary file is not supported: {filename}")
         for sig in BINARY_SIGNATURES:
             if data.startswith(sig):
                 raise HTTPException(status_code=422, detail=f"Binary file is not supported: {filename}")
         for enc in TEXT_ENCODINGS:
             try:
-                text = data.decode(enc)
-                if enc == 'latin-1':
-                    control = sum(1 for c in text if ord(c) < 32 and c not in '\n\r\t')
-                    if len(text) > 0 and control / len(text) > 0.1:
-                        continue
-                return text.strip()
+                return data.decode(enc).strip()
             except (UnicodeDecodeError, Exception):
                 continue
         raise HTTPException(status_code=422, detail=f"Binary file is not supported: {filename}")

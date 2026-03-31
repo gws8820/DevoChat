@@ -280,8 +280,8 @@ Define the AI models available in the application and their properties through t
       },
       "controls": {
         "temperature": "conditional",
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
@@ -305,7 +305,7 @@ Define the AI models available in the application and their properties through t
       "controls": {
         "temperature": true,
         "reason": false,
-        "verbosity": true,
+        "verbosity": false,
         "instructions": true
       },
       "admin": false
@@ -331,8 +331,8 @@ Define the AI models available in the application and their properties through t
       },
       "controls": {
         "temperature": false,
-        "reason": true,
-        "verbosity": true,
+        "reason": ["low", "medium", "high", "xhigh"],
+        "verbosity": ["low", "medium", "high"],
         "instructions": true
       },
       "admin": false
@@ -363,8 +363,8 @@ Define the AI models available in the application and their properties through t
 | `capabilities.mcp` | Whether MCP server integration is supported. Possible values: `true`, `false` |
 | `controls` | Defines user control options supported by the model |
 | `controls.temperature` | Whether temperature adjustment is possible. Possible values: `true`, `false`, `"conditional"` |
-| `controls.reason` | Whether Reasoning Effect adjustment is possible. Possible values: `true`, `false` |
-| `controls.verbosity` | Whether response length control is possible. Possible values: `true`, `false` |
+| `controls.reason` | Defines selectable reasoning intensity levels. Possible values: `false` or an array of strings (e.g. `["low", "medium", "high"]`, `["low", "medium", "high", "xhigh"]`, `["low", "medium", "high", "max"]`) |
+| `controls.verbosity` | Defines selectable response length levels. Possible values: `false` or an array of strings (e.g. `["low", "medium", "high"]`) |
 | `controls.instructions` | Whether custom instructions setting is possible. Possible values: `true`, `false` |
 | `admin` | If `true`, only admin users can access/select this model |
 
@@ -384,6 +384,9 @@ When a user toggles this feature, it switches to another individual model. Dynam
 
 #### conditional
 Available in standard mode, but not available in reasoning mode.
+
+#### string array
+Used by `controls.reason` and `controls.verbosity` to define the selectable levels shown in the UI.
 
 ### image_models.json Configuration
 

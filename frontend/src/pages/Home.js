@@ -34,12 +34,6 @@ function Home({ isTouch, userInfo }) {
     models,
     model,
     canVision,
-    updateModel,
-    setTemperature,
-    setReason,
-    setVerbosity,
-    setInstructions,
-    setIsDAN,
     setHasImage,
   } = useContext(SettingsContext);
 
@@ -66,18 +60,6 @@ function Home({ isTouch, userInfo }) {
     };
     
     fetchNotice();
-  }, []);
-
-  useEffect(() => {
-    updateModel(model);
-    
-    setTemperature(1);
-    setReason(0.5);
-    setVerbosity(0.5);
-    setInstructions("");
-    setIsDAN(false);
-    setHasImage(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
