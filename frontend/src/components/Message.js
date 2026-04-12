@@ -53,6 +53,20 @@ function Message({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
 
+  useEffect(() => {
+    if (!isEditing) return;
+    const vv = window.visualViewport;
+    const resetScroll = () => window.scrollTo(0, 0);
+    vv?.addEventListener('scroll', resetScroll);
+    const timer = setTimeout(() => {
+      textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 300);
+    return () => {
+      vv?.removeEventListener('scroll', resetScroll);
+      clearTimeout(timer);
+    };
+  }, [isEditing]);
+
   const saveEdit = useCallback(() => {
     if (!editText.trim()) return;
 

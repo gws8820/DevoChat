@@ -80,13 +80,59 @@
     background-color: #f1f1f1;
 }
 
+.conversation-list-wrapper {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.scroll-to-active-btn {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    font-size: 17px;
+    border: 1px solid rgb(225, 225, 225);
+    border-radius: 50%;
+    background-color: rgb(255, 255, 255);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    color: #444;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease, background-color 0.2s ease;
+}
+
+.scroll-to-active-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.scroll-to-active-btn:hover {
+    background-color: #f1f1f1;
+}
+
 .conversation-container {
     margin-top: 8px;
     flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     list-style-type: none;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    scrollbar-width: auto;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.2s ease;
+}
+
+.conversation-container:hover {
+    scrollbar-color: rgb(230, 230, 230) transparent;
 }
 
 .conversation-container.loading {
@@ -121,8 +167,14 @@
     padding: 10px;
 }
 
-.conversation-item:hover {
+.conversation-item.selected {
     background-color: #f3f3f3;
+}
+
+@media (hover: hover) {
+    .conversation-item:hover {
+        background-color: #f3f3f3;
+    }
 }
 
 .conversation-text,
@@ -235,8 +287,10 @@ input:focus {
     cursor: pointer;
 }
 
-.user-dropdown button:hover {
-    background-color: #f3f3f3;
+@media (hover: hover) {
+    .user-dropdown button:hover {
+        background-color: #f3f3f3;
+    }
 }
 
 .user-container {
@@ -253,8 +307,10 @@ input:focus {
     cursor: pointer;
 }
 
-.user-info:hover {
-    background-color: #f3f3f3;
+@media (hover: hover) {
+    .user-info:hover {
+        background-color: #f3f3f3;
+    }
 }
 
 .user-icon {
@@ -275,8 +331,10 @@ input:focus {
     border-top: 1px solid rgb(248, 248, 248);
 }
 
-.dropdown-item:hover {
-    background-color: #f3f3f3;
+@media (hover: hover) {
+    .dropdown-item:hover {
+        background-color: #f3f3f3;
+    }
 }
 
 .dropdown-item.user-billing {
@@ -310,19 +368,21 @@ input:focus {
     pointer-events: none;
 }
 
-.user-billing:hover .billing-text {
-    opacity: 0;
-    transform: translateY(-6px);
-}
+@media (hover: hover) {
+    .user-billing:hover .billing-text {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
 
-.user-billing:hover .refresh-button {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
+    .user-billing:hover .refresh-button {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
 }
 
 @media (hover: hover) {
     .conversation-item:hover .delete-icon {
-      opacity: 1;
+        opacity: 1;
     }
 }

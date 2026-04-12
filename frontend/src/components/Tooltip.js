@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import "../styles/Tooltip.css";
 
-function Tooltip({ content, children, position = "bottom", isTouch = false }) {
+function Tooltip({ content, children, position = "bottom", isTouch = false, enabled = true }) {
   const [visible, setVisible] = useState(false);
 
-  if (isTouch) {
+  if (isTouch || !enabled) {
     return children;
   }
 

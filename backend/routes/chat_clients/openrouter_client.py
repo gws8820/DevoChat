@@ -50,7 +50,7 @@ def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dic
         server_list.append({
             "url": server_config["url"],
             "name": server_config["name"],
-            "authorization_token": server_config["authorization_token"]
+            "authorization_token": server_config.get("authorization_token")
         })
 
     return server_list, None
@@ -125,8 +125,9 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                 tool_info_map = {}
 
                 for server in mcp_servers:
+                    token = server.get("authorization_token")
                     transport = await exit_stack.enter_async_context(
-                        streamablehttp_client(server["url"], headers={"Authorization": f"Bearer {server['authorization_token']}"})
+                        streamablehttp_client(server["url"], headers={"Authorization": f"Bearer {token}"} if token else {})
                     )
                     read, write, _ = transport
                     session = await exit_stack.enter_async_context(ClientSession(read, write))

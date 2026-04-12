@@ -45,7 +45,7 @@ def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dic
         mcp_server = mcp (
             server_url = server_config["url"],
             server_label = server_config["name"],
-            authorization = server_config["authorization_token"]
+            authorization = server_config.get("authorization_token")
         )
         
         server_list.append(mcp_server)

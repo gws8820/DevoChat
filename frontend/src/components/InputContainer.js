@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
 import { GoPlus, GoGlobe, GoLightBulb, GoTelescope } from "react-icons/go";
 import { BiX } from "react-icons/bi";
-import { FiPaperclip, FiMic, FiCommand } from "react-icons/fi";
-import { PiPaperPlaneRightFill, PiStopFill } from "react-icons/pi";
+import { FiCommand } from "react-icons/fi";
+import { PiPaperPlaneRightFill, PiStopFill, PiWaveformBold } from "react-icons/pi";
 import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
 import MCPModal from "./MCPModal";
@@ -23,18 +23,17 @@ function InputContainer({
   uploadingFiles,
 }) {
   const [isComposing, setIsComposing] = useState(false);
-  const [showMediaOptions, setShowMediaOptions] = useState(false);
+
   const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
   const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  const optionsRef = useRef(null);
+
   const textAreaRef = useRef(null);
   const fileInputRef = useRef(null);
   const recognitionRef = useRef(null);
-  const recordingTimerRef = useRef(null);
+
 
   const adjustTextareaHeight = useCallback(() => {
     const textarea = textAreaRef.current;
@@ -50,13 +49,7 @@ function InputContainer({
     adjustTextareaHeight();
   }, [inputText, adjustTextareaHeight]);
   
-  const formatRecordingTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const {
+const {
     isReasoning,
     isSearch,
     isDeepResearch,
@@ -72,19 +65,7 @@ function InputContainer({
     toggleDeepResearch,
   } = useContext(SettingsContext);
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
-        setShowMediaOptions(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const notifyError = useCallback((message) => {
+const notifyError = useCallback((message) => {
     setToastMessage(message);
     setShowToast(true);
   }, []);
@@ -110,15 +91,8 @@ function InputContainer({
     [processFiles, canVision, notifyError]
   );
 
-  const handlePlusButtonClick = useCallback((e) => {
-    e.stopPropagation();
-    setShowMediaOptions(!showMediaOptions);
-  }, [showMediaOptions]);
-
-  const handleFileClick = useCallback((e) => {
-    e.stopPropagation();
+  const handleFileClick = useCallback(() => {
     if (fileInputRef.current) fileInputRef.current.click();
-    setShowMediaOptions(false);
   }, []);
 
   const handleFileDelete = useCallback((file) => {
@@ -129,8 +103,6 @@ function InputContainer({
     if (recognitionRef.current && isRecording) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
-      clearInterval(recordingTimerRef.current);
-      setRecordingTime(0);
       setIsRecording(false);
     }
   }, [isRecording]);
@@ -173,26 +145,14 @@ function InputContainer({
       recognition.start();
       recognitionRef.current = recognition;
       setIsRecording(true);
-      setShowMediaOptions(false);
+      if (navigator.vibrate) navigator.vibrate(100);
     } catch (error) {
       setToastMessage("음성 인식을 시작하는 데 실패했습니다.");
       setShowToast(true);
     }
   }, [isRecording, handleRecordingStop, inputText, setInputText]);
 
-  useEffect(() => {
-    if (isRecording) {
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingTime((prev) => prev + 1);
-      }, 1000);
-    } else {
-      clearInterval(recordingTimerRef.current);
-      setRecordingTime(0);
-    }
-    return () => clearInterval(recordingTimerRef.current);
-  }, [isRecording]);
-
-  const handleKeyDown = useCallback((event) => {
+const handleKeyDown = useCallback((event) => {
     if (
       event.key === "Enter" &&
       !event.shiftKey &&
@@ -210,17 +170,19 @@ function InputContainer({
       onCancel?.();
       return;
     }
+    if (isRecording) {
+      handleRecordingStop();
+      return;
+    }
     if (inputText.trim()) {
       onSend(inputText);
     } else {
-      setToastMessage("내용을 입력해주세요.");
-      setShowToast(true);
+      handleRecordingStart();
     }
-  }, [isLoading, inputText, onSend, onCancel]);
+  }, [isLoading, inputText, onSend, onCancel, isRecording, handleRecordingStop, handleRecordingStart]);
 
   const handleMCPClick = useCallback(() => {
     setIsMCPModalOpen(true);
-    setShowMediaOptions(false);
   }, []);
 
   const handleMCPModalClose = useCallback(() => {
@@ -291,23 +253,6 @@ function InputContainer({
         </AnimatePresence>
 
         <div className="input-area">
-          <AnimatePresence>
-            {isRecording && (
-              <motion.div
-                className="recording-indicator"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="recording-dot"></div>
-                <span>{`녹음 중... ${formatRecordingTime(recordingTime)}`}</span>
-                <button className="stop-recording-button" onClick={handleRecordingStop}>
-                  완료
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
           <textarea
             ref={textAreaRef}
             className="message-input"
@@ -322,35 +267,15 @@ function InputContainer({
         </div>
 
         <div className="button-area">
-          <div className="function-button-container" ref={optionsRef}>
+          <div className="function-button-container">
             <motion.div
               className="function-button"
-              onClick={handlePlusButtonClick}
+              onClick={handleFileClick}
               transition={{ type: "physics", velocity: 200, stiffness: 100, damping: 15 }}
               layout
             >
               <GoPlus style={{ strokeWidth: 0.5 }} />
             </motion.div>
-            <AnimatePresence>
-              {showMediaOptions && (
-                <motion.div
-                  className="media-options-dropdown"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="media-option" onClick={handleFileClick}>
-                    <FiPaperclip />
-                    파일 업로드
-                  </div>
-                  <div className="media-option" onClick={handleRecordingStart}>
-                    <FiMic />
-                    음성 인식
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
           <AnimatePresence initial={false}>
@@ -419,12 +344,12 @@ function InputContainer({
       </div>
 
       <button
-        className="send-button"
+        className={`send-button${isRecording ? " recording" : ""}`}
         onClick={handleSendButtonClick}
-        disabled={uploadingFiles || isRecording}
+        disabled={uploadingFiles}
         aria-label={isLoading ? "전송 중단" : "메시지 전송"}
       >
-        {isLoading ? <PiStopFill /> : <PiPaperPlaneRightFill />}
+        {isLoading ? <PiStopFill /> : (!isRecording && inputText.trim()) ? <PiPaperPlaneRightFill /> : <PiWaveformBold />}
       </button>
 
       <input

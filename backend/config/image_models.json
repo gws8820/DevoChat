@@ -135,8 +135,8 @@
       "admin": false
     },
     {
-      "model_name": "alibaba/wan-2.6/text-to-image",
-      "model_alias": "Wan 2.6",
+      "model_name": "alibaba/wan-2.7/text-to-image",
+      "model_alias": "Wan 2.7",
       "description": "Alibaba",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -144,14 +144,14 @@
         "out_billing": "0.03"
       },
       "variants": {
-        "vision": "alibaba/wan-2.6/image-edit"
+        "vision": "alibaba/wan-2.7/image-edit"
       },
       "capabilities": { "vision": "switch" },
       "admin": false
     },
     {
-      "model_name": "alibaba/wan-2.6/image-edit",
-      "model_alias": "Wan 2.6 Image",
+      "model_name": "alibaba/wan-2.7/image-edit",
+      "model_alias": "Wan 2.7 Image",
       "description": "Alibaba",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -159,7 +159,7 @@
         "out_billing": "0.03"
       },
       "variants": {
-        "base": "alibaba/wan-2.6/text-to-image"
+        "base": "alibaba/wan-2.7/text-to-image"
       },
       "capabilities": { "vision": "switch", "max_input": 2 },
       "admin": false

@@ -44,7 +44,7 @@ def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dic
             "type": "url",
             "url": server_config["url"],
             "name": server_config["name"],
-            "authorization_token": server_config["authorization_token"]
+            "authorization_token": server_config.get("authorization_token")
         }
         
         server_list.append(mcp_server)
@@ -298,6 +298,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             parameters = {
                 "model": request.model,
                 "temperature": request.temperature if request.control.temperature else 1.0,
+                "max_tokens": 16000,
                 "system": instructions,
                 "messages": formatted_messages,
                 "stream": request.stream,

@@ -1,16 +1,13 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useMemo, useCallback } from "react";
  
 export const SettingsContext = createContext();
 
-const DEFAULT_CONTROL_VALUES = {
+const INIT_VALUES = {
   temperature: 1,
   reason: "medium",
   verbosity: "medium",
   memory: 4,
-  instructions: ""
-};
-
-const DEFAULT_MODEL_FLAGS = {
+  instructions: "",
   isReasoning: false,
   isSearch: false,
   isDeepResearch: false
@@ -25,13 +22,13 @@ export const SettingsProvider = ({ children }) => {
   const [realtimeModels, setRealtimeModels] = useState([]);
   const [isModelReady, setIsModelReady] = useState(false);
   const [alias, setAlias] = useState("");
-  const [temperature, setTemperature] = useState(DEFAULT_CONTROL_VALUES.temperature);
-  const [reason, setReason] = useState(DEFAULT_CONTROL_VALUES.reason);
-  const [verbosity, setVerbosity] = useState(DEFAULT_CONTROL_VALUES.verbosity);
+  const [temperature, setTemperature] = useState(INIT_VALUES.temperature);
+  const [reason, setReason] = useState(INIT_VALUES.reason);
+  const [verbosity, setVerbosity] = useState(INIT_VALUES.verbosity);
   const [defaultModel, setDefaultModel] = useState("");
   const [defaultImageModel, setDefaultImageModel] = useState("");
-  const [memory, setMemory] = useState(DEFAULT_CONTROL_VALUES.memory);
-  const [instructions, setInstructions] = useState(DEFAULT_CONTROL_VALUES.instructions);
+  const [memory, setMemory] = useState(INIT_VALUES.memory);
+  const [instructions, setInstructions] = useState(INIT_VALUES.instructions);
   const [isReasoning, setIsReasoning] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
   const [isDeepResearch, setIsDeepResearch] = useState(false);
@@ -87,6 +84,13 @@ export const SettingsProvider = ({ children }) => {
     setCanControlTemp(temperatureControl === true || (temperatureControl === "conditional" && nextIsReasoning === false));
     setCanControlReason(reasonLevels.length > 0 && nextIsReasoning === true);
     setCanControlVerbosity(verbosityLevels.length > 0);
+
+    if (reasonLevels.length > 0 && !reasonLevels.includes(reason)) {
+      setReason(INIT_VALUES.reason);
+    }
+    if (verbosityLevels.length > 0 && !verbosityLevels.includes(verbosity)) {
+      setVerbosity(INIT_VALUES.verbosity);
+    }
     setCanControlSystemMessage(canUseInstructions);
     if (!canUseInstructions) setIsDAN(false);
 
@@ -188,24 +192,24 @@ export const SettingsProvider = ({ children }) => {
     applyImageModelSelection(selectedImageModel);
   };
 
-  const updateRealtimeModel = (newRealtimeModel) => {
+  const updateRealtimeModel = useCallback((newRealtimeModel) => {
     setRealtimeModel(newRealtimeModel);
-  };
+  }, []);
 
   const resetSettings = () => {
     if (defaultModel) {
-      updateModel(defaultModel, DEFAULT_MODEL_FLAGS);
+      updateModel(defaultModel, INIT_VALUES);
     }
 
     if (defaultImageModel) {
       updateImageModel(defaultImageModel);
     }
 
-    setTemperature(DEFAULT_CONTROL_VALUES.temperature);
-    setReason(DEFAULT_CONTROL_VALUES.reason);
-    setVerbosity(DEFAULT_CONTROL_VALUES.verbosity);
-    setMemory(DEFAULT_CONTROL_VALUES.memory);
-    setInstructions(DEFAULT_CONTROL_VALUES.instructions);
+    setTemperature(INIT_VALUES.temperature);
+    setReason(INIT_VALUES.reason);
+    setVerbosity(INIT_VALUES.verbosity);
+    setMemory(INIT_VALUES.memory);
+    setInstructions(INIT_VALUES.instructions);
     setIsDAN(false);
     setHasImage(false);
     setMCPList([]);
@@ -275,57 +279,58 @@ export const SettingsProvider = ({ children }) => {
     }
   };
 
+  const value = useMemo(() => ({
+    models,
+    imageModels,
+    realtimeModels,
+    model,
+    imageModel,
+    realtimeModel,
+    isModelReady,
+    alias,
+    temperature,
+    reason,
+    verbosity,
+    memory,
+    instructions,
+    hasImage,
+    isReasoning,
+    isSearch,
+    isDeepResearch,
+    isDAN,
+    mcpList,
+    canControlTemp,
+    canControlReason,
+    canControlVerbosity,
+    canControlSystemMessage,
+    canToggleReasoning,
+    canToggleSearch,
+    canToggleDeepResearch,
+    canToggleMCP,
+    canVision,
+    maxImageInput,
+    updateModel,
+    updateImageModel,
+    updateRealtimeModel,
+    setAlias,
+    setTemperature,
+    setReason,
+    setVerbosity,
+    setMemory,
+    setInstructions,
+    setHasImage,
+    setIsDAN,
+    setMCPList,
+    toggleReasoning,
+    toggleSearch,
+    toggleDeepResearch,
+    switchImageMode,
+    resetSettings
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [models, imageModels, realtimeModels, model, imageModel, realtimeModel, isModelReady, alias, temperature, reason, verbosity, memory, instructions, hasImage, isReasoning, isSearch, isDeepResearch, isDAN, mcpList, canControlTemp, canControlReason, canControlVerbosity, canControlSystemMessage, canToggleReasoning, canToggleSearch, canToggleDeepResearch, canToggleMCP, canVision, maxImageInput]);
+
   return (
-    <SettingsContext.Provider
-      value={{
-        models,
-        imageModels,
-        realtimeModels,
-        model,
-        imageModel,
-        realtimeModel,
-        isModelReady,
-        alias,
-        temperature,
-        reason,
-        verbosity,
-        memory,
-        instructions,
-        hasImage,
-        isReasoning,
-        isSearch,
-        isDeepResearch,
-        isDAN,
-        mcpList,
-        canControlTemp,
-        canControlReason,
-        canControlVerbosity,
-        canControlSystemMessage,
-        canToggleReasoning,
-        canToggleSearch,
-        canToggleDeepResearch,
-        canToggleMCP,
-        canVision,
-        maxImageInput,
-        updateModel,
-        updateImageModel,
-        updateRealtimeModel,
-        setAlias,
-        setTemperature,
-        setReason,
-        setVerbosity,
-        setMemory,
-        setInstructions,
-        setHasImage,
-        setIsDAN,
-        setMCPList,
-        toggleReasoning,
-        toggleSearch,
-        toggleDeepResearch,
-        switchImageMode,
-        resetSettings
-      }}
-    >
+    <SettingsContext.Provider value={value}>
       {children}
     </SettingsContext.Provider>
   );

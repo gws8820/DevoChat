@@ -9,7 +9,7 @@ import Toast from "../components/Toast";
 import ImageInputContainer from "../components/ImageInputContainer";
 import "../styles/Common.css";
 
-function ImageHome({ isTouch }) {
+function ImageHome({ isTouch, userInfo }) {
   const navigate = useNavigate();
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -149,7 +149,14 @@ function ImageHome({ isTouch }) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          상상을 마음껏 펼쳐보세요!
+          {(() => {
+            const h = new Date().getHours();
+            const name = userInfo.name.split(' ')[0];
+            if (h >= 5 && h < 12) return `좋은 아침이에요, ${name}님! ☀️`;
+            if (h >= 12 && h < 17) return `안녕하세요, ${name}님! 👋`;
+            if (h >= 17 && h < 21) return `좋은 저녁이에요, ${name}님! ✨`;
+            return `안녕히 주무세요, ${name}님! 🌙`;
+          })()}
         </motion.div>
       </div>
 

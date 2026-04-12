@@ -1,5 +1,5 @@
 // src/contexts/ConversationsContext.js
-import React, { createContext, useState, useCallback } from "react";
+import React, { createContext, useState, useCallback, useMemo } from "react";
  
 export const ConversationsContext = createContext();
 
@@ -27,40 +27,40 @@ export function ConversationsProvider({ children }) {
     }
   }, []);
 
-  const addConversation = (newConversation) => {
+  const addConversation = useCallback((newConversation) => {
     setConversations((prevConversations) => [
       ...prevConversations,
       newConversation,
     ]);
-  };
+  }, []);
 
-  const deleteConversation = (conversation_id) => {
+  const deleteConversation = useCallback((conversation_id) => {
     setConversations((prevConversations) =>
       prevConversations.filter(
         (conv) => conv.conversation_id !== conversation_id
       )
     );
-  };
+  }, []);
 
-  const deleteAllConversation = () => {
+  const deleteAllConversation = useCallback(() => {
     setConversations([]);
-  };
+  }, []);
 
-  const updateAlias = (conversation_id, newAlias, isLoading = undefined) => {
+  const updateAlias = useCallback((conversation_id, newAlias, isLoading = undefined) => {
     setConversations((prevConversations) =>
       prevConversations.map((conv) =>
         conv.conversation_id === conversation_id
-          ? { 
-              ...conv, 
+          ? {
+              ...conv,
               alias: newAlias,
               ...(isLoading !== undefined && { isLoading })
             }
           : conv
       )
     );
-  };
+  }, []);
 
-  const updateTimestamp = (conversation_id, updated_at) => {
+  const updateTimestamp = useCallback((conversation_id, updated_at) => {
     setConversations((prevConversations) =>
       prevConversations.map((conv) =>
         conv.conversation_id === conversation_id
@@ -68,31 +68,33 @@ export function ConversationsProvider({ children }) {
           : conv
       )
     );
-  };
+  }, []);
 
-  const toggleStarConversation = (conversation_id, starred) => {
-    setConversations(prevConversations => 
-      prevConversations.map(conv => 
-        conv.conversation_id === conversation_id 
+  const toggleStarConversation = useCallback((conversation_id, starred) => {
+    setConversations(prevConversations =>
+      prevConversations.map(conv =>
+        conv.conversation_id === conversation_id
           ? { ...conv, starred, starred_at: starred ? new Date().toISOString() : null }
           : conv
       )
     );
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    conversations,
+    isLoadingChat,
+    error,
+    fetchConversations,
+    addConversation,
+    deleteConversation,
+    deleteAllConversation,
+    updateAlias,
+    updateTimestamp,
+    toggleStarConversation
+  }), [conversations, isLoadingChat, error, fetchConversations, addConversation, deleteConversation, deleteAllConversation, updateAlias, updateTimestamp, toggleStarConversation]);
 
   return (
-    <ConversationsContext.Provider value={{
-      conversations,
-      isLoadingChat,
-      error,
-      fetchConversations,
-      addConversation,
-      deleteConversation,
-      deleteAllConversation,
-      updateAlias,
-      updateTimestamp,
-      toggleStarConversation
-    }}>
+    <ConversationsContext.Provider value={value}>
       {children}
     </ConversationsContext.Provider>
   );

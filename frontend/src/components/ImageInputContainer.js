@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { GoImage } from "react-icons/go";
 import { BiX } from "react-icons/bi";
-import { PiPaperPlaneRightFill, PiStopFill } from "react-icons/pi";
+import { PiPaperPlaneRightFill, PiStopFill, PiWaveformBold } from "react-icons/pi";
 import { motion, AnimatePresence } from "framer-motion";
 import Toast from "./Toast";
 import "../styles/InputContainer.css";
@@ -196,7 +196,7 @@ function ImageInputContainer({
         disabled={uploadingFiles}
         aria-label={isLoading ? "전송 중단" : "메시지 전송"}
       >
-        {isLoading ? <PiStopFill /> : <PiPaperPlaneRightFill />}
+        {isLoading ? <PiStopFill /> : inputText.trim() ? <PiPaperPlaneRightFill /> : <PiWaveformBold />}
       </button>
 
       <input

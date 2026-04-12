@@ -2,10 +2,9 @@
 import React, { useEffect, useState, useRef, useContext, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RiMenuLine } from "react-icons/ri";
-import { LuSearch, LuSquarePen, LuAudioLines, LuImage } from "react-icons/lu";
+import { LuSearch, LuSquarePen, LuAudioLines, LuImage, LuArrowUp, LuArrowDown } from "react-icons/lu";
 import { IoMdStar } from "react-icons/io";
 import { FaUserCircle } from "react-icons/fa";
-import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Modal from "./Modal";
@@ -15,9 +14,20 @@ import SearchModal from "./SearchModal";
 import logo from "../resources/logo.png";
 import "../styles/Sidebar.css";
 
+const itemVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0, x: 40 }
+};
+
+const itemContentVariants = {
+  exit: { height: 0 }
+};
+
 const ConversationItem = React.memo(({
   conv,
   currentConversationId,
+  selectedConversationId,
   renamingConversationId,
   renameInputValue,
   setRenameInputValue,
@@ -32,16 +42,16 @@ const ConversationItem = React.memo(({
 }) => {
   const isRenaming = renamingConversationId === conv.conversation_id;
   const isActive = currentConversationId === conv.conversation_id;
+  const isSelected = selectedConversationId === conv.conversation_id;
 
   return (
     <motion.li
-      key={conv.conversation_id}
       layout
-      transition={{ 
-        type: "tween",
-        duration: 0.3,
-        ease: "easeInOut"
-      }}
+      variants={itemVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={{ duration: 0.2, ease: "easeInOut" }}
       onContextMenu={(e) => {
         e.preventDefault();
         handleConversationContextMenu(e, conv.conversation_id)
@@ -51,8 +61,13 @@ const ConversationItem = React.memo(({
       onTouchMove={handleTouchMove}
       onTouchCancel={(e) => handleTouchEnd(e, conv.conversation_id)}
     >
+      <motion.div
+        variants={itemContentVariants}
+        style={{ overflow: 'hidden' }}
+        transition={{ duration: 0.2, ease: "easeInOut" }}
+      >
       <div
-        className={`conversation-item ${isActive ? "active-conversation" : ""}`}
+        className={`conversation-item ${isActive ? "active-conversation" : ""} ${isSelected ? "selected" : ""}`}
         onClick={!isTouch ? () => {
           if (!isRenaming) {
             handleNavigate(conv.conversation_id);
@@ -103,6 +118,7 @@ const ConversationItem = React.memo(({
           </span>
         )}
       </div>
+      </motion.div>
     </motion.li>
   );
 });
@@ -113,6 +129,7 @@ function Sidebar({
   isResponsive,
   isTouch,
   userInfo,
+  setAlias,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -127,23 +144,25 @@ function Sidebar({
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
+  const [isActiveVisible, setIsActiveVisible] = useState(true);
+  const [activeDirection, setActiveDirection] = useState('down');
   
   const [contextMenu, setContextMenu] = useState({
     visible: false,
     x: 0,
     y: 0,
   });
+  const containerRef = useRef(null);
   const userContainerRef = useRef(null);
   const longPressTimer = useRef(null);
   const contextMenuProtected = useRef(false);
 
-  const { setAlias } = useContext(SettingsContext); 
-  const { 
-    conversations, 
-    deleteConversation, 
-    deleteAllConversation, 
-    updateAlias, 
-    toggleStarConversation 
+  const {
+    conversations,
+    deleteConversation,
+    deleteAllConversation,
+    updateAlias,
+    toggleStarConversation
   } = useContext(ConversationsContext);
 
   const sortedConversations = useMemo(() => {
@@ -398,6 +417,11 @@ function Sidebar({
     setModalAction(null);
   }, []);
 
+  const handleScrollToActive = useCallback(() => {
+    const activeEl = containerRef.current?.querySelector('.active-conversation');
+    activeEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, []);
+
   const handleNewConversation = useCallback(() => {
     navigate("/");
     if (isResponsive) toggleSidebar();
@@ -429,6 +453,7 @@ function Sidebar({
     const handleClickOutsideContextMenu = () => {
       if (contextMenu.visible && !contextMenuProtected.current) {
         setContextMenu(prev => ({ ...prev, visible: false }));
+        setSelectedConversationId(null);
       }
     };
     document.addEventListener("click", handleClickOutsideContextMenu);
@@ -458,6 +483,29 @@ function Sidebar({
       setSearchQuery("");
   }, [isSidebarOpen]);
 
+  useEffect(() => {
+    if (!currentConversationId || !containerRef.current) {
+      setIsActiveVisible(true);
+      return;
+    }
+    const activeEl = containerRef.current.querySelector('.active-conversation');
+    if (!activeEl) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsActiveVisible(entry.isIntersecting);
+        if (!entry.isIntersecting) {
+          const rect = entry.boundingClientRect;
+          const containerRect = containerRef.current.getBoundingClientRect();
+          setActiveDirection(rect.top < containerRect.top ? 'up' : 'down');
+        }
+      },
+      { root: containerRef.current, threshold: 0.5 }
+    );
+    observer.observe(activeEl);
+    return () => observer.disconnect();
+  }, [currentConversationId, sortedConversations]);
+
   const handleCustomAction = useCallback((action) => {
     if (action === "star") {
       if (selectedConversationId) {
@@ -484,6 +532,7 @@ function Sidebar({
       }
     }
     setContextMenu(prev => ({ ...prev, visible: false }));
+    setSelectedConversationId(null);
   }, [selectedConversationId, conversations, toggleStar, handleDelete]);
 
   const toggleSearch = useCallback(() => {
@@ -530,19 +579,20 @@ function Sidebar({
           </div>
         </div>
 
-        <div className="conversation-container">
+        <div className="conversation-list-wrapper">
+        <div className="conversation-container" ref={containerRef}>
           <div className="conversation-header">
             대화 기록
           </div>
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {sortedConversations.length > 0 ? (
-              sortedConversations
-                .slice()
-                .map((conv) => (
+              <AnimatePresence initial={false}>
+                {sortedConversations.map((conv) => (
                   <ConversationItem
                     key={conv.conversation_id}
                     conv={conv}
                     currentConversationId={currentConversationId}
+                    selectedConversationId={selectedConversationId}
                     renamingConversationId={renamingConversationId}
                     renameInputValue={renameInputValue}
                     setRenameInputValue={setRenameInputValue}
@@ -555,13 +605,23 @@ function Sidebar({
                     handleTouchMove={handleTouchMove}
                     isTouch={isTouch}
                   />
-                ))
+                ))}
+              </AnimatePresence>
             ) : (
               <div className="no-result">
                 {conversations.length === 0 ? "대화 내역이 없습니다." : "검색 결과가 없습니다."}
               </div>
             )}
           </div>
+        </div>
+          {currentConversationId && (
+            <button
+              className={`scroll-to-active-btn ${!isActiveVisible ? 'visible' : ''}`}
+              onClick={handleScrollToActive}
+            >
+              {activeDirection === 'up' ? <LuArrowUp /> : <LuArrowDown />}
+            </button>
+          )}
         </div>
 
         <div className="user-container" ref={userContainerRef}>
@@ -664,4 +724,4 @@ function Sidebar({
   );
 }
 
-export default Sidebar;
+export default React.memo(Sidebar);

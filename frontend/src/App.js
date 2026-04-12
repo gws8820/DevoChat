@@ -63,7 +63,7 @@ function AppContent() {
 
   const chatMessageRef = useRef(null);
   const { fetchConversations, isLoadingChat } = useContext(ConversationsContext);
-  const { isModelReady, resetSettings } = useContext(SettingsContext);
+  const { isModelReady, resetSettings, setAlias } = useContext(SettingsContext);
 
   useEffect(() => {
     const handleResize = () => {
@@ -73,6 +73,7 @@ function AppContent() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -239,6 +240,7 @@ function AppContent() {
             isResponsive={isResponsive}
             isTouch={isTouch}
             userInfo={userInfo}
+            setAlias={setAlias}
           />
         </div>
       )}
@@ -303,7 +305,7 @@ function AppContent() {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={isLoggedIn ? <Home isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
           <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} userInfo={userInfo} /> : <Navigate to="/login" />} />
-          <Route path="/image" element={isLoggedIn ? <ImageHome isTouch={isTouch} /> : <Navigate to="/login" />} />
+          <Route path="/image" element={isLoggedIn ? <ImageHome isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
           <Route path="/image/:conversation_id" element={isLoggedIn ? <ImageChat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
           <Route path="/view/:conversation_id" element={isLoggedIn ? <View /> : <Navigate to="/login" />} />
           <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />

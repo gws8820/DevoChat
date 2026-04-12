@@ -710,7 +710,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         )}
 
         {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-          <div style={{ margin: isReasoning ? "18px 14px 22.5px" : "18px 14px 32px" }}>
+          <div style={{ margin: isReasoning ? "18px 14px 37.5px" : "18px 14px 32px" }}>
              <motion.div
                 className="chat-loading-circle"
                 initial={{ scale: 1 }}

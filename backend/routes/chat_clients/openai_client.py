@@ -40,14 +40,13 @@ def get_mcp_servers(server_ids: List[str], current_user: User) -> tuple[List[Dic
             logger.warning(json.dumps({"event": "MCP_SERVER_PERMISSION_ERROR", "username": current_user.name, "server_id": server_id}, ensure_ascii=False, indent=2))
             return [], "잘못된 접근입니다."
         
+        token = server_config.get("authorization_token")
         mcp_server = {
             "type": "mcp",
             "server_label": server_config["name"],
             "server_url": server_config["url"],
             "require_approval": "never",
-            "headers": {
-                "Authorization": f"Bearer {server_config['authorization_token']}"
-            }
+            **({"headers": {"Authorization": f"Bearer {token}"}} if token else {})
         }
         
         server_list.append(mcp_server)

@@ -1,6 +1,6 @@
 import React, { useState, useContext, useRef, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
-import { RiMenuLine, RiArrowRightSLine, RiShare2Line, RiLightbulbLine, RiEdit2Line, RiImage2Line } from "react-icons/ri";
+import { RiMenuLine, RiArrowRightSLine, RiShare2Line, RiLightbulbLine, RiEdit2Line, RiImage2Line, RiCloseLine } from "react-icons/ri";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { v4 as uuidv4 } from 'uuid';
@@ -48,13 +48,49 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("error");
   const [showToast, setShowToast] = useState(false);
+  const [localTemperature, setLocalTemperature] = useState(temperature);
+  const [localMemory, setLocalMemory] = useState(memory);
+  const [localReason, setLocalReason] = useState(reason);
+  const [localVerbosity, setLocalVerbosity] = useState(verbosity);
 
   const modelModalRef = useRef(null);
   const controlPanelRef = useRef(null);
   const instructionsRef = useRef(null);
+  const tempTimerRef = useRef(null);
+  const memTimerRef = useRef(null);
+  const reasonTimerRef = useRef(null);
+  const verbosityTimerRef = useRef(null);
+
+  useEffect(() => { setLocalTemperature(temperature); }, [temperature]);
+  useEffect(() => { setLocalMemory(memory); }, [memory]);
+  useEffect(() => { setLocalReason(reason); }, [reason]);
+  useEffect(() => { setLocalVerbosity(verbosity); }, [verbosity]);
+
+  const handleTemperatureChange = (val) => {
+    setLocalTemperature(val);
+    clearTimeout(tempTimerRef.current);
+    tempTimerRef.current = setTimeout(() => setTemperature(val), 150);
+  };
+
+  const handleMemoryChange = (val) => {
+    setLocalMemory(val);
+    clearTimeout(memTimerRef.current);
+    memTimerRef.current = setTimeout(() => setMemory(val), 150);
+  };
+
+  const handleReasonChange = (val) => {
+    setLocalReason(val);
+    clearTimeout(reasonTimerRef.current);
+    reasonTimerRef.current = setTimeout(() => setReason(val), 150);
+  };
+
+  const handleVerbosityChange = (val) => {
+    setLocalVerbosity(val);
+    clearTimeout(verbosityTimerRef.current);
+    verbosityTimerRef.current = setTimeout(() => setVerbosity(val), 150);
+  };
 
   let modelsList = models.filter((m) => {
-    if (hasImage && !m.capabilities.vision) return false;
     if (m.variants?.base) return false;
     return true;
   });
@@ -230,7 +266,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                         <div className="slider-label">
                           <span>창의성</span>
                           <span className="slider-value">
-                            {parseFloat(temperature).toFixed(1)}
+                            {parseFloat(localTemperature).toFixed(1)}
                           </span>
                         </div>
                         <input
@@ -238,10 +274,8 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                           min={0.1}
                           max={2}
                           step={0.1}
-                          value={temperature}
-                          onChange={(e) =>
-                            setTemperature(parseFloat(e.target.value))
-                          }
+                          value={localTemperature}
+                          onChange={(e) => handleTemperatureChange(parseFloat(e.target.value))}
                           className="slider"
                         />
                       </div>
@@ -250,15 +284,15 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                       <div className="slider-section">
                         <div className="slider-label">
                           <span>추론 강도</span>
-                          <span className="slider-value">{reason}</span>
+                          <span className="slider-value">{localReason}</span>
                         </div>
                         <input
                           type="range"
                           min={0}
                           max={reasonLevels.length - 1}
                           step={1}
-                          value={reasonLevels.indexOf(reason)}
-                          onChange={(e) => setReason(reasonLevels[parseInt(e.target.value)])}
+                          value={reasonLevels.indexOf(localReason)}
+                          onChange={(e) => handleReasonChange(reasonLevels[parseInt(e.target.value)])}
                           className="slider"
                         />
                       </div>
@@ -267,15 +301,15 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                       <div className="slider-section">
                         <div className="slider-label">
                           <span>답변 길이</span>
-                          <span className="slider-value">{verbosity}</span>
+                          <span className="slider-value">{localVerbosity}</span>
                         </div>
                         <input
                           type="range"
                           min={0}
                           max={verbosityLevels.length - 1}
                           step={1}
-                          value={verbosityLevels.indexOf(verbosity)}
-                          onChange={(e) => setVerbosity(verbosityLevels[parseInt(e.target.value)])}
+                          value={verbosityLevels.indexOf(localVerbosity)}
+                          onChange={(e) => handleVerbosityChange(verbosityLevels[parseInt(e.target.value)])}
                           className="slider"
                         />
                       </div>
@@ -284,7 +318,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                     <div className="slider-label">
                       <span>대화 기억</span>
                       <span className="slider-value">
-                        {memory === 0 ? "기억 안함" : `${memory}턴`}
+                        {localMemory === 0 ? "기억 안함" : `${localMemory}턴`}
                       </span>
                     </div>
                     <input
@@ -292,8 +326,8 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                       min={0}
                       max={12}
                       step={1}
-                      value={memory}
-                      onChange={(e) => setMemory(parseInt(e.target.value))}
+                      value={localMemory}
+                      onChange={(e) => handleMemoryChange(parseInt(e.target.value))}
                       className="slider"
                     />
                   </div>
@@ -365,29 +399,43 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
+            <button className="hmodal-close" onClick={() => setIsModelModalOpen(false)}>
+              <RiCloseLine />
+            </button>
             <div className="hmodal" ref={modelModalRef}>
               <div className="model-list">
-                {modelsList.map((m, index) => (
-                  <div
-                    className="model-item"
-                    key={index}
-                    onClick={() => {
-                      updateModel(m.model_name);
-                      setIsModelModalOpen(false);
-                    }}
-                  >
-                    <div className="model-alias">
-                      {m.model_alias}
-                      <div className="model-badge">
-                        {m.capabilities?.vision && (
-                          <RiImage2Line className="image-badge" />
-                        )}
+                {modelsList.map((m, index) => {
+                  const visionDisabled = hasImage && !m.capabilities?.vision;
+                  return (
+                    <Tooltip
+                      key={index}
+                      content="이미지를 포함한 대화에서는 사용할 수 없습니다."
+                      position="bottom"
+                      isTouch={isTouch}
+                      enabled={visionDisabled}
+                    >
+                      <div
+                        className={`model-item${visionDisabled ? " disabled" : ""}`}
+                        onClick={() => {
+                          if (visionDisabled) return;
+                          updateModel(m.model_name);
+                          setIsModelModalOpen(false);
+                        }}
+                      >
+                        <div className="model-alias">
+                          {m.model_alias}
+                          <div className="model-badge">
+                            {m.capabilities?.vision && (
+                              <RiImage2Line className="image-badge" />
+                            )}
+                          </div>
+                        </div>
+                        <div className="model-description">{m.description}</div>
+                        <div className="model-pricing">In {m.billing?.in_billing}$ / Out {m.billing?.out_billing}$</div>
                       </div>
-                    </div>
-                    <div className="model-description">{m.description}</div>
-                    <div className="model-pricing">In {m.billing?.in_billing}$ / Out {m.billing?.out_billing}$</div>
-                  </div>
-                ))}
+                    </Tooltip>
+                  );
+                })}
               </div>
             </div>
           </motion.div>

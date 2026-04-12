@@ -69,9 +69,11 @@
     touch-action: manipulation;
 }
 
-.model-box:hover {
-    background-color: #f9f9f9;
-    color: #000;
+@media (hover: hover) {
+    .model-box:hover {
+        background-color: #f9f9f9;
+        color: #000;
+    }
 }
 
 .expand-icon {
@@ -107,6 +109,30 @@
     scrollbar-width: none;
 }
 
+.hmodal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    font-size: 22px;
+    color: #666;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    z-index: 1;
+}
+
+.hmodal-close:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: #333;
+}
+
 .model-list {
     display: flex;
     flex-direction: column;
@@ -122,6 +148,12 @@
     border: none;
     cursor: pointer;
     transition: background-color 0.2s ease;
+}
+
+.model-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .model-alias {
@@ -222,8 +254,10 @@
     cursor: pointer;
 }
 
-.slider:hover {
-    background: rgba(0, 0, 0, 0.12);
+@media (hover: hover) {
+    .slider:hover {
+        background: rgba(0, 0, 0, 0.12);
+    }
 }
 
 .slider::-webkit-slider-thumb {

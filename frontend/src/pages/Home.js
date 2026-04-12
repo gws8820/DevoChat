@@ -185,7 +185,14 @@ function Home({ isTouch, userInfo }) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          무엇을 도와드릴까요?
+          {(() => {
+            const h = new Date().getHours();
+            const name = userInfo.name.split(' ')[0];
+            if (h >= 5 && h < 12) return `좋은 아침이에요, ${name}님! ☀️`;
+            if (h >= 12 && h < 17) return `안녕하세요, ${name}님! 👋`;
+            if (h >= 17 && h < 21) return `좋은 저녁이에요, ${name}님! ✨`;
+            return `안녕히 주무세요, ${name}님! 🌙`;
+          })()}
         </motion.div>
       </div>
 

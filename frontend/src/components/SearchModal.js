@@ -24,8 +24,8 @@ function SearchModal({
     if (!searchQuery.trim()) return sortedConversations;
     
     const query = searchQuery.toLowerCase().trim();
-    return sortedConversations.filter(conv => 
-      conv.alias.toLowerCase().includes(query)
+    return sortedConversations.filter(conv =>
+      (conv.alias ?? '').toLowerCase().includes(query)
     );
   }, [sortedConversations, searchQuery]);
 
