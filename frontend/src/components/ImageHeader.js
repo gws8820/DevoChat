@@ -159,8 +159,8 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
                   return (
                     <Tooltip
                       key={index}
-                      content="이미지를 포함한 대화에서는 사용할 수 없습니다."
-                      position="bottom"
+                      content="이미지 미지원 모델"
+                      position="overlay"
                       isTouch={isTouch}
                       enabled={visionDisabled}
                     >
@@ -203,4 +203,4 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
   );
 }
 
-export default ImageHeader;
+export default React.memo(ImageHeader);

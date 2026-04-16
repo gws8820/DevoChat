@@ -227,10 +227,8 @@ function ImageChat({ isTouch, chatMessageRef }) {
 
       setMessages((prev) => [...prev, userMessage]);
       setInputText("");
-      setUploadedFiles((prev) => {
-        prev.forEach((file) => { if (file.preview) URL.revokeObjectURL(file.preview) });
-        return [];
-      });
+      uploadedFiles.forEach((file) => { if (file.preview) URL.revokeObjectURL(file.preview); });
+      setUploadedFiles([]);
       setIsLoading(true);
       setTimeout(() => {
         setScrollTrigger((v) => v + 1);
@@ -429,10 +427,12 @@ function ImageChat({ isTouch, chatMessageRef }) {
           )}
         </AnimatePresence>
 
-        {isLoading && (
-          <div className="image-generating">
-            이미지 생성 중...
-          </div>
+        {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
+          <>
+            <div className="image-generating" style={{ marginBottom: "15px" }}>
+              이미지 생성 중...
+            </div>
+          </>
         )}
         <div ref={bottomRef} />
       </div>
@@ -481,4 +481,4 @@ function ImageChat({ isTouch, chatMessageRef }) {
   );
 }
 
-export default ImageChat;
+export default React.memo(ImageChat);

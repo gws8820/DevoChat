@@ -204,4 +204,4 @@ function ImageHome({ isTouch, userInfo }) {
   );
 }
 
-export default ImageHome;
+export default React.memo(ImageHome);

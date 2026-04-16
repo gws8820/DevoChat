@@ -35,8 +35,8 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   } = useContext(SettingsContext);
 
   const selectedModel = models.find(m => m.model_name === model);
-  const reasonLevels = Array.isArray(selectedModel?.controls?.reason) ? selectedModel.controls.reason : [];
-  const verbosityLevels = Array.isArray(selectedModel?.controls?.verbosity) ? selectedModel.controls.verbosity : [];
+  const reasonLevels = selectedModel?.controls?.reason?.levels ?? [];
+  const verbosityLevels = selectedModel?.controls?.verbosity?.levels ?? [];
 
   const location = useLocation();
   const match = location.pathname.match(/^\/(?:chat|image)\/([^/]+)/);
@@ -231,14 +231,13 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
         )}
 
         <AnimatePresence initial={false}>
-          {(canControlTemp || canControlReason || canControlVerbosity) && (
-            <motion.div 
-              className="header-icon-wrapper"
-              key="controls"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-            >
+          <motion.div
+            className="header-icon-wrapper"
+            key="controls"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+          >
               <Tooltip content="파라미터 설정" position="left" isTouch={isTouch}>
                 <div className="header-icon slider-icon">
                   <RiLightbulbLine
@@ -334,8 +333,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
-          )}
+          </motion.div>
           {canControlSystemMessage && (
             <motion.div 
               className="header-icon-wrapper"
@@ -409,8 +407,8 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                   return (
                     <Tooltip
                       key={index}
-                      content="이미지를 포함한 대화에서는 사용할 수 없습니다."
-                      position="bottom"
+                      content="이미지 미지원 모델"
+                      position="overlay"
                       isTouch={isTouch}
                       enabled={visionDisabled}
                     >
@@ -453,4 +451,4 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   );
 }
 
-export default Header;
+export default React.memo(Header);

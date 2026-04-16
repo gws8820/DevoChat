@@ -1,5 +1,5 @@
 // src/App.js
-import { useEffect, useState, useCallback, useRef, useContext, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useRef, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { BarLoader } from "react-spinners";
 import Sidebar from "./components/Sidebar";
@@ -32,6 +32,42 @@ function App() {
   );
 }
 
+const AppRoutes = React.memo(function AppRoutes({ isLoggedIn, isTouch, userInfo, chatMessageRef }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const shouldShowLogo = location.pathname.startsWith("/view");
+
+  return (
+    <>
+      {shouldShowLogo && (
+        <div className="header" style={{ padding: "0 20px" }}>
+          <img
+            src={logo}
+            alt="DEVOCHAT"
+            width="143.5px"
+            onClick={() => navigate("/")}
+            style={{ cursor: "pointer" }}
+          />
+        </div>
+      )}
+
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={isLoggedIn ? <Home isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
+        <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} userInfo={userInfo} /> : <Navigate to="/login" />} />
+        <Route path="/image" element={isLoggedIn ? <ImageHome isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
+        <Route path="/image/:conversation_id" element={isLoggedIn ? <ImageChat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
+        <Route path="/view/:conversation_id" element={isLoggedIn ? <View /> : <Navigate to="/login" />} />
+        <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
+        <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />
+        <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <Login />} />
+        <Route path="/register" element={isLoggedIn ? <Navigate to="/" /> : <Register />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
+  );
+});
+
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
@@ -39,29 +75,22 @@ function AppContent() {
   const [isTransitionEnabled, setIsTransitionEnabled] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userSidebarOpen, setUserSidebarOpen] = useState(null);
+
   const [isTouch, setIsTouch] = useState(false);
   const [toastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
   const location = useLocation();
-  const navigate = useNavigate();
 
-  const shouldShowLayout = useMemo(() => {
-    return (
-      isLoggedIn && (
-        location.pathname === '/' ||
-        location.pathname.startsWith('/chat/') ||
-        location.pathname.startsWith('/image') ||
-        location.pathname.startsWith('/realtime')
-      )
-    );
-  }, [isLoggedIn, location.pathname]);
-
-  const shouldShowLogo = useMemo(() => {
-    return location.pathname.startsWith("/view");
-  }, [location.pathname]);
+  const shouldShowLayout = isLoggedIn && (
+    location.pathname === '/' ||
+    location.pathname.startsWith('/chat/') ||
+    location.pathname.startsWith('/image') ||
+    location.pathname.startsWith('/realtime')
+  );
 
   const chatMessageRef = useRef(null);
+  const sidebarRef = useRef(null);
   const { fetchConversations, isLoadingChat } = useContext(ConversationsContext);
   const { isModelReady, resetSettings, setAlias } = useContext(SettingsContext);
 
@@ -133,6 +162,7 @@ function AppContent() {
   }, [isModelReady, location.pathname]);
 
   const toggleSidebar = useCallback(() => {
+    sidebarRef.current?.resetSearch();
     setIsSidebarOpen(prev => {
       const newState = !prev;
       if (!isResponsive) setUserSidebarOpen(newState);
@@ -235,8 +265,8 @@ function AppContent() {
           }}
         >
           <Sidebar
+            ref={sidebarRef}
             toggleSidebar={toggleSidebar}
-            isSidebarOpen={isSidebarOpen}
             isResponsive={isResponsive}
             isTouch={isTouch}
             userInfo={userInfo}
@@ -263,7 +293,7 @@ function AppContent() {
 
       {/* Main Container */}
       <div
-        style={{ 
+        style={{
           width: "100%",
           height: "100dvh",
           marginLeft: (shouldShowLayout && isSidebarOpen && !isResponsive) ? "260px" : "0",
@@ -272,18 +302,6 @@ function AppContent() {
           backfaceVisibility: "hidden",
         }}
       >
-        {shouldShowLogo && (
-          <div className="header" style={{ padding: "0 20px" }}>
-            <img
-              src={logo}
-              alt="DEVOCHAT"
-              width="143.5px"
-              onClick={() => navigate("/")}
-              style={{ cursor: "pointer" }}
-            />
-          </div>
-        )}
-
         {shouldShowLayout && (
           location.pathname.startsWith('/image') ? (
             <ImageHeader
@@ -301,19 +319,12 @@ function AppContent() {
             />
           )
         )}
-
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={isLoggedIn ? <Home isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
-          <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} userInfo={userInfo} /> : <Navigate to="/login" />} />
-          <Route path="/image" element={isLoggedIn ? <ImageHome isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
-          <Route path="/image/:conversation_id" element={isLoggedIn ? <ImageChat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
-          <Route path="/view/:conversation_id" element={isLoggedIn ? <View /> : <Navigate to="/login" />} />
-          <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
-          <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />
-          <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <Login />} />
-          <Route path="/register" element={isLoggedIn ? <Navigate to="/" /> : <Register />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AppRoutes
+          isLoggedIn={isLoggedIn}
+          isTouch={isTouch}
+          userInfo={userInfo}
+          chatMessageRef={chatMessageRef}
+        />
       </div>
 
       <Toast

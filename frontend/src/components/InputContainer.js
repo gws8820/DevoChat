@@ -33,6 +33,8 @@ function InputContainer({
   const textAreaRef = useRef(null);
   const fileInputRef = useRef(null);
   const recognitionRef = useRef(null);
+  const isRecordingRef = useRef(false);
+  const inputTextRef = useRef(inputText);
 
 
   const adjustTextareaHeight = useCallback(() => {
@@ -46,8 +48,20 @@ function InputContainer({
   }, []);
 
   useEffect(() => {
+    inputTextRef.current = inputText;
     adjustTextareaHeight();
   }, [inputText, adjustTextareaHeight]);
+
+  useEffect(() => {
+    return () => {
+      isRecordingRef.current = false;
+      if (recognitionRef.current) {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+    };
+  }, []);
   
 const {
     isReasoning,
@@ -100,57 +114,74 @@ const notifyError = useCallback((message) => {
   }, [removeFile]);
 
   const handleRecordingStop = useCallback(() => {
-    if (recognitionRef.current && isRecording) {
+    isRecordingRef.current = false;
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
       recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+  }, []);
+
+  const handleRecordingStart = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      notifyError("이 브라우저는 음성 인식을 지원하지 않습니다.");
+      return;
+    }
+
+    let accumulatedText = inputTextRef.current;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ko-KR';
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
+      let finalText = '';
+      let interimText = '';
+      for (let i = 0; i < event.results.length; i++) {
+        const result = event.results[i];
+        const transcript = result[0].transcript;
+        if (result.isFinal) finalText += transcript; else interimText += transcript;
+      }
+      setInputText(accumulatedText + finalText + interimText);
+      if (finalText) accumulatedText += finalText;
+    };
+
+    recognition.onerror = (event) => {
+      isRecordingRef.current = false;
+      recognitionRef.current = null;
+      setIsRecording(false);
+      if (event.error === 'aborted' && event.message && event.message.includes('Dictation')) {
+        notifyError("받아쓰기가 비활성화되어 있습니다. 설정 → 일반 → 키보드 → 받아쓰기에서 활성화해 주세요.");
+      } else if (event.error !== 'aborted') {
+        notifyError(`음성 인식 오류가 발생했습니다. ${event.error}`);
+      }
+    };
+
+    recognition.onend = () => {
+      if (!isRecordingRef.current) return;
+      try {
+        recognition.start();
+      } catch (e) {
+        isRecordingRef.current = false;
+        recognitionRef.current = null;
+        setIsRecording(false);
+      }
+    };
+
+    isRecordingRef.current = true;
+    recognitionRef.current = recognition;
+    setIsRecording(true);
+    if (navigator.vibrate) navigator.vibrate(100);
+
+    try {
+      recognition.start();
+    } catch (e) {
+      isRecordingRef.current = false;
       recognitionRef.current = null;
       setIsRecording(false);
     }
-  }, [isRecording]);
-
-  const handleRecordingStart = useCallback(async () => {
-    try {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        setToastMessage("이 브라우저는 음성 인식을 지원하지 않습니다.");
-        setShowToast(true);
-        return;
-      }
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'ko-KR';
-      recognition.continuous = true;
-      recognition.interimResults = true;
-
-      recognition.onresult = (event) => {
-        let finalText = '';
-        let interimText = '';
-        for (let i = 0; i < event.results.length; i++) {
-          const result = event.results[i];
-          const transcript = result[0].transcript;
-          if (result.isFinal) finalText += transcript; else interimText += transcript;
-        }
-        const newText = inputText + finalText + interimText;
-        setInputText(newText);
-      };
-
-      recognition.onerror = (event) => {
-        setToastMessage(`음성 인식 오류가 발생했습니다. ${event.error}`);
-        setShowToast(true);
-        handleRecordingStop();
-      };
-
-      recognition.onend = () => {
-        if (isRecording) recognition.start();
-      };
-
-      recognition.start();
-      recognitionRef.current = recognition;
-      setIsRecording(true);
-      if (navigator.vibrate) navigator.vibrate(100);
-    } catch (error) {
-      setToastMessage("음성 인식을 시작하는 데 실패했습니다.");
-      setShowToast(true);
-    }
-  }, [isRecording, handleRecordingStop, inputText, setInputText]);
+  }, [notifyError, setInputText]);
 
 const handleKeyDown = useCallback((event) => {
     if (

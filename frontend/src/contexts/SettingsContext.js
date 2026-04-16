@@ -4,8 +4,6 @@ export const SettingsContext = createContext();
 
 const INIT_VALUES = {
   temperature: 1,
-  reason: "medium",
-  verbosity: "medium",
   memory: 4,
   instructions: "",
   isReasoning: false,
@@ -23,8 +21,8 @@ export const SettingsProvider = ({ children }) => {
   const [isModelReady, setIsModelReady] = useState(false);
   const [alias, setAlias] = useState("");
   const [temperature, setTemperature] = useState(INIT_VALUES.temperature);
-  const [reason, setReason] = useState(INIT_VALUES.reason);
-  const [verbosity, setVerbosity] = useState(INIT_VALUES.verbosity);
+  const [reason, setReason] = useState("");
+  const [verbosity, setVerbosity] = useState("");
   const [defaultModel, setDefaultModel] = useState("");
   const [defaultImageModel, setDefaultImageModel] = useState("");
   const [memory, setMemory] = useState(INIT_VALUES.memory);
@@ -50,8 +48,12 @@ export const SettingsProvider = ({ children }) => {
     if (!selectedModel) return;
 
     const temperatureControl = selectedModel?.controls?.temperature;
-    const reasonLevels = Array.isArray(selectedModel?.controls?.reason) ? selectedModel.controls.reason : [];
-    const verbosityLevels = Array.isArray(selectedModel?.controls?.verbosity) ? selectedModel.controls.verbosity : [];
+    const reasonControl = selectedModel?.controls?.reason;
+    const reasonLevels = reasonControl?.levels ?? [];
+    const reasonDefault = reasonControl?.default ?? "";
+    const verbosityControl = selectedModel?.controls?.verbosity;
+    const verbosityLevels = verbosityControl?.levels ?? [];
+    const verbosityDefault = verbosityControl?.default ?? "";
     const canUseInstructions = Boolean(selectedModel?.controls?.instructions);
     const reasoningCapability = selectedModel?.capabilities?.reasoning;
     const searchCapability = selectedModel?.capabilities?.web_search;
@@ -86,10 +88,10 @@ export const SettingsProvider = ({ children }) => {
     setCanControlVerbosity(verbosityLevels.length > 0);
 
     if (reasonLevels.length > 0 && !reasonLevels.includes(reason)) {
-      setReason(INIT_VALUES.reason);
+      setReason(reasonDefault);
     }
     if (verbosityLevels.length > 0 && !verbosityLevels.includes(verbosity)) {
-      setVerbosity(INIT_VALUES.verbosity);
+      setVerbosity(verbosityDefault);
     }
     setCanControlSystemMessage(canUseInstructions);
     if (!canUseInstructions) setIsDAN(false);
@@ -119,7 +121,7 @@ export const SettingsProvider = ({ children }) => {
     const selectedModel = models.find(m => m.model_name === model);
     const reasoning = selectedModel?.capabilities?.reasoning;
     const temperature = selectedModel?.controls?.temperature;
-    const reason = selectedModel?.controls?.reason;
+    const reasonLevels = selectedModel?.controls?.reason?.levels ?? [];
 
     const nextIsReasoning = !isReasoning;
 
@@ -142,7 +144,7 @@ export const SettingsProvider = ({ children }) => {
     setIsReasoning(nextIsReasoning);
 
     setCanControlTemp(temperature === true || (temperature === "conditional" && !nextIsReasoning));
-    setCanControlReason(Array.isArray(reason) && reason.length > 0 && nextIsReasoning === true);
+    setCanControlReason(reasonLevels.length > 0 && nextIsReasoning === true);
   };
 
   const toggleSearch = () => {
@@ -199,6 +201,9 @@ export const SettingsProvider = ({ children }) => {
   const resetSettings = () => {
     if (defaultModel) {
       updateModel(defaultModel, INIT_VALUES);
+      const selectedDefaultModel = models.find(m => m.model_name === defaultModel);
+      setReason(selectedDefaultModel?.controls?.reason?.default ?? "");
+      setVerbosity(selectedDefaultModel?.controls?.verbosity?.default ?? "");
     }
 
     if (defaultImageModel) {
@@ -206,8 +211,6 @@ export const SettingsProvider = ({ children }) => {
     }
 
     setTemperature(INIT_VALUES.temperature);
-    setReason(INIT_VALUES.reason);
-    setVerbosity(INIT_VALUES.verbosity);
     setMemory(INIT_VALUES.memory);
     setInstructions(INIT_VALUES.instructions);
     setIsDAN(false);

@@ -201,10 +201,6 @@ const Realtime = () => {
             dataChannel.current.send(JSON.stringify(updateEvent));
           }
 
-          if (realtimeEvent.type === 'session.updated') {
-            console.log("Session updated:", realtimeEvent);
-          }
-
           if (realtimeEvent.type === 'response.created') {
             setTranscript("");
           }

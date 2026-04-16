@@ -305,7 +305,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             }
             
             if request.control.reason and request.reason:
-                parameters["thinking"]      = {"type": "adaptive"}
+                parameters["thinking"]      = {"type": "adaptive", "display": "summarized"}
                 parameters["output_config"] = {"effort": request.reason}
 
             if request.web_search:

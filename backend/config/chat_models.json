@@ -21,7 +21,10 @@
       },
       "controls": {
         "temperature": false,
-        "reason": ["low", "medium", "high", "xhigh"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },
@@ -45,8 +48,11 @@
         "mcp": true
       },
       "controls": {
-        "temperature": true,
-        "reason": ["low", "medium", "high", "xhigh"],
+        "temperature": false,
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },
@@ -71,8 +77,14 @@
       },
       "controls": {
         "temperature": "conditional",
-        "reason": ["low", "medium", "high", "xhigh"],
-        "verbosity": ["low", "medium", "high"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
+        "verbosity": {
+          "levels": ["low", "medium", "high"],
+          "default": "medium"
+        },
         "instructions": true
       },
       "admin": false
@@ -96,15 +108,21 @@
       },
       "controls": {
         "temperature": false,
-        "reason": ["low", "medium", "high", "xhigh"],
-        "verbosity": ["low", "medium", "high"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
+        "verbosity": {
+          "levels": ["low", "medium", "high"],
+          "default": "medium"
+        },
         "instructions": true
       },
       "admin": false
     },
     {
-      "model_name": "claude-opus-4-6",
-      "model_alias": "Claude 4.6 Opus",
+      "model_name": "claude-opus-4-7",
+      "model_alias": "Claude 4.7 Opus",
       "description": "고성능 Claude 모델",
       "endpoint": "/chat/claude",
       "billing": {
@@ -120,8 +138,11 @@
         "mcp": true
       },
       "controls": {
-        "temperature": "conditional",
-        "reason": ["low", "medium", "high", "max"],
+        "temperature": false,
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh", "max"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },
@@ -146,7 +167,10 @@
       },
       "controls": {
         "temperature": "conditional",
-        "reason": ["low", "medium", "high"],
+        "reason": {
+          "levels": ["low", "medium", "high", "max"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },
@@ -196,7 +220,10 @@
       },
       "controls": {
         "temperature": true,
-        "reason": ["low", "medium", "high", "xhigh"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },
@@ -221,7 +248,10 @@
       },
       "controls": {
         "temperature": true,
-        "reason": ["low", "medium", "high", "xhigh"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },
@@ -302,7 +332,10 @@
       },
       "controls": {
         "temperature": true,
-        "reason": ["low", "medium", "high", "xhigh"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },
@@ -327,7 +360,10 @@
       },
       "controls": {
         "temperature": true,
-        "reason": ["low", "medium", "high", "xhigh"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },
@@ -352,7 +388,10 @@
       },
       "controls": {
         "temperature": true,
-        "reason": ["low", "medium", "high", "xhigh"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },
@@ -377,7 +416,10 @@
       },
       "controls": {
         "temperature": true,
-        "reason": ["low", "medium", "high", "xhigh"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },
@@ -427,7 +469,10 @@
       },
       "controls": {
         "temperature": true,
-        "reason": ["low", "medium", "high", "xhigh"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },

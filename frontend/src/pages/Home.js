@@ -24,19 +24,13 @@ function Home({ isTouch, userInfo }) {
 
   const abortControllerRef = useRef(null);
 
-  const { 
-    uploadedFiles, 
-    processFiles, 
+  const {
+    uploadedFiles,
+    processFiles,
     removeFile
   } = useFileUpload([], userInfo);
 
-  const {
-    models,
-    model,
-    canVision,
-    setHasImage,
-  } = useContext(SettingsContext);
-
+  const { models, model, canVision, setHasImage } = useContext(SettingsContext);
   const { addConversation } = useContext(ConversationsContext);
 
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
@@ -260,4 +254,4 @@ function Home({ isTouch, userInfo }) {
   );
 }
 
-export default Home;
+export default React.memo(Home);

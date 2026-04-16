@@ -76,8 +76,10 @@
     border-radius: 15px;
 }
 
-.new-task:hover {
-    background-color: #f1f1f1;
+@media (hover: hover) {
+    .new-task:hover {
+        background-color: #f1f1f1;
+    }
 }
 
 .conversation-list-wrapper {
@@ -116,8 +118,10 @@
     transform: translateX(-50%) translateY(0);
 }
 
-.scroll-to-active-btn:hover {
-    background-color: #f1f1f1;
+@media (hover: hover) {
+    .scroll-to-active-btn:hover {
+        background-color: #f1f1f1;
+    }
 }
 
 .conversation-container {

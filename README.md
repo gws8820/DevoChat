@@ -2,11 +2,6 @@
 
 *English | [한국어](README.ko.md)*
 
-> ⚠️ **Breaking Change**:
-> - `capabilities.image` key has been renamed to `capabilities.vision`
-> - `capabilities.inference` key has been renamed to `capabilities.reasoning`
-> - Please update your configuration files.
-
 ### Unified AI Chat Platform
 DevoChat is a web application that allows you to use various multimodal AI models and MCP (Model Context Protocol) servers through a single interface. Check out the [live demo](https://devochat.com).
 
@@ -280,7 +275,10 @@ Define the AI models available in the application and their properties through t
       },
       "controls": {
         "temperature": "conditional",
-        "reason": ["low", "medium", "high", "xhigh"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
         "verbosity": false,
         "instructions": true
       },
@@ -331,8 +329,14 @@ Define the AI models available in the application and their properties through t
       },
       "controls": {
         "temperature": false,
-        "reason": ["low", "medium", "high", "xhigh"],
-        "verbosity": ["low", "medium", "high"],
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
+        "verbosity": {
+          "levels": ["low", "medium", "high"],
+          "default": "medium"
+        },
         "instructions": true
       },
       "admin": false
@@ -363,8 +367,12 @@ Define the AI models available in the application and their properties through t
 | `capabilities.mcp` | Whether MCP server integration is supported. Possible values: `true`, `false` |
 | `controls` | Defines user control options supported by the model |
 | `controls.temperature` | Whether temperature adjustment is possible. Possible values: `true`, `false`, `"conditional"` |
-| `controls.reason` | Defines selectable reasoning intensity levels. Possible values: `false` or an array of strings (e.g. `["low", "medium", "high"]`, `["low", "medium", "high", "xhigh"]`, `["low", "medium", "high", "max"]`) |
-| `controls.verbosity` | Defines selectable response length levels. Possible values: `false` or an array of strings (e.g. `["low", "medium", "high"]`) |
+| `controls.reason` | Defines selectable reasoning intensity levels. Possible values: `false` or an object |
+| `controls.reason.levels` | String array defining the selectable options shown in the UI |
+| `controls.reason.default` | Default value applied when the model is selected |
+| `controls.verbosity` | Defines selectable response length levels. Possible values: `false` or an object |
+| `controls.verbosity.levels` | String array defining the selectable options shown in the UI |
+| `controls.verbosity.default` | Default value applied when the model is selected |
 | `controls.instructions` | Whether custom instructions setting is possible. Possible values: `true`, `false` |
 | `admin` | If `true`, only admin users can access/select this model |
 
@@ -385,8 +393,6 @@ When a user toggles this feature, it switches to another individual model. Dynam
 #### conditional
 Available in standard mode, but not available in reasoning mode.
 
-#### string array
-Used by `controls.reason` and `controls.verbosity` to define the selectable levels shown in the UI.
 
 ### image_models.json Configuration
 

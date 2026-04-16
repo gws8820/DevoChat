@@ -154,10 +154,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       
       setMessages((prev) => [...prev, userMessage]);
       setInputText("");
-      setUploadedFiles((prev) => {
-        prev.forEach((file) => { if (file.preview) URL.revokeObjectURL(file.preview) });
-        return [];
-      });
+      uploadedFiles.forEach((file) => { if (file.preview) URL.revokeObjectURL(file.preview); });
+      setUploadedFiles([]);
       setIsLoading(true);
       setTimeout(() => {
         setScrollTrigger((v) => v + 1);
@@ -710,17 +708,19 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         )}
 
         {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-          <div style={{ margin: isReasoning ? "18px 14px 37.5px" : "18px 14px 32px" }}>
-             <motion.div
-                className="chat-loading-circle"
-                initial={{ scale: 1 }}
-                animate={{
-                  scale: [1, 1.1, 1],
-                  transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
-                }}
-             />
+          <div style={{ margin: "18px 14px 24px" }}>
+            <motion.div
+              className="chat-loading-circle"
+              initial={{ scale: 1 }}
+              animate={{
+                scale: [1, 1.1, 1],
+                transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
+              }}
+            />
           </div>
         )}
+
+
 
         <AnimatePresence>
           {confirmModal && (
@@ -791,4 +791,4 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   );
 }
 
-export default Chat;
+export default React.memo(Chat);
