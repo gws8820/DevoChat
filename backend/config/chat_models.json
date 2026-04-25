@@ -13,20 +13,20 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": true,
         "vision": true,
+        "reasoning": true,
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "high"
         },
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
     },
@@ -41,22 +41,53 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "toggle",
         "vision": true,
+        "reasoning": "toggle",
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "high"
         },
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
+    },
+    {
+      "model_name": "gpt-5.5",
+      "model_alias": "GPT 5.5",
+      "description": "고성능 GPT 모델",
+      "endpoint": "/chat/gpt",
+      "billing": {
+        "in_billing": "5",
+        "out_billing": "30"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": true,
+        "reasoning": "toggle",
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "temperature": false,
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "medium"
+        },
+        "verbosity": {
+          "levels": ["low", "medium", "high"],
+          "default": "medium"
+        }
+      },
+      "admin": true
     },
     {
       "model_name": "gpt-5.4",
@@ -69,14 +100,15 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "toggle",
         "vision": true,
+        "reasoning": "toggle",
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
-        "temperature": "conditional",
+        "instructions": true,
+        "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "high"
@@ -84,8 +116,7 @@
         "verbosity": {
           "levels": ["low", "medium", "high"],
           "default": "medium"
-        },
-        "instructions": true
+        }
       },
       "admin": false
     },
@@ -100,13 +131,14 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "toggle",
         "vision": true,
+        "reasoning": "toggle",
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
@@ -115,8 +147,7 @@
         "verbosity": {
           "levels": ["low", "medium", "high"],
           "default": "medium"
-        },
-        "instructions": true
+        }
       },
       "admin": false
     },
@@ -131,20 +162,20 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "toggle",
         "vision": true,
+        "reasoning": "toggle",
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh", "max"],
           "default": "high"
         },
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": true
     },
@@ -159,20 +190,20 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "toggle",
         "vision": true,
+        "reasoning": "toggle",
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
-        "temperature": "conditional",
+        "instructions": true,
+        "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "max"],
           "default": "high"
         },
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
     },
@@ -187,17 +218,73 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": false,
         "vision": true,
+        "reasoning": false,
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
-        "temperature": "conditional",
+        "instructions": true,
+        "temperature": true,
         "reason": false,
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
+      },
+      "admin": false
+    },
+    {
+      "model_name": "deepseek/deepseek-v4-pro",
+      "model_alias": "Deepseek V4 Pro",
+      "description": "고성능 Deepseek 모델",
+      "endpoint": "/chat/openrouter",
+      "billing": {
+        "in_billing": "1.74",
+        "out_billing": "3.48"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": false,
+        "reasoning": "toggle",
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "temperature": true,
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
+        "verbosity": false
+      },
+      "admin": false
+    },
+    {
+      "model_name": "deepseek/deepseek-v4-flash",
+      "model_alias": "Deepseek V4 Flash",
+      "description": "기본 Deepseek 모델",
+      "endpoint": "/chat/openrouter",
+      "billing": {
+        "in_billing": "0.14",
+        "out_billing": "0.28"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": false,
+        "reasoning": "toggle",
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "temperature": true,
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "high"
+        },
+        "verbosity": false
       },
       "admin": false
     },
@@ -212,20 +299,20 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "toggle",
         "vision": false,
+        "reasoning": "toggle",
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": true,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "high"
         },
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
     },
@@ -240,20 +327,20 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "toggle",
         "vision": true,
+        "reasoning": "toggle",
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": true,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "high"
         },
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
     },
@@ -271,17 +358,17 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "switch",
         "vision": true,
+        "reasoning": "switch",
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": true,
         "reason": false,
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
     },
@@ -299,17 +386,17 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "switch",
         "vision": true,
+        "reasoning": "switch",
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": true,
         "reason": false,
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
     },
@@ -324,48 +411,48 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": true,
         "vision": false,
+        "reasoning": true,
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": true,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "high"
         },
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
     },
     {
-      "model_name": "moonshotai/kimi-k2.5",
-      "model_alias": "Kimi K2.5",
+      "model_name": "moonshotai/kimi-k2.6",
+      "model_alias": "Kimi K2.6",
       "description": "기본 Kimi 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "0.45",
-        "out_billing": "2.2"
+        "in_billing": "0.8",
+        "out_billing": "3.5"
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "toggle",
         "vision": true,
+        "reasoning": "toggle",
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": true,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "high"
         },
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
     },
@@ -380,48 +467,20 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "toggle",
         "vision": true,
-        "web_search": "toggle",
-        "deep_research": false,
-        "mcp": true
-      },
-      "controls": {
-        "temperature": true,
-        "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
-          "default": "high"
-        },
-        "verbosity": false,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "deepseek/deepseek-v3.2",
-      "model_alias": "Deepseek 3.2",
-      "description": "기본 Deepseek 모델",
-      "endpoint": "/chat/openrouter",
-      "billing": {
-        "in_billing": "0.26",
-        "out_billing": "0.38"
-      },
-      "capabilities": {
-        "stream": true,
         "reasoning": "toggle",
-        "vision": false,
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": true,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "high"
         },
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
     },
@@ -436,17 +495,17 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": false,
         "vision": true,
+        "reasoning": false,
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": true,
         "reason": false,
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
     },
@@ -461,20 +520,20 @@
       },
       "capabilities": {
         "stream": true,
-        "reasoning": "toggle",
         "vision": false,
+        "reasoning": "toggle",
         "web_search": "toggle",
-        "deep_research": false,
+        "research": false,
         "mcp": true
       },
       "controls": {
+        "instructions": true,
         "temperature": true,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "high"
         },
-        "verbosity": false,
-        "instructions": true
+        "verbosity": false
       },
       "admin": false
     }

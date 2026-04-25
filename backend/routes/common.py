@@ -23,7 +23,7 @@ class ChatRequest(BaseModel):
     model: str
     reasoning: bool = False
     web_search: bool = False
-    deep_research: bool = False
+    research: bool = False
     dan: bool = False
     mcp: List[str] = []
     stream: bool = True
@@ -52,7 +52,7 @@ load_dotenv()
 router = APIRouter()
 
 mongo_client = MongoClient(os.getenv('MONGODB_URI'))
-db = mongo_client.chat_db
+db = mongo_client.devochat
 user_collection = db.users
 conversation_collection = db.conversations
 
@@ -264,7 +264,7 @@ def save_chat_conversation(user: User, user_message, response_text, token_usage,
                 "model": request.model,
                 "reasoning": request.reasoning,
                 "web_search": request.web_search,
-                "deep_research": request.deep_research,
+                "research": request.research,
                 "dan": request.dan,
                 "mcp": request.mcp,
                 "temperature": request.temperature,

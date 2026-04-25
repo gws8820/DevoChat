@@ -98,7 +98,7 @@ DevoChat is a web application that allows you to use various multimodal AI model
 
 - **Model Switching Architecture**
   - Allows immediate addition of various AI models to the system through JSON modification without code changes.
-  - Supports toggling of additional features like reasoning, search, and deep research for hybrid models.
+  - Supports toggling of additional features like reasoning, web search, and research for hybrid models.
   - Enables linking separate provider models (e.g., Qwen3-235B-A22B-Instruct-2507, Qwen3-235B-A22B-Thinking-2507) with a "switch" variant to function as a single hybrid model.
 
 - **Web-based MCP Client**
@@ -111,69 +111,49 @@ DevoChat is a web application that allows you to use various multimodal AI model
 ```
 devochat/
 ├── frontend/                           # React frontend
+│   ├── public/                         # Static public assets
 │   ├── src/
 │   │   ├── components/                 # UI components
-│   │   │   ├── Header.js               # Main header
-│   │   │   ├── ImageHeader.js          # Image generation page header
-│   │   │   ├── ImageInputContainer.js  # Image generation input container
-│   │   │   ├── InputContainer.js       # Chat input container
-│   │   │   ├── MarkdownRenderers.js    # Markdown renderers
-│   │   │   ├── MCPModal.js             # MCP server selection modal
-│   │   │   ├── Message.js              # Message rendering
-│   │   │   ├── Modal.js                # Generic modal
-│   │   │   ├── Orb.js                  # Real-time conversation visualization
-│   │   │   ├── SearchModal.js          # Search modal
-│   │   │   ├── Sidebar.js              # Sidebar navigation
-│   │   │   ├── Toast.js                # Notification messages
-│   │   │   ├── ToolBlock.js            # MCP tool block
-│   │   │   └── Tooltip.js              # Tooltips
 │   │   ├── contexts/                   # State management
-│   │   │   ├── ConversationsContext.js # Conversations list state
-│   │   │   └── SettingsContext.js      # Model/settings state
 │   │   ├── pages/                      # Page components
-│   │   │   ├── Admin.js                # Admin page
-│   │   │   ├── Chat.js                 # Main chat page
-│   │   │   ├── Home.js                 # Home page
-│   │   │   ├── ImageChat.js            # Image generation page
-│   │   │   ├── ImageHome.js            # Image generation home
-│   │   │   ├── Login.js                # Login page
-│   │   │   ├── Realtime.js             # Real-time conversation page
-│   │   │   ├── Register.js             # Registration page
-│   │   │   └── View.js                 # Conversation viewer page
 │   │   ├── resources/                  # Static resources
 │   │   ├── styles/                     # CSS stylesheets
 │   │   ├── utils/                      # Utility functions
-│   │   │   └── useFileUpload.js        # File upload hook
 │   │   └── App.js                      # Main app component
+│   ├── build/                          # Production build output
+│   ├── releases/                       # Archived frontend builds
+│   ├── package.json
+│   └── package-lock.json
 │
 ├── backend/                            # FastAPI backend
 │   ├── config/                         # Configuration files
 │   │   ├── chat_models.json            # Text AI model settings
 │   │   ├── image_models.json           # Image generation AI model settings
+│   │   ├── mcp_servers_example.json    # MCP server config template
 │   │   ├── mcp_servers.json            # MCP server settings
 │   │   └── realtime_models.json        # Real-time conversation model settings
+│   ├── generated/                      # Generated image outputs
+│   ├── icons/                          # MCP server icons
 │   ├── prompts/                        # System prompts
 │   ├── routes/                         # API routers
 │   │   ├── chat_clients/               # Text AI model clients
-│   │   │   ├── anthropic_client.py
-│   │   │   ├── google_client.py
-│   │   │   ├── grok_client.py
-│   │   │   ├── openai_client.py
-│   │   │   └── openrouter_client.py
 │   │   ├── image_clients/              # Image generation AI model clients
-│   │   │   ├── flux_client.py
-│   │   │   ├── google_client.py
-│   │   │   ├── grok_client.py
-│   │   │   ├── openai_client.py
-│   │   │   └── wavespeed_client.py
 │   │   ├── auth.py                     # Authentication/authorization management
 │   │   ├── common.py                   # Common utilities
 │   │   ├── conversations.py            # Conversation management API
 │   │   ├── realtime.py                 # Real-time communication
 │   │   └── uploads.py                  # File upload handling
+│   ├── shared_pages/                   # Generated shared conversation pages
+│   ├── uploads/                        # Uploaded files and images
 │   ├── logging_util.py                 # Logging utility
 │   ├── main.py                         # FastAPI application entry point
 │   └── requirements.txt                # Python dependencies
+├── mcp-proxy/                          # Local MCP proxy package and servers
+│   ├── servers/                        # Local MCP server definitions
+│   ├── src/                            # Proxy source package
+│   ├── servers.json
+│   └── pyproject.toml
+└── samples/                            # README screenshots
 ```
 
 ## Tech Stack
@@ -255,93 +235,96 @@ Define the AI models available in the application and their properties through t
 
 ```json
 {
-  "default": "gpt-5-mini",
+  "default": "google/gemini-3-flash-preview",
+  "alias": "google/gemini-3.1-flash-lite-preview",
   "models": [
     {
-      "model_name": "claude-sonnet-4-20250514",
-      "model_alias": "Claude 4 Sonnet",
-      "description": "High-performance Claude model",
-      "endpoint": "/claude",
+      "model_name": "google/gemini-3-flash-preview",
+      "model_alias": "Gemini 3 Flash",
+      "description": "Default Gemini model",
+      "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "3",
-        "out_billing": "15"
+        "in_billing": "0.5",
+        "out_billing": "3"
       },
       "capabilities": {
         "stream": true,
         "vision": true,
         "reasoning": "toggle",
         "web_search": "toggle",
-        "deep_research": false
+        "research": false,
+        "mcp": true
       },
       "controls": {
-        "temperature": "conditional",
-        "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
-          "default": "high"
-        },
-        "verbosity": false,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "grok-4",
-      "model_alias": "Grok 4",
-      "description": "High-performance Grok model",
-      "endpoint": "/grok",
-      "billing": {
-        "in_billing": "3",
-        "out_billing": "15"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": false,
-        "reasoning": false,
-        "web_search": false,
-        "deep_research": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": false,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "o3",
-      "model_alias": "OpenAI o3",
-      "description": "High-performance reasoning GPT model",
-      "endpoint": "/gpt",
-      "billing": {
-        "in_billing": "2",
-        "out_billing": "8"
-      },
-      "variants": {
-        "deep_research": "o3-deep-research"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": true,
-        "reasoning": true,
-        "web_search": false,
-        "deep_research": "switch"
-      },
-      "controls": {
+        "instructions": true,
         "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "high"
         },
+        "verbosity": false
+      },
+      "admin": false
+    },
+    {
+      "model_name": "gpt-5.5",
+      "model_alias": "GPT 5.5",
+      "description": "High-performance GPT model",
+      "endpoint": "/chat/gpt",
+      "billing": {
+        "in_billing": "5",
+        "out_billing": "30"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": true,
+        "reasoning": "toggle",
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "temperature": false,
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "medium"
+        },
         "verbosity": {
           "levels": ["low", "medium", "high"],
           "default": "medium"
-        },
-        "instructions": true
+        }
+      },
+      "admin": true
+    },
+    {
+      "model_name": "grok-4.20-0309-non-reasoning",
+      "model_alias": "Grok 4.2",
+      "description": "Default Grok model",
+      "endpoint": "/chat/grok",
+      "billing": {
+        "in_billing": "2",
+        "out_billing": "6"
+      },
+      "variants": {
+        "reasoning": "grok-4.20-0309-reasoning"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": true,
+        "reasoning": "switch",
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "temperature": true,
+        "reason": false,
+        "verbosity": false
       },
       "admin": false
     }
-    ...
   ]
 }
 ```
@@ -350,30 +333,32 @@ Define the AI models available in the application and their properties through t
 
 | Parameter | Description |
 |---------|------|
+| `default` | Default chat model selected when the app initializes |
+| `alias` | Model used to generate conversation aliases/titles |
 | `model_name` | The actual identifier of the model used in API calls |
 | `model_alias` | User-friendly name displayed in the UI |
 | `description` | Brief description of the model for reference when selecting |
-| `endpoint` | API path for handling model requests in the backend (e.g., `/gpt`, `/claude`, `/gemini`) |
+| `endpoint` | API path for handling model requests in the backend (e.g., `/chat/gpt`, `/chat/claude`, `/chat/grok`, `/chat/openrouter`) |
 | `billing` | Object containing model usage cost information |
 | `billing.in_billing` | Billing cost for input tokens (prompts). Unit: USD per million tokens |
 | `billing.out_billing` | Billing cost for output tokens (responses). Unit: USD per million tokens |
-| `variants` | Defines models to switch to for `"switch"` type |
+| `variants` | Defines target models for `"switch"` capability values. Keys such as `reasoning`, `web_search`, and `research` point to the feature-specific model; `base` points back to the normal model |
 | `capabilities` | Defines the features supported by the model |
-| `capabilities.stream` | Whether streaming response is supported |
-| `capabilities.vision` | Whether image input is supported |
+| `capabilities.stream` | Whether streaming response is supported. Possible values: `true`, `false` |
+| `capabilities.vision` | Whether image input is supported. Possible values: `true`, `false` |
 | `capabilities.reasoning` | Whether reasoning is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.web_search` | Whether web search is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
-| `capabilities.deep_research` | Whether Deep Research is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
+| `capabilities.research` | Whether research mode is supported. Possible values: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.mcp` | Whether MCP server integration is supported. Possible values: `true`, `false` |
 | `controls` | Defines user control options supported by the model |
-| `controls.temperature` | Whether temperature adjustment is possible. Possible values: `true`, `false`, `"conditional"` |
+| `controls.instructions` | Whether custom instructions setting is possible. Possible values: `true`, `false` |
+| `controls.temperature` | Whether temperature adjustment is possible. Possible values: `true`, `false` |
 | `controls.reason` | Defines selectable reasoning intensity levels. Possible values: `false` or an object |
 | `controls.reason.levels` | String array defining the selectable options shown in the UI |
 | `controls.reason.default` | Default value applied when the model is selected |
 | `controls.verbosity` | Defines selectable response length levels. Possible values: `false` or an object |
 | `controls.verbosity.levels` | String array defining the selectable options shown in the UI |
 | `controls.verbosity.default` | Default value applied when the model is selected |
-| `controls.instructions` | Whether custom instructions setting is possible. Possible values: `true`, `false` |
 | `admin` | If `true`, only admin users can access/select this model |
 
 ### Value Description
@@ -385,13 +370,10 @@ The feature is always enabled.
 The feature is not supported.
 
 #### toggle
-For hybrid models, users can turn this feature on or off as needed.
+Users can turn the feature on or off without changing the selected model.
 
 #### switch
-When a user toggles this feature, it switches to another individual model. Dynamic switching occurs to models defined in the `variants` object.
-
-#### conditional
-Available in standard mode, but not available in reasoning mode.
+When a user toggles the feature, the selected model changes to another model defined in the `variants` object.
 
 
 ### image_models.json Configuration
@@ -400,38 +382,49 @@ Define the image generation AI models available in the application and their pro
 
 ```json
 {
-  "default": "seedream-3-0-t2i-250415",
+  "default": "gemini-2.5-flash-image",
+  "alias": "google/gemini-3.1-flash-lite-preview",
   "models": [
     {
-      "model_name": "flux-kontext-max",
-      "model_alias": "Flux Kontext Max",
-      "description": "Black Forest Labs",
-      "endpoint": "/image/flux",
+      "model_name": "gemini-2.5-flash-image",
+      "model_alias": "Nano Banana",
+      "description": "Google",
+      "endpoint": "/image/google/gemini",
       "billing": {
         "in_billing": "0",
-        "out_billing": "0.08"
+        "out_billing": "0.039"
       },
-      "capabilities": { 
-        "vision": true, 
-        "max_input": 4 
-      },
+      "capabilities": { "vision": true, "max_input": 10 },
       "admin": false
     },
     {
-      "model_name": "seedream-3-0-t2i-250415",
-      "model_alias": "Seedream 3.0",
+      "model_name": "bytedance/seedream-v4.5",
+      "model_alias": "Seedream 4.5",
       "description": "BytePlus",
-      "endpoint": "/image/byteplus",
+      "endpoint": "/image/wavespeed",
       "billing": {
         "in_billing": "0",
-        "out_billing": "0.03"
+        "out_billing": "0.04"
       },
       "variants": {
-        "vision": "seededit-3-0-i2i-250628"
+        "vision": "bytedance/seedream-v4.5/edit"
       },
-      "capabilities": { 
-        "vision": "switch"
+      "capabilities": { "vision": "switch" },
+      "admin": false
+    },
+    {
+      "model_name": "bytedance/seedream-v4.5/edit",
+      "model_alias": "Seedream 4.5",
+      "description": "BytePlus",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.04"
       },
+      "variants": {
+        "base": "bytedance/seedream-v4.5"
+      },
+      "capabilities": { "vision": "switch", "max_input": 10 },
       "admin": false
     }
   ]
@@ -442,6 +435,9 @@ Define the image generation AI models available in the application and their pro
 
 | Parameter | Description |
 |---------|------|
+| `default` | Default image model selected when the image page initializes |
+| `alias` | Model used to generate image conversation aliases/titles |
+| `variants` | Defines target models for `"switch"` capability values. `vision` points to the image-editing model; `base` points back to the text-to-image model |
 | `capabilities.vision` | Whether image input is supported. `true`: supported, `false`: not supported, `"switch"`: switch to variant model |
 | `capabilities.max_input` | Maximum number of images that can be input simultaneously |
 
@@ -451,27 +447,61 @@ You can define various variants of models through the `variants` object.
 
 #### Example
 ```json
-{
-  "model_name": "sonar",
-  "variants": {
-    "reasoning": "sonar-reasoning",
-    "deep_research": "sonar-deep-research"
+[
+  {
+    "model_name": "grok-4.20-0309-non-reasoning",
+    "variants": {
+      "reasoning": "grok-4.20-0309-reasoning"
+    },
+    "capabilities": {
+      "reasoning": "switch"
+    }
   },
-  "capabilities": {
-    "reasoning": "switch",
-    "deep_research": "switch"
+  {
+    "model_name": "grok-4.20-0309-reasoning",
+    "variants": {
+      "base": "grok-4.20-0309-non-reasoning"
+    },
+    "capabilities": {
+      "reasoning": "switch"
+    }
   }
-},
+]
+```
+
+### realtime_models.json Configuration
+
+Define the real-time voice models available in the application through the `realtime_models.json` file.
+
+```json
 {
-  "model_name": "sonar-reasoning",
-  "variants": {
-    "base": "sonar"
-  },
-  "capabilities": {
-    "reasoning": "switch"
-  }
+  "default": "gpt-realtime-1.5:coral",
+  "models": [
+    {
+      "model_name": "gpt-realtime-1.5:marin",
+      "model_alias": "Marin",
+      "model_gender": "female",
+      "description": "A warm motivator"
+    },
+    {
+      "model_name": "gpt-realtime-1.5:ash",
+      "model_alias": "Ash",
+      "model_gender": "male",
+      "description": "A steady supporter who believes in you"
+    }
+  ]
 }
 ```
+
+### Realtime Model Parameter Description
+
+| Parameter | Description |
+|---------|------|
+| `default` | Default real-time voice model selected when the real-time page initializes |
+| `model_name` | Actual voice/model identifier used by the real-time API |
+| `model_alias` | User-friendly voice name displayed in the UI |
+| `model_gender` | UI grouping/style hint for the voice. Current values use `female` or `male` |
+| `description` | Short voice/personality description displayed in the model picker |
 
 ## MCP Server Configuration
 

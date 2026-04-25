@@ -12,7 +12,7 @@
         "out_billing": "0.134"
       },
       "capabilities": { "vision": true, "max_input": 10 },
-      "admin": false
+      "admin": true
     },
     {
       "model_name": "gemini-3.1-flash-image-preview",
@@ -39,13 +39,13 @@
       "admin": false
     },
     {
-      "model_name": "gpt-image-1.5",
-      "model_alias": "GPT Image 1.5",
+      "model_name": "gpt-image-2",
+      "model_alias": "GPT Image 2",
       "description": "OpenAI",
       "endpoint": "/image/openai",
       "billing": {
-        "in_billing": "0.01",
-        "out_billing": "0.034"
+        "in_billing": "0.008",
+        "out_billing": "0.030"
       },
       "capabilities": { "vision": true, "max_input": 1 },
       "admin": false

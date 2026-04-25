@@ -51,7 +51,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     instructions,
     isReasoning,
     isSearch,
-    isDeepResearch,
+    isResearch,
     isDAN,
     mcpList,
     canVision,
@@ -288,7 +288,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
               model: selectedModel.model_name,
               reasoning: isReasoning,
               web_search: isSearch,
-              deep_research: isDeepResearch,
+              research: isResearch,
               dan: isDAN,
               mcp: mcpList,
               stream: selectedModel.capabilities.stream,
@@ -378,7 +378,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       setErrorMessage,
       isReasoning,
       isSearch,
-      isDeepResearch,
+      isResearch,
       isDAN,
       mcpList,
       uploadedFiles,
@@ -506,7 +506,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           updateModel(data.model, {
             isReasoning: data.reasoning,
             isSearch: data.web_search,
-            isDeepResearch: data.deep_research
+            isResearch: data.research
           });
 
           setAlias(data.alias);

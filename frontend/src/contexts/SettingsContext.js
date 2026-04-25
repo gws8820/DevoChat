@@ -6,9 +6,9 @@ const INIT_VALUES = {
   temperature: 1,
   memory: 4,
   instructions: "",
-  isReasoning: false,
+  isReasoning: true,
   isSearch: false,
-  isDeepResearch: false
+  isResearch: false
 };
 
 export const SettingsProvider = ({ children }) => {
@@ -27,9 +27,9 @@ export const SettingsProvider = ({ children }) => {
   const [defaultImageModel, setDefaultImageModel] = useState("");
   const [memory, setMemory] = useState(INIT_VALUES.memory);
   const [instructions, setInstructions] = useState(INIT_VALUES.instructions);
-  const [isReasoning, setIsReasoning] = useState(false);
+  const [isReasoning, setIsReasoning] = useState(true);
   const [isSearch, setIsSearch] = useState(false);
-  const [isDeepResearch, setIsDeepResearch] = useState(false);
+  const [isResearch, setIsResearch] = useState(false);
   const [isDAN, setIsDAN] = useState(false);
   const [hasImage, setHasImage] = useState(false); // Has Image in Chat
   const [mcpList, setMCPList] = useState([]);
@@ -40,7 +40,7 @@ export const SettingsProvider = ({ children }) => {
   const [canVision, setCanVision] = useState(false);
   const [canToggleReasoning, setCanToggleReasoning] = useState(false);
   const [canToggleSearch, setCanToggleSearch] = useState(false);
-  const [canToggleDeepResearch, setCanToggleDeepResearch] = useState(false);
+  const [canToggleResearch, setCanToggleResearch] = useState(false);
   const [canToggleMCP, setCanToggleMCP] = useState(false);
   const [maxImageInput, setMaxImageInput] = useState(1);
 
@@ -57,33 +57,33 @@ export const SettingsProvider = ({ children }) => {
     const canUseInstructions = Boolean(selectedModel?.controls?.instructions);
     const reasoningCapability = selectedModel?.capabilities?.reasoning;
     const searchCapability = selectedModel?.capabilities?.web_search;
-    const deepResearchCapability = selectedModel?.capabilities?.deep_research;
+    const researchCapability = selectedModel?.capabilities?.research;
     const visionCapability = selectedModel?.capabilities?.vision;
     const mcpCapability = selectedModel?.capabilities?.mcp;
 
     const canToggleReasoning = reasoningCapability === "toggle" || reasoningCapability === "switch";
     const canToggleSearch = searchCapability === "toggle" || searchCapability === "switch";
-    const canToggleDeepResearch = deepResearchCapability === "toggle" || deepResearchCapability === "switch";
+    const canToggleResearch = researchCapability === "toggle" || researchCapability === "switch";
 
     const nextIsReasoning = canToggleReasoning
-      ? modelConfig.isReasoning ?? isReasoning
+      ? modelConfig.isReasoning ?? true
       : Boolean(reasoningCapability);
     const nextIsSearch = canToggleSearch
       ? modelConfig.isSearch ?? isSearch
       : Boolean(searchCapability);
-    const nextIsDeepResearch = canToggleDeepResearch
-      ? modelConfig.isDeepResearch ?? isDeepResearch
-      : Boolean(deepResearchCapability);
+    const nextIsResearch = canToggleResearch
+      ? modelConfig.isResearch ?? isResearch
+      : Boolean(researchCapability);
 
     setModel(selectedModel.model_name);
     setCanToggleReasoning(canToggleReasoning);
     setIsReasoning(nextIsReasoning);
     setCanToggleSearch(canToggleSearch);
     setIsSearch(nextIsSearch);
-    setCanToggleDeepResearch(canToggleDeepResearch);
-    setIsDeepResearch(nextIsDeepResearch);
+    setCanToggleResearch(canToggleResearch);
+    setIsResearch(nextIsResearch);
 
-    setCanControlTemp(temperatureControl === true || (temperatureControl === "conditional" && nextIsReasoning === false));
+    setCanControlTemp(temperatureControl === true);
     setCanControlReason(reasonLevels.length > 0 && nextIsReasoning === true);
     setCanControlVerbosity(verbosityLevels.length > 0);
 
@@ -134,7 +134,7 @@ export const SettingsProvider = ({ children }) => {
           {
             isReasoning: nextIsReasoning,
             isSearch,
-            isDeepResearch
+            isResearch
           }
         );
         return;
@@ -143,7 +143,7 @@ export const SettingsProvider = ({ children }) => {
 
     setIsReasoning(nextIsReasoning);
 
-    setCanControlTemp(temperature === true || (temperature === "conditional" && !nextIsReasoning));
+    setCanControlTemp(temperature === true);
     setCanControlReason(reasonLevels.length > 0 && nextIsReasoning === true);
   };
 
@@ -159,7 +159,7 @@ export const SettingsProvider = ({ children }) => {
         updateModel(targetModel, {
           isReasoning,
           isSearch: nextIsSearch,
-          isDeepResearch
+          isResearch
         });
         return;
       }
@@ -168,25 +168,25 @@ export const SettingsProvider = ({ children }) => {
     setIsSearch(nextIsSearch);
   };
 
-  const toggleDeepResearch = () => {
+  const toggleResearch = () => {
     const selectedModel = models.find(m => m.model_name === model);
-    const deep_research = selectedModel?.capabilities?.deep_research;
-    const nextIsDeepResearch = !isDeepResearch;
+    const research = selectedModel?.capabilities?.research;
+    const nextIsResearch = !isResearch;
     
-    if (deep_research === "switch") {
+    if (research === "switch") {
       const variants = selectedModel?.variants;
-      const targetModel = isDeepResearch ? variants?.base : variants?.deep_research;
+      const targetModel = isResearch ? variants?.base : variants?.research;
       if (targetModel) {
         updateModel(targetModel, {
           isReasoning,
           isSearch,
-          isDeepResearch: nextIsDeepResearch
+          isResearch: nextIsResearch
         });
         return;
       }
     }
     
-    setIsDeepResearch(nextIsDeepResearch);
+    setIsResearch(nextIsResearch);
   };
 
   const updateImageModel = (newImageModel) => {
@@ -299,7 +299,7 @@ export const SettingsProvider = ({ children }) => {
     hasImage,
     isReasoning,
     isSearch,
-    isDeepResearch,
+    isResearch,
     isDAN,
     mcpList,
     canControlTemp,
@@ -308,7 +308,7 @@ export const SettingsProvider = ({ children }) => {
     canControlSystemMessage,
     canToggleReasoning,
     canToggleSearch,
-    canToggleDeepResearch,
+    canToggleResearch,
     canToggleMCP,
     canVision,
     maxImageInput,
@@ -326,11 +326,11 @@ export const SettingsProvider = ({ children }) => {
     setMCPList,
     toggleReasoning,
     toggleSearch,
-    toggleDeepResearch,
+    toggleResearch,
     switchImageMode,
     resetSettings
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [models, imageModels, realtimeModels, model, imageModel, realtimeModel, isModelReady, alias, temperature, reason, verbosity, memory, instructions, hasImage, isReasoning, isSearch, isDeepResearch, isDAN, mcpList, canControlTemp, canControlReason, canControlVerbosity, canControlSystemMessage, canToggleReasoning, canToggleSearch, canToggleDeepResearch, canToggleMCP, canVision, maxImageInput]);
+  }), [models, imageModels, realtimeModels, model, imageModel, realtimeModel, isModelReady, alias, temperature, reason, verbosity, memory, instructions, hasImage, isReasoning, isSearch, isResearch, isDAN, mcpList, canControlTemp, canControlReason, canControlVerbosity, canControlSystemMessage, canToggleReasoning, canToggleSearch, canToggleResearch, canToggleMCP, canVision, maxImageInput]);
 
   return (
     <SettingsContext.Provider value={value}>

@@ -15,7 +15,7 @@ load_dotenv()
 router = APIRouter()
 
 mongo_client = MongoClient(os.getenv('MONGODB_URI'))
-db = mongo_client.chat_db
+db = mongo_client.devochat
 collection = db.users
 
 AUTH_KEY = os.getenv('AUTH_KEY')

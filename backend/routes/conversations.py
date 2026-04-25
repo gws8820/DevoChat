@@ -12,7 +12,7 @@ load_dotenv()
 router = APIRouter()
 
 mongo_client = MongoClient(os.getenv('MONGODB_URI'))
-db = mongo_client.chat_db
+db = mongo_client.devochat
 conversations_collection = db.conversations
 
 class RenameRequest(BaseModel):
@@ -99,7 +99,7 @@ async def get_chat_conversation(conversation_id: str, current_user: User = Depen
         "model": doc.get("model", ""),
         "reasoning": doc.get("reasoning", False),
         "web_search": doc.get("web_search", False),
-        "deep_research": doc.get("deep_research", False),
+        "research": doc.get("research", False),
         "dan": doc.get("dan", False),
         "mcp": doc.get("mcp", []),
         "temperature": doc.get("temperature", 1),
@@ -156,7 +156,7 @@ async def create_new_conversation(current_user: User = Depends(get_current_user)
         "model": None,
         "reasoning": None,
         "web_search": None,
-        "deep_research": None,
+        "research": None,
         "dan": None,
         "mcp": None,
         "temperature": None,

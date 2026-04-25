@@ -98,7 +98,7 @@ DevoChat은 다양한 멀티모달 AI 모델과 MCP (Model Context Protocol) 서
 
 - **모델 전환 아키텍처**
   - JSON 설정만으로 코드 수정 없이 다양한 AI 모델을 시스템에 즉시 추가할 수 있습니다.
-  - 하이브리드 모델의 경우 추론, 검색, 딥 리서치 등 각 모델의 특화 기능을 필요에 따라 토글할 수 있습니다.
+  - 하이브리드 모델의 경우 추론, 웹 검색, 리서치 등 각 모델의 특화 기능을 필요에 따라 토글할 수 있습니다.
   - 제공업체가 기능을 여러 모델로 분할한 경우(예: Qwen3-235B-A22B-Instruct-2507, Qwen3-235B-A22B-Thinking-2507), "switch" 변형으로 연결하여 단일 하이브리드 모델처럼 작동하도록 구현했습니다.
 
 - **웹 기반 MCP 클라이언트**
@@ -111,69 +111,49 @@ DevoChat은 다양한 멀티모달 AI 모델과 MCP (Model Context Protocol) 서
 ```
 devochat/
 ├── frontend/                           # React 프론트엔드
+│   ├── public/                         # 정적 공개 자산
 │   ├── src/
 │   │   ├── components/                 # UI 컴포넌트
-│   │   │   ├── Header.js               # 메인 헤더
-│   │   │   ├── ImageHeader.js          # 이미지 생성 페이지 헤더
-│   │   │   ├── ImageInputContainer.js  # 이미지 생성 입력 컨테이너
-│   │   │   ├── InputContainer.js       # 채팅 입력 컨테이너
-│   │   │   ├── MarkdownRenderers.js    # 마크다운 렌더러
-│   │   │   ├── MCPModal.js             # MCP 서버 선택 모달
-│   │   │   ├── Message.js              # 메시지 렌더링
-│   │   │   ├── Modal.js                # 범용 모달
-│   │   │   ├── Orb.js                  # 실시간 대화 시각화
-│   │   │   ├── SearchModal.js          # 검색 모달
-│   │   │   ├── Sidebar.js              # 사이드바 네비게이션
-│   │   │   ├── Toast.js                # 알림 메시지
-│   │   │   ├── ToolBlock.js            # MCP 도구 블록
-│   │   │   └── Tooltip.js              # 도구 설명
 │   │   ├── contexts/                   # 상태 관리
-│   │   │   ├── ConversationsContext.js # 대화 목록 상태
-│   │   │   └── SettingsContext.js      # 모델/설정 상태
 │   │   ├── pages/                      # 페이지 컴포넌트
-│   │   │   ├── Admin.js                # 관리자 페이지
-│   │   │   ├── Chat.js                 # 메인 채팅 페이지
-│   │   │   ├── Home.js                 # 홈 페이지
-│   │   │   ├── ImageChat.js            # 이미지 생성 페이지
-│   │   │   ├── ImageHome.js            # 이미지 생성 홈
-│   │   │   ├── Login.js                # 로그인 페이지
-│   │   │   ├── Realtime.js             # 실시간 대화 페이지
-│   │   │   ├── Register.js             # 회원가입 페이지
-│   │   │   └── View.js                 # 대화 뷰어 페이지
 │   │   ├── resources/                  # 정적 리소스
 │   │   ├── styles/                     # CSS 스타일시트
 │   │   ├── utils/                      # 유틸리티 함수
-│   │   │   └── useFileUpload.js        # 파일 업로드 훅
 │   │   └── App.js                      # 메인 앱 컴포넌트
+│   ├── build/                          # 프로덕션 빌드 결과물
+│   ├── releases/                       # 프론트엔드 빌드 아카이브
+│   ├── package.json
+│   └── package-lock.json
 │
 ├── backend/                            # FastAPI 백엔드
 │   ├── config/                         # 설정 파일
 │   │   ├── chat_models.json            # 텍스트 AI 모델 설정
 │   │   ├── image_models.json           # 이미지 생성 AI 모델 설정
+│   │   ├── mcp_servers_example.json    # MCP 서버 설정 템플릿
 │   │   ├── mcp_servers.json            # MCP 서버 설정
 │   │   └── realtime_models.json        # 실시간 대화 모델 설정
+│   ├── generated/                      # 생성된 이미지 결과물
+│   ├── icons/                          # MCP 서버 아이콘
 │   ├── prompts/                        # 시스템 프롬프트
 │   ├── routes/                         # API 라우터
 │   │   ├── chat_clients/               # 텍스트 AI 모델 클라이언트
-│   │   │   ├── anthropic_client.py
-│   │   │   ├── google_client.py
-│   │   │   ├── grok_client.py
-│   │   │   ├── openai_client.py
-│   │   │   └── openrouter_client.py
 │   │   ├── image_clients/              # 이미지 생성 AI 모델 클라이언트
-│   │   │   ├── flux_client.py
-│   │   │   ├── google_client.py
-│   │   │   ├── grok_client.py
-│   │   │   ├── openai_client.py
-│   │   │   └── wavespeed_client.py
 │   │   ├── auth.py                     # 인증/권한 관리
 │   │   ├── common.py                   # 공통 유틸리티
 │   │   ├── conversations.py            # 대화 관리 API
 │   │   ├── realtime.py                 # 실시간 통신
 │   │   └── uploads.py                  # 파일 업로드 처리
+│   ├── shared_pages/                   # 생성된 공유 대화 페이지
+│   ├── uploads/                        # 업로드된 파일 및 이미지
 │   ├── logging_util.py                 # 로깅 유틸리티
 │   ├── main.py                         # FastAPI 애플리케이션 진입점
 │   └── requirements.txt                # Python 의존성
+├── mcp-proxy/                          # 로컬 MCP 프록시 패키지 및 서버
+│   ├── servers/                        # 로컬 MCP 서버 정의
+│   ├── src/                            # 프록시 소스 패키지
+│   ├── servers.json
+│   └── pyproject.toml
+└── samples/                            # README 스크린샷
 ```
 
 ## 기술 스택
@@ -255,93 +235,96 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 ```json
 {
-  "default": "gpt-5-mini",
+  "default": "google/gemini-3-flash-preview",
+  "alias": "google/gemini-3.1-flash-lite-preview",
   "models": [
     {
-      "model_name": "claude-sonnet-4-20250514",
-      "model_alias": "Claude 4 Sonnet",
-      "description": "고성능 Claude 모델",
-      "endpoint": "/claude",
+      "model_name": "google/gemini-3-flash-preview",
+      "model_alias": "Gemini 3 Flash",
+      "description": "기본 Gemini 모델",
+      "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "3",
-        "out_billing": "15"
+        "in_billing": "0.5",
+        "out_billing": "3"
       },
       "capabilities": {
         "stream": true,
         "vision": true,
         "reasoning": "toggle",
         "web_search": "toggle",
-        "deep_research": false
+        "research": false,
+        "mcp": true
       },
       "controls": {
-        "temperature": "conditional",
-        "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
-          "default": "high"
-        },
-        "verbosity": false,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "grok-4",
-      "model_alias": "Grok 4",
-      "description": "고성능 Grok 모델",
-      "endpoint": "/grok",
-      "billing": {
-        "in_billing": "3",
-        "out_billing": "15"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": false,
-        "reasoning": false,
-        "web_search": false,
-        "deep_research": false
-      },
-      "controls": {
-        "temperature": true,
-        "reason": false,
-        "verbosity": false,
-        "instructions": true
-      },
-      "admin": false
-    },
-    {
-      "model_name": "o3",
-      "model_alias": "OpenAI o3",
-      "description": "고성능 추론 GPT 모델",
-      "endpoint": "/gpt",
-      "billing": {
-        "in_billing": "2",
-        "out_billing": "8"
-      },
-      "variants": {
-        "deep_research": "o3-deep-research"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": true,
-        "reasoning": true,
-        "web_search": false,
-        "deep_research": "switch"
-      },
-      "controls": {
+        "instructions": true,
         "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "high"
         },
+        "verbosity": false
+      },
+      "admin": false
+    },
+    {
+      "model_name": "gpt-5.5",
+      "model_alias": "GPT 5.5",
+      "description": "고성능 GPT 모델",
+      "endpoint": "/chat/gpt",
+      "billing": {
+        "in_billing": "5",
+        "out_billing": "30"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": true,
+        "reasoning": "toggle",
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "temperature": false,
+        "reason": {
+          "levels": ["low", "medium", "high", "xhigh"],
+          "default": "medium"
+        },
         "verbosity": {
           "levels": ["low", "medium", "high"],
           "default": "medium"
-        },
-        "instructions": true
+        }
+      },
+      "admin": true
+    },
+    {
+      "model_name": "grok-4.20-0309-non-reasoning",
+      "model_alias": "Grok 4.2",
+      "description": "기본 Grok 모델",
+      "endpoint": "/chat/grok",
+      "billing": {
+        "in_billing": "2",
+        "out_billing": "6"
+      },
+      "variants": {
+        "reasoning": "grok-4.20-0309-reasoning"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": true,
+        "reasoning": "switch",
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "temperature": true,
+        "reason": false,
+        "verbosity": false
       },
       "admin": false
     }
-    ...
   ]
 }
 ```
@@ -350,30 +333,32 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 | 파라미터 | 설명 |
 |---------|------|
+| `default` | 앱 초기화 시 기본으로 선택되는 채팅 모델입니다. |
+| `alias` | 대화 제목/별칭 생성에 사용할 모델입니다. |
 | `model_name` | API 호출 시 사용되는 모델의 실제 식별자입니다. |
 | `model_alias` | UI에 표시되는 모델의 사용자 친화적인 이름입니다. |
 | `description` | 모델에 대한 간략한 설명으로, 선택 시 참고할 수 있습니다. |
-| `endpoint` | 백엔드에서 해당 모델 요청을 처리할 API 경로입니다. (예: `/gpt`, `/claude`, `/gemini`) |
+| `endpoint` | 백엔드에서 해당 모델 요청을 처리할 API 경로입니다. (예: `/chat/gpt`, `/chat/claude`, `/chat/grok`, `/chat/openrouter`) |
 | `billing` | 모델 사용 비용 정보를 담는 객체입니다. |
 | `billing.in_billing` | 입력 토큰(프롬프트)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
 | `billing.out_billing` | 출력 토큰(응답)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
-| `variants` | `"switch"` 타입일 때 전환할 모델을 정의합니다. |
+| `variants` | `"switch"` capability 값일 때 전환할 대상 모델을 정의합니다. `reasoning`, `web_search`, `research` 같은 키는 기능별 모델을, `base`는 일반 모델을 가리킵니다. |
 | `capabilities` | 모델이 지원하는 기능들을 정의합니다. |
-| `capabilities.stream` | 스트리밍 응답 지원 여부입니다. |
-| `capabilities.vision` | 이미지 입력 기능 지원 여부입니다. |
+| `capabilities.stream` | 스트리밍 응답 지원 여부입니다. 가능한 값: `true`, `false` |
+| `capabilities.vision` | 이미지 입력 기능 지원 여부입니다. 가능한 값: `true`, `false` |
 | `capabilities.reasoning` | 추론 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.web_search` | 웹 검색 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
-| `capabilities.deep_research` | Deep Research 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
+| `capabilities.research` | 리서치 모드 지원 여부입니다. 가능한 값: `true`, `false`, `"toggle"`, `"switch"` |
 | `capabilities.mcp` | MCP 서버 연동 지원 여부입니다. 가능한 값: `true`, `false` |
 | `controls` | 모델이 지원하는 사용자 제어 옵션들을 정의합니다. |
-| `controls.temperature` | Temperature 조절 가능 여부입니다. 가능한 값: `true`, `false`, `"conditional"` |
+| `controls.instructions` | 커스텀 지시사항 설정 가능 여부입니다. 가능한 값: `true`, `false` |
+| `controls.temperature` | Temperature 조절 가능 여부입니다. 가능한 값: `true`, `false` |
 | `controls.reason` | 선택 가능한 추론 강도 레벨을 정의합니다. 가능한 값: `false` 또는 객체 |
 | `controls.reason.levels` | UI에 노출할 선택 가능한 레벨 목록입니다. |
 | `controls.reason.default` | 모델 선택 시 적용되는 초기값입니다. |
 | `controls.verbosity` | 선택 가능한 답변 길이 레벨을 정의합니다. 가능한 값: `false` 또는 객체 |
 | `controls.verbosity.levels` | UI에 노출할 선택 가능한 레벨 목록입니다. |
 | `controls.verbosity.default` | 모델 선택 시 적용되는 초기값입니다. |
-| `controls.instructions` | 커스텀 지시사항 설정 가능 여부입니다. 가능한 값: `true`, `false` |
 | `admin` | `true`인 경우, 관리자만 해당 모델을 선택/사용할 수 있습니다. |
 
 ### 값 설명
@@ -385,13 +370,10 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 해당 기능이 지원되지 않습니다.
 
 #### toggle
-하이브리드 모델일 때, 사용자 필요에 따라 해당 기능을 켜거나 끌 수 있습니다.
+선택된 모델은 그대로 두고 사용자가 해당 기능을 켜거나 끌 수 있습니다.
 
 #### switch
-사용자가 해당 기능을 토글할 때 다른 개별 모델로 전환됩니다. `variants` 객체에 정의된 모델로 동적 전환이 이루어집니다.
-
-#### conditional
-표준 모드에서는 사용할 수 있으나, 추론 모드에서는 사용할 수 없습니다.
+사용자가 해당 기능을 토글할 때 `variants` 객체에 정의된 다른 모델로 전환됩니다.
 
 
 ### image_models.json 설정
@@ -400,38 +382,49 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 ```json
 {
-  "default": "seedream-3-0-t2i-250415",
+  "default": "gemini-2.5-flash-image",
+  "alias": "google/gemini-3.1-flash-lite-preview",
   "models": [
     {
-      "model_name": "flux-kontext-max",
-      "model_alias": "Flux Kontext Max",
-      "description": "Black Forest Labs",
-      "endpoint": "/image/flux",
+      "model_name": "gemini-2.5-flash-image",
+      "model_alias": "Nano Banana",
+      "description": "Google",
+      "endpoint": "/image/google/gemini",
       "billing": {
         "in_billing": "0",
-        "out_billing": "0.08"
+        "out_billing": "0.039"
       },
-      "capabilities": { 
-        "vision": true, 
-        "max_input": 4 
-      },
+      "capabilities": { "vision": true, "max_input": 10 },
       "admin": false
     },
     {
-      "model_name": "seedream-3-0-t2i-250415",
-      "model_alias": "Seedream 3.0",
+      "model_name": "bytedance/seedream-v4.5",
+      "model_alias": "Seedream 4.5",
       "description": "BytePlus",
-      "endpoint": "/image/byteplus",
+      "endpoint": "/image/wavespeed",
       "billing": {
         "in_billing": "0",
-        "out_billing": "0.03"
+        "out_billing": "0.04"
       },
       "variants": {
-        "vision": "seededit-3-0-i2i-250628"
+        "vision": "bytedance/seedream-v4.5/edit"
       },
-      "capabilities": { 
-        "vision": "switch"
+      "capabilities": { "vision": "switch" },
+      "admin": false
+    },
+    {
+      "model_name": "bytedance/seedream-v4.5/edit",
+      "model_alias": "Seedream 4.5",
+      "description": "BytePlus",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.04"
       },
+      "variants": {
+        "base": "bytedance/seedream-v4.5"
+      },
+      "capabilities": { "vision": "switch", "max_input": 10 },
       "admin": false
     }
   ]
@@ -442,6 +435,9 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 | 파라미터 | 설명 |
 |---------|------|
+| `default` | 이미지 페이지 초기화 시 기본으로 선택되는 이미지 모델입니다. |
+| `alias` | 이미지 대화 제목/별칭 생성에 사용할 모델입니다. |
+| `variants` | `"switch"` capability 값일 때 전환할 대상 모델을 정의합니다. `vision`은 이미지 편집 모델을, `base`는 Text-to-Image 모델을 가리킵니다. |
 | `capabilities.vision` | 이미지 입력 지원 여부입니다. `true`: 지원, `false`: 미지원, `"switch"`: 모델 동적 전환 |
 | `capabilities.max_input` | 동시에 입력 가능한 최대 이미지 수입니다. |
 
@@ -451,27 +447,61 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 #### 예시
 ```json
-{
-  "model_name": "sonar",
-  "variants": {
-    "reasoning": "sonar-reasoning",
-    "deep_research": "sonar-deep-research"
+[
+  {
+    "model_name": "grok-4.20-0309-non-reasoning",
+    "variants": {
+      "reasoning": "grok-4.20-0309-reasoning"
+    },
+    "capabilities": {
+      "reasoning": "switch"
+    }
   },
-  "capabilities": {
-    "reasoning": "switch",
-    "deep_research": "switch"
+  {
+    "model_name": "grok-4.20-0309-reasoning",
+    "variants": {
+      "base": "grok-4.20-0309-non-reasoning"
+    },
+    "capabilities": {
+      "reasoning": "switch"
+    }
   }
-},
+]
+```
+
+### realtime_models.json 설정
+
+`realtime_models.json` 파일을 통해 애플리케이션에서 사용 가능한 실시간 음성 모델을 정의합니다.
+
+```json
 {
-  "model_name": "sonar-reasoning",
-  "variants": {
-    "base": "sonar"
-  },
-  "capabilities": {
-    "reasoning": "switch"
-  }
+  "default": "gpt-realtime-1.5:coral",
+  "models": [
+    {
+      "model_name": "gpt-realtime-1.5:marin",
+      "model_alias": "Marin",
+      "model_gender": "female",
+      "description": "따뜻한 성격의 동기부여자"
+    },
+    {
+      "model_name": "gpt-realtime-1.5:ash",
+      "model_alias": "Ash",
+      "model_gender": "male",
+      "description": "언제나 날 믿어주는 든든한 조력자"
+    }
+  ]
 }
 ```
+
+### 실시간 모델 파라미터 설명
+
+| 파라미터 | 설명 |
+|---------|------|
+| `default` | 실시간 페이지 초기화 시 기본으로 선택되는 음성 모델입니다. |
+| `model_name` | 실시간 API에서 사용하는 실제 음성/모델 식별자입니다. |
+| `model_alias` | UI에 표시되는 사용자 친화적인 음성 이름입니다. |
+| `model_gender` | 음성의 UI 그룹/스타일 힌트입니다. 현재 값은 `female` 또는 `male`을 사용합니다. |
+| `description` | 모델 선택 화면에 표시되는 짧은 음성/성격 설명입니다. |
 
 ## MCP 서버 설정
 

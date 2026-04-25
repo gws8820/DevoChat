@@ -66,17 +66,17 @@ function InputContainer({
 const {
     isReasoning,
     isSearch,
-    isDeepResearch,
+    isResearch,
     mcpList,
     canToggleReasoning,
     canToggleSearch,
-    canToggleDeepResearch,
+    canToggleResearch,
     canToggleMCP,
     canVision,
     setMCPList,
     toggleReasoning,
     toggleSearch,
-    toggleDeepResearch,
+    toggleResearch,
   } = useContext(SettingsContext);
 
 const notifyError = useCallback((message) => {
@@ -131,35 +131,43 @@ const notifyError = useCallback((message) => {
     }
 
     let accumulatedText = inputTextRef.current;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'ko-KR';
-    recognition.interimResults = true;
 
-    recognition.onresult = (event) => {
-      let finalText = '';
-      let interimText = '';
-      for (let i = 0; i < event.results.length; i++) {
-        const result = event.results[i];
-        const transcript = result[0].transcript;
-        if (result.isFinal) finalText += transcript; else interimText += transcript;
-      }
-      setInputText(accumulatedText + finalText + interimText);
-      if (finalText) accumulatedText += finalText;
-    };
+    const startRecognition = () => {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ko-KR';
+      recognition.interimResults = true;
 
-    recognition.onerror = (event) => {
-      isRecordingRef.current = false;
-      recognitionRef.current = null;
-      setIsRecording(false);
-      if (event.error === 'aborted' && event.message && event.message.includes('Dictation')) {
-        notifyError("받아쓰기가 비활성화되어 있습니다. 설정 → 일반 → 키보드 → 받아쓰기에서 활성화해 주세요.");
-      } else if (event.error !== 'aborted') {
-        notifyError(`음성 인식 오류가 발생했습니다. ${event.error}`);
-      }
-    };
+      recognition.onresult = (event) => {
+        let finalText = '';
+        let interimText = '';
+        for (let i = 0; i < event.results.length; i++) {
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          if (result.isFinal) finalText += transcript; else interimText += transcript;
+        }
+        setInputText(accumulatedText + finalText + interimText);
+        if (finalText) accumulatedText += finalText;
+      };
 
-    recognition.onend = () => {
-      if (!isRecordingRef.current) return;
+      recognition.onerror = (event) => {
+        if (event.error === 'no-speech') return;
+
+        isRecordingRef.current = false;
+        recognitionRef.current = null;
+        setIsRecording(false);
+        if (event.error === 'aborted' && event.message && event.message.includes('Dictation')) {
+          notifyError("받아쓰기가 비활성화되어 있습니다. 설정 → 일반 → 키보드 → 받아쓰기에서 활성화해 주세요.");
+        } else if (event.error !== 'aborted') {
+          notifyError(`음성 인식 오류가 발생했습니다. ${event.error}`);
+        }
+      };
+
+      recognition.onend = () => {
+        if (!isRecordingRef.current) return;
+        startRecognition();
+      };
+
+      recognitionRef.current = recognition;
       try {
         recognition.start();
       } catch (e) {
@@ -170,17 +178,9 @@ const notifyError = useCallback((message) => {
     };
 
     isRecordingRef.current = true;
-    recognitionRef.current = recognition;
     setIsRecording(true);
     if (navigator.vibrate) navigator.vibrate(100);
-
-    try {
-      recognition.start();
-    } catch (e) {
-      isRecordingRef.current = false;
-      recognitionRef.current = null;
-      setIsRecording(false);
-    }
+    startRecognition();
   }, [notifyError, setInputText]);
 
 const handleKeyDown = useCallback((event) => {
@@ -340,11 +340,11 @@ const handleKeyDown = useCallback((event) => {
                 <span className="button-text">추론</span>
               </motion.div>
             )}
-            {canToggleDeepResearch && (
+            {canToggleResearch && (
               <motion.div
-                key="deep-research"
-                className={`function-button ${isDeepResearch ? "active" : ""}`}
-                onClick={toggleDeepResearch}
+                key="research"
+                className={`function-button ${isResearch ? "active" : ""}`}
+                onClick={toggleResearch}
                 initial={{ x: -20, opacity: 0, scale: 0.8 }}
                 animate={{ x: 0, opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
@@ -352,7 +352,7 @@ const handleKeyDown = useCallback((event) => {
                 layout
               >
                 <GoTelescope style={{ strokeWidth: 0.5 }} />
-                <span className="button-text">딥 리서치</span>
+                <span className="button-text">리서치</span>
               </motion.div>
             )}
             {canToggleMCP && (
