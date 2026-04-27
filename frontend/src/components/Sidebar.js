@@ -24,13 +24,39 @@ const itemContentVariants = {
   exit: { height: 0 }
 };
 
+const RenameInput = ({ initialValue, conversationId, handleRename, setRenamingConversationId }) => {
+  const [value, setValue] = useState(initialValue);
+  return (
+    <input
+      type="text"
+      className="rename-input"
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          handleRename(conversationId, value);
+        } else if (e.key === "Escape") {
+          setRenamingConversationId(null);
+        }
+      }}
+      enterKeyHint="done"
+      onBlur={() => {
+        if (value.trim()) {
+          handleRename(conversationId, value);
+        } else {
+          setRenamingConversationId(null);
+        }
+      }}
+      autoFocus
+    />
+  );
+};
+
 const ConversationItem = React.memo(({
   conv,
   currentConversationId,
   selectedConversationId,
   renamingConversationId,
-  renameInputValue,
-  setRenameInputValue,
   handleRename,
   setRenamingConversationId,
   handleNavigate,
@@ -75,29 +101,11 @@ const ConversationItem = React.memo(({
         } : undefined}
       >
         {isRenaming ? (
-          <input
-            type="text"
-            className="rename-input"
-            value={renameInputValue}
-            onChange={(e) => setRenameInputValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleRename(conv.conversation_id, renameInputValue);
-              } else if (e.key === "Escape") {
-                setRenamingConversationId(null);
-                setRenameInputValue("");
-              }
-            }}
-            enterKeyHint="done"
-            onBlur={() => {
-              if (renameInputValue.trim()) {
-                handleRename(conv.conversation_id, renameInputValue);
-              } else {
-                setRenamingConversationId(null);
-                setRenameInputValue("");
-              }
-            }}
-            autoFocus
+          <RenameInput
+            initialValue={conv.alias}
+            conversationId={conv.conversation_id}
+            handleRename={handleRename}
+            setRenamingConversationId={setRenamingConversationId}
           />
         ) : (
           <>
@@ -138,7 +146,6 @@ const Sidebar = forwardRef(function Sidebar({
   const [modalAction, setModalAction] = useState(null);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [renamingConversationId, setRenamingConversationId] = useState(null);
-  const [renameInputValue, setRenameInputValue] = useState("");
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState("");
@@ -284,7 +291,6 @@ const Sidebar = forwardRef(function Sidebar({
     try {
       updateAlias(conversation_id, newAlias);
       setRenamingConversationId(null);
-      setRenameInputValue("");
   
       if (conversation_id === currentConversationId) {
         setAlias(newAlias);
@@ -519,12 +525,6 @@ const Sidebar = forwardRef(function Sidebar({
       }
     } else if (action === "rename") {
       if (selectedConversationId) {
-        const conv = conversations.find(
-          (c) => c.conversation_id === selectedConversationId
-        );
-        if (conv) {
-          setRenameInputValue(conv.alias);
-        }
         setRenamingConversationId(selectedConversationId);
       }
     } else if (action === "delete") {
@@ -595,8 +595,6 @@ const Sidebar = forwardRef(function Sidebar({
                     currentConversationId={currentConversationId}
                     selectedConversationId={selectedConversationId}
                     renamingConversationId={renamingConversationId}
-                    renameInputValue={renameInputValue}
-                    setRenameInputValue={setRenameInputValue}
                     handleRename={handleRename}
                     setRenamingConversationId={setRenamingConversationId}
                     handleNavigate={handleNavigate}
@@ -626,7 +624,7 @@ const Sidebar = forwardRef(function Sidebar({
         </div>
 
         <div className="user-container" ref={userContainerRef}>
-          <div className="user-info" onClick={() => setIsDropdown(!isDropdown)}>
+          <div className={`user-info${isDropdown ? ' active' : ''}`} onClick={() => setIsDropdown(!isDropdown)}>
             <FaUserCircle className="user-icon" />
             <div className="user-name">{userInfo?.name}</div>
           </div>

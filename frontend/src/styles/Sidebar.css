@@ -5,8 +5,8 @@
     width: 260px;
     height: 100dvh;
     box-sizing: border-box;
-    border-right: 1px solid rgb(240, 240, 240);
-    background-color: rgb(252, 252, 252);
+    border-right: 1px solid rgb(234, 234, 234);
+    background-color: rgb(255, 255, 255);
     z-index: 100;
     position: fixed;
     left: 0;
@@ -193,7 +193,7 @@
 
 .conversation-text {
     font-size: 14px;
-    color: #333;
+    color: #000;
 }
 
 .conversation-text.search {
@@ -282,7 +282,7 @@ input:focus {
     background-color: rgb(255, 255, 255);
     border-radius: 10px;
     z-index: 101;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgb(234, 234, 234);
 }
 
 .user-dropdown button {
@@ -299,16 +299,19 @@ input:focus {
 
 .user-container {
     position: relative;
+    border-top: 1px solid rgb(240, 240, 240);
+    padding: 4px 8px;
 }
 
 .user-info {
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 25px 20px;
+    padding: 15px 12px;
     gap: 10px;
-    border-top: 1px solid rgb(240, 240, 240);
+    border-radius: 8px;
     cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
 @media (hover: hover) {

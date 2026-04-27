@@ -7,7 +7,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.15);
   z-index: 1000;
 }
 
@@ -77,8 +77,10 @@
   background: white;
 }
 
-.mcp-server-item:hover {
-  background: #fafafa;
+@media (hover: hover) {
+  .mcp-server-item:hover {
+    background: #fafafa;
+  }
 }
 
 .mcp-server-item.selected {
@@ -162,16 +164,18 @@
   border: 1px solid #eaeaea;
 }
 
-.mcp-modal-button.cancel:hover {
-  background: #f5f5f5;
-}
-
 .mcp-modal-button.confirm {
   background: #252525;
   color: white;
   border: 1px solid #1a1a1a;
 }
 
-.mcp-modal-button.confirm:hover {
-  background: #000000;
+@media (hover: hover) {
+  .mcp-modal-button.cancel:hover {
+    background: #f5f5f5;
+  }
+
+  .mcp-modal-button.confirm:hover {
+    background: #000000;
+  }
 }
