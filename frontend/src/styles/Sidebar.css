@@ -5,8 +5,7 @@
     width: 260px;
     height: 100dvh;
     box-sizing: border-box;
-    border-right: 1px solid rgb(234, 234, 234);
-    background-color: rgb(255, 255, 255);
+    background-color: rgb(250, 249, 249);
     z-index: 100;
     position: fixed;
     left: 0;
@@ -71,9 +70,10 @@
 .new-task.search {
     margin-bottom: 2px;
     padding: 9px 11px;
-    background-color: rgb(255, 255, 255);
+    background-color: rgb(248, 248, 248);
     border: 1px solid rgb(236, 236, 236);
     border-radius: 15px;
+    box-shadow: 0 1px 7px rgba(0, 0, 0, 0.045);
 }
 
 @media (hover: hover) {
@@ -136,7 +136,25 @@
 }
 
 .conversation-container:hover {
-    scrollbar-color: rgb(230, 230, 230) transparent;
+    scrollbar-color: rgb(235, 235, 235) transparent;
+}
+
+.conversation-container:focus-within {
+    scrollbar-color: rgb(235, 235, 235) transparent;
+}
+
+.conversation-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+.conversation-container::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 10px;
+}
+
+.conversation-container:hover::-webkit-scrollbar-thumb,
+.conversation-container:focus-within::-webkit-scrollbar-thumb {
+    background: rgb(235, 235, 235);
 }
 
 .conversation-container.loading {
@@ -299,7 +317,7 @@ input:focus {
 
 .user-container {
     position: relative;
-    border-top: 1px solid rgb(240, 240, 240);
+    border-top: 1px solid rgb(242, 242, 242);
     padding: 4px 8px;
 }
 

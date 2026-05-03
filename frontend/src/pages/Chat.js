@@ -111,7 +111,11 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
 
   const deleteMessages = useCallback(
     async (startIndex) => {
-      setMessages((prevMessages) => prevMessages.slice(0, startIndex));
+      let savedMessages;
+      setMessages((prevMessages) => {
+        savedMessages = prevMessages;
+        return prevMessages.slice(0, startIndex);
+      });
 
       try {
         const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/${startIndex}`, {
@@ -125,8 +129,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         }
         if (!res.ok) throw new Error('delete failed');
       } catch (err) {
-        setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
-        setShowToast(true);
+        setMessages(savedMessages);
+        throw err;
       }
     },
     [conversation_id]
@@ -391,21 +395,22 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   );
 
   const resendMesage = useCallback(
-    async (messageContent, deleteIndex = null) => {
+    async (messageContent, deleteIndex = null, errorLabel) => {
       setIsLoading(true);
-      try {
-        if (deleteIndex !== null) {
+      if (deleteIndex !== null) {
+        try {
           await deleteMessages(deleteIndex);
+        } catch {
+          setToastMessage(`메세지 ${errorLabel} 중 오류가 발생했습니다.`);
+          setShowToast(true);
+          setIsLoading(false);
+          return;
         }
-        
-        const textContent = messageContent.find(item => item.type === "text")?.text || "";
-        const nonTextContent = messageContent.filter(item => item.type !== "text");
-        
-        sendMessage(textContent, nonTextContent);
-      } catch (err) {
-        setToastMessage("메세지 처리 중 오류가 발생했습니다.");
-        setShowToast(true);
       }
+
+      const textContent = messageContent.find(item => item.type === "text")?.text || "";
+      const nonTextContent = messageContent.filter(item => item.type !== "text");
+      sendMessage(textContent, nonTextContent);
     },
     [deleteMessages, sendMessage]
   );
@@ -419,7 +424,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
 
   const sendEditedMessage = useCallback(
     (idx, updatedContent) => {
-      resendMesage(updatedContent, idx);
+      resendMesage(updatedContent, idx, '전송');
     },
     [resendMesage]
   );
@@ -428,8 +433,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     (startIndex) => {
       const previousMessage = messages[startIndex - 1];
       if (!previousMessage) return;
-      
-      resendMesage(previousMessage.content, startIndex - 1);
+
+      resendMesage(previousMessage.content, startIndex - 1, '재생성');
     },
     [messages, resendMesage]
   );
@@ -726,8 +731,13 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           {confirmModal && (
             <Modal
               message="정말 메세지를 삭제하시겠습니까?"
-              onConfirm={() => {
-                deleteMessages(deleteIndex);
+              onConfirm={async () => {
+                try {
+                  await deleteMessages(deleteIndex);
+                } catch {
+                  setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
+                  setShowToast(true);
+                }
                 setdeleteIndex(null);
                 setConfirmModal(false);
               }}

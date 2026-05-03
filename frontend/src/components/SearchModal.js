@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { RiCloseLine } from "react-icons/ri";
 import { IoMdStar } from "react-icons/io";
@@ -7,16 +7,17 @@ import "../styles/SearchModal.css";
 function SearchModal({
   isVisible,
   onClose,
-  searchQuery,
-  setChangeQuery,
   sortedConversations,
   onSelectConversation,
 }) {
   const inputRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    if (isVisible && inputRef.current) {
-      inputRef.current.focus();
+    if (isVisible) {
+      inputRef.current?.focus();
+    } else {
+      setSearchQuery("");
     }
   }, [isVisible]);
 
@@ -46,7 +47,7 @@ function SearchModal({
                 type="text"
                 placeholder="검색어를 입력하세요."
                 value={searchQuery}
-                onChange={(e) => setChangeQuery(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="search-modal-input"
                 ref={inputRef}
               />
@@ -83,4 +84,4 @@ function SearchModal({
   );
 }
 
-export default SearchModal;
+export default React.memo(SearchModal);

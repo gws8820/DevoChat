@@ -9,6 +9,7 @@
     padding: 10px;
     background-color: rgb(255, 255, 255);
     border: 1px solid rgb(234, 234, 234);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
     opacity: 1;
     user-select: none;
     -webkit-user-select: none;
@@ -41,7 +42,7 @@
 }
 
 .file-area::-webkit-scrollbar-thumb {
-    background: rgb(230, 230, 230);
+    background: rgb(235, 235, 235);
     border-radius: 10px;
 }
 
@@ -140,7 +141,7 @@
 }
 
 .message-input::-webkit-scrollbar-thumb {
-    background: rgb(230, 230, 230);
+    background: rgb(235, 235, 235);
     border-radius: 10px;
 }
 

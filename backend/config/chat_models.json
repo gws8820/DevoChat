@@ -345,49 +345,18 @@
       "admin": false
     },
     {
-      "model_name": "grok-4.20-0309-non-reasoning",
-      "model_alias": "Grok 4.2",
+      "model_name": "grok-4.3",
+      "model_alias": "Grok 4.3",
       "description": "기본 Grok 모델",
       "endpoint": "/chat/grok",
       "billing": {
-        "in_billing": "2",
-        "out_billing": "6"
-      },
-      "variants": {
-        "reasoning": "grok-4.20-0309-reasoning"
+        "in_billing": "1.25",
+        "out_billing": "2.5"
       },
       "capabilities": {
         "stream": true,
         "vision": true,
-        "reasoning": "switch",
-        "web_search": "toggle",
-        "research": false,
-        "mcp": true
-      },
-      "controls": {
-        "instructions": true,
-        "temperature": true,
-        "reason": false,
-        "verbosity": false
-      },
-      "admin": false
-    },
-    {
-      "model_name": "grok-4.20-0309-reasoning",
-      "model_alias": "Grok 4.2",
-      "description": "기본 Grok 모델",
-      "endpoint": "/chat/grok",
-      "billing": {
-        "in_billing": "2",
-        "out_billing": "6"
-      },
-      "variants": {
-        "base": "grok-4.20-0309-non-reasoning"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": true,
-        "reasoning": "switch",
+        "reasoning": true,
         "web_search": "toggle",
         "research": false,
         "mcp": true

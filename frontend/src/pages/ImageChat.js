@@ -314,7 +314,11 @@ function ImageChat({ isTouch, chatMessageRef }) {
 
   const deleteMessages = useCallback(
     async (startIndex) => {
-      setMessages((prevMessages) => prevMessages.slice(0, startIndex));
+      let savedMessages;
+      setMessages((prevMessages) => {
+        savedMessages = prevMessages;
+        return prevMessages.slice(0, startIndex);
+      });
 
       try {
         const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/conversation/${conversation_id}/${startIndex}`, {
@@ -328,35 +332,35 @@ function ImageChat({ isTouch, chatMessageRef }) {
           throw new Error('메세지 삭제에 실패했습니다.');
         }
       } catch (err) {
-        setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
-        setShowToast(true);
+        setMessages(savedMessages);
+        throw err;
       }
     },
     [conversation_id]
   );
 
   const resendMesage = useCallback(
-    async (messageContent, deleteIndex = null) => {
-      try {
-        if (deleteIndex !== null) {
+    async (messageContent, deleteIndex = null, errorLabel) => {
+      if (deleteIndex !== null) {
+        try {
           await deleteMessages(deleteIndex);
+        } catch {
+          setToastMessage(`메세지 ${errorLabel} 중 오류가 발생했습니다.`);
+          setShowToast(true);
+          return;
         }
-        
-        const textContent = messageContent.find(item => item.type === "text")?.text || "";
-        const nonTextContent = messageContent.filter(item => item.type !== "text");
-        
-        sendMessage(textContent, nonTextContent);
-      } catch (err) {
-        setToastMessage("메세지 처리 중 오류가 발생했습니다.");
-        setShowToast(true);
       }
+
+      const textContent = messageContent.find(item => item.type === "text")?.text || "";
+      const nonTextContent = messageContent.filter(item => item.type !== "text");
+      sendMessage(textContent, nonTextContent);
     },
     [deleteMessages, sendMessage]
   );
 
   const sendEditedMessage = useCallback(
     (idx, updatedContent) => {
-      resendMesage(updatedContent, idx);
+      resendMesage(updatedContent, idx, '전송');
     },
     [resendMesage]
   );
@@ -414,8 +418,13 @@ function ImageChat({ isTouch, chatMessageRef }) {
           {confirmModal && (
             <Modal
               message="정말 메세지를 삭제하시겠습니까?"
-              onConfirm={() => {
-                deleteMessages(deleteIndex);
+              onConfirm={async () => {
+                try {
+                  await deleteMessages(deleteIndex);
+                } catch {
+                  setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
+                  setShowToast(true);
+                }
                 setdeleteIndex(null);
                 setConfirmModal(false);
               }}

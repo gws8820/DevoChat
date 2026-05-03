@@ -11,7 +11,10 @@ import openpyxl
 import xlrd
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
 from pydantic import BaseModel
+from pillow_heif import register_heif_opener
 from PIL import Image, ImageOps
+
+register_heif_opener()
 from typing import List
 from docx import Document
 from pptx import Presentation

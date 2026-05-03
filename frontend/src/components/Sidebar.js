@@ -1,5 +1,5 @@
 // src/components/Sidebar.js
-import React, { useEffect, useState, useRef, useContext, useMemo, useCallback, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useLayoutEffect, useState, useRef, useContext, useMemo, useCallback, useImperativeHandle, forwardRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RiMenuLine } from "react-icons/ri";
 import { LuSearch, LuSquarePen, LuAudioLines, LuImage, LuArrowUp, LuArrowDown } from "react-icons/lu";
@@ -54,9 +54,9 @@ const RenameInput = ({ initialValue, conversationId, handleRename, setRenamingCo
 
 const ConversationItem = React.memo(({
   conv,
-  currentConversationId,
-  selectedConversationId,
-  renamingConversationId,
+  isActive,
+  isSelected,
+  isRenaming,
   handleRename,
   setRenamingConversationId,
   handleNavigate,
@@ -66,10 +66,6 @@ const ConversationItem = React.memo(({
   handleTouchMove,
   isTouch
 }) => {
-  const isRenaming = renamingConversationId === conv.conversation_id;
-  const isActive = currentConversationId === conv.conversation_id;
-  const isSelected = selectedConversationId === conv.conversation_id;
-
   return (
     <motion.li
       layout
@@ -147,7 +143,6 @@ const Sidebar = forwardRef(function Sidebar({
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [renamingConversationId, setRenamingConversationId] = useState(null);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [isActiveVisible, setIsActiveVisible] = useState(true);
@@ -162,6 +157,13 @@ const Sidebar = forwardRef(function Sidebar({
   const userContainerRef = useRef(null);
   const longPressTimer = useRef(null);
   const contextMenuProtected = useRef(false);
+  const contextMenuVisibleRef = useRef(false);
+  const renamingIdRef = useRef(null);
+  const conversationsRef = useRef([]);
+
+  useLayoutEffect(() => {
+    contextMenuVisibleRef.current = contextMenu.visible;
+  }, [contextMenu.visible]);
 
   const {
     conversations,
@@ -170,6 +172,10 @@ const Sidebar = forwardRef(function Sidebar({
     updateAlias,
     toggleStarConversation
   } = useContext(ConversationsContext);
+
+  useLayoutEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
 
   const sortedConversations = useMemo(() => {
     return [...conversations].sort((a, b) => {
@@ -189,7 +195,7 @@ const Sidebar = forwardRef(function Sidebar({
   }, [conversations]);
 
   const handleNavigate = useCallback((conversation_id) => {
-    const conv = conversations.find(
+    const conv = conversationsRef.current.find(
       (c) => c.conversation_id === conversation_id
     );
     if (!conv) {
@@ -200,7 +206,7 @@ const Sidebar = forwardRef(function Sidebar({
     const targetPath = conv.type === 'image' ? `/image/${conversation_id}` : `/chat/${conversation_id}`;
     navigate(targetPath);
     if (isResponsive) toggleSidebar();
-  }, [conversations, navigate, isResponsive, toggleSidebar]);
+  }, [navigate, isResponsive, toggleSidebar]);
 
   const toggleStar = useCallback(async (conversation_id, e) => {
     e.stopPropagation();
@@ -261,21 +267,21 @@ const Sidebar = forwardRef(function Sidebar({
   }, []);
 
   const handleTouchEnd = useCallback((e, conversation_id) => {
-    if (contextMenu.visible) {
+    if (contextMenuVisibleRef.current) {
       e.preventDefault();
       e.stopPropagation();
       return;
     }
-    
+
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
-      
-      if (renamingConversationId !== conversation_id) {
+
+      if (renamingIdRef.current !== conversation_id) {
         handleNavigate(conversation_id);
       }
     }
-  }, [contextMenu.visible, renamingConversationId, handleNavigate]);
+  }, [handleNavigate]);
 
   const handleTouchMove = useCallback((e) => {
     if (longPressTimer.current) {
@@ -287,12 +293,18 @@ const Sidebar = forwardRef(function Sidebar({
   const match = location.pathname.match(/^\/(?:chat|image)\/([^/]+)/);
   const currentConversationId = match ? match[1] : null;
 
+  const currentConversationIdRef = useRef(currentConversationId);
+  useLayoutEffect(() => {
+    currentConversationIdRef.current = currentConversationId;
+    renamingIdRef.current = renamingConversationId;
+  }, [currentConversationId, renamingConversationId]);
+
   const handleRename = useCallback(async (conversation_id, newAlias) => {
     try {
       updateAlias(conversation_id, newAlias);
       setRenamingConversationId(null);
-  
-      if (conversation_id === currentConversationId) {
+
+      if (conversation_id === currentConversationIdRef.current) {
         setAlias(newAlias);
       }
   
@@ -313,7 +325,7 @@ const Sidebar = forwardRef(function Sidebar({
       setToastMessage("대화 이름 편집에 실패했습니다.");
       setShowToast(true);
     }
-  }, [updateAlias, currentConversationId, setAlias]);
+  }, [updateAlias, setAlias]);
 
   const handleDelete = useCallback(async (conversation_id) => {
     try {
@@ -444,19 +456,19 @@ const Sidebar = forwardRef(function Sidebar({
 
   const handleConversationContextMenu = useCallback((e, conversation_id) => {
     e.preventDefault();
-    if (renamingConversationId !== null) return;
-    
+    if (renamingIdRef.current !== null) return;
+
     setSelectedConversationId(conversation_id);
     setContextMenu({
       visible: true,
       x: e.pageX,
       y: e.pageY,
     });
-  }, [renamingConversationId]);
+  }, []);
   
   useEffect(() => {
     const handleClickOutsideContextMenu = () => {
-      if (contextMenu.visible && !contextMenuProtected.current) {
+      if (contextMenuVisibleRef.current && !contextMenuProtected.current) {
         setContextMenu(prev => ({ ...prev, visible: false }));
         setSelectedConversationId(null);
       }
@@ -464,7 +476,7 @@ const Sidebar = forwardRef(function Sidebar({
     document.addEventListener("click", handleClickOutsideContextMenu);
     return () =>
       document.removeEventListener("click", handleClickOutsideContextMenu);
-  }, [contextMenu.visible]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutsideDropdown = (e) => {
@@ -486,7 +498,6 @@ const Sidebar = forwardRef(function Sidebar({
   useImperativeHandle(ref, () => ({
     resetSearch: () => {
       setIsSearchVisible(false);
-      setSearchQuery("");
     }
   }));
 
@@ -537,11 +548,8 @@ const Sidebar = forwardRef(function Sidebar({
   }, [selectedConversationId, conversations, toggleStar, handleDelete]);
 
   const toggleSearch = useCallback(() => {
-    setIsSearchVisible(!isSearchVisible);
-    if (isSearchVisible) {
-      setSearchQuery("");
-    }
-  }, [isSearchVisible]);
+    setIsSearchVisible(prev => !prev);
+  }, []);
 
   return (
     <>
@@ -592,9 +600,9 @@ const Sidebar = forwardRef(function Sidebar({
                   <ConversationItem
                     key={conv.conversation_id}
                     conv={conv}
-                    currentConversationId={currentConversationId}
-                    selectedConversationId={selectedConversationId}
-                    renamingConversationId={renamingConversationId}
+                    isActive={currentConversationId === conv.conversation_id}
+                    isSelected={selectedConversationId === conv.conversation_id}
+                    isRenaming={renamingConversationId === conv.conversation_id}
                     handleRename={handleRename}
                     setRenamingConversationId={setRenamingConversationId}
                     handleNavigate={handleNavigate}
@@ -673,10 +681,8 @@ const Sidebar = forwardRef(function Sidebar({
       <SearchModal
         isVisible={isSearchVisible}
         onClose={toggleSearch}
-        searchQuery={searchQuery}
-        setChangeQuery={setSearchQuery}
         sortedConversations={sortedConversations}
-        onSelectConversation={(id) => handleNavigate(id)}
+        onSelectConversation={handleNavigate}
       />
 
       <div

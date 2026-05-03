@@ -21,7 +21,7 @@
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: rgb(230, 230, 230);
+  background: rgb(235, 235, 235);
   border-radius: 10px;
 }
 
@@ -282,7 +282,7 @@
 }
 
 .code-block pre::-webkit-scrollbar-thumb {
-  background: rgb(210, 210, 210);
+  background: rgb(235, 235, 235);
   border-radius: 10px;
 }
 
