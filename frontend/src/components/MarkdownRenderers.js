@@ -1,4 +1,3 @@
-// src/components/markdownrenderers.js
 import React, { useMemo, useRef, createContext, useContext, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm-no-autolink";

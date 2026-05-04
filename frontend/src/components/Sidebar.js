@@ -1,5 +1,4 @@
-// src/components/Sidebar.js
-import React, { useEffect, useLayoutEffect, useState, useRef, useContext, useMemo, useCallback, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useLayoutEffect, useState, useRef, useContext, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RiMenuLine } from "react-icons/ri";
 import { LuSearch, LuSquarePen, LuAudioLines, LuImage, LuArrowUp, LuArrowDown } from "react-icons/lu";
@@ -127,13 +126,14 @@ const ConversationItem = React.memo(({
   );
 });
 
-const Sidebar = forwardRef(function Sidebar({
+function Sidebar({
+  isSidebarOpen,
   toggleSidebar,
   isResponsive,
   isTouch,
   userInfo,
   setAlias,
-}, ref) {
+}) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isDropdown, setIsDropdown] = useState(false);
@@ -495,11 +495,9 @@ const Sidebar = forwardRef(function Sidebar({
     };
   }, [isDropdown]);
 
-  useImperativeHandle(ref, () => ({
-    resetSearch: () => {
-      setIsSearchVisible(false);
-    }
-  }));
+  useLayoutEffect(() => {
+    if (!isSidebarOpen) setIsSearchVisible(false);
+  }, [isSidebarOpen]);
 
   useEffect(() => {
     if (!currentConversationId || !containerRef.current) {
@@ -727,7 +725,7 @@ const Sidebar = forwardRef(function Sidebar({
       />
     </>
   );
-});
+}
 
 export default React.memo(Sidebar);
 

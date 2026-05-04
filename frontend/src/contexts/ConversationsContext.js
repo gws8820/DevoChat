@@ -1,4 +1,3 @@
-// src/contexts/ConversationsContext.js
 import React, { createContext, useState, useCallback, useMemo } from "react";
  
 export const ConversationsContext = createContext();

@@ -1,4 +1,3 @@
-// src/App.js
 import React, { useEffect, useState, useCallback, useRef, useContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { BarLoader } from "react-spinners";
@@ -14,7 +13,6 @@ import Realtime from "./pages/Realtime";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Toast from "./components/Toast";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { SettingsContext } from "./contexts/SettingsContext";
 import { ConversationsProvider, ConversationsContext } from "./contexts/ConversationsContext";
@@ -77,8 +75,6 @@ function AppContent() {
   const [userSidebarOpen, setUserSidebarOpen] = useState(null);
 
   const [isTouch, setIsTouch] = useState(false);
-  const [toastMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
 
   const location = useLocation();
 
@@ -90,7 +86,6 @@ function AppContent() {
   );
 
   const chatMessageRef = useRef(null);
-  const sidebarRef = useRef(null);
   const { fetchConversations, isLoadingChat } = useContext(ConversationsContext);
   const { isModelReady, resetSettings, setAlias } = useContext(SettingsContext);
 
@@ -162,7 +157,6 @@ function AppContent() {
   }, [isModelReady, location.pathname]);
 
   const toggleSidebar = useCallback(() => {
-    sidebarRef.current?.resetSearch();
     setIsSidebarOpen(prev => {
       const newState = !prev;
       if (!isResponsive) setUserSidebarOpen(newState);
@@ -265,7 +259,7 @@ function AppContent() {
           }}
         >
           <Sidebar
-            ref={sidebarRef}
+            isSidebarOpen={isSidebarOpen}
             toggleSidebar={toggleSidebar}
             isResponsive={isResponsive}
             isTouch={isTouch}
@@ -327,12 +321,6 @@ function AppContent() {
         />
       </div>
 
-      <Toast
-        type="error"
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-      />
     </div>
   );
 }
