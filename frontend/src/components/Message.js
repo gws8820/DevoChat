@@ -90,6 +90,26 @@ function Message({
     setEditText(e.target.value);
   };
 
+  const stripMarkdown = (text) => text
+    .replace(/```[\s\S]*?```/g, (m) => m.replace(/^```\w*\n?/, '').replace(/```$/, '').trim())
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/___(.+?)___/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/_(.+?)_/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/^\s*\d+\.\s+/gm, '')
+    .replace(/^\s*>{1,}\s*/gm, '')
+    .replace(/^[-*_]{3,}$/gm, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
   const handleCopy = async () => {
     try {
       let textToCopy;
@@ -100,12 +120,12 @@ function Message({
         textToCopy = String(content)
           .replace(/\n\n<tool_use>\n.*?\n<\/tool_use>\n/gi, '')
           .replace(/\n<tool_result>\n.*?\n<\/tool_result>\n\n/gi, '')
-          .replace(/<\/?think>/gi, '')
+          .replace(/<think>[\s\S]*?<\/think>\n*/gi, '')
           .replace(/<\/?citations>/gi, '')
           .replace(/\n$/, "");
       }
       await navigator.clipboard.writeText(
-        textToCopy.replace(/\\u([0-9a-fA-F]{4})/g, (_, code) =>
+        stripMarkdown(textToCopy).replace(/\\u([0-9a-fA-F]{4})/g, (_, code) =>
           String.fromCharCode(parseInt(code, 16))
         )
       );

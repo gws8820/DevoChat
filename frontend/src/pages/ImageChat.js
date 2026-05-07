@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, useContext } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { IoImageOutline } from "react-icons/io5";
+import { LuArrowDown } from "react-icons/lu";
 import { PulseLoader } from "react-spinners";
 import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
@@ -35,6 +36,8 @@ function ImageChat({ isTouch, chatMessageRef }) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [scrollTrigger, setScrollTrigger] = useState(0);
   const [editingHasImages, setEditingHasImages] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isButtonReady, setIsButtonReady] = useState(false);
   const [deleteIndex, setdeleteIndex] = useState(null);
   const [confirmModal, setConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -48,7 +51,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
   } = useFileUpload([]);
 
   const abortControllerRef = useRef(null);
-  const bottomRef = useRef(null);
+
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
   const generateMessageId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -154,6 +157,19 @@ function ImageChat({ isTouch, chatMessageRef }) {
     initializeChat();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversation_id, location.state]);
+
+  useEffect(() => {
+    const container = chatMessageRef.current;
+    if (!container) return;
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      setIsAtBottom(scrollHeight - scrollTop - clientHeight < 50);
+    };
+    container.addEventListener('scroll', handleScroll);
+    const t = setTimeout(() => setIsButtonReady(true), 600);
+    return () => { container.removeEventListener('scroll', handleScroll); clearTimeout(t); };
+  // eslint-disable-next-line
+  }, []);
 
   useEffect(() => {
     if (isInitialized) chatMessageRef.current.scrollTop = chatMessageRef.current.scrollHeight;
@@ -394,56 +410,64 @@ function ImageChat({ isTouch, chatMessageRef }) {
         </motion.div>
       )}
 
-      <div className="chat-messages" ref={chatMessageRef} style={{ scrollbarGutter: "stable" }}>
-        {useMemo(() => 
-          messages.map((msg, idx) => (
-            <Message
-              key={msg.id}
-              messageIndex={idx}
-              role={msg.role}
-              content={msg.content}
-              onDelete={handleDelete}
-              onSendEditedMessage={sendEditedMessage}
-              setEditingHasImages={setEditingHasImages}
-              setScrollTrigger={setScrollTrigger}
-              isTouch={isTouch}
-              isLoading={isLoading}
-              isLastMessage={idx === messages.length - 1}
-              shouldRender={idx >= messages.length - 6}
-            />
-          )), [messages, handleDelete, sendEditedMessage, isTouch, isLoading]
-        )}
-
-        <AnimatePresence>
-          {confirmModal && (
-            <Modal
-              message="정말 메세지를 삭제하시겠습니까?"
-              onConfirm={async () => {
-                try {
-                  await deleteMessages(deleteIndex);
-                } catch {
-                  setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
-                  setShowToast(true);
-                }
-                setdeleteIndex(null);
-                setConfirmModal(false);
-              }}
-              onCancel={() => {
-                setdeleteIndex(null);
-                setConfirmModal(false);
-              }}
-            />
+      <div className="chat-messages-wrapper">
+        <div className="chat-messages" ref={chatMessageRef} style={{ scrollbarGutter: "stable" }}>
+          {useMemo(() =>
+            messages.map((msg, idx) => (
+              <Message
+                key={msg.id}
+                messageIndex={idx}
+                role={msg.role}
+                content={msg.content}
+                onDelete={handleDelete}
+                onSendEditedMessage={sendEditedMessage}
+                setEditingHasImages={setEditingHasImages}
+                setScrollTrigger={setScrollTrigger}
+                isTouch={isTouch}
+                isLoading={isLoading}
+                isLastMessage={idx === messages.length - 1}
+                shouldRender={idx >= messages.length - 6}
+              />
+            )), [messages, handleDelete, sendEditedMessage, isTouch, isLoading]
           )}
-        </AnimatePresence>
 
-        {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-          <>
-            <div className="image-generating" style={{ marginBottom: "15px" }}>
-              이미지 생성 중...
-            </div>
-          </>
-        )}
-        <div ref={bottomRef} />
+          <AnimatePresence>
+            {confirmModal && (
+              <Modal
+                message="정말 메세지를 삭제하시겠습니까?"
+                onConfirm={async () => {
+                  try {
+                    await deleteMessages(deleteIndex);
+                  } catch {
+                    setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
+                    setShowToast(true);
+                  }
+                  setdeleteIndex(null);
+                  setConfirmModal(false);
+                }}
+                onCancel={() => {
+                  setdeleteIndex(null);
+                  setConfirmModal(false);
+                }}
+              />
+            )}
+          </AnimatePresence>
+
+          {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
+            <>
+              <div className="image-generating" style={{ marginBottom: "15px" }}>
+                이미지 생성 중...
+              </div>
+            </>
+          )}
+
+        </div>
+        <button
+          className={`scroll-to-bottom-btn ${!isAtBottom && isButtonReady ? 'visible' : ''}`}
+          onClick={() => chatMessageRef.current.scrollTo({ top: chatMessageRef.current.scrollHeight, behavior: 'smooth' })}
+        >
+          <LuArrowDown />
+        </button>
       </div>
 
       <ImageInputContainer

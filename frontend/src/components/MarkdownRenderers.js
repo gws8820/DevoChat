@@ -2,6 +2,7 @@ import React, { useMemo, useRef, createContext, useContext, useState } from "rea
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm-no-autolink";
 import remarkMath from "remark-math";
+import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
 import rehypeKatex from "rehype-katex";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize"; 
@@ -341,16 +342,37 @@ function parseToolBlocks(rawContent, isLoading, isLastMessage) {
   return { content: processedContent, toolData };
 }
 
+function preprocessMarkdownContent(content) {
+  const mathParts = [];
+  const stash = (value) => {
+    const token = `@@MATH_${mathParts.length}@@`;
+    mathParts.push(value);
+    return token;
+  };
+  const isMath = (value) => /\\[a-zA-Z]+|[=+\-*/^_{}|]/.test(value);
+
+  let result = String(content)
+    .replace(/^(#{2,3}) #{2,4}(?= )/gm, "$1")
+    .replace(/(^|[\s(])[₩￦](?=\s*\d)/g, "$1₩")
+    .replace(/\\\[/g, "$$")
+    .replace(/\\\]/g, "$$")
+    .replace(/\\\(/g, "$")
+    .replace(/\\\)/g, "$");
+
+  result = result
+    .replace(/\$\$[\s\S]*?\$\$/g, stash)
+    .replace(/(^|[^\\])\$((?:\\.|[^\n$])+?)\$/g, (match, prefix, value) => {
+      return isMath(value) ? `${prefix}${stash(`$${value}$`)}` : match;
+    })
+    .replace(/(^|[\s(])\$(?=\s*\d)/g, "$1\\$")
+    .replace(/@@MATH_(\d+)@@/g, (match, index) => mathParts[Number(index)] ?? match);
+
+  return result;
+}
+
 const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = false, isLastMessage = false }) => {
   const { finalContent, toolData, thinkState } = useMemo(() => {
-    let parsedContent = String(content)
-      .replace(/^(#{2,3}) #{2,4}(?= )/gm, "$1")
-      .replace(/(^|[\s(])\$(?=\s*\d)/g, "$1\\$")
-      .replace(/(^|[\s(])[₩￦](?=\s*\d)/g, "$1₩")
-      .replace(/\\\[/g, "$$")
-      .replace(/\\\]/g, "$$")
-      .replace(/\\\(/g, "$")
-      .replace(/\\\)/g, "$");
+    let parsedContent = preprocessMarkdownContent(content);
     const { content: contentWithSpecialBlocks, states } = parseSpecialBlocks(parsedContent);
     const { content: finalContent, toolData } = parseToolBlocks(contentWithSpecialBlocks, isLoading, isLastMessage);
     return { finalContent, toolData, thinkState: states?.think ?? { hasTag: false, isClosed: false } };
@@ -379,6 +401,7 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
       th: Th,
       td: Td,
       hr: () => null,
+      br: () => <span className="markdown-line-break" aria-hidden="true" />,
       div: ({ className, children, ...props }) => {
         if (className === "tool-block") {
           const toolId = props['data-tool-id'];
@@ -413,7 +436,7 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
   return (
     <ToolBlockStateProvider>
       <ReactMarkdown
-        remarkPlugins={[remarkMath, remarkGfm]}
+        remarkPlugins={[remarkMath, remarkBreaks, remarkGfm]}
         rehypePlugins={[
           rehypeRaw,
           [

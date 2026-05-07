@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { IoImageOutline, IoAttach } from "react-icons/io5";
+import { LuArrowDown } from "react-icons/lu";
 import { PulseLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
@@ -29,6 +30,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   const [confirmModal, setConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isButtonReady, setIsButtonReady] = useState(false);
   
   const { 
     uploadedFiles, 
@@ -40,6 +43,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   const abortControllerRef = useRef(null);
   const lastScrollTopRef = useRef(0);
   const touchStartYRef = useRef(null);
+
   
   const {
     models,
@@ -518,7 +522,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           setInstructions(data.instructions);
 
           setIsDAN(data.dan);
-          setMCPList(data.mcp);
+          setMCPList(data.mcp ?? []);
           setTemperature(data.temperature);
           setReason(data.reason);
           setVerbosity(data.verbosity);
@@ -644,6 +648,19 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     }
   }, [isLoading]);
 
+  useEffect(() => {
+    const container = chatMessageRef.current;
+    if (!container) return;
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      setIsAtBottom(scrollHeight - scrollTop - clientHeight < 50);
+    };
+    container.addEventListener('scroll', handleScroll);
+    const t = setTimeout(() => setIsButtonReady(true), 600);
+    return () => { container.removeEventListener('scroll', handleScroll); clearTimeout(t); };
+  // eslint-disable-next-line
+  }, []);
+
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
     setIsDragActive(true);
@@ -691,8 +708,9 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         </motion.div>
       )}
       
+      <div className="chat-messages-wrapper">
       <div className="chat-messages" ref={chatMessageRef} style={{ scrollbarGutter: "stable" }}>
-        {useMemo(() => 
+        {useMemo(() =>
           messages.map((msg, idx) => (
             <Message
               key={msg.id}
@@ -748,6 +766,14 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
             />
           )}
         </AnimatePresence>
+
+      </div>
+      <button
+        className={`scroll-to-bottom-btn ${!isAtBottom && isButtonReady ? 'visible' : ''}`}
+        onClick={() => chatMessageRef.current.scrollTo({ top: chatMessageRef.current.scrollHeight, behavior: 'smooth' })}
+      >
+        <LuArrowDown />
+      </button>
       </div>
 
       <InputContainer

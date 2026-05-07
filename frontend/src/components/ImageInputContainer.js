@@ -144,6 +144,7 @@ function ImageInputContainer({
                     ) : (
                       <div className="file-object">
                         <span className="file-name">{file.name}</span>
+                        <span className="file-ext">{file.name.includes('.') ? file.name.split('.').pop().toUpperCase() : 'FILE'}</span>
                         <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
                       </div>
                     )}

@@ -1,7 +1,17 @@
+.chat-messages-wrapper {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .chat-messages {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
   padding-left: calc((100% - 700px) / 2);
   padding-right: calc((100% - 700px) / 2);
@@ -176,6 +186,11 @@
   margin: 0;
 }
 
+.chat-message .markdown-line-break {
+  display: block;
+  height: 15px;
+}
+
 .chat-message h1, h2, h3, h4 {
   margin: 16px 0 6px 0;
 }
@@ -208,8 +223,6 @@
 }
 
 .chat-message .katex {
-  position: relative;
-  padding: 5px 0;
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -404,6 +417,41 @@ textarea:focus {
 
 .edit-button.save:hover {
   background-color: #000000;
+}
+
+.scroll-to-bottom-btn {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  font-size: 17px;
+  border: 1px solid rgb(225, 225, 225);
+  border-radius: 50%;
+  background-color: rgb(255, 255, 255);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  color: #444;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease, background-color 0.2s ease;
+  z-index: 10;
+}
+
+.scroll-to-bottom-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (hover: hover) {
+  .scroll-to-bottom-btn:hover {
+    background-color: #f1f1f1;
+  }
 }
 
 @container (max-width: 768px) {
