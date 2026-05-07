@@ -227,7 +227,7 @@
   overflow-y: hidden;
 }
 
-.think-toggle, .citations-toggle, .image-generating {
+.think-toggle, .citations-toggle, .image-generating, .remote-streaming {
   display: flex;
   align-items: center;
   margin-top: 6px;
@@ -239,7 +239,6 @@
   user-select: none;
 }
 
-
 .think-toggle.thinking, .image-generating {
   background: linear-gradient(to right, rgb(100, 100, 100) 0%, rgb(100, 100, 100) 40%, rgb(255, 255, 255) 50%, rgb(100, 100, 100) 60%, rgb(100, 100, 100) 100%);
   background-size: 200% auto;
@@ -250,6 +249,15 @@
   animation: shimmer 6s linear infinite;
 }
 
+.remote-streaming {
+  background: linear-gradient(to right, rgb(100, 100, 100) 0%, rgb(100, 100, 100) 42.5%, rgb(255, 255, 255) 50%, rgb(100, 100, 100) 57.5%, rgb(100, 100, 100) 100%);
+  background-size: 200% auto;
+  color: rgb(100, 100, 100);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 15s linear infinite;
+}
 
 @keyframes shimmer {
   0% {

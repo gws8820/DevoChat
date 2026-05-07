@@ -56,6 +56,7 @@ db = mongo_client.devochat
 user_collection = db.users
 conversation_collection = db.conversations
 
+active_streams: set = set()
 
 default_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'default_prompt.txt')
 try:
@@ -105,7 +106,6 @@ def check_chat_user_permissions(user: User, request: ChatRequest):
         return "메시지가 비어 있습니다. 내용을 입력해 주세요.", None, None
     return None, in_billing, out_billing
 
-
 def check_image_user_permissions(user: User, request: ImageGenerateRequest):
     billing_result = get_image_model_billing(request.model)
     if not billing_result:
@@ -128,15 +128,6 @@ def get_chat_conversation(user: User, conversation_id: str, memory):
     )
     return conversation.get("conversation", [])
 
-
-def normalize_assistant_content(content):
-    content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
-    content = re.sub(r'<citations>.*?</citations>', '', content, flags=re.DOTALL)
-    content = re.sub(r'<tool_use>.*?</tool_use>', '', content, flags=re.DOTALL)
-    content = re.sub(r'<tool_result>.*?</tool_result>', '', content, flags=re.DOTALL)
-    
-    return content.strip()
-
 def get_chat_alias_model() -> str:
     try:
         models_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'chat_models.json')
@@ -156,6 +147,22 @@ def get_image_alias_model() -> str:
     except Exception as ex:
         logger.error(f"Error reading config/image_models.json: {str(ex)}")
         return ''
+
+def build_instruction(user_name: str, custom_instructions: str = None, dan: bool = False) -> str:
+    instructions = f"[Info]\nThe user's name is {user_name}.\n\n" + DEFAULT_PROMPT
+    if custom_instructions:
+        instructions += "\n\n" + custom_instructions
+    if dan and DAN_PROMPT:
+        instructions += "\n\n" + DAN_PROMPT
+    return instructions
+
+def normalize_assistant_content(content):
+    content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<citations>.*?</citations>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<tool_use>.*?</tool_use>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<tool_result>.*?</tool_result>', '', content, flags=re.DOTALL)
+    
+    return content.strip()
 
 def get_chat_model_billing(model_name):
     try:

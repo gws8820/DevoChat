@@ -226,7 +226,7 @@ const handleKeyDown = useCallback((event) => {
 
   return (
     <motion.div 
-      className="input-container"
+      className={`input-container${isTouch ? " touch" : ""}`}
       initial={{ y: 8 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.3 }}
@@ -253,7 +253,7 @@ const handleKeyDown = useCallback((event) => {
                     style={{ position: "relative" }}
                   >
                     {file.preview ? (
-                      <div className="file-object image">
+                      <div className={`file-object image${isTouch ? " touch" : ""}`}>
                         <img
                           src={file.preview}
                           alt={file.name}
@@ -266,7 +266,7 @@ const handleKeyDown = useCallback((event) => {
                         )}
                       </div>
                     ) : (
-                      <div className="file-object">
+                      <div className={`file-object${isTouch ? " touch" : ""}`}>
                         <span className="file-name">{file.name}</span>
                         <span className="file-ext">{file.name.includes('.') ? file.name.split('.').pop().toUpperCase() : 'FILE'}</span>
                         <BiX className="file-delete" onClick={() => handleFileDelete(file)} />

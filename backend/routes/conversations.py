@@ -85,6 +85,7 @@ async def get_user_conversations(
 
 @router.get("/chat/conversation/{conversation_id}", response_model=dict)
 async def get_chat_conversation(conversation_id: str, current_user: User = Depends(get_current_user)):
+    from .common import active_streams
     doc = conversations_collection.find_one({"conversation_id": conversation_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -107,7 +108,8 @@ async def get_chat_conversation(conversation_id: str, current_user: User = Depen
         "verbosity": doc.get("verbosity", 0),
         "memory": doc.get("memory", 4),
         "instructions": doc.get("instructions", ""),
-        "conversation": doc.get("conversation", [])
+        "conversation": doc.get("conversation", []),
+        "is_streaming": conversation_id in active_streams
     }
 
 @router.get("/view/{conversation_id}", response_model=dict)

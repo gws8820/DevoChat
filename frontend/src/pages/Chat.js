@@ -32,6 +32,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   const [toastMessage, setToastMessage] = useState("");
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [isButtonReady, setIsButtonReady] = useState(false);
+  const [isRemoteStreaming, setIsRemoteStreaming] = useState(false);
   
   const { 
     uploadedFiles, 
@@ -43,8 +44,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   const abortControllerRef = useRef(null);
   const lastScrollTopRef = useRef(0);
   const touchStartYRef = useRef(null);
+  const pollIntervalRef = useRef(null);
 
-  
   const {
     models,
     model,
@@ -511,30 +512,56 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
             return;
           }
           const data = await res.json();
-          
-          updateModel(data.model, {
-            isReasoning: data.reasoning,
-            isSearch: data.web_search,
-            isResearch: data.research
-          });
 
-          setAlias(data.alias);
-          setInstructions(data.instructions);
+          const applyData = (d) => {
+            updateModel(d.model, {
+              isReasoning: d.reasoning,
+              isSearch: d.web_search,
+              isResearch: d.research
+            });
+            setAlias(d.alias);
+            setInstructions(d.instructions);
+            setIsDAN(d.dan);
+            setMCPList(d.mcp ?? []);
+            setTemperature(d.temperature);
+            setReason(d.reason);
+            setVerbosity(d.verbosity);
+            setMemory(d.memory);
+            const initialMessages = d.conversation.map((m) => {
+              const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
+              return m.role === "assistant" ? { ...messageWithId, isComplete: true } : messageWithId;
+            });
+            setMessages(initialMessages);
+            setIsInitialized(true);
+          };
 
-          setIsDAN(data.dan);
-          setMCPList(data.mcp ?? []);
-          setTemperature(data.temperature);
-          setReason(data.reason);
-          setVerbosity(data.verbosity);
-          setMemory(data.memory);
-
-          const initialMessages = data.conversation.map((m) => {
-            const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
-            return m.role === "assistant" ? { ...messageWithId, isComplete: true } : messageWithId;
-          });
-          
-          setMessages(initialMessages);
-          setIsInitialized(true);
+          if (data.is_streaming) {
+            setIsRemoteStreaming(true);
+            setIsInitialized(true);
+            pollIntervalRef.current = setInterval(async () => {
+              try {
+                const pollRes = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/chat/conversation/${conversation_id}`, {
+                  credentials: 'include'
+                });
+                if (!pollRes.ok) {
+                  clearInterval(pollIntervalRef.current);
+                  setIsRemoteStreaming(false);
+                  return;
+                }
+                const pollData = await pollRes.json();
+                if (!pollData.is_streaming) {
+                  clearInterval(pollIntervalRef.current);
+                  setIsRemoteStreaming(false);
+                  applyData(pollData);
+                }
+              } catch {
+                clearInterval(pollIntervalRef.current);
+                setIsRemoteStreaming(false);
+              }
+            }, 2000);
+          } else {
+            applyData(data);
+          }
         }
       } catch (err) {
         if (err.response && err.response.status === 404) {
@@ -550,6 +577,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     };
 
     initializeChat();
+    return () => clearInterval(pollIntervalRef.current);
     // eslint-disable-next-line
   }, [conversation_id, location.state]);
 
@@ -707,7 +735,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           <PulseLoader loading={true} size={20} />
         </motion.div>
       )}
-      
       <div className="chat-messages-wrapper">
       <div className="chat-messages" ref={chatMessageRef} style={{ scrollbarGutter: "stable" }}>
         {useMemo(() =>
@@ -730,6 +757,12 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           )), [messages, handleDelete, handleRegenerate, sendEditedMessage, isTouch, isLoading]
         )}
 
+        {isRemoteStreaming && (
+          <div style={{ margin: "18px 14px 24px" }}>
+            <span className="remote-streaming">다른 창에서 응답 중</span>
+          </div>
+        )}
+
         {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
           <div style={{ margin: "18px 14px 24px" }}>
             <motion.div
@@ -742,8 +775,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
             />
           </div>
         )}
-
-
 
         <AnimatePresence>
           {confirmModal && (
