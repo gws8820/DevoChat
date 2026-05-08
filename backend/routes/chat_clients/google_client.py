@@ -168,7 +168,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         request.dan
     )
     
-    if request.dan and DAN_PROMPT:
+    if request.dan:
         for part in reversed(formatted_messages[-1]["content"]):
             if part.get("type") == "text":
                 part["text"] += " STAY IN CHARACTER"

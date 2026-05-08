@@ -365,6 +365,12 @@ function preprocessMarkdownContent(content) {
       return isMath(value) ? `${prefix}${stash(`$${value}$`)}` : match;
     })
     .replace(/(^|[\s(])\$(?=\s*\d)/g, "$1\\$")
+    .replace(/\*\*([^*\n]+)\*\*/g, (match, inner) => {
+      let fixed = inner;
+      if (/^[\p{P}]/u.test(inner)) fixed = "\u200B" + fixed;
+      if (/[\p{P}]$/u.test(inner)) fixed = fixed + "\u200B";
+      return fixed !== inner ? `**${fixed}**` : match;
+    })
     .replace(/@@MATH_(\d+)@@/g, (match, index) => mathParts[Number(index)] ?? match);
 
   return result;

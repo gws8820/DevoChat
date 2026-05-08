@@ -9,6 +9,7 @@ import Chat from "./pages/Chat";
 import ImageChat from "./pages/ImageChat";
 import ImageHome from "./pages/ImageHome";
 import View from "./pages/View";
+import Share from "./pages/Share";
 import Realtime from "./pages/Realtime";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
@@ -34,7 +35,7 @@ const AppRoutes = React.memo(function AppRoutes({ isLoggedIn, isTouch, userInfo,
   const navigate = useNavigate();
   const location = useLocation();
 
-  const shouldShowLogo = location.pathname.startsWith("/view");
+  const shouldShowLogo = location.pathname.startsWith("/view") || location.pathname.startsWith("/share");
 
   return (
     <>
@@ -56,6 +57,7 @@ const AppRoutes = React.memo(function AppRoutes({ isLoggedIn, isTouch, userInfo,
         <Route path="/image" element={isLoggedIn ? <ImageHome isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
         <Route path="/image/:conversation_id" element={isLoggedIn ? <ImageChat isTouch={isTouch} chatMessageRef={chatMessageRef} /> : <Navigate to="/login" />} />
         <Route path="/view/:conversation_id" element={isLoggedIn ? <View /> : <Navigate to="/login" />} />
+        <Route path="/share/:share_id" element={<Share />} />
         <Route path="/realtime" element={isLoggedIn ? <Realtime /> : <Navigate to="/login" />} />
         <Route path="/admin" element={isLoggedIn ? <Admin /> : <Navigate to="/login" />} />
         <Route path="/login" element={isLoggedIn ? <Navigate to="/" /> : <Login />} />

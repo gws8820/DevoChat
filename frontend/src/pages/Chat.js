@@ -689,6 +689,14 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   // eslint-disable-next-line
   }, []);
 
+  useEffect(() => {
+    const container = chatMessageRef.current;
+    if (!container) return;
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    setIsAtBottom(scrollHeight - scrollTop - clientHeight < 50);
+  // eslint-disable-next-line
+  }, [messages.length]);
+
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
     setIsDragActive(true);

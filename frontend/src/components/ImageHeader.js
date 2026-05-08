@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState, useContext } from "react";
 import { useLocation } from 'react-router-dom';
 import { RiMenuLine, RiArrowRightSLine, RiShare2Line, RiImage2Line, RiCloseLine } from "react-icons/ri";
 import { motion, AnimatePresence } from "framer-motion";
-import { v4 as uuidv4 } from 'uuid';
 import Tooltip from "./Tooltip";
 import Toast from "./Toast";
 import { SettingsContext } from "../contexts/SettingsContext";
@@ -12,7 +11,6 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
   const { 
     imageModels,
     imageModel,
-    alias,
     hasImage,
     updateImageModel
   } = useContext(SettingsContext);
@@ -37,39 +35,12 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
 
   const handleShare = async () => {
     try {
-      const uniqueId = uuidv4();
-
-      const containerClone = chatMessageRef.current.cloneNode(true);
-      const elementsToRemove = containerClone.querySelectorAll('.message-function, .copy-button');
-      elementsToRemove.forEach(el => {
-        el.remove();
-      });
-      
-      const htmlContent = containerClone.outerHTML;
-      const stylesheets = [];
-      
-      const linkElements = document.querySelectorAll('link[rel="stylesheet"]');
-      linkElements.forEach(link => {
-        if (link.href) {
-          stylesheets.push(link.href);
-        }
-      });
-      const styleElements = document.querySelectorAll('style');
-      styleElements.forEach(style => {
-        stylesheets.push(style.outerHTML);
-      });
-
-      try {
-        await navigator.clipboard.writeText(`https://api.devochat.com/share/${uniqueId}`);
-        setToastMessage("공유 링크가 복사되었습니다.");
-        setToastType("copy");
-        setShowToast(true);
-      } catch (err) {
-        console.error("복사 실패:", err);
+      if (!conversation_id) {
+        throw new Error("공유할 대화를 찾을 수 없습니다.");
       }
 
       const res = await fetch(
-        `${process.env.REACT_APP_FASTAPI_URL}/upload_page`,
+        `${process.env.REACT_APP_FASTAPI_URL}/share`,
         {
           method: "POST",
           credentials: "include",
@@ -77,10 +48,7 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            unique_id: uniqueId,
-            html: htmlContent,
-            stylesheets,
-            title: alias
+            conversation_id
           })
         }
       );
@@ -98,8 +66,21 @@ function ImageHeader({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) 
         throw new Error(detail || String(res.status));
       }
 
+      const data = await res.json();
+      const shareUrl = `${window.location.origin}${data.path}`;
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setToastMessage("공유 링크가 복사되었습니다.");
+        setToastType("copy");
+        setShowToast(true);
+      } catch (err) {
+        console.error("복사 실패:", err);
+      }
     } catch (error) {
       console.error('링크 생성 실패:', error);
+      setToastMessage(error.message || "링크 생성에 실패했습니다.");
+      setToastType("error");
+      setShowToast(true);
     }
   };
 

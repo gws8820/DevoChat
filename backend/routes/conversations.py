@@ -14,12 +14,16 @@ router = APIRouter()
 mongo_client = MongoClient(os.getenv('MONGODB_URI'))
 db = mongo_client.devochat
 conversations_collection = db.conversations
+shared_conversations_collection = db.shared_conversations
 
 class RenameRequest(BaseModel):
     alias: str
 
 class StarRequest(BaseModel):
     starred: bool
+
+class ShareRequest(BaseModel):
+    conversation_id: str
 
 @router.get("/conversations", response_model=dict)
 async def get_conversations(current_user: User = Depends(get_current_user)):
@@ -126,6 +130,54 @@ async def get_view_conversation(conversation_id: str, current_user: User = Depen
         "conversation_id": doc["conversation_id"],
         "alias": doc.get("alias", ""),
         "conversation": doc.get("conversation", [])
+    }
+
+@router.post("/share", response_model=dict)
+async def create_shared_conversation(request: ShareRequest, current_user: User = Depends(get_current_user)):
+    doc = conversations_collection.find_one({"conversation_id": request.conversation_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if doc["user_id"] != current_user.user_id and not current_user.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to share this conversation"
+        )
+
+    share_id = str(uuid.uuid4())
+    shared_doc = {
+        "share_id": share_id,
+        "conversation_id": doc["conversation_id"],
+        "owner_id": doc["user_id"],
+        "type": doc.get("type", "chat"),
+        "alias": doc.get("alias", ""),
+        "conversation": doc.get("conversation", []),
+        "created_at": datetime.now(timezone.utc)
+    }
+
+    try:
+        shared_conversations_collection.insert_one(shared_doc)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to create share link")
+
+    return {
+        "share_id": share_id,
+        "path": f"/share/{share_id}",
+        "alias": shared_doc["alias"]
+    }
+
+@router.get("/share/{share_id}", response_model=dict)
+async def get_shared_conversation(share_id: str):
+    doc = shared_conversations_collection.find_one({"share_id": share_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Shared conversation not found")
+
+    return {
+        "share_id": doc["share_id"],
+        "conversation_id": doc.get("conversation_id", ""),
+        "type": doc.get("type", "chat"),
+        "alias": doc.get("alias", ""),
+        "conversation": doc.get("conversation", []),
+        "created_at": doc.get("created_at").isoformat() if doc.get("created_at") else None
     }
 
 @router.get("/image/conversation/{conversation_id}", response_model=dict)

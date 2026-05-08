@@ -204,12 +204,11 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         request.dan
     )
     
-    if request.dan and DAN_PROMPT:
-        last_message = formatted_messages[-1]
-        if hasattr(last_message, 'args'):
-            new_args = list(last_message.args)
-            new_args[0] = new_args[0] + " STAY IN CHARACTER"
-            formatted_messages[-1].args = tuple(new_args)
+    if request.dan:
+        for part in reversed(formatted_messages[-1].content):
+            if part.text:
+                part.text += " STAY IN CHARACTER"
+                break
             
     formatted_messages.insert(0, system(instructions))
     

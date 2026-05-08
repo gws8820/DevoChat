@@ -8,7 +8,6 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, Response, Depends
-from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 import aiofiles
@@ -262,26 +261,6 @@ async def get_mcp_servers(user: User = Depends(get_current_user)):
         return servers
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error occured while fetching MCP servers: {str(ex)}")
-
-@app.get("/share/{share_id}", response_class=HTMLResponse)
-async def get_shared_page(share_id: str):
-    file_path = os.path.join("shared_pages", f"{share_id}.html")
-    
-    if not os.path.exists(file_path):
-        with open("./error.html", "r", encoding="utf-8") as f:
-            error_content = f.read()
-        return Response(
-            content=error_content,
-            media_type="text/html; charset=utf-8",
-            status_code=404
-        )
-    
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-        return content
-    except Exception as ex:
-        raise HTTPException(status_code=500, detail=str(ex))
 
 @app.post("/visit_url")
 def visit_url(request: URLRequest):

@@ -225,6 +225,25 @@
 .chat-message .katex {
   overflow-x: auto;
   overflow-y: hidden;
+  scrollbar-color: rgb(235, 235, 235) transparent;
+}
+
+.chat-message .katex-display .katex::-webkit-scrollbar-track {
+  background: transparent;
+  border: none;
+}
+
+.chat-message .katex-display .katex::-webkit-scrollbar-thumb {
+  background: rgb(235, 235, 235);
+  border-radius: 10px;
+  border: none;
+}
+
+.chat-message .katex-display .katex::-webkit-scrollbar-button,
+.chat-message .katex-display .katex::-webkit-scrollbar-corner {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .think-toggle, .citations-toggle, .image-generating, .remote-streaming {
