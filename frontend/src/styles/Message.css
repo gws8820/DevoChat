@@ -258,6 +258,12 @@
   user-select: none;
 }
 
+.remote-streaming-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 18px 14px 24px;
+}
+
 .think-toggle.thinking, .image-generating {
   background: linear-gradient(to right, rgb(100, 100, 100) 0%, rgb(100, 100, 100) 40%, rgb(255, 255, 255) 50%, rgb(100, 100, 100) 60%, rgb(100, 100, 100) 100%);
   background-size: 200% auto;

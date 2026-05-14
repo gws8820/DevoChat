@@ -15,6 +15,7 @@ function InputContainer({
   inputText,
   setInputText,
   isLoading,
+  isSendDisabled = false,
   onSend,
   onCancel,
   uploadedFiles,
@@ -189,14 +190,17 @@ const handleKeyDown = useCallback((event) => {
       !event.shiftKey &&
       !isComposing &&
       !isTouch &&
-      !uploadingFiles
+      !uploadingFiles &&
+      !isLoading &&
+      !isSendDisabled
     ) {
       event.preventDefault();
       onSend(inputText);
     }
-  }, [inputText, isComposing, isTouch, uploadingFiles, onSend]);
+  }, [inputText, isComposing, isTouch, uploadingFiles, isLoading, isSendDisabled, onSend]);
 
   const handleSendButtonClick = useCallback(() => {
+    if (isSendDisabled) return;
     if (isLoading) {
       onCancel?.();
       return;
@@ -210,7 +214,7 @@ const handleKeyDown = useCallback((event) => {
     } else {
       handleRecordingStart();
     }
-  }, [isLoading, inputText, onSend, onCancel, isRecording, handleRecordingStop, handleRecordingStart]);
+  }, [isSendDisabled, isLoading, inputText, onSend, onCancel, isRecording, handleRecordingStop, handleRecordingStart]);
 
   const handleMCPClick = useCallback(() => {
     setIsMCPModalOpen(true);
@@ -378,8 +382,8 @@ const handleKeyDown = useCallback((event) => {
       <button
         className={`send-button${isRecording ? " recording" : ""}`}
         onClick={handleSendButtonClick}
-        disabled={uploadingFiles}
-        aria-label={isLoading ? "전송 중단" : "메시지 전송"}
+        disabled={uploadingFiles || isSendDisabled}
+        aria-label={isSendDisabled ? "메시지 전송 비활성화" : isLoading ? "전송 중단" : "메시지 전송"}
       >
         {isLoading ? <PiStopFill /> : (!isRecording && inputText.trim()) ? <PiPaperPlaneRightFill /> : <PiWaveformBold />}
       </button>

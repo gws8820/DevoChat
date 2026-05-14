@@ -236,7 +236,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 ```json
 {
   "default": "google/gemini-3-flash-preview",
-  "alias": "google/gemini-3.1-flash-lite-preview",
+  "alias": "google/gemini-3.1-flash-lite",
   "models": [
     {
       "model_name": "google/gemini-3-flash-preview",
@@ -383,7 +383,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 ```json
 {
   "default": "gemini-2.5-flash-image",
-  "alias": "google/gemini-3.1-flash-lite-preview",
+  "alias": "google/gemini-3.1-flash-lite",
   "models": [
     {
       "model_name": "gemini-2.5-flash-image",

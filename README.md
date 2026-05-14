@@ -236,7 +236,7 @@ Define the AI models available in the application and their properties through t
 ```json
 {
   "default": "google/gemini-3-flash-preview",
-  "alias": "google/gemini-3.1-flash-lite-preview",
+  "alias": "google/gemini-3.1-flash-lite",
   "models": [
     {
       "model_name": "google/gemini-3-flash-preview",
@@ -383,7 +383,7 @@ Define the image generation AI models available in the application and their pro
 ```json
 {
   "default": "gemini-2.5-flash-image",
-  "alias": "google/gemini-3.1-flash-lite-preview",
+  "alias": "google/gemini-3.1-flash-lite",
   "models": [
     {
       "model_name": "gemini-2.5-flash-image",

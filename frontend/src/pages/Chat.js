@@ -114,6 +114,77 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     setMessages((prev) => [...prev, errorMessage]);
   }, []);
 
+  const applyData = useCallback((data) => {
+    updateModel(data.model, {
+      isReasoning: data.reasoning,
+      isSearch: data.web_search,
+      isResearch: data.research
+    });
+    setAlias(data.alias);
+    setInstructions(data.instructions);
+    setIsDAN(data.dan);
+    setMCPList(data.mcp ?? []);
+    setTemperature(data.temperature);
+    setReason(data.reason);
+    setVerbosity(data.verbosity);
+    setMemory(data.memory);
+    const initialMessages = data.conversation.map((m) => {
+      const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
+      return m.role === "assistant" ? { ...messageWithId, isComplete: true } : messageWithId;
+    });
+    setMessages(initialMessages);
+    setIsInitialized(true);
+  }, [
+    updateModel,
+    setAlias,
+    setInstructions,
+    setIsDAN,
+    setMCPList,
+    setTemperature,
+    setReason,
+    setVerbosity,
+    setMemory
+  ]);
+
+  const pollRemote = useCallback((initialData = null) => {
+    if (initialData) applyData(initialData);
+    clearInterval(pollIntervalRef.current);
+    setIsRemoteStreaming(true);
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const pollRes = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/chat/conversation/${conversation_id}`, {
+          credentials: 'include'
+        });
+        if (!pollRes.ok) {
+          clearInterval(pollIntervalRef.current);
+          setIsRemoteStreaming(false);
+          return;
+        }
+        const pollData = await pollRes.json();
+        if (!pollData.is_streaming) {
+          clearInterval(pollIntervalRef.current);
+          setIsRemoteStreaming(false);
+          applyData(pollData);
+        }
+      } catch {
+        clearInterval(pollIntervalRef.current);
+        setIsRemoteStreaming(false);
+      }
+    }, 2000);
+  }, [conversation_id, applyData]);
+
+  const showSendError = useCallback((shouldPoll = false) => {
+    setToastMessage("메세지 전송 중 오류가 발생했습니다.");
+    setShowToast(true);
+    if (shouldPoll) pollRemote();
+  }, [pollRemote]);
+
+  const showDeleteError = useCallback((shouldPoll = false) => {
+    setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
+    setShowToast(true);
+    if (shouldPoll) pollRemote();
+  }, [pollRemote]);
+
   const deleteMessages = useCallback(
     async (startIndex) => {
       let savedMessages;
@@ -132,7 +203,11 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
             window.location.href = '/login?expired=true';
           }
         }
-        if (!res.ok) throw new Error('delete failed');
+        if (!res.ok) {
+          const error = new Error('delete failed');
+          error.status = res.status;
+          throw error;
+        }
       } catch (err) {
         setMessages(savedMessages);
         throw err;
@@ -325,6 +400,18 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           }
           return;
         }
+        if (response.status === 409) {
+          setMessages((prev) => prev.filter((msg) => msg.id !== userMessage.id));
+          setInputText(message);
+          showSendError(true);
+          return;
+        }
+        if (!response.ok) {
+          let detail = null;
+          try { detail = (await response.json())?.detail; } catch {}
+          setErrorMessage("메세지 전송 중 오류가 발생했습니다: " + (detail || response.status));
+          return;
+        }
 
         updateTimestamp(conversation_id, new Date().toISOString());
   
@@ -367,7 +454,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         updateAssistantMessage(assistantText, true);
       } catch (err) {
         if (err.name === "AbortError") return;
-        setErrorMessage("메시지 전송 중 오류가 발생했습니다: " + err.message);
+        setErrorMessage("메세지 전송 중 오류가 발생했습니다: " + err.message);
       } finally {
         setIsLoading(false);
         abortControllerRef.current = null;
@@ -395,19 +482,28 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       canControlTemp,
       canControlReason,
       canControlVerbosity,
-      canControlSystemMessage
+      canControlSystemMessage,
+      showSendError
     ]
   );
 
   const resendMesage = useCallback(
-    async (messageContent, deleteIndex = null, errorLabel) => {
+    async (messageContent, deleteIndex = null) => {
+      if (isLoading || isRemoteStreaming) {
+        showSendError(isRemoteStreaming);
+        return;
+      }
+
       setIsLoading(true);
       if (deleteIndex !== null) {
         try {
           await deleteMessages(deleteIndex);
-        } catch {
-          setToastMessage(`메세지 ${errorLabel} 중 오류가 발생했습니다.`);
-          setShowToast(true);
+        } catch (err) {
+          if (err.status === 400 || err.status === 409) {
+            showSendError(true);
+          } else {
+            showSendError();
+          }
           setIsLoading(false);
           return;
         }
@@ -417,7 +513,13 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       const nonTextContent = messageContent.filter(item => item.type !== "text");
       sendMessage(textContent, nonTextContent);
     },
-    [deleteMessages, sendMessage]
+    [
+      deleteMessages,
+      sendMessage,
+      showSendError,
+      isLoading,
+      isRemoteStreaming
+    ]
   );
 
   const cancelRequest = useCallback(() => {
@@ -429,7 +531,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
 
   const sendEditedMessage = useCallback(
     (idx, updatedContent) => {
-      resendMesage(updatedContent, idx, '전송');
+      resendMesage(updatedContent, idx);
     },
     [resendMesage]
   );
@@ -439,15 +541,19 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       const previousMessage = messages[startIndex - 1];
       if (!previousMessage) return;
 
-      resendMesage(previousMessage.content, startIndex - 1, '재생성');
+      resendMesage(previousMessage.content, startIndex - 1);
     },
     [messages, resendMesage]
   );
 
   const handleDelete = useCallback((idx) => {
+    if (isLoading || isRemoteStreaming) {
+      showDeleteError(isRemoteStreaming);
+      return;
+    }
     setdeleteIndex(idx);
     setConfirmModal(true);
-  }, []);
+  }, [isLoading, isRemoteStreaming, showDeleteError]);
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -513,52 +619,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           }
           const data = await res.json();
 
-          const applyData = (d) => {
-            updateModel(d.model, {
-              isReasoning: d.reasoning,
-              isSearch: d.web_search,
-              isResearch: d.research
-            });
-            setAlias(d.alias);
-            setInstructions(d.instructions);
-            setIsDAN(d.dan);
-            setMCPList(d.mcp ?? []);
-            setTemperature(d.temperature);
-            setReason(d.reason);
-            setVerbosity(d.verbosity);
-            setMemory(d.memory);
-            const initialMessages = d.conversation.map((m) => {
-              const messageWithId = m.id ? m : { ...m, id: generateMessageId() };
-              return m.role === "assistant" ? { ...messageWithId, isComplete: true } : messageWithId;
-            });
-            setMessages(initialMessages);
-            setIsInitialized(true);
-          };
-
           if (data.is_streaming) {
-            setIsRemoteStreaming(true);
-            setIsInitialized(true);
-            pollIntervalRef.current = setInterval(async () => {
-              try {
-                const pollRes = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/chat/conversation/${conversation_id}`, {
-                  credentials: 'include'
-                });
-                if (!pollRes.ok) {
-                  clearInterval(pollIntervalRef.current);
-                  setIsRemoteStreaming(false);
-                  return;
-                }
-                const pollData = await pollRes.json();
-                if (!pollData.is_streaming) {
-                  clearInterval(pollIntervalRef.current);
-                  setIsRemoteStreaming(false);
-                  applyData(pollData);
-                }
-              } catch {
-                clearInterval(pollIntervalRef.current);
-                setIsRemoteStreaming(false);
-              }
-            }, 2000);
+            pollRemote(data);
           } else {
             applyData(data);
           }
@@ -605,6 +667,16 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       chatMessageRef.current.scrollTo({ top: chatMessageRef.current.scrollHeight, behavior: "smooth" });
     }
   }, [chatMessageRef, scrollTrigger]);
+
+  useEffect(() => {
+    if (!isRemoteStreaming) return;
+    requestAnimationFrame(() => {
+      chatMessageRef.current?.scrollTo({
+        top: chatMessageRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    });
+  }, [chatMessageRef, isRemoteStreaming]);
 
   useEffect(() => {
     if (isLoading && !userFixedScroll) { // Only During Streaming
@@ -766,7 +838,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         )}
 
         {isRemoteStreaming && (
-          <div style={{ margin: "18px 14px 24px" }}>
+          <div className="remote-streaming-wrap">
             <span className="remote-streaming">다른 창에서 응답 중</span>
           </div>
         )}
@@ -789,11 +861,21 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
             <Modal
               message="정말 메세지를 삭제하시겠습니까?"
               onConfirm={async () => {
+                if (isLoading || isRemoteStreaming) {
+                  showDeleteError(isRemoteStreaming);
+                  setdeleteIndex(null);
+                  setConfirmModal(false);
+                  return;
+                }
                 try {
                   await deleteMessages(deleteIndex);
-                } catch {
-                  setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
-                  setShowToast(true);
+                } catch (err) {
+                  if (err.status === 400 || err.status === 409) {
+                    showDeleteError(true);
+                  } else {
+                    setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
+                    setShowToast(true);
+                  }
                 }
                 setdeleteIndex(null);
                 setConfirmModal(false);
@@ -821,6 +903,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         inputText={inputText}
         setInputText={setInputText}
         isLoading={isLoading}
+        isSendDisabled={isRemoteStreaming}
         onSend={sendMessage}
         onCancel={cancelRequest}
         uploadedFiles={uploadedFiles}

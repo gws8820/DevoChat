@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import Tooltip from "./Tooltip";
 import Toast from "./Toast";
+import copyToClipboard from "../utils/copyToClipboard";
 import "../styles/Header.css";
 
 function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
@@ -131,14 +132,10 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
 
       const data = await res.json();
       const shareUrl = `${window.location.origin}${data.path}`;
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        setToastMessage("공유 링크가 복사되었습니다.");
-        setToastType("copy");
-        setShowToast(true);
-      } catch (err) {
-        console.error("복사 실패:", err);
-      }
+      await copyToClipboard(shareUrl);
+      setToastMessage("공유 링크가 복사되었습니다.");
+      setToastType("copy");
+      setShowToast(true);
     } catch (error) {
       console.error('링크 생성 실패:', error);
       setToastMessage(error.message || "링크 생성에 실패했습니다.");

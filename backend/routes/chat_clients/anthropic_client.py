@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, List
 from ..auth import User, get_current_user
 from ..common import (
     ChatRequest, router, RawChunk,
-    active_streams, build_instruction,
+    acquire_stream_lock, release_stream_lock, build_instruction,
     check_chat_user_permissions,
     get_chat_conversation, save_chat_conversation,
     normalize_assistant_content,
@@ -294,8 +294,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     token_usage = None
     client_disconnected = False
     
-    active_streams.add(request.conversation_id)
-
     try:
         async with anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) as client:
             parameters = {
@@ -367,9 +365,15 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         logger.error(f"RESPONSE_ERROR: {str(ex)}")
         yield f"data: {json.dumps({'error': str(ex)})}\n\n"
     finally:
-        active_streams.discard(request.conversation_id)
         save_chat_conversation(user, user_message, response_text, token_usage, request, in_billing, out_billing)
 
 @router.post("/chat/claude")
 async def claude_endpoint(request: ChatRequest, fastapi_request: Request, user: User = Depends(get_current_user)):
-    return StreamingResponse(get_response(request, user, fastapi_request), media_type="text/event-stream")
+    acquire_stream_lock(request.conversation_id)
+    async def locked_response():
+        try:
+            async for chunk in get_response(request, user, fastapi_request):
+                yield chunk
+        finally:
+            release_stream_lock(request.conversation_id)
+    return StreamingResponse(locked_response(), media_type="text/event-stream")

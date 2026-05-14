@@ -182,6 +182,7 @@ async def get_shared_conversation(share_id: str):
 
 @router.get("/image/conversation/{conversation_id}", response_model=dict)
 async def get_image_conversation(conversation_id: str, current_user: User = Depends(get_current_user)):
+    from .common import active_streams
     doc = conversations_collection.find_one({"conversation_id": conversation_id})
     if not doc:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -194,7 +195,8 @@ async def get_image_conversation(conversation_id: str, current_user: User = Depe
         "conversation_id": doc["conversation_id"],
         "alias": doc.get("alias", ""),
         "model": doc.get("model", ""),
-        "conversation": doc.get("conversation", [])
+        "conversation": doc.get("conversation", []),
+        "is_streaming": conversation_id in active_streams
     }
     
 @router.post("/chat/new_conversation", response_model=dict)
@@ -295,6 +297,10 @@ async def delete_all_conversation(current_user: User = Depends(get_current_user)
 
 @router.delete("/conversation/{conversation_id}", response_model=dict)
 async def delete_conversation(conversation_id: str, current_user: User = Depends(get_current_user)):
+    from .common import active_streams
+    if conversation_id in active_streams:
+        raise HTTPException(status_code=409, detail="Conversation is already streaming")
+
     user_id = current_user.user_id
     result = conversations_collection.delete_one({
         "user_id": user_id,
@@ -310,10 +316,13 @@ async def delete_messages_from_index(
     startIndex: int,
     current_user: User = Depends(get_current_user)
 ):
+    from .common import active_streams
     user_id = current_user.user_id
     doc = conversations_collection.find_one({"user_id": user_id, "conversation_id": conversation_id})
     if doc is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
+    if conversation_id in active_streams:
+        raise HTTPException(status_code=409, detail="Conversation is already streaming")
     
     messages = doc.get("conversation", [])
     if startIndex < 0 or startIndex >= len(messages):

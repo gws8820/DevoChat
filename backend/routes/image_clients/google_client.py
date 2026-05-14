@@ -5,16 +5,20 @@ from PIL import Image
 from google.genai import types, Client
 
 from ..auth import User, get_current_user
-from ..common import router, ImageGenerateRequest, save_image_conversation, check_image_user_permissions
+from ..common import acquire_stream_lock, release_stream_lock, router, ImageGenerateRequest, save_image_conversation, check_image_user_permissions
 
 client = Client(api_key=os.getenv('GEMINI_API_KEY'))
     
 @router.post("/image/google/gemini")
 async def gemini_endpoint(request: ImageGenerateRequest, user: User = Depends(get_current_user)):
+  lock_acquired = False
   try:
     error_message, in_billing, out_billing = check_image_user_permissions(user, request)
     if error_message:
       raise HTTPException(status_code=403, detail=error_message)
+    acquire_stream_lock(request.conversation_id)
+
+    lock_acquired = True
       
     contents: list = []
     
@@ -48,15 +52,24 @@ async def gemini_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
       raise HTTPException(status_code=500, detail="Invalid image response")
 
     return save_image_conversation(user, request, img_bytes, in_billing, out_billing)
+  except HTTPException:
+    raise
   except Exception as ex:
     raise HTTPException(status_code=500, detail=str(ex))
+  finally:
+    if lock_acquired:
+      release_stream_lock(request.conversation_id)
   
 @router.post("/image/google/imagen")
 async def imagen_endpoint(request: ImageGenerateRequest, user: User = Depends(get_current_user)):
+  lock_acquired = False
   try:
     error_message, in_billing, out_billing = check_image_user_permissions(user, request)
     if error_message:
       raise HTTPException(status_code=403, detail=error_message)
+    acquire_stream_lock(request.conversation_id)
+
+    lock_acquired = True
       
     prompt = "\n\n".join(part.get("text") for part in request.message)
     
@@ -75,5 +88,10 @@ async def imagen_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
       raise HTTPException(status_code=500, detail="Invalid image response")
 
     return save_image_conversation(user, request, img_bytes, in_billing, out_billing)
+  except HTTPException:
+    raise
   except Exception as ex:
     raise HTTPException(status_code=500, detail=str(ex))
+  finally:
+    if lock_acquired:
+      release_stream_lock(request.conversation_id)

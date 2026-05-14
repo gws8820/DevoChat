@@ -4,7 +4,7 @@ import json
 import uuid
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from bson import ObjectId
 from datetime import datetime, timezone
@@ -57,6 +57,14 @@ user_collection = db.users
 conversation_collection = db.conversations
 
 active_streams: set = set()
+
+def acquire_stream_lock(conversation_id: str):
+    if conversation_id in active_streams:
+        raise HTTPException(status_code=409, detail="Conversation is already streaming")
+    active_streams.add(conversation_id)
+
+def release_stream_lock(conversation_id: str):
+    active_streams.discard(conversation_id)
 
 default_prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'default_prompt.txt')
 try:

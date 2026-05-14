@@ -354,8 +354,8 @@ function preprocessMarkdownContent(content) {
   let result = String(content)
     .replace(/^(#{2,3}) #{2,4}(?= )/gm, "$1")
     .replace(/(^|[\s(])[₩￦](?=\s*\d)/g, "$1₩")
-    .replace(/\\\[/g, "$$")
-    .replace(/\\\]/g, "$$")
+    .replace(/\\\[/g, () => "$$")
+    .replace(/\\\]/g, () => "$$")
     .replace(/\\\(/g, "$")
     .replace(/\\\)/g, "$");
 

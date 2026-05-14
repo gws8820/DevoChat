@@ -5,14 +5,18 @@ from fastapi import HTTPException, Depends
 from openai import AsyncOpenAI
 
 from ..auth import User, get_current_user
-from ..common import router, ImageGenerateRequest, save_image_conversation, check_image_user_permissions
+from ..common import acquire_stream_lock, release_stream_lock, router, ImageGenerateRequest, save_image_conversation, check_image_user_permissions
 
 @router.post("/image/openai")
 async def openai_endpoint(request: ImageGenerateRequest, user: User = Depends(get_current_user)):
+  lock_acquired = False
   try:
     error_message, in_billing, out_billing = check_image_user_permissions(user, request)
     if error_message:
       raise HTTPException(status_code=403, detail=error_message)
+    acquire_stream_lock(request.conversation_id)
+
+    lock_acquired = True
       
     text_parts = []
     image_files = []
@@ -45,5 +49,10 @@ async def openai_endpoint(request: ImageGenerateRequest, user: User = Depends(ge
 
       image_bytes = base64.b64decode(response.data[0].b64_json)
       return save_image_conversation(user, request, image_bytes, in_billing, out_billing)
+  except HTTPException:
+    raise
   except Exception as ex:
     raise HTTPException(status_code=500, detail=str(ex))
+  finally:
+    if lock_acquired:
+      release_stream_lock(request.conversation_id)

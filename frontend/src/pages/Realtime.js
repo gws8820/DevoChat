@@ -111,7 +111,13 @@ const Realtime = () => {
 
   const addAudioTrack = useCallback(async (pc) => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
       audioStreamRef.current = stream;
 
       stream.getAudioTracks().forEach((track) => {
@@ -190,9 +196,13 @@ const Realtime = () => {
                 instructions: "Answer in Korean unless otherwise specified.",
                 audio: {
                   input: {
+                    noise_reduction: {
+                      type: "near_field"
+                    },
                     turn_detection: {
                       type: "semantic_vad",
-                      eagerness: "low"
+                      eagerness: "low",
+                      interrupt_response: false
                     }
                   }
                 }

@@ -12,6 +12,7 @@ function ImageInputContainer({
   inputText,
   setInputText,
   isLoading,
+  isSendDisabled = false,
   onSend,
   onCancel,
   uploadedFiles,
@@ -85,14 +86,17 @@ function ImageInputContainer({
       !event.shiftKey &&
       !isComposing &&
       !isTouch &&
-      !uploadingFiles
+      !uploadingFiles &&
+      !isLoading &&
+      !isSendDisabled
     ) {
       event.preventDefault();
       onSend(inputText);
     }
-  }, [inputText, isComposing, isTouch, uploadingFiles, onSend]);
+  }, [inputText, isComposing, isTouch, uploadingFiles, isLoading, isSendDisabled, onSend]);
 
   const handleSendButtonClick = useCallback(() => {
+    if (isSendDisabled) return;
     if (isLoading) {
       onCancel?.();
       return;
@@ -103,7 +107,7 @@ function ImageInputContainer({
       setToastMessage("내용을 입력해주세요.");
       setShowToast(true);
     }
-  }, [isLoading, inputText, onSend, onCancel]);
+  }, [isSendDisabled, isLoading, inputText, onSend, onCancel]);
 
   return (
     <motion.div
@@ -194,8 +198,8 @@ function ImageInputContainer({
       <button
         className="send-button"
         onClick={handleSendButtonClick}
-        disabled={uploadingFiles}
-        aria-label={isLoading ? "전송 중단" : "메시지 전송"}
+        disabled={uploadingFiles || isSendDisabled}
+        aria-label={isSendDisabled ? "메시지 전송 비활성화" : isLoading ? "전송 중단" : "메시지 전송"}
       >
         {isLoading ? <PiStopFill /> : inputText.trim() ? <PiPaperPlaneRightFill /> : <PiWaveformBold />}
       </button>
