@@ -181,9 +181,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
     try:
         client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 
-        generation_config = {
-            "temperature": request.temperature if request.control.temperature else 1.0
-        }
+        generation_config = {}
         if request.control.reason and request.reason:
             generation_config["thinking_level"] = request.reason
             generation_config["thinking_summaries"] = "auto"

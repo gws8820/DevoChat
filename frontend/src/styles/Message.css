@@ -50,13 +50,6 @@
   content-visibility: visible;
 }
 
-.chat-loading-circle {
-  width: 12px;
-  height: 12px;
-  background-color: black;
-  border-radius: 50%;
-}
-
 .user-wrap {
   display: flex;
   flex-direction: column;
@@ -173,11 +166,6 @@
   margin-bottom: 18px;
 }
 
-.refresh-wrap {
-  display: flex;
-  align-items: center;
-}
-
 .chat-message p {
   margin: 10px 0;
 }
@@ -244,75 +232,6 @@
   display: none;
   width: 0;
   height: 0;
-}
-
-.think-toggle, .citations-toggle, .image-generating, .remote-streaming {
-  display: flex;
-  align-items: center;
-  margin-top: 6px;
-  gap: 4px;
-  font-weight: 600;
-  font-size: 13px;
-  color: rgb(100, 100, 100);
-  cursor: pointer;
-  user-select: none;
-}
-
-.remote-streaming-wrap {
-  display: flex;
-  justify-content: center;
-  margin: 18px 14px 24px;
-}
-
-.think-toggle.thinking, .image-generating {
-  background: linear-gradient(to right, rgb(100, 100, 100) 0%, rgb(100, 100, 100) 40%, rgb(255, 255, 255) 50%, rgb(100, 100, 100) 60%, rgb(100, 100, 100) 100%);
-  background-size: 200% auto;
-  color: rgb(100, 100, 100);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 6s linear infinite;
-}
-
-.remote-streaming {
-  background: linear-gradient(to right, rgb(100, 100, 100) 0%, rgb(100, 100, 100) 42.5%, rgb(255, 255, 255) 50%, rgb(100, 100, 100) 57.5%, rgb(100, 100, 100) 100%);
-  background-size: 200% auto;
-  color: rgb(100, 100, 100);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 15s linear infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.image-generating {
-  width: fit-content;
-  margin-left: 14px;
-  cursor: not-allowed;
-  opacity: 0;
-  animation: shimmer 6s linear 0.5s infinite, imageFadeIn 0.5s ease 0.5s forwards;
-}
-
-@keyframes imageFadeIn {
-  to { opacity: 1; }
-}
-
-.think-content, .citations-content {
-  padding: 0 12px;
-  font-size: 14px;
-  color: rgb(100, 100, 100);
-}
-
-.think-content {
-  margin-top: 10px;
 }
 
 .code-block {
@@ -508,10 +427,6 @@ textarea:focus {
 
   .message-function {
     margin-right: 0;
-  }
-
-  .image-generating {
-    margin-left: 5px;
   }
 
   .edit-buttons {

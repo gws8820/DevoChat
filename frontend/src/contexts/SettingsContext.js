@@ -3,11 +3,10 @@ import React, { createContext, useState, useEffect, useMemo, useCallback } from 
 export const SettingsContext = createContext();
 
 const INIT_VALUES = {
-  temperature: 1,
   memory: 4,
   instructions: "",
   isReasoning: true,
-  isSearch: false,
+  isSearch: true,
   isResearch: false
 };
 
@@ -20,7 +19,6 @@ export const SettingsProvider = ({ children }) => {
   const [realtimeModels, setRealtimeModels] = useState([]);
   const [isModelReady, setIsModelReady] = useState(false);
   const [alias, setAlias] = useState("");
-  const [temperature, setTemperature] = useState(INIT_VALUES.temperature);
   const [reason, setReason] = useState("");
   const [verbosity, setVerbosity] = useState("");
   const [defaultModel, setDefaultModel] = useState("");
@@ -28,12 +26,11 @@ export const SettingsProvider = ({ children }) => {
   const [memory, setMemory] = useState(INIT_VALUES.memory);
   const [instructions, setInstructions] = useState(INIT_VALUES.instructions);
   const [isReasoning, setIsReasoning] = useState(true);
-  const [isSearch, setIsSearch] = useState(false);
+  const [isSearch, setIsSearch] = useState(true);
   const [isResearch, setIsResearch] = useState(false);
   const [isDAN, setIsDAN] = useState(false);
   const [hasImage, setHasImage] = useState(false); // Has Image in Chat
   const [mcpList, setMCPList] = useState([]);
-  const [canControlTemp, setCanControlTemp] = useState(false);
   const [canControlReason, setCanControlReason] = useState(false);
   const [canControlVerbosity, setCanControlVerbosity] = useState(false);
   const [canControlSystemMessage, setCanControlSystemMessage] = useState(false);
@@ -47,7 +44,6 @@ export const SettingsProvider = ({ children }) => {
   const applyModelSelection = (selectedModel, modelConfig = {}) => {
     if (!selectedModel) return;
 
-    const temperatureControl = selectedModel?.controls?.temperature;
     const reasonControl = selectedModel?.controls?.reason;
     const reasonLevels = reasonControl?.levels ?? [];
     const reasonDefault = reasonControl?.default ?? "";
@@ -83,7 +79,6 @@ export const SettingsProvider = ({ children }) => {
     setCanToggleResearch(canToggleResearch);
     setIsResearch(nextIsResearch);
 
-    setCanControlTemp(temperatureControl === true);
     setCanControlReason(reasonLevels.length > 0 && nextIsReasoning === true);
     setCanControlVerbosity(verbosityLevels.length > 0);
 
@@ -120,7 +115,6 @@ export const SettingsProvider = ({ children }) => {
   const toggleReasoning = () => {
     const selectedModel = models.find(m => m.model_name === model);
     const reasoning = selectedModel?.capabilities?.reasoning;
-    const temperature = selectedModel?.controls?.temperature;
     const reasonLevels = selectedModel?.controls?.reason?.levels ?? [];
 
     const nextIsReasoning = !isReasoning;
@@ -143,7 +137,6 @@ export const SettingsProvider = ({ children }) => {
 
     setIsReasoning(nextIsReasoning);
 
-    setCanControlTemp(temperature === true);
     setCanControlReason(reasonLevels.length > 0 && nextIsReasoning === true);
   };
 
@@ -210,7 +203,6 @@ export const SettingsProvider = ({ children }) => {
       updateImageModel(defaultImageModel);
     }
 
-    setTemperature(INIT_VALUES.temperature);
     setMemory(INIT_VALUES.memory);
     setInstructions(INIT_VALUES.instructions);
     setIsDAN(false);
@@ -291,7 +283,6 @@ export const SettingsProvider = ({ children }) => {
     realtimeModel,
     isModelReady,
     alias,
-    temperature,
     reason,
     verbosity,
     memory,
@@ -302,7 +293,6 @@ export const SettingsProvider = ({ children }) => {
     isResearch,
     isDAN,
     mcpList,
-    canControlTemp,
     canControlReason,
     canControlVerbosity,
     canControlSystemMessage,
@@ -316,7 +306,6 @@ export const SettingsProvider = ({ children }) => {
     updateImageModel,
     updateRealtimeModel,
     setAlias,
-    setTemperature,
     setReason,
     setVerbosity,
     setMemory,
@@ -330,7 +319,7 @@ export const SettingsProvider = ({ children }) => {
     switchImageMode,
     resetSettings
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [models, imageModels, realtimeModels, model, imageModel, realtimeModel, isModelReady, alias, temperature, reason, verbosity, memory, instructions, hasImage, isReasoning, isSearch, isResearch, isDAN, mcpList, canControlTemp, canControlReason, canControlVerbosity, canControlSystemMessage, canToggleReasoning, canToggleSearch, canToggleResearch, canToggleMCP, canVision, maxImageInput]);
+  }), [models, imageModels, realtimeModels, model, imageModel, realtimeModel, isModelReady, alias, reason, verbosity, memory, instructions, hasImage, isReasoning, isSearch, isResearch, isDAN, mcpList, canControlReason, canControlVerbosity, canControlSystemMessage, canToggleReasoning, canToggleSearch, canToggleResearch, canToggleMCP, canVision, maxImageInput]);
 
   return (
     <SettingsContext.Provider value={value}>

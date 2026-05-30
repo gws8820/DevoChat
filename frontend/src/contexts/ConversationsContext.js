@@ -41,10 +41,6 @@ export function ConversationsProvider({ children }) {
     );
   }, []);
 
-  const deleteAllConversation = useCallback(() => {
-    setConversations([]);
-  }, []);
-
   const updateAlias = useCallback((conversation_id, newAlias, isLoading = undefined) => {
     setConversations((prevConversations) =>
       prevConversations.map((conv) =>
@@ -86,11 +82,10 @@ export function ConversationsProvider({ children }) {
     fetchConversations,
     addConversation,
     deleteConversation,
-    deleteAllConversation,
     updateAlias,
     updateTimestamp,
     toggleStarConversation
-  }), [conversations, isLoadingChat, error, fetchConversations, addConversation, deleteConversation, deleteAllConversation, updateAlias, updateTimestamp, toggleStarConversation]);
+  }), [conversations, isLoadingChat, error, fetchConversations, addConversation, deleteConversation, updateAlias, updateTimestamp, toggleStarConversation]);
 
   return (
     <ConversationsContext.Provider value={value}>

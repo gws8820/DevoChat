@@ -1,88 +1,47 @@
 import React from 'react';
-import { GoCheck, GoX, GoChevronDown, GoChevronUp } from 'react-icons/go';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useToolBlockState } from './MarkdownRenderers';
 import '../styles/ToolBlock.css';
 
+const MAX_VISIBLE_RESULT_LENGTH = 60000;
+
+const formatResult = (result) => {
+  const text = typeof result === 'string' ? result : JSON.stringify(result, null, 2) ?? '';
+
+  if (text.length <= MAX_VISIBLE_RESULT_LENGTH) return text;
+
+  const omittedLength = text.length - MAX_VISIBLE_RESULT_LENGTH;
+  return text.slice(0, MAX_VISIBLE_RESULT_LENGTH) + '\n\n... 도구 결과 ' + omittedLength.toLocaleString() + '자 생략됨';
+};
+
 const ToolBlock = React.memo(({ toolData }) => {
-  const { expandedBlocks, toggleExpanded } = useToolBlockState();
-  const toolId = toolData.tool_id;
-  const isExpanded = expandedBlocks[toolId] || false;
-
-  const handleToggleExpanded = () => {
-    toggleExpanded(toolId);
-  };
-
-  const renderIcon = () => {
-    if (toolData.type === 'tool_use') {
-      return toolData.isValid ? 
-        <span className="tool-icon loading spinner" /> :
-        <GoX className="tool-icon error" />;
-    }
-    
-    if (toolData.type === 'tool_result') {
-      return toolData.is_error ? 
-        <GoX className="tool-icon error" /> : 
-        <GoCheck className="tool-icon success" />;
-    }
-    
-    return null;
-  };
-
-  const hasResult = toolData.type === 'tool_result' && toolData.result;
+  const serverName = toolData.server_name?.replace(/_/g, ' ');
+  const toolName = toolData.tool_name;
+  const statusText = toolData.is_error ? '실패' : '완료';
+  const resultText = formatResult(toolData.result);
 
   return (
-    <div className="tool-block">
-      <div className="tool-header">
-        <div className="tool-content">
-          <div className="tool-status">
-            {renderIcon()}
-          </div>
-          <div className="tool-info">
-            <span className="tool-server-name">{toolData.server_name?.replace(/_/g, ' ')}</span>
-            <span className="tool-tool-name">{toolData.tool_name}</span>
-          </div>
+    <div className="tool-detail-card">
+      <div className="tool-detail-header">
+        <div className="tool-detail-title">
+          <span className="tool-detail-server">{serverName}</span>
+          <span className="tool-detail-name">{toolName}</span>
         </div>
-        
-        {hasResult && (
-          <button 
-            className="tool-expand-btn"
-            onClick={handleToggleExpanded}
-          >
-            {isExpanded ? <GoChevronUp /> : <GoChevronDown />}
-          </button>
-        )}
+        <span className={`tool-detail-status${toolData.is_error ? ' error' : ''}`}>
+          {statusText}
+        </span>
       </div>
-      
-      <AnimatePresence>
-        {hasResult && isExpanded && (
-          <motion.div
-            className="tool-result"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-          >
-            <pre className="tool-result-content">{toolData.result}</pre>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <pre className="tool-detail-result">{resultText}</pre>
     </div>
   );
 }, (prevProps, nextProps) => {
   const prevData = prevProps.toolData;
   const nextData = nextProps.toolData;
-  
+
   return (
-    prevData.type === nextData.type &&
-    prevData.tool_id === nextData.tool_id &&
     prevData.server_name === nextData.server_name &&
     prevData.tool_name === nextData.tool_name &&
     prevData.is_error === nextData.is_error &&
-    prevData.result === nextData.result &&
-    prevProps.isLoading === nextProps.isLoading &&
-    prevProps.isLastMessage === nextProps.isLastMessage
+    prevData.result === nextData.result
   );
 });
 
-export default ToolBlock; 
+export default ToolBlock;

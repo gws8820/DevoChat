@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback, useRef, useContext } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { BarLoader } from "react-spinners";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
-import ImageHeader from "./components/ImageHeader";
 import Home from "./pages/Home";
 import Chat from "./pages/Chat";
 import ImageChat from "./pages/ImageChat";
@@ -32,25 +31,10 @@ function App() {
 }
 
 const AppRoutes = React.memo(function AppRoutes({ isLoggedIn, isTouch, userInfo, chatMessageRef }) {
-  const navigate = useNavigate();
   const location = useLocation();
-
-  const shouldShowLogo = location.pathname.startsWith("/view") || location.pathname.startsWith("/share");
 
   return (
     <>
-      {shouldShowLogo && (
-        <div className="header" style={{ padding: "0 20px" }}>
-          <img
-            src={logo}
-            alt="DEVOCHAT"
-            width="143.5px"
-            onClick={() => navigate("/")}
-            style={{ cursor: "pointer" }}
-          />
-        </div>
-      )}
-
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={isLoggedIn ? <Home isTouch={isTouch} userInfo={userInfo} /> : <Navigate to="/login" />} />
         <Route path="/chat/:conversation_id" element={isLoggedIn ? <Chat isTouch={isTouch} chatMessageRef={chatMessageRef} userInfo={userInfo} /> : <Navigate to="/login" />} />
@@ -80,7 +64,7 @@ function AppContent() {
 
   const location = useLocation();
 
-  const shouldShowLayout = isLoggedIn && (
+  const shouldShowSidebar = isLoggedIn && (
     location.pathname === '/' ||
     location.pathname.startsWith('/chat/') ||
     location.pathname.startsWith('/image') ||
@@ -245,7 +229,7 @@ function AppContent() {
   return (
     <div style={{ display: "flex", height: "100dvh", margin: "0", overflow: "hidden" }}>
       {/* Sidebar Container */}
-      {shouldShowLayout && (
+      {shouldShowSidebar && (
         <div
           style={{
             width: "260px",
@@ -272,7 +256,7 @@ function AppContent() {
       )}
 
       {/* Sidebar Overlay */}
-      {shouldShowLayout && isSidebarOpen && isResponsive && (
+      {shouldShowSidebar && isSidebarOpen && isResponsive && (
         <div
           onClick={toggleSidebar}
           style={{
@@ -292,29 +276,17 @@ function AppContent() {
         style={{
           width: "100%",
           height: "100dvh",
-          marginLeft: (shouldShowLayout && isSidebarOpen && !isResponsive) ? "260px" : "0",
+          marginLeft: (shouldShowSidebar && isSidebarOpen && !isResponsive) ? "260px" : "0",
           transition: "margin-left 0.3s ease",
-          scrollbarGutter: "stable",
           backfaceVisibility: "hidden",
+          overflowY: "hidden",
         }}
       >
-        {shouldShowLayout && (
-          location.pathname.startsWith('/image') ? (
-            <ImageHeader
-              toggleSidebar={toggleSidebar}
-              isSidebarOpen={isSidebarOpen}
-              isTouch={isTouch}
-              chatMessageRef={chatMessageRef}
-            />
-          ) : (
-            <Header
-              toggleSidebar={toggleSidebar}
-              isSidebarOpen={isSidebarOpen}
-              isTouch={isTouch}
-              chatMessageRef={chatMessageRef}
-            />
-          )
-        )}
+        <Header
+          toggleSidebar={toggleSidebar}
+          isSidebarOpen={isSidebarOpen}
+          isTouch={isTouch}
+        />
         <AppRoutes
           isLoggedIn={isLoggedIn}
           isTouch={isTouch}

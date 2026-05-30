@@ -47,6 +47,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 @router.post("/register")
 async def register(user: RegisterUser):
+    raise HTTPException(status_code=403, detail="회원가입이 일시적으로 중단되었습니다. 관리자에게 문의해주세요.")
     if collection.find_one({"email": user.email}):
         raise HTTPException(status_code=400, detail="이미 존재하는 사용자입니다.")
     
@@ -229,13 +230,9 @@ async def check_admin(access_token: str = Cookie(None)):
     return db_user
 
 @router.get("/users", response_model=List[User])
-async def get_all_users(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    _ = Depends(check_admin)
-):
+async def get_all_users(_ = Depends(check_admin)):
     users = []
-    cursor = collection.find({}).skip(skip).limit(limit)
+    cursor = collection.find({})
     
     for user in cursor:
         users.append(User(

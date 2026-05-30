@@ -12,6 +12,7 @@ import Message from "../components/Message";
 import Modal from "../components/Modal";
 import Toast from "../components/Toast";
 import InputContainer from "../components/InputContainer";
+import StatusBlock from "../components/StatusBlock";
 import "../styles/Common.css";
 
 function Chat({ isTouch, chatMessageRef, userInfo }) {
@@ -49,7 +50,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   const {
     models,
     model,
-    temperature,
     reason,
     verbosity,
     memory,
@@ -60,13 +60,11 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     isDAN,
     mcpList,
     canVision,
-    canControlTemp,
     canControlReason,
     canControlVerbosity,
     canControlSystemMessage,
     updateModel,
     setAlias,
-    setTemperature,
     setReason,
     setVerbosity,
     setMemory,
@@ -124,7 +122,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     setInstructions(data.instructions);
     setIsDAN(data.dan);
     setMCPList(data.mcp ?? []);
-    setTemperature(data.temperature);
     setReason(data.reason);
     setVerbosity(data.verbosity);
     setMemory(data.memory);
@@ -140,7 +137,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     setInstructions,
     setIsDAN,
     setMCPList,
-    setTemperature,
     setReason,
     setVerbosity,
     setMemory
@@ -377,12 +373,10 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
               mcp: mcpList,
               stream: selectedModel.capabilities.stream,
               control: {
-                temperature: canControlTemp,
                 reason: canControlReason,
                 verbosity: canControlVerbosity,
                 instructions: canControlSystemMessage,
               },
-              temperature: temperature,
               reason: reason,
               verbosity: verbosity,
               memory: memory,
@@ -464,7 +458,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       conversation_id,
       model,
       models,
-      temperature,
       reason,
       verbosity,
       memory,
@@ -479,7 +472,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       mcpList,
       uploadedFiles,
       setUploadedFiles,
-      canControlTemp,
       canControlReason,
       canControlVerbosity,
       canControlSystemMessage,
@@ -838,21 +830,12 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         )}
 
         {isRemoteStreaming && (
-          <div className="remote-streaming-wrap">
-            <span className="remote-streaming">다른 창에서 응답 중</span>
-          </div>
+          <StatusBlock type="remote-streaming" />
         )}
 
-        {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-          <div style={{ margin: "18px 14px 24px" }}>
-            <motion.div
-              className="chat-loading-circle"
-              initial={{ scale: 1 }}
-              animate={{
-                scale: [1, 1.1, 1],
-                transition: { duration: 1.5, repeat: Infinity, ease: "easeInOut" }
-              }}
-            />
+        {isLoading && messages[messages.length - 1]?.role === "user" && (
+          <div className="assistant-wrap">
+            <StatusBlock type="waiting" init />
           </div>
         )}
 

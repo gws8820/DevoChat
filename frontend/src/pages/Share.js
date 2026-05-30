@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { LuArrowDown } from "react-icons/lu";
 import { PulseLoader } from "react-spinners";
 import { motion } from "framer-motion";
@@ -8,9 +8,9 @@ import "../styles/Common.css";
 
 function Share() {
   const { share_id } = useParams();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [isButtonReady, setIsButtonReady] = useState(false);
   const chatMessageRef = useRef(null);
@@ -22,7 +22,8 @@ function Share() {
       try {
         const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/share/${share_id}`);
         if (!res.ok) {
-          setErrorMessage(res.status === 404 ? "공유 대화를 찾을 수 없습니다." : "공유 대화를 불러오는 중 오류가 발생했습니다.");
+          const errorModal = res.status === 404 ? "공유 대화를 찾을 수 없습니다." : "공유 대화를 불러오는 중 오류가 발생했습니다.";
+          navigate("/", { state: { errorModal } });
           return;
         }
 
@@ -33,7 +34,7 @@ function Share() {
         });
         setMessages(updatedMessages);
       } catch (err) {
-        setErrorMessage("공유 대화를 불러오는 중 오류가 발생했습니다.");
+        navigate("/", { state: { errorModal: "공유 대화를 불러오는 중 오류가 발생했습니다." } });
       } finally {
         setIsInitialized(true);
       }
@@ -95,24 +96,18 @@ function Share() {
         </motion.div>
       )}
 
-      {errorMessage ? (
-        <div className="welcome-container">
-          <div className="welcome-message">{errorMessage}</div>
+      <div className="chat-messages-wrapper">
+        <div className="chat-messages view" ref={chatMessageRef}>
+          {renderedMessages}
         </div>
-      ) : (
-        <div className="chat-messages-wrapper">
-          <div className="chat-messages view" ref={chatMessageRef}>
-            {renderedMessages}
-          </div>
-          <button
-            className={`scroll-to-bottom-btn ${!isAtBottom && isButtonReady ? "visible" : ""}`}
-            onClick={() => chatMessageRef.current.scrollTo({ top: chatMessageRef.current.scrollHeight, behavior: "smooth" })}
-            aria-label="아래로 스크롤"
-          >
-            <LuArrowDown />
-          </button>
-        </div>
-      )}
+        <button
+          className={`scroll-to-bottom-btn ${!isAtBottom && isButtonReady ? "visible" : ""}`}
+          onClick={() => chatMessageRef.current.scrollTo({ top: chatMessageRef.current.scrollHeight, behavior: "smooth" })}
+          aria-label="아래로 스크롤"
+        >
+          <LuArrowDown />
+        </button>
+      </div>
     </div>
   );
 }

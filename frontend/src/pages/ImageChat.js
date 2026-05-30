@@ -7,10 +7,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { useFileUpload } from "../utils/useFileUpload";
-import ImageInputContainer from "../components/ImageInputContainer"; 
+import InputContainer from "../components/InputContainer";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
 import Toast from "../components/Toast";
+import StatusBlock from "../components/StatusBlock";
 import "../styles/Common.css";
 
 function ImageChat({ isTouch, chatMessageRef }) {
@@ -551,17 +552,11 @@ function ImageChat({ isTouch, chatMessageRef }) {
           </AnimatePresence>
 
           {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-            <>
-              <div className="image-generating" style={{ marginBottom: "15px" }}>
-                이미지 생성 중...
-              </div>
-            </>
+            <StatusBlock type="image-generating" />
           )}
 
           {isRemoteStreaming && (
-            <div className="remote-streaming-wrap">
-              <span className="remote-streaming">다른 창에서 응답 중</span>
-            </div>
+            <StatusBlock type="remote-streaming" />
           )}
 
         </div>
@@ -573,7 +568,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
         </button>
       </div>
 
-      <ImageInputContainer
+      <InputContainer
         isTouch={isTouch}
         placeholder="프롬프트 입력"
         inputText={inputText}
@@ -586,8 +581,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
         processFiles={processFiles}
         removeFile={removeFile}
         uploadingFiles={uploadingFiles}
-        canVision={canVision}
-        maxImageInput={maxImageInput}
+        imageOnly={true}
       />
 
       <AnimatePresence>

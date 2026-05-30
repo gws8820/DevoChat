@@ -112,6 +112,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request, parameters, fastap
             async for chunk in stream_result:
                 if await fastapi_request.is_disconnected():
                     return
+
                 if chunk.type == "response.reasoning_summary_text.delta":
                     if not is_reasoning:
                         is_reasoning = True
@@ -292,7 +293,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         async with AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY')) as client:
             parameters = {
                 "model": request.model,
-                "temperature": request.temperature if request.control.temperature else 1.0,
                 "instructions": instructions,
                 "input": formatted_messages,
                 "stream": request.stream

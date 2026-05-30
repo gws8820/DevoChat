@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
-import { GoPlus, GoGlobe, GoLightBulb, GoTelescope } from "react-icons/go";
+import { GoPlus } from "react-icons/go";
 import { BiX } from "react-icons/bi";
 import { FiCommand } from "react-icons/fi";
 import { PiPaperPlaneRightFill, PiStopFill, PiWaveformBold } from "react-icons/pi";
 import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
-import MCPModal from "./MCPModal";
+import ToolModal from "./ToolModal";
+import ThinkingModeDropdown from "./ThinkingDropdown";
 import Toast from "./Toast";
 import "../styles/InputContainer.css";
  
@@ -22,21 +23,21 @@ function InputContainer({
   processFiles,
   removeFile,
   uploadingFiles,
+  imageOnly = false,
 }) {
   const [isComposing, setIsComposing] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
   const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
+
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-
 
   const textAreaRef = useRef(null);
   const fileInputRef = useRef(null);
   const recognitionRef = useRef(null);
   const isRecordingRef = useRef(false);
   const inputTextRef = useRef(inputText);
-
 
   const adjustTextareaHeight = useCallback(() => {
     const textarea = textAreaRef.current;
@@ -65,17 +66,14 @@ function InputContainer({
   }, []);
   
 const {
-    isReasoning,
     isSearch,
     isResearch,
     mcpList,
-    canToggleReasoning,
     canToggleSearch,
     canToggleResearch,
     canToggleMCP,
     canVision,
     setMCPList,
-    toggleReasoning,
     toggleSearch,
     toggleResearch,
   } = useContext(SettingsContext);
@@ -87,23 +85,16 @@ const notifyError = useCallback((message) => {
 
   const handlePaste = useCallback(
     async (e) => {
-      const items = e.clipboardData.items;
-      const filesToUpload = [];
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (item.kind === "file") {
-          const file = item.getAsFile();
-          if (file) {
-            filesToUpload.push(file);
-          }
-        }
-      }
-      if (filesToUpload.length > 0) {
+      const files = Array.from(e.clipboardData.items)
+        .filter(item => item.kind === "file")
+        .map(item => item.getAsFile())
+        .filter(file => file && (!imageOnly || file.type.startsWith("image/")));
+      if (files.length > 0) {
         e.preventDefault();
-        await processFiles(filesToUpload, notifyError, canVision);
+        await processFiles(files, notifyError, canVision);
       }
     },
-    [processFiles, canVision, notifyError]
+    [processFiles, canVision, notifyError, imageOnly]
   );
 
   const handleFileClick = useCallback(() => {
@@ -303,79 +294,20 @@ const handleKeyDown = useCallback((event) => {
         </div>
 
         <div className="button-area">
-          <div className="function-button-container">
-            <motion.div
-              className="function-button"
-              onClick={handleFileClick}
-              transition={{ type: "physics", velocity: 200, stiffness: 100, damping: 15 }}
-              layout
-            >
-              <GoPlus style={{ strokeWidth: 0.5 }} />
-            </motion.div>
+          <div className="function-button" onClick={handleFileClick}>
+            <GoPlus style={{ strokeWidth: 0.8 }} />
           </div>
 
-          <AnimatePresence initial={false}>
-            {canToggleSearch && (
-              <motion.div
-                key="web_search"
-                className={`function-button ${isSearch ? "active" : ""}`}
-                onClick={toggleSearch}
-                initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                animate={{ x: 0, opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ type: "physics", velocity: 200, stiffness: 100, damping: 15 }}
-                layout
-              >
-                <GoGlobe style={{ strokeWidth: 0.5 }} />
-                <span className="button-text">검색</span>
-              </motion.div>
-            )}
-            {canToggleReasoning && (
-              <motion.div
-                key="reasoning"
-                className={`function-button ${isReasoning ? "active" : ""}`}
-                onClick={toggleReasoning}
-                initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                animate={{ x: 0, opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ type: "physics", velocity: 200, stiffness: 100, damping: 15 }}
-                layout
-              >
-                <GoLightBulb style={{ strokeWidth: 0.5 }} />
-                <span className="button-text">추론</span>
-              </motion.div>
-            )}
-            {canToggleResearch && (
-              <motion.div
-                key="research"
-                className={`function-button ${isResearch ? "active" : ""}`}
-                onClick={toggleResearch}
-                initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                animate={{ x: 0, opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ type: "physics", velocity: 200, stiffness: 100, damping: 15 }}
-                layout
-              >
-                <GoTelescope style={{ strokeWidth: 0.5 }} />
-                <span className="button-text">리서치</span>
-              </motion.div>
-            )}
-            {canToggleMCP && (
-              <motion.div
-                key="mcp"
-                className={`function-button ${mcpList.length > 0 ? "active" : ""}`}
-                onClick={handleMCPClick}
-                initial={{ x: -20, opacity: 0, scale: 0.8 }}
-                animate={{ x: 0, opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ type: "physics", velocity: 200, stiffness: 100, damping: 15 }}
-                layout
-              >
-                <FiCommand style={{ strokeWidth: 2 }} />
-                <span className="button-text">도구</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {!imageOnly && (
+            <div
+              className={`function-button ${(mcpList.length > 0 || isSearch || isResearch) ? "active" : ""}`}
+              onClick={handleMCPClick}
+            >
+              <FiCommand style={{ strokeWidth: 2 }} />
+            </div>
+          )}
+
+          {!imageOnly && <ThinkingModeDropdown />}
         </div>
       </div>
 
@@ -390,7 +322,7 @@ const handleKeyDown = useCallback((event) => {
 
       <input
         type="file"
-        accept="*/*"
+        accept={imageOnly ? "image/*" : "*/*"}
         multiple
         ref={fileInputRef}
         style={{ display: "none" }}
@@ -404,11 +336,18 @@ const handleKeyDown = useCallback((event) => {
         }}
       />
 
-      <MCPModal
+      <ToolModal
         isOpen={isMCPModalOpen}
         onClose={handleMCPModalClose}
         onConfirm={handleMCPModalConfirm}
         currentMCPList={mcpList}
+        canSearch={canToggleSearch}
+        isSearch={isSearch}
+        toggleSearch={toggleSearch}
+        canResearch={canToggleResearch}
+        isResearch={isResearch}
+        toggleResearch={toggleResearch}
+        canToggleMCP={canToggleMCP}
       />
 
       <Toast

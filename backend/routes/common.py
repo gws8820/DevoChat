@@ -13,7 +13,6 @@ from .auth import User
 from logging_util import logger
 
 class ControlFlags(BaseModel):
-    temperature: bool = True
     reason: bool = True
     verbosity: bool = True
     instructions: bool = True
@@ -28,7 +27,6 @@ class ChatRequest(BaseModel):
     mcp: List[str] = []
     stream: bool = True
     control: ControlFlags = ControlFlags()
-    temperature: float = 1.0
     reason: str = ""
     verbosity: str = ""
     memory: int = 4
@@ -282,7 +280,6 @@ def save_chat_conversation(user: User, user_message, response_text, token_usage,
                 "research": request.research,
                 "dan": request.dan,
                 "mcp": request.mcp,
-                "temperature": request.temperature,
                 "reason": request.reason,
                 "verbosity": request.verbosity,
                 "memory": request.memory,

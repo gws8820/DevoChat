@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { GoCopy, GoCheck, GoPencil, GoTrash, GoSync } from "react-icons/go";
-import { TbRefresh } from "react-icons/tb";
 import { motion } from "framer-motion";
 import TextareaAutosize from "react-textarea-autosize";
 import { MarkdownRenderer } from "./MarkdownRenderers";
@@ -118,8 +117,9 @@ function Message({
         textToCopy = textItem ? textItem.text : "";
       } else {
         textToCopy = String(content)
-          .replace(/\n\n<tool_use>\n.*?\n<\/tool_use>\n/gi, '')
-          .replace(/\n<tool_result>\n.*?\n<\/tool_result>\n\n/gi, '')
+          .replace(/\n*<tool_use>\r?\n[\s\S]*?\r?\n<\/tool_use>\n*/gi, '')
+          .replace(/\n*<tool_result>\r?\n[\s\S]*?\r?\n<\/tool_result>\n*/gi, '')
+          .replace(/\n*<tool_(?:use|result)>\r?\n[\s\S]*$/gi, '')
           .replace(/<think>[\s\S]*?<\/think>\n*/gi, '')
           .replace(/<\/?citations>/gi, '')
           .replace(/\n$/, "");
@@ -220,10 +220,10 @@ function Message({
               <GoCopy className="function-button" onClick={handleCopy} />
             )}
             {onSendEditedMessage && (
-              <GoPencil 
+              <GoPencil
                 className="function-button"
-                onClick={startEdit} 
-              /> 
+                onClick={startEdit}
+              />
             )}
             {onDelete && (
               <GoTrash
@@ -297,13 +297,7 @@ function Message({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
       >
-        <div style={{ marginRight: "7px" }}>{content}</div>
-        <div className="refresh-wrap">
-          <TbRefresh
-            style={{ color: "#666666", fontSize: "18px", cursor: "pointer" }}
-            onClick={() => window.location.reload()}
-          />
-        </div>
+        <div>{content}</div>
       </motion.div>
     );
   }

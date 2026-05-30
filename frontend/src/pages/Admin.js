@@ -202,6 +202,7 @@ function Admin() {
 
   if (selectedUser) {
     return (
+      <div className="admin-page">
       <div className="admin-container">
         <div className="admin-header">
           <button className="back-button" onClick={handleBackToUsers}>← 돌아가기</button>
@@ -268,10 +269,12 @@ function Admin() {
           </div>
         )}
       </div>
+      </div>
     );
   }
 
   return (
+    <div className="admin-page">
     <div className="admin-container">
       <h1 className="admin-title">사용자 관리</h1>
       <div className="admin-stats">
@@ -326,6 +329,7 @@ function Admin() {
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 }

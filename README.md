@@ -3,7 +3,7 @@
 *English | [한국어](README.ko.md)*
 
 ### Unified AI Chat Platform
-DevoChat is a web application that allows you to use various multimodal AI models and MCP (Model Context Protocol) servers through a single interface. Check out the [live demo](https://devochat.com).
+DevoChat is a web application that allows you to use various multimodal AI models and tools through a single interface. Check out the [live demo](https://devochat.com).
 
 ## Screenshots
 
@@ -22,26 +22,26 @@ DevoChat is a web application that allows you to use various multimodal AI model
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/docs.png" alt="File Upload">
+      <img src="samples/file-upload.png" alt="File Upload">
       <br>
       <em>File Upload</em>
     </td>
     <td align="center" width="50%">
-      <img src="samples/image.png" alt="Image Upload">
+      <img src="samples/image-upload.png" alt="Image Upload">
       <br>
       <em>Image Upload</em>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/image-generation.png" alt="Image Generation">
+      <img src="samples/tool-select.png" alt="Tool Selection">
       <br>
-      <em>Image Generation</em>
+      <em>Tool Selection</em>
     </td>
     <td align="center" width="50%">
-      <img src="samples/image-edit.png" alt="Image Editing">
+      <img src="samples/tool-use.png" alt="Tool Usage">
       <br>
-      <em>Image Editing</em>
+      <em>Tool Usage</em>
     </td>
   </tr>
   <tr>
@@ -58,7 +58,7 @@ DevoChat is a web application that allows you to use various multimodal AI model
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/url.png" alt="URL Processing">
+      <img src="samples/url-detect.png" alt="URL Processing">
       <br>
       <em>URL Processing</em>
     </td>
@@ -70,14 +70,14 @@ DevoChat is a web application that allows you to use various multimodal AI model
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/mcp-select.png" alt="MCP Server Selection">
+      <img src="samples/image-generation.png" alt="Image Generation">
       <br>
-      <em>MCP Server Selection</em>
+      <em>Image Generation</em>
     </td>
     <td align="center" width="50%">
-      <img src="samples/mcp-use.png" alt="MCP Server Usage">
+      <img src="samples/image-edit.png" alt="Image Editing">
       <br>
-      <em>MCP Server Usage</em>
+      <em>Image Editing</em>
     </td>
   </tr>
 </table>
@@ -90,7 +90,7 @@ DevoChat is a web application that allows you to use various multimodal AI model
   - Offers an integrated management environment for various media files including images, PDFs, and documents.
 
 - **Advanced Conversation Feature**
-  - Provides parameter controls including temperature, reasoning intensity, response length, and system prompt modification.
+  - Provides parameter controls including reasoning intensity, response length, and system prompt modification.
   - Supports markdown, LaTeX formula, and code block rendering.
   - Enables streaming responses and simulates streaming for non-streaming models by sending complete responses in chunks.
   - Supports image generation via Text-to-Image and Image-to-Image models.
@@ -99,7 +99,7 @@ DevoChat is a web application that allows you to use various multimodal AI model
 - **Model Switching Architecture**
   - Allows immediate addition of various AI models to the system through JSON modification without code changes.
   - Supports toggling of additional features like reasoning, web search, and research for hybrid models.
-  - Enables linking separate provider models (e.g., Qwen3-235B-A22B-Instruct-2507, Qwen3-235B-A22B-Thinking-2507) with a "switch" variant to function as a single hybrid model.
+  - Enables linking separate text-to-image and image-editing models (e.g., bytedance/seedream-v5.0-lite, bytedance/seedream-v5.0-lite/edit) with a "switch" variant to function as a single model.
 
 - **Web-based MCP Client**
   - Connects directly to all types of MCP servers (SSE, Local) from web browsers.
@@ -129,11 +129,9 @@ devochat/
 │   ├── config/                         # Configuration files
 │   │   ├── chat_models.json            # Text AI model settings
 │   │   ├── image_models.json           # Image generation AI model settings
-│   │   ├── mcp_servers_example.json    # MCP server config template
 │   │   ├── mcp_servers.json            # MCP server settings
 │   │   └── realtime_models.json        # Real-time conversation model settings
-│   ├── generated/                      # Generated image outputs
-│   ├── icons/                          # MCP server icons
+│   ├── generated/                      # Generated outputs
 │   ├── prompts/                        # System prompts
 │   ├── routes/                         # API routers
 │   │   ├── chat_clients/               # Text AI model clients
@@ -143,15 +141,13 @@ devochat/
 │   │   ├── conversations.py            # Conversation management API
 │   │   ├── realtime.py                 # Real-time communication
 │   │   └── uploads.py                  # File upload handling
-│   ├── shared_pages/                   # Generated shared conversation pages
 │   ├── uploads/                        # Uploaded files and images
 │   ├── logging_util.py                 # Logging utility
 │   ├── main.py                         # FastAPI application entry point
 │   └── requirements.txt                # Python dependencies
-├── mcp-proxy/                          # Local MCP proxy package and servers
-│   ├── servers/                        # Local MCP server definitions
+├── mcp-proxy/                          # Local MCP proxy package
 │   ├── src/                            # Proxy source package
-│   ├── servers.json
+│   ├── servers.json                    # Local MCP server definitions
 │   └── pyproject.toml
 └── samples/                            # README screenshots
 ```
@@ -163,7 +159,6 @@ devochat/
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![Textract](https://img.shields.io/badge/Textract-FF6F61?style=for-the-badge)
 
 ## Installation and Setup
 
@@ -210,16 +205,13 @@ AUTH_KEY=your_auth_secret_key
 OPENAI_API_KEY=...
 ANTHROPIC_API_KEY=...
 GEMINI_API_KEY=...
-PERPLEXITY_API_KEY=...
-HUGGINGFACE_API_KEY=...
-XAI_API_KEY=...
-MISTRAL_API_KEY=...
 OPENROUTER_API_KEY=...
-FIREWORKS_API_KEY=...
-FRIENDLI_API_KEY=...
+XAI_API_KEY=...
+GROK_API_KEY=...
 FLUX_API_KEY=...
-BYTEPLUS_API_KEY=...
-ALIBABA_API_KEY=...
+WAVESPEED_API_KEY=...
+GOOGLE_STT_API_KEY=...
+REALTIME_API_KEY=...
 ```
 
 #### Run FastAPI Server
@@ -235,32 +227,31 @@ Define the AI models available in the application and their properties through t
 
 ```json
 {
-  "default": "google/gemini-3-flash-preview",
+  "default": "google/gemini-3.5-flash",
   "alias": "google/gemini-3.1-flash-lite",
   "models": [
     {
-      "model_name": "google/gemini-3-flash-preview",
-      "model_alias": "Gemini 3 Flash",
+      "model_name": "google/gemini-3.5-flash",
+      "model_alias": "Gemini 3.5 Flash",
       "description": "Default Gemini model",
       "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "0.5",
-        "out_billing": "3"
+        "in_billing": "1.5",
+        "out_billing": "9"
       },
       "capabilities": {
         "stream": true,
         "vision": true,
-        "reasoning": "toggle",
+        "reasoning": true,
         "web_search": "toggle",
         "research": false,
         "mcp": true
       },
       "controls": {
         "instructions": true,
-        "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
-          "default": "high"
+          "default": "medium"
         },
         "verbosity": false
       },
@@ -285,7 +276,6 @@ Define the AI models available in the application and their properties through t
       },
       "controls": {
         "instructions": true,
-        "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "medium"
@@ -298,28 +288,24 @@ Define the AI models available in the application and their properties through t
       "admin": true
     },
     {
-      "model_name": "grok-4.20-0309-non-reasoning",
-      "model_alias": "Grok 4.2",
-      "description": "Default Grok model",
-      "endpoint": "/chat/grok",
+      "model_name": "mistralai/mistral-large-2512",
+      "model_alias": "Mistral Large 3",
+      "description": "Default Mistral model",
+      "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "2",
-        "out_billing": "6"
-      },
-      "variants": {
-        "reasoning": "grok-4.20-0309-reasoning"
+        "in_billing": "0.5",
+        "out_billing": "1.5"
       },
       "capabilities": {
         "stream": true,
         "vision": true,
-        "reasoning": "switch",
+        "reasoning": false,
         "web_search": "toggle",
         "research": false,
         "mcp": true
       },
       "controls": {
         "instructions": true,
-        "temperature": true,
         "reason": false,
         "verbosity": false
       },
@@ -338,7 +324,7 @@ Define the AI models available in the application and their properties through t
 | `model_name` | The actual identifier of the model used in API calls |
 | `model_alias` | User-friendly name displayed in the UI |
 | `description` | Brief description of the model for reference when selecting |
-| `endpoint` | API path for handling model requests in the backend (e.g., `/chat/gpt`, `/chat/claude`, `/chat/grok`, `/chat/openrouter`) |
+| `endpoint` | API path for handling model requests in the backend (e.g., `/chat/gpt`, `/chat/claude`, `/chat/gemini`, `/chat/grok`, `/chat/openrouter`) |
 | `billing` | Object containing model usage cost information |
 | `billing.in_billing` | Billing cost for input tokens (prompts). Unit: USD per million tokens |
 | `billing.out_billing` | Billing cost for output tokens (responses). Unit: USD per million tokens |
@@ -352,7 +338,6 @@ Define the AI models available in the application and their properties through t
 | `capabilities.mcp` | Whether MCP server integration is supported. Possible values: `true`, `false` |
 | `controls` | Defines user control options supported by the model |
 | `controls.instructions` | Whether custom instructions setting is possible. Possible values: `true`, `false` |
-| `controls.temperature` | Whether temperature adjustment is possible. Possible values: `true`, `false` |
 | `controls.reason` | Defines selectable reasoning intensity levels. Possible values: `false` or an object |
 | `controls.reason.levels` | String array defining the selectable options shown in the UI |
 | `controls.reason.default` | Default value applied when the model is selected |
@@ -398,8 +383,8 @@ Define the image generation AI models available in the application and their pro
       "admin": false
     },
     {
-      "model_name": "bytedance/seedream-v4.5",
-      "model_alias": "Seedream 4.5",
+      "model_name": "bytedance/seedream-v5.0-lite",
+      "model_alias": "Seedream 5.0 Lite",
       "description": "BytePlus",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -407,14 +392,14 @@ Define the image generation AI models available in the application and their pro
         "out_billing": "0.04"
       },
       "variants": {
-        "vision": "bytedance/seedream-v4.5/edit"
+        "vision": "bytedance/seedream-v5.0-lite/edit"
       },
       "capabilities": { "vision": "switch" },
       "admin": false
     },
     {
-      "model_name": "bytedance/seedream-v4.5/edit",
-      "model_alias": "Seedream 4.5",
+      "model_name": "bytedance/seedream-v5.0-lite/edit",
+      "model_alias": "Seedream 5.0 Lite",
       "description": "BytePlus",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -422,7 +407,7 @@ Define the image generation AI models available in the application and their pro
         "out_billing": "0.04"
       },
       "variants": {
-        "base": "bytedance/seedream-v4.5"
+        "base": "bytedance/seedream-v5.0-lite"
       },
       "capabilities": { "vision": "switch", "max_input": 10 },
       "admin": false
@@ -449,21 +434,21 @@ You can define various variants of models through the `variants` object.
 ```json
 [
   {
-    "model_name": "grok-4.20-0309-non-reasoning",
+    "model_name": "bytedance/seedream-v5.0-lite",
     "variants": {
-      "reasoning": "grok-4.20-0309-reasoning"
+      "vision": "bytedance/seedream-v5.0-lite/edit"
     },
     "capabilities": {
-      "reasoning": "switch"
+      "vision": "switch"
     }
   },
   {
-    "model_name": "grok-4.20-0309-reasoning",
+    "model_name": "bytedance/seedream-v5.0-lite/edit",
     "variants": {
-      "base": "grok-4.20-0309-non-reasoning"
+      "base": "bytedance/seedream-v5.0-lite"
     },
     "capabilities": {
-      "reasoning": "switch"
+      "vision": "switch"
     }
   }
 ]
@@ -475,16 +460,16 @@ Define the real-time voice models available in the application through the `real
 
 ```json
 {
-  "default": "gpt-realtime-1.5:coral",
+  "default": "gpt-realtime-2:coral",
   "models": [
     {
-      "model_name": "gpt-realtime-1.5:marin",
+      "model_name": "gpt-realtime-2:marin",
       "model_alias": "Marin",
       "model_gender": "female",
       "description": "A warm motivator"
     },
     {
-      "model_name": "gpt-realtime-1.5:ash",
+      "model_name": "gpt-realtime-2:ash",
       "model_alias": "Ash",
       "model_gender": "male",
       "description": "A steady supporter who believes in you"
@@ -514,8 +499,9 @@ You can define external servers to connect to in the `mcp_servers.json` file.
 {
   "server-id": {
     "url": "https://example.com/mcp/endpoint",
-    "authorization_token": "your_authorization_token", 
+    "authorization_token": "your_authorization_token",
     "name": "Server_Display_Name",
+    "description": "Short description shown in the server picker",
     "admin": false
   }
 }

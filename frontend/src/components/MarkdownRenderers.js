@@ -9,9 +9,8 @@ import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { GoCopy, GoCheck } from "react-icons/go";
-import { GoChevronRight, GoChevronUp } from "react-icons/go";
-import { motion, AnimatePresence } from "framer-motion";
 import ToolBlock from "./ToolBlock";
+import StatusBlock from "./StatusBlock";
 import "../styles/Message.css";
 import "katex/dist/katex.min.css";
 
@@ -50,59 +49,43 @@ export const InlineCode = React.memo(({ children, ...props }) => {
   );
 });
 
-export const ThinkBlock = React.memo(({ children, isThinkClosed = false, isLoading = false, isLastMessage = false }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+export const ThinkingStatusBlock = React.memo(({ children, title, isThinkClosed = false, isLoading = false, isLastMessage = false }) => {
   const isThinking = !isThinkClosed && isLoading && isLastMessage;
 
   return (
-    <>
-      <div className={`think-toggle ${isThinking ? 'thinking' : ''}`} onClick={() => setIsExpanded(!isExpanded)}>
-        {isThinking ? '생각하는 중' : isExpanded ? '생각 닫기' : '생각 열기'}
-        {isExpanded ? <GoChevronUp strokeWidth={1} /> : <GoChevronRight strokeWidth={1} />}
-      </div>
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.div 
-            className="think-content"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+    <StatusBlock type="thinking" isActive={isThinking} activeLabel={title}>
+      {children}
+    </StatusBlock>
+  );
+});
+
+export const ToolStatusBlock = React.memo(({ toolData }) => {
+  const { expandedBlocks, toggleExpanded } = useToolBlockState();
+  const toolId = toolData.tool_id;
+  const isExpanded = expandedBlocks[toolId] || false;
+  const toolName = toolData.tool_name;
+  const hasResult = toolData.type === 'tool_result' && toolData.result;
+  const isPending = toolData.type === 'tool_use' && toolData.isValid;
+
+  return (
+    <StatusBlock
+      type="tool"
+      label={toolName}
+      loading={isPending}
+      expandable={Boolean(hasResult)}
+      expanded={isExpanded}
+      onToggle={() => toggleExpanded(toolId)}
+    >
+      <ToolBlock toolData={toolData} />
+    </StatusBlock>
   );
 });
 
 export const CitationsBlock = React.memo(({ children }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   return (
-    <>
-      <div 
-        className="citations-toggle" 
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <span>{isExpanded ? '출처 닫기' : '출처 열기'}</span>
-        {isExpanded ? <GoChevronUp strokeWidth={1} /> : <GoChevronRight strokeWidth={1} />}
-      </div>
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div 
-            className="citations-content"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+    <StatusBlock type="citations">
+      {children}
+    </StatusBlock>
   );
 });
 
@@ -223,20 +206,81 @@ export const Td = React.memo((props) => (
 ));
 
 function parseSpecialBlocks(rawContent) {
+  const escapeAttribute = (value) => (
+    String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+  );
+
+  const getCurrentThinkingTitle = (content) => {
+    const titlePattern = /(?:^|(?:\r?\n){2,})[ \t]*\*\*([^*\n][^\n]*?)\*\*[ \t]*(?=(?:\r?\n){2,})/g;
+    let currentTitle = "";
+
+    for (const match of content.matchAll(titlePattern)) {
+      currentTitle = match[1].trim();
+    }
+
+    return currentTitle;
+  };
+
   const normalize = (content, tag, className) => {
+    const tagPattern = new RegExp(`</?${tag}>`, 'gi');
     const openCount = (content.match(new RegExp(`<${tag}>`, 'gi')) || []).length;
     const closeCount = (content.match(new RegExp(`</${tag}>`, 'gi')) || []).length;
     const hasTag = openCount + closeCount > 0;
     const isClosed = hasTag ? closeCount >= openCount && closeCount > 0 : false;
 
-    let updatedContent = content;
-    if (openCount > closeCount) {
-      updatedContent += `</${tag}>`;
+    let updatedContent = "";
+    let lastIndex = 0;
+    let openStart = null;
+    let blockIndex = 0;
+
+    for (const match of content.matchAll(tagPattern)) {
+      const tagText = match[0];
+      const isCloseTag = tagText.startsWith("</");
+
+      if (!isCloseTag && openStart === null) {
+        updatedContent += content.slice(lastIndex, match.index);
+        openStart = match.index + tagText.length;
+        lastIndex = openStart;
+        continue;
+      }
+
+      if (isCloseTag && openStart !== null) {
+        const blockContent = content.slice(openStart, match.index);
+        let titleAttribute = "";
+
+        if (tag === "think") {
+          const title = getCurrentThinkingTitle(blockContent);
+          if (title) {
+            titleAttribute = ` data-title="${escapeAttribute(title)}"`;
+          }
+        }
+
+        updatedContent += `<div class="${className}" data-block-index="${blockIndex}" data-is-closed="true"${titleAttribute}>\n\n${blockContent}</div>`;
+        blockIndex += 1;
+        openStart = null;
+        lastIndex = match.index + tagText.length;
+      }
     }
-    updatedContent = updatedContent.replace(
-      new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'gi'),
-      (match) => `<div class="${className}">${match.replace(new RegExp(`</?${tag}>`, 'gi'), "")}</div>`
-    );
+
+    if (openStart !== null) {
+      const blockContent = content.slice(openStart);
+      let titleAttribute = "";
+
+      if (tag === "think") {
+        const title = getCurrentThinkingTitle(blockContent);
+        if (title) {
+          titleAttribute = ` data-title="${escapeAttribute(title)}"`;
+        }
+      }
+
+      updatedContent += `<div class="${className}" data-block-index="${blockIndex}" data-is-closed="false"${titleAttribute}>\n\n${blockContent}</div>`;
+    } else {
+      updatedContent += content.slice(lastIndex);
+    }
 
     return { content: updatedContent, state: { hasTag, isClosed } };
   };
@@ -260,21 +304,67 @@ function parseToolBlocks(rawContent, isLoading, isLastMessage) {
   const toolData = {};
   const processedToolIds = new Set();
   const toolSequence = [];
-  const toolMatches = [...rawContent.matchAll(/<tool_(use|result)>\n(.*?)\n<\/tool_\1>/gi)];
-  
-  toolMatches.forEach((match) => {
-    const tagType = match[1];
-    const jsonData = match[2];
-    
+
+  const escapeAttribute = (value) => (
+    String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+  );
+
+  const closedBlocks = [];
+  const closedStarts = new Set();
+  const closedTagPattern = /<tool_(use|result)>\r?\n([\s\S]*?)\r?\n<\/tool_\1>/gi;
+  let closedMatch;
+
+  while ((closedMatch = closedTagPattern.exec(rawContent)) !== null) {
+    const tagType = closedMatch[1];
+    const jsonData = closedMatch[2];
+    const block = {
+      kind: "closed",
+      type: tagType,
+      jsonData,
+      start: closedMatch.index,
+      end: closedMatch.index + closedMatch[0].length,
+      data: null,
+      toolId: null,
+    };
+
     try {
       const data = JSON.parse(jsonData);
       const toolId = data.tool_id;
-      
-      toolSequence.push({ type: tagType, toolId, data });
+
+      if (toolId) {
+        block.data = data;
+        block.toolId = toolId;
+        toolSequence.push({ type: tagType, toolId, data, start: block.start, end: block.end });
+      }
     } catch (e) {
       console.error('Error parsing Tool tag:', e);
     }
-  });
+
+    closedBlocks.push(block);
+    closedStarts.add(block.start);
+  }
+
+  const incompleteBlocks = [];
+  const toolStartPattern = /<tool_(use|result)>\r?\n/gi;
+  let startMatch;
+
+  while ((startMatch = toolStartPattern.exec(rawContent)) !== null) {
+    const startIndex = startMatch.index;
+    const startType = startMatch[1];
+    if (closedStarts.has(startIndex)) continue;
+
+    const nextClosedBlock = closedBlocks.find((block) => block.start > startIndex);
+    incompleteBlocks.push({
+      kind: "incomplete",
+      type: startType,
+      start: startIndex,
+      end: nextClosedBlock ? nextClosedBlock.start : rawContent.length,
+    });
+  }
   
   const validResults = new Set();
   for (let i = 0; i < toolSequence.length; i++) {
@@ -285,14 +375,15 @@ function parseToolBlocks(rawContent, isLoading, isLastMessage) {
       if (next && next.type === 'result' && next.toolId === current.toolId) {
         validResults.add(current.toolId);
       } else {
-        const toolUsePattern = new RegExp(`<tool_use>\\n.*?"tool_id"\\s*:\\s*"${current.toolId}".*?\\n</tool_use>`, 'g');
-        const match = toolUsePattern.exec(rawContent);
-        if (match) {
-          const afterToolUse = rawContent.substring(match.index + match[0].length);
-          const trimmedAfter = afterToolUse.trim();
-          if ((trimmedAfter === '' || trimmedAfter === '</div>') && isLoading && isLastMessage) {
-            validResults.add(current.toolId);
-          }
+        const afterToolUse = rawContent.slice(current.end);
+        const trimmedAfter = afterToolUse.trim();
+        const hasStreamingResult = incompleteBlocks.some((block) => {
+          if (block.type !== 'result' || block.start < current.end) return false;
+          return rawContent.slice(current.end, block.start).trim() === '';
+        });
+
+        if ((trimmedAfter === '' || hasStreamingResult) && isLoading && isLastMessage) {
+          validResults.add(current.toolId);
         }
       }
     }
@@ -318,26 +409,25 @@ function parseToolBlocks(rawContent, isLoading, isLastMessage) {
       };
     }
   });
-  
-  const processedContent = rawContent.replace(
-    /<tool_(use|result)>\n(.*?)\n<\/tool_\1>/gi,
-    (match, tagType, jsonData) => {
-      try {
-        const data = JSON.parse(jsonData);
-        const toolId = data.tool_id;
-        
-        if (!processedToolIds.has(toolId)) {
-          processedToolIds.add(toolId);
-          return `<div class="tool-block" data-tool-id="${toolId}"></div>`;
-        }
-        
-        return '';
-      } catch (e) {
-        console.error('Error parsing Tool tag:', e);
-        return '';
-      }
+
+  const ranges = [...closedBlocks, ...incompleteBlocks].sort((a, b) => a.start - b.start);
+  let processedContent = "";
+  let lastIndex = 0;
+
+  ranges.forEach((block) => {
+    if (block.start < lastIndex) return;
+
+    processedContent += rawContent.slice(lastIndex, block.start);
+
+    if (block.kind === "closed" && block.toolId && !processedToolIds.has(block.toolId)) {
+      processedToolIds.add(block.toolId);
+      processedContent += '<div class="tool-block" data-tool-id="' + escapeAttribute(block.toolId) + '"></div>';
     }
-  );
+
+    lastIndex = block.end;
+  });
+
+  processedContent += rawContent.slice(lastIndex);
   
   return { content: processedContent, toolData };
 }
@@ -349,15 +439,13 @@ function preprocessMarkdownContent(content) {
     mathParts.push(value);
     return token;
   };
-  const isMath = (value) => /\\[a-zA-Z]+|[=+\-*/^_{}|]/.test(value);
+  const isMath = (value) => /\\[a-zA-Z]+|[=+\-*/^_{}|]/.test(value) || /^\S+$/.test(value);
 
   let result = String(content)
     .replace(/^(#{2,3}) #{2,4}(?= )/gm, "$1")
     .replace(/(^|[\s(])[₩￦](?=\s*\d)/g, "$1₩")
     .replace(/\\\[/g, () => "$$")
-    .replace(/\\\]/g, () => "$$")
-    .replace(/\\\(/g, "$")
-    .replace(/\\\)/g, "$");
+    .replace(/\\\]/g, () => "$$");
 
   result = result
     .replace(/\$\$[\s\S]*?\$\$/g, stash)
@@ -365,6 +453,8 @@ function preprocessMarkdownContent(content) {
       return isMath(value) ? `${prefix}${stash(`$${value}$`)}` : match;
     })
     .replace(/(^|[\s(])\$(?=\s*\d)/g, "$1\\$")
+    .replace(/\\\(/g, "$")
+    .replace(/\\\)/g, "$")
     .replace(/\*\*([^*\n]+)\*\*/g, (match, inner) => {
       let fixed = inner;
       if (/^[\p{P}]/u.test(inner)) fixed = "\u200B" + fixed;
@@ -377,15 +467,15 @@ function preprocessMarkdownContent(content) {
 }
 
 const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = false, isLastMessage = false }) => {
-  const { finalContent, toolData, thinkState } = useMemo(() => {
-    let parsedContent = preprocessMarkdownContent(content);
-    const { content: contentWithSpecialBlocks, states } = parseSpecialBlocks(parsedContent);
-    const { content: finalContent, toolData } = parseToolBlocks(contentWithSpecialBlocks, isLoading, isLastMessage);
-    return { finalContent, toolData, thinkState: states?.think ?? { hasTag: false, isClosed: false } };
+  const { finalContent, toolData } = useMemo(() => {
+    const { content: contentWithToolBlocks, toolData } = parseToolBlocks(String(content), isLoading, isLastMessage);
+    const parsedContent = preprocessMarkdownContent(contentWithToolBlocks);
+    const { content: finalContent } = parseSpecialBlocks(parsedContent);
+    return { finalContent, toolData };
   }, [content, isLoading, isLastMessage]);
 
-  const dynamicDataRef = useRef({ isComplete, toolData, isLoading, isLastMessage, thinkState });
-  dynamicDataRef.current = { isComplete, toolData, isLoading, isLastMessage, thinkState };
+  const dynamicDataRef = useRef({ isComplete, toolData, isLoading, isLastMessage });
+  dynamicDataRef.current = { isComplete, toolData, isLoading, isLastMessage };
 
   const components = useMemo(() => {
     return {
@@ -411,24 +501,26 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
       div: ({ className, children, ...props }) => {
         if (className === "tool-block") {
           const toolId = props['data-tool-id'];
-          const { toolData: currentToolData, isLoading: currentIsLoading, isLastMessage: currentIsLastMessage } = dynamicDataRef.current;
-          
+          const { toolData: currentToolData } = dynamicDataRef.current;
+
           if (!toolId || !currentToolData || !currentToolData[toolId]) {
             return null;
           }
-          const toolData = currentToolData[toolId];
-          return <ToolBlock toolData={toolData} isLoading={currentIsLoading} isLastMessage={currentIsLastMessage} />;
+          return <ToolStatusBlock toolData={currentToolData[toolId]} />;
         }
         if (className === "think-block") {
-          const { isLoading: currentIsLoading, isLastMessage: currentIsLastMessage, thinkState: currentThinkState } = dynamicDataRef.current;
+          const { isLoading: currentIsLoading, isLastMessage: currentIsLastMessage } = dynamicDataRef.current;
+          const isThinkClosed = props['data-is-closed'] !== "false";
+          const title = props['data-title'] || "";
           return (
-            <ThinkBlock
-              isThinkClosed={currentThinkState?.isClosed}
+            <ThinkingStatusBlock
+              title={title}
+              isThinkClosed={isThinkClosed}
               isLoading={currentIsLoading}
               isLastMessage={currentIsLastMessage}
             >
               {children}
-            </ThinkBlock>
+            </ThinkingStatusBlock>
           );
         }
         if (className === "citations-block") {
@@ -456,6 +548,12 @@ const MarkdownRenderer = React.memo(({ content, isComplete = false, isLoading = 
                   ["className", "think-block", "citations-block", "tool-block"],
                   ["dataToolId"],
                   ["data-tool-id"],
+                  ["dataBlockIndex"],
+                  ["data-block-index"],
+                  ["dataIsClosed"],
+                  ["data-is-closed"],
+                  ["dataTitle"],
+                  ["data-title"],
                   /^data-/,
                 ],
                 code: [

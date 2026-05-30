@@ -53,7 +53,7 @@
     {
       "model_name": "grok-imagine-image",
       "model_alias": "Grok Imagine",
-      "description": "XAI",
+      "description": "xAI",
       "endpoint": "/image/grok",
       "billing": {
         "in_billing": "0",
@@ -63,8 +63,8 @@
       "admin": false
     },
     {
-      "model_name": "bytedance/seedream-v4.5",
-      "model_alias": "Seedream 4.5",
+      "model_name": "bytedance/seedream-v5.0-lite",
+      "model_alias": "Seedream 5.0 Lite",
       "description": "BytePlus",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -72,14 +72,14 @@
         "out_billing": "0.04"
       },
       "variants": {
-        "vision": "bytedance/seedream-v4.5/edit"
+        "vision": "bytedance/seedream-v5.0-lite/edit"
       },
       "capabilities": { "vision": "switch" },
       "admin": false
     },
     {
-      "model_name": "bytedance/seedream-v4.5/edit",
-      "model_alias": "Seedream 4.5",
+      "model_name": "bytedance/seedream-v5.0-lite/edit",
+      "model_alias": "Seedream 5.0 Lite",
       "description": "BytePlus",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -87,51 +87,99 @@
         "out_billing": "0.04"
       },
       "variants": {
-        "base": "bytedance/seedream-v4.5"
+        "base": "bytedance/seedream-v5.0-lite"
       },
       "capabilities": { "vision": "switch", "max_input": 10 },
       "admin": false
     },
     {
-      "model_name": "wavespeed-ai/qwen-image/text-to-image-2512",
-      "model_alias": "Qwen Image",
+      "model_name": "wavespeed-ai/qwen-image-2.0-pro/text-to-image",
+      "model_alias": "Qwen Image 2 Pro",
       "description": "Alibaba",
       "endpoint": "/image/wavespeed",
       "billing": {
         "in_billing": "0",
-        "out_billing": "0.02"
+        "out_billing": "0.07"
       },
       "variants": {
-        "vision": "wavespeed-ai/qwen-image/edit-2511"
+        "vision": "wavespeed-ai/qwen-image-2.0-pro/edit"
       },
       "capabilities": { "vision": "switch" },
       "admin": false
     },
     {
-      "model_name": "wavespeed-ai/qwen-image/edit-2511",
-      "model_alias": "Qwen Image",
+      "model_name": "wavespeed-ai/qwen-image-2.0-pro/edit",
+      "model_alias": "Qwen Image 2 Pro",
       "description": "Alibaba",
       "endpoint": "/image/wavespeed",
       "billing": {
         "in_billing": "0",
-        "out_billing": "0.02"
+        "out_billing": "0.07"
       },
       "variants": {
-        "base": "wavespeed-ai/qwen-image/text-to-image-2512"
+        "base": "wavespeed-ai/qwen-image-2.0-pro/text-to-image"
       },
       "capabilities": { "vision": "switch", "max_input": 3 },
       "admin": false
     },
     {
-      "model_name": "kwaivgi/kling-image-o1",
-      "model_alias": "Kling Image O1",
+      "model_name": "wavespeed-ai/qwen-image-2.0/text-to-image",
+      "model_alias": "Qwen Image 2",
+      "description": "Alibaba",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.03"
+      },
+      "variants": {
+        "vision": "wavespeed-ai/qwen-image-2.0/edit"
+      },
+      "capabilities": { "vision": "switch" },
+      "admin": false
+    },
+    {
+      "model_name": "wavespeed-ai/qwen-image-2.0/edit",
+      "model_alias": "Qwen Image 2",
+      "description": "Alibaba",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.03"
+      },
+      "variants": {
+        "base": "wavespeed-ai/qwen-image-2.0/text-to-image"
+      },
+      "capabilities": { "vision": "switch", "max_input": 3 },
+      "admin": false
+    },
+    {
+      "model_name": "kwaivgi/kling-image-o3/text-to-image",
+      "model_alias": "Kling Image O3",
       "description": "Kuaishou",
       "endpoint": "/image/wavespeed",
       "billing": {
         "in_billing": "0",
         "out_billing": "0.028"
       },
-      "capabilities": { "vision": true, "max_input": 10 },
+      "variants": {
+        "vision": "kwaivgi/kling-image-o3/edit"
+      },
+      "capabilities": { "vision": "switch" },
+      "admin": false
+    },
+    {
+      "model_name": "kwaivgi/kling-image-o3/edit",
+      "model_alias": "Kling Image O3",
+      "description": "Kuaishou",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.028"
+      },
+      "variants": {
+        "base": "kwaivgi/kling-image-o3/text-to-image"
+      },
+      "capabilities": { "vision": "switch", "max_input": 10 },
       "admin": false
     },
     {
@@ -151,7 +199,7 @@
     },
     {
       "model_name": "alibaba/wan-2.7/image-edit",
-      "model_alias": "Wan 2.7 Image",
+      "model_alias": "Wan 2.7",
       "description": "Alibaba",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -174,6 +222,72 @@
         "out_billing": "0.045"
       },
       "capabilities": { "vision": true, "max_input": 8 },
+      "admin": false
+    },
+    {
+      "model_name": "pruna-ai/p-image/text-to-image",
+      "model_alias": "P Image",
+      "description": "Pruna AI",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.005"
+      },
+      "variants": {
+        "vision": "pruna-ai/p-image/edit"
+      },
+      "capabilities": { "vision": "switch" },
+      "admin": false
+    },
+    {
+      "model_name": "pruna-ai/p-image/edit",
+      "model_alias": "P Image",
+      "description": "Pruna AI",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.01"
+      },
+      "variants": {
+        "base": "pruna-ai/p-image/text-to-image"
+      },
+      "capabilities": { "vision": "switch", "max_input": 10 },
+      "admin": false
+    },
+    {
+      "model_name": "recraft-ai/recraft-v4.1/text-to-image",
+      "model_alias": "Recraft V4.1",
+      "description": "Recraft",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.04"
+      },
+      "capabilities": { "vision": false },
+      "admin": false
+    },
+    {
+      "model_name": "wavespeed-ai/krea-v2-large/text-to-image",
+      "model_alias": "Krea V2 Large",
+      "description": "Krea",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.06"
+      },
+      "capabilities": { "vision": false },
+      "admin": false
+    },
+    {
+      "model_name": "wavespeed-ai/krea-v2-medium/text-to-image",
+      "model_alias": "Krea V2 Medium",
+      "description": "Krea",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.03"
+      },
+      "capabilities": { "vision": false },
       "admin": false
     }
   ]

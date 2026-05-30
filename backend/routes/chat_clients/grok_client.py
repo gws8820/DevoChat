@@ -221,7 +221,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         
         parameters = {
             "model": request.model,
-            "temperature": request.temperature if request.control.temperature else 1.0,
             "messages": formatted_messages,
             "tools": []
         }

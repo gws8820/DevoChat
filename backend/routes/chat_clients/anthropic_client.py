@@ -101,8 +101,27 @@ def format_message(message):
         
 async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, parameters, fastapi_request: Request, client) -> None:
     is_reasoning = False
+    has_started_reasoning = False
     citations = []
     tools = {}
+
+    async def ensure_reasoning_open() -> bool:
+        nonlocal is_reasoning, has_started_reasoning
+        if is_reasoning:
+            return True
+        if has_started_reasoning:
+            return False
+        await chunk_queue.put('<think>\n')
+        has_started_reasoning = True
+        is_reasoning = True
+        return True
+
+    async def stop_reasoning() -> None:
+        nonlocal is_reasoning
+        if is_reasoning:
+            await chunk_queue.put('\n</think>\n\n')
+            is_reasoning = False
+
     try:
         if request.stream:
             stream_result = await client.beta.messages.create(**parameters)
@@ -112,10 +131,8 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
 
                 if hasattr(chunk, "type"):
                     if chunk.type == "content_block_start" and hasattr(chunk, "content_block"):
-                        if getattr(chunk.content_block, "type", "") == "thinking":
-                            is_reasoning = True
-                            await chunk_queue.put('<think>\n')
-                        elif getattr(chunk.content_block, "type", "") == "mcp_tool_use":
+                        block_type = getattr(chunk.content_block, "type", "")
+                        if block_type == "mcp_tool_use":
                             tool_id = getattr(chunk.content_block, "id")
                             server_name = getattr(chunk.content_block, "server_name")
                             tool_name = getattr(chunk.content_block, "name")
@@ -128,7 +145,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             await chunk_queue.put(RawChunk(
                                 f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n"
                             ))
-                        elif getattr(chunk.content_block, "type", "") == "mcp_tool_result":
+                        elif block_type == "mcp_tool_result":
                             tool_use_id = getattr(chunk.content_block, "tool_use_id")
                             tool_info = tools.get(tool_use_id)
                             
@@ -145,7 +162,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             await chunk_queue.put(RawChunk(
                                 f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': tool_result}, ensure_ascii=False)}\n</tool_result>\n\n"
                             ))
-                        elif getattr(chunk.content_block, "type", "") == "server_tool_use":
+                        elif block_type == "server_tool_use":
                             tool_id = getattr(chunk.content_block, "id")
                             tool_name = getattr(chunk.content_block, "name")
                             server_name = "Claude"
@@ -158,7 +175,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             await chunk_queue.put(RawChunk(
                                 f"\n\n<tool_use>\n{json.dumps({'tool_id': tool_id, 'server_name': server_name, 'tool_name': tool_name}, ensure_ascii=False)}\n</tool_use>\n"
                             ))
-                        elif getattr(chunk.content_block, "type", "") == "web_search_tool_result":
+                        elif block_type == "web_search_tool_result":
                             tool_use_id = getattr(chunk.content_block, "tool_use_id")
                             tool_info = tools.get(tool_use_id)
 
@@ -177,7 +194,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             await chunk_queue.put(RawChunk(
                                 f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': False, 'result': '\n'.join(tool_result)}, ensure_ascii=False)}\n</tool_result>\n\n"
                             ))
-                        elif getattr(chunk.content_block, "type", "") == "code_execution_tool_result":
+                        elif block_type == "code_execution_tool_result":
                             tool_use_id = getattr(chunk.content_block, "tool_use_id")
                             tool_info = tools.get(tool_use_id)
 
@@ -192,18 +209,16 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
                             await chunk_queue.put(RawChunk(
                                 f"\n<tool_result>\n{json.dumps({'tool_id': tool_use_id, 'server_name': server_name, 'tool_name': tool_name, 'is_error': is_error, 'result': result}, ensure_ascii=False)}\n</tool_result>\n\n"
                             ))
-                    elif chunk.type == "content_block_stop":
-                        if is_reasoning:
-                            await chunk_queue.put('\n</think>\n\n')
-                            is_reasoning = False
                 if hasattr(chunk, "delta"):
                     if hasattr(chunk.delta, "thinking"):
                         thinking = chunk.delta.thinking
                         if thinking:
-                            await chunk_queue.put(thinking)
+                            if await ensure_reasoning_open():
+                                await chunk_queue.put(thinking)
                     elif hasattr(chunk.delta, "text"):
                         text = chunk.delta.text
                         if text:
+                            await stop_reasoning()
                             await chunk_queue.put(text)
                 if hasattr(chunk, "usage"):
                     usage = chunk.usage
@@ -253,8 +268,7 @@ async def process_stream(chunk_queue: asyncio.Queue, request: ChatRequest, param
         logger.error(f"STREAM_ERROR: {str(ex)}")
         await chunk_queue.put({"error": str(ex)})
     finally:
-        if is_reasoning:
-            await chunk_queue.put('\n</think>\n\n')
+        await stop_reasoning()
 
         if citations:
             citations_text = "\n<citations>"
@@ -298,7 +312,6 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
         async with anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY")) as client:
             parameters = {
                 "model": request.model,
-                "temperature": request.temperature if request.control.temperature else 1.0,
                 "max_tokens": 16000,
                 "system": instructions,
                 "messages": formatted_messages,

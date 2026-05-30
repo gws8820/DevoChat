@@ -68,19 +68,19 @@ function Register() {
         e.preventDefault();
         handleRegister();
       }}>
-        <input 
-          className="name field" 
-          type="text" 
-          placeholder="이름" 
-          value={name} 
+        <input
+          className="name field"
+          type="text"
+          placeholder="이름"
+          value={name}
           onChange={(e) => setName(e.target.value)}
           autoComplete="name"
         />
-        <input 
-          className="id field" 
-          type="email" 
-          placeholder="이메일" 
-          value={email} 
+        <input
+          className="id field"
+          type="email"
+          placeholder="이메일"
+          value={email}
           onChange={(e) => {
             const value = e.target.value;
             if (/^[a-zA-Z0-9@._-]*$/.test(value)) {
@@ -89,11 +89,11 @@ function Register() {
           }}
           autoComplete="username"
         />
-        <input 
-          className="password field" 
-          type="password" 
-          placeholder="비밀번호" 
-          value={password} 
+        <input
+          className="password field"
+          type="password"
+          placeholder="비밀번호"
+          value={password}
           onChange={(e) => {
             const value = e.target.value;
             if (/^[a-zA-Z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]*$/.test(value)) {

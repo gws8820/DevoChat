@@ -1,12 +1,22 @@
+.admin-page {
+  height: 100dvh;
+  overflow-y: auto;
+}
+
+.admin-page::-webkit-scrollbar {
+  width: 10px;
+}
+
+.admin-page::-webkit-scrollbar-thumb {
+  background: rgb(235, 235, 235);
+  border-radius: 10px;
+}
+
 .admin-container {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  height: 100%;
-  overflow-y: auto;
   box-sizing: border-box;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
 .admin-header {
@@ -164,12 +174,6 @@
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.status-label {
-  font-size: 14px;
-  color: #333;
-  min-width: 120px;
 }
 
 .toggle-switch {

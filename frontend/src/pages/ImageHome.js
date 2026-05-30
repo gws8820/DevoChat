@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
+import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoImageOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,7 +6,7 @@ import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { useFileUpload } from "../utils/useFileUpload";
 import Toast from "../components/Toast";
-import ImageInputContainer from "../components/ImageInputContainer";
+import InputContainer from "../components/InputContainer";
 import "../styles/Common.css";
 
 function ImageHome({ isTouch, userInfo }) {
@@ -18,6 +18,48 @@ function ImageHome({ isTouch, userInfo }) {
   const [toastMessage, setToastMessage] = useState("");
 
   const abortControllerRef = useRef(null);
+
+  const welcomeMessage = useMemo(() => {
+    const h = new Date().getHours();
+    const name = userInfo?.name?.split(' ')[0];
+
+    const morning = [
+      `좋은 아침이에요, ${name}님.`,
+      "아침에 떠오르는 이미지가 있나요?",
+      "오늘 하루도 잘 부탁드려요.",
+    ];
+    const afternoon = [
+      `즐거운 오후입니다, ${name}님!`,
+      "오후엔 어떤 장면을 그려볼까요?",
+    ];
+    const evening = [
+      "오늘 하루 수고 많으셨어요.",
+      "벌써 하루가 끝나가네요.",
+    ];
+    const night = [
+      `늦은 밤이네요, ${name}님.`,
+      "밤에 떠오른 그 장면, 그려드릴게요.",
+    ];
+    const general = [
+      `반갑습니다, ${name}님.`,
+      `오늘도 잘 부탁드려요, ${name}님.`,
+      "어떤 이미지를 만들어 드릴까요?",
+      "어떤 장면을 상상하고 계신가요?",
+      "어떤 그림을 그려볼까요?",
+      "상상하는 장면을 설명해 주세요.",
+      `잘 오셨어요, ${name}님.`,
+    ];
+
+    let pool;
+    if (h >= 5 && h < 12) pool = morning;
+    else if (h >= 12 && h < 17) pool = afternoon;
+    else if (h >= 17 && h < 21) pool = evening;
+    else pool = night;
+
+    const combined = [...pool, ...general];
+    return combined[Math.floor(Math.random() * combined.length)];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     canVision,
@@ -149,18 +191,11 @@ function ImageHome({ isTouch, userInfo }) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          {(() => {
-            const h = new Date().getHours();
-            const name = userInfo.name.split(' ')[0];
-            if (h >= 5 && h < 12) return `좋은 아침이에요, ${name}님! ☀️`;
-            if (h >= 12 && h < 17) return `안녕하세요, ${name}님! 👋`;
-            if (h >= 17 && h < 21) return `좋은 저녁이에요, ${name}님! ✨`;
-            return `안녕히 주무세요, ${name}님! 🌙`;
-          })()}
+          {welcomeMessage}
         </motion.div>
       </div>
 
-      <ImageInputContainer
+      <InputContainer
         isTouch={isTouch}
         placeholder="프롬프트 입력"
         inputText={inputText}
@@ -172,8 +207,7 @@ function ImageHome({ isTouch, userInfo }) {
         processFiles={processFiles}
         removeFile={removeFile}
         uploadingFiles={uploadingFiles}
-        canVision={canVision}
-        maxImageInput={maxImageInput}
+        imageOnly={true}
       />
 
       <AnimatePresence>

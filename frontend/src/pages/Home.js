@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useContext } from "react";
+import React, { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { IoImageOutline, IoAttach } from "react-icons/io5";
 import { SettingsContext } from "../contexts/SettingsContext";
@@ -23,6 +23,54 @@ function Home({ isTouch, userInfo }) {
   const [toastMessage, setToastMessage] = useState("");
 
   const abortControllerRef = useRef(null);
+
+  const welcomeMessage = useMemo(() => {
+    const h = new Date().getHours();
+    const name = userInfo?.name?.split(' ')[0];
+
+    const morning = [
+      `좋은 아침이에요, ${name}님.`,
+      "오늘 아침도 시작해 볼까요?",
+      "오늘 하루도 잘 부탁드려요.",
+      "오늘 아침엔 무엇이 궁금하신가요?",
+    ];
+    const afternoon = [
+      "오후의 대화를 시작해 볼까요?",
+      `즐거운 오후입니다, ${name}님!`,
+      "오후엔 어떤 주제로 이야기할까요?",
+    ];
+    const evening = [
+      "오늘 하루 수고 많으셨어요.",
+      "벌써 하루가 끝나가네요.",
+      "오늘 저녁엔 무얼 하실 계획이신가요?",
+    ];
+    const night = [
+      `늦은 밤이네요, ${name}님.`,
+      "오늘 밤엔 어떤 아이디어가 떠오르나요?",
+      "오늘 밤엔 어떤 걸 알아볼까요?",
+    ];
+    const general = [
+      `반갑습니다, ${name}님.`,
+      `오늘도 잘 부탁드려요, ${name}님.`,
+      "오늘은 무엇을 도와드릴까요?",
+      "어디서부터 시작할까요?",
+      "새로운 대화를 시작해 볼까요?",
+      "오늘은 어떤 게 궁금하신가요?",
+      "무엇을 알아볼까요?",
+      "대화를 시작해 볼까요?",
+      `잘 오셨어요, ${name}님.`,
+    ];
+
+    let pool;
+    if (h >= 5 && h < 12) pool = morning;
+    else if (h >= 12 && h < 17) pool = afternoon;
+    else if (h >= 17 && h < 21) pool = evening;
+    else pool = night;
+
+    const combined = [...pool, ...general];
+    return combined[Math.floor(Math.random() * combined.length)];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     uploadedFiles,
@@ -179,14 +227,7 @@ function Home({ isTouch, userInfo }) {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          {(() => {
-            const h = new Date().getHours();
-            const name = userInfo.name.split(' ')[0];
-            if (h >= 5 && h < 12) return `좋은 아침이에요, ${name}님! ☀️`;
-            if (h >= 12 && h < 17) return `안녕하세요, ${name}님! 👋`;
-            if (h >= 17 && h < 21) return `좋은 저녁이에요, ${name}님! ✨`;
-            return `안녕히 주무세요, ${name}님! 🌙`;
-          })()}
+          {welcomeMessage}
         </motion.div>
       </div>
 

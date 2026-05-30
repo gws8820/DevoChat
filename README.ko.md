@@ -3,7 +3,7 @@
 *[English](README.md) | 한국어*
 
 ### 통합 AI 대화 플랫폼
-DevoChat은 다양한 멀티모달 AI 모델과 MCP (Model Context Protocol) 서버를 하나의 인터페이스에서 사용할 수 있는 웹 애플리케이션입니다. [여기](https://devochat.com)에서 라이브 데모를 확인하세요.
+DevoChat은 다양한 멀티모달 AI 모델과 도구를 하나의 인터페이스에서 사용할 수 있는 웹 애플리케이션입니다. [여기](https://devochat.com)에서 라이브 데모를 확인하세요.
 
 ## 스크린샷
 
@@ -22,26 +22,26 @@ DevoChat은 다양한 멀티모달 AI 모델과 MCP (Model Context Protocol) 서
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/docs.png" alt="파일 업로드">
+      <img src="samples/file-upload.png" alt="파일 업로드">
       <br>
       <em>파일 업로드</em>
     </td>
     <td align="center" width="50%">
-      <img src="samples/image.png" alt="이미지 업로드">
+      <img src="samples/image-upload.png" alt="이미지 업로드">
       <br>
       <em>이미지 업로드</em>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/image-generation.png" alt="이미지 생성">
+      <img src="samples/tool-select.png" alt="도구 선택">
       <br>
-      <em>이미지 생성</em>
+      <em>도구 선택</em>
     </td>
     <td align="center" width="50%">
-      <img src="samples/image-edit.png" alt="이미지 편집">
+      <img src="samples/tool-use.png" alt="도구 사용">
       <br>
-      <em>이미지 편집</em>
+      <em>도구 사용</em>
     </td>
   </tr>
   <tr>
@@ -58,7 +58,7 @@ DevoChat은 다양한 멀티모달 AI 모델과 MCP (Model Context Protocol) 서
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/url.png" alt="URL 링크 처리">
+      <img src="samples/url-detect.png" alt="URL 링크 처리">
       <br>
       <em>URL 처리</em>
     </td>
@@ -70,14 +70,14 @@ DevoChat은 다양한 멀티모달 AI 모델과 MCP (Model Context Protocol) 서
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="samples/mcp-select.png" alt="MCP 서버 선택">
+      <img src="samples/image-generation.png" alt="이미지 생성">
       <br>
-      <em>MCP 서버 선택</em>
+      <em>이미지 생성</em>
     </td>
     <td align="center" width="50%">
-      <img src="samples/mcp-use.png" alt="MCP 서버 사용">
+      <img src="samples/image-edit.png" alt="이미지 편집">
       <br>
-      <em>MCP 서버 사용</em>
+      <em>이미지 편집</em>
     </td>
   </tr>
 </table>
@@ -90,7 +90,7 @@ DevoChat은 다양한 멀티모달 AI 모델과 MCP (Model Context Protocol) 서
   - 이미지, PDF, 문서 등 다양한 미디어 파일을 통합 관리하는 환경을 제공합니다.
 
 - **고급 대화 기능**
-  - 온도, 추론 강도, 답변 길이, 시스템 프롬프트 수정 등 세부 파라미터 제어를 제공합니다.
+  - 추론 강도, 답변 길이, 시스템 프롬프트 수정 등 세부 파라미터 제어를 제공합니다.
   - 마크다운, LaTeX 수식, 코드 블럭 렌더링을 제공합니다.
   - 스트리밍 응답을 지원하며, 비스트리밍 모델의 경우 전체 응답을 청크 단위로 전송하여 스트리밍을 시뮬레이션합니다.
   - Text-to-Image/Image-to-Image 모델을 통한 이미지 생성을 지원합니다.
@@ -99,7 +99,7 @@ DevoChat은 다양한 멀티모달 AI 모델과 MCP (Model Context Protocol) 서
 - **모델 전환 아키텍처**
   - JSON 설정만으로 코드 수정 없이 다양한 AI 모델을 시스템에 즉시 추가할 수 있습니다.
   - 하이브리드 모델의 경우 추론, 웹 검색, 리서치 등 각 모델의 특화 기능을 필요에 따라 토글할 수 있습니다.
-  - 제공업체가 기능을 여러 모델로 분할한 경우(예: Qwen3-235B-A22B-Instruct-2507, Qwen3-235B-A22B-Thinking-2507), "switch" 변형으로 연결하여 단일 하이브리드 모델처럼 작동하도록 구현했습니다.
+  - Text-to-Image 모델과 이미지 편집 모델처럼 분리된 모델(예: bytedance/seedream-v5.0-lite, bytedance/seedream-v5.0-lite/edit)을 "switch" 변형으로 연결하여 단일 모델처럼 작동하도록 구현했습니다.
 
 - **웹 기반 MCP 클라이언트**
   - 웹 브라우저에서 모든 유형의 MCP 서버(SSE, 로컬)에 직접 연결할 수 있습니다.
@@ -129,11 +129,9 @@ devochat/
 │   ├── config/                         # 설정 파일
 │   │   ├── chat_models.json            # 텍스트 AI 모델 설정
 │   │   ├── image_models.json           # 이미지 생성 AI 모델 설정
-│   │   ├── mcp_servers_example.json    # MCP 서버 설정 템플릿
 │   │   ├── mcp_servers.json            # MCP 서버 설정
 │   │   └── realtime_models.json        # 실시간 대화 모델 설정
-│   ├── generated/                      # 생성된 이미지 결과물
-│   ├── icons/                          # MCP 서버 아이콘
+│   ├── generated/                      # 생성된 결과물
 │   ├── prompts/                        # 시스템 프롬프트
 │   ├── routes/                         # API 라우터
 │   │   ├── chat_clients/               # 텍스트 AI 모델 클라이언트
@@ -143,15 +141,13 @@ devochat/
 │   │   ├── conversations.py            # 대화 관리 API
 │   │   ├── realtime.py                 # 실시간 통신
 │   │   └── uploads.py                  # 파일 업로드 처리
-│   ├── shared_pages/                   # 생성된 공유 대화 페이지
 │   ├── uploads/                        # 업로드된 파일 및 이미지
 │   ├── logging_util.py                 # 로깅 유틸리티
 │   ├── main.py                         # FastAPI 애플리케이션 진입점
 │   └── requirements.txt                # Python 의존성
-├── mcp-proxy/                          # 로컬 MCP 프록시 패키지 및 서버
-│   ├── servers/                        # 로컬 MCP 서버 정의
+├── mcp-proxy/                          # 로컬 MCP 프록시 패키지
 │   ├── src/                            # 프록시 소스 패키지
-│   ├── servers.json
+│   ├── servers.json                    # 로컬 MCP 서버 정의
 │   └── pyproject.toml
 └── samples/                            # README 스크린샷
 ```
@@ -163,7 +159,6 @@ devochat/
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![Textract](https://img.shields.io/badge/Textract-FF6F61?style=for-the-badge)
 
 ## 설치 및 실행
 
@@ -210,16 +205,13 @@ AUTH_KEY=your_auth_secret_key
 OPENAI_API_KEY=...
 ANTHROPIC_API_KEY=...
 GEMINI_API_KEY=...
-PERPLEXITY_API_KEY=...
-HUGGINGFACE_API_KEY=...
-XAI_API_KEY=...
-MISTRAL_API_KEY=...
 OPENROUTER_API_KEY=...
-FIREWORKS_API_KEY=...
-FRIENDLI_API_KEY=...
+XAI_API_KEY=...
+GROK_API_KEY=...
 FLUX_API_KEY=...
-BYTEPLUS_API_KEY=...
-ALIBABA_API_KEY=...
+WAVESPEED_API_KEY=...
+GOOGLE_STT_API_KEY=...
+REALTIME_API_KEY=...
 ```
 
 #### FastAPI 서버 실행
@@ -235,32 +227,31 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 ```json
 {
-  "default": "google/gemini-3-flash-preview",
+  "default": "google/gemini-3.5-flash",
   "alias": "google/gemini-3.1-flash-lite",
   "models": [
     {
-      "model_name": "google/gemini-3-flash-preview",
-      "model_alias": "Gemini 3 Flash",
+      "model_name": "google/gemini-3.5-flash",
+      "model_alias": "Gemini 3.5 Flash",
       "description": "기본 Gemini 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "0.5",
-        "out_billing": "3"
+        "in_billing": "1.5",
+        "out_billing": "9"
       },
       "capabilities": {
         "stream": true,
         "vision": true,
-        "reasoning": "toggle",
+        "reasoning": true,
         "web_search": "toggle",
         "research": false,
         "mcp": true
       },
       "controls": {
         "instructions": true,
-        "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
-          "default": "high"
+          "default": "medium"
         },
         "verbosity": false
       },
@@ -285,7 +276,6 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       },
       "controls": {
         "instructions": true,
-        "temperature": false,
         "reason": {
           "levels": ["low", "medium", "high", "xhigh"],
           "default": "medium"
@@ -298,28 +288,24 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       "admin": true
     },
     {
-      "model_name": "grok-4.20-0309-non-reasoning",
-      "model_alias": "Grok 4.2",
-      "description": "기본 Grok 모델",
-      "endpoint": "/chat/grok",
+      "model_name": "mistralai/mistral-large-2512",
+      "model_alias": "Mistral Large 3",
+      "description": "기본 Mistral 모델",
+      "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "2",
-        "out_billing": "6"
-      },
-      "variants": {
-        "reasoning": "grok-4.20-0309-reasoning"
+        "in_billing": "0.5",
+        "out_billing": "1.5"
       },
       "capabilities": {
         "stream": true,
         "vision": true,
-        "reasoning": "switch",
+        "reasoning": false,
         "web_search": "toggle",
         "research": false,
         "mcp": true
       },
       "controls": {
         "instructions": true,
-        "temperature": true,
         "reason": false,
         "verbosity": false
       },
@@ -338,7 +324,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `model_name` | API 호출 시 사용되는 모델의 실제 식별자입니다. |
 | `model_alias` | UI에 표시되는 모델의 사용자 친화적인 이름입니다. |
 | `description` | 모델에 대한 간략한 설명으로, 선택 시 참고할 수 있습니다. |
-| `endpoint` | 백엔드에서 해당 모델 요청을 처리할 API 경로입니다. (예: `/chat/gpt`, `/chat/claude`, `/chat/grok`, `/chat/openrouter`) |
+| `endpoint` | 백엔드에서 해당 모델 요청을 처리할 API 경로입니다. (예: `/chat/gpt`, `/chat/claude`, `/chat/gemini`, `/chat/grok`, `/chat/openrouter`) |
 | `billing` | 모델 사용 비용 정보를 담는 객체입니다. |
 | `billing.in_billing` | 입력 토큰(프롬프트)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
 | `billing.out_billing` | 출력 토큰(응답)에 대한 청구 비용입니다. 단위는 백만 토큰당 USD입니다. |
@@ -352,7 +338,6 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 | `capabilities.mcp` | MCP 서버 연동 지원 여부입니다. 가능한 값: `true`, `false` |
 | `controls` | 모델이 지원하는 사용자 제어 옵션들을 정의합니다. |
 | `controls.instructions` | 커스텀 지시사항 설정 가능 여부입니다. 가능한 값: `true`, `false` |
-| `controls.temperature` | Temperature 조절 가능 여부입니다. 가능한 값: `true`, `false` |
 | `controls.reason` | 선택 가능한 추론 강도 레벨을 정의합니다. 가능한 값: `false` 또는 객체 |
 | `controls.reason.levels` | UI에 노출할 선택 가능한 레벨 목록입니다. |
 | `controls.reason.default` | 모델 선택 시 적용되는 초기값입니다. |
@@ -398,8 +383,8 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
       "admin": false
     },
     {
-      "model_name": "bytedance/seedream-v4.5",
-      "model_alias": "Seedream 4.5",
+      "model_name": "bytedance/seedream-v5.0-lite",
+      "model_alias": "Seedream 5.0 Lite",
       "description": "BytePlus",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -407,14 +392,14 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "out_billing": "0.04"
       },
       "variants": {
-        "vision": "bytedance/seedream-v4.5/edit"
+        "vision": "bytedance/seedream-v5.0-lite/edit"
       },
       "capabilities": { "vision": "switch" },
       "admin": false
     },
     {
-      "model_name": "bytedance/seedream-v4.5/edit",
-      "model_alias": "Seedream 4.5",
+      "model_name": "bytedance/seedream-v5.0-lite/edit",
+      "model_alias": "Seedream 5.0 Lite",
       "description": "BytePlus",
       "endpoint": "/image/wavespeed",
       "billing": {
@@ -422,7 +407,7 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
         "out_billing": "0.04"
       },
       "variants": {
-        "base": "bytedance/seedream-v4.5"
+        "base": "bytedance/seedream-v5.0-lite"
       },
       "capabilities": { "vision": "switch", "max_input": 10 },
       "admin": false
@@ -449,21 +434,21 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 ```json
 [
   {
-    "model_name": "grok-4.20-0309-non-reasoning",
+    "model_name": "bytedance/seedream-v5.0-lite",
     "variants": {
-      "reasoning": "grok-4.20-0309-reasoning"
+      "vision": "bytedance/seedream-v5.0-lite/edit"
     },
     "capabilities": {
-      "reasoning": "switch"
+      "vision": "switch"
     }
   },
   {
-    "model_name": "grok-4.20-0309-reasoning",
+    "model_name": "bytedance/seedream-v5.0-lite/edit",
     "variants": {
-      "base": "grok-4.20-0309-non-reasoning"
+      "base": "bytedance/seedream-v5.0-lite"
     },
     "capabilities": {
-      "reasoning": "switch"
+      "vision": "switch"
     }
   }
 ]
@@ -475,16 +460,16 @@ $ uvicorn main:app --host=0.0.0.0 --port=8000 --reload
 
 ```json
 {
-  "default": "gpt-realtime-1.5:coral",
+  "default": "gpt-realtime-2:coral",
   "models": [
     {
-      "model_name": "gpt-realtime-1.5:marin",
+      "model_name": "gpt-realtime-2:marin",
       "model_alias": "Marin",
       "model_gender": "female",
       "description": "따뜻한 성격의 동기부여자"
     },
     {
-      "model_name": "gpt-realtime-1.5:ash",
+      "model_name": "gpt-realtime-2:ash",
       "model_alias": "Ash",
       "model_gender": "male",
       "description": "언제나 날 믿어주는 든든한 조력자"
@@ -514,8 +499,9 @@ DevoChat은 웹 기반 MCP(Model Context Protocol) 클라이언트입니다.
 {
   "server-id": {
     "url": "https://example.com/mcp/endpoint",
-    "authorization_token": "your_authorization_token", 
+    "authorization_token": "your_authorization_token",
     "name": "Server_Display_Name",
+    "description": "서버 선택 화면에 표시되는 짧은 설명",
     "admin": false
   }
 }

@@ -1,13 +1,12 @@
 import React, { useEffect, useLayoutEffect, useState, useRef, useContext, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { RiMenuLine } from "react-icons/ri";
-import { LuSearch, LuSquarePen, LuAudioLines, LuImage, LuArrowUp, LuArrowDown } from "react-icons/lu";
+import { LuSearch, LuSquarePen, LuAudioLines, LuImage, LuArrowUp, LuArrowDown, LuRefreshCw, LuUsers, LuLogOut } from "react-icons/lu";
 import { IoMdStar } from "react-icons/io";
 import { FaUserCircle } from "react-icons/fa";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Modal from "./Modal";
-import Tooltip from "./Tooltip";
 import Toast from "./Toast";
 import SearchModal from "./SearchModal";
 import logo from "../resources/logo.png";
@@ -168,7 +167,6 @@ function Sidebar({
   const {
     conversations,
     deleteConversation,
-    deleteAllConversation,
     updateAlias,
     toggleStarConversation
   } = useContext(ConversationsContext);
@@ -360,13 +358,6 @@ function Sidebar({
     if (isResponsive) toggleSidebar();
   }, [navigate, isResponsive, toggleSidebar]);
 
-  const handleDeleteAll = useCallback(() => {
-    setModalMessage("정말 모든 대화를 삭제하시겠습니까?");
-    setModalAction("deleteAll");
-    setShowModal(true);
-    setIsDropdown(false);
-  }, []);
-
   const handleLogoutClick = useCallback(() => {
     setModalMessage("정말 로그아웃 하시겠습니까?");
     setModalAction("logout");
@@ -374,29 +365,7 @@ function Sidebar({
   }, []);
 
   const confirmDelete = useCallback(async () => {
-    if (modalAction === "deleteAll") {
-      try {
-        deleteAllConversation();
-        navigate("/");
-
-        {
-          const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/conversation/all`, {
-            method: 'DELETE',
-            credentials: 'include'
-          });
-          if (res.status === 401 && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-            window.location.href = '/login?expired=true';
-          }
-          if (!res.ok) {
-            throw new Error('대화 삭제에 실패했습니다.');
-          }
-        }
-      } catch (error) {
-        console.error("Failed to delete conversations.", error);
-        setToastMessage("대화 삭제에 실패했습니다.");
-        setShowToast(true);
-      }
-    } else if (modalAction === "logout") {
+    if (modalAction === "logout") {
       try {
         {
           const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/logout`, {
@@ -427,7 +396,7 @@ function Sidebar({
     }
     setShowModal(false);
     setModalAction(null);
-  }, [modalAction, deleteAllConversation, navigate]);
+  }, [modalAction]);
 
   const cancelDelete = useCallback(() => {
     setShowModal(false);
@@ -559,11 +528,9 @@ function Sidebar({
             </div>
           </div>
           <div className="header-right">
-            <Tooltip content="사이드바 닫기" position="bottom" isTouch={isTouch}>
-              <div className="header-icon">
-                <RiMenuLine onClick={toggleSidebar} />
-              </div>
-            </Tooltip>
+            <div className="header-icon">
+              <RiMenuLine onClick={toggleSidebar} />
+            </div>
           </div>
         </div>
 
@@ -632,7 +599,10 @@ function Sidebar({
         <div className="user-container" ref={userContainerRef}>
           <div className={`user-info${isDropdown ? ' active' : ''}`} onClick={() => setIsDropdown(!isDropdown)}>
             <FaUserCircle className="user-icon" />
-            <div className="user-name">{userInfo?.name}</div>
+            <div className="user-text">
+              <div className="user-name">{userInfo?.name}</div>
+              <div className="user-billing-inline">{userInfo?.billing?.toFixed(2)}$ 사용됨</div>
+            </div>
           </div>
 
           <AnimatePresence>
@@ -644,31 +614,21 @@ function Sidebar({
                 exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
               >
-                <div onClick={handleRefresh} className="dropdown-item user-billing">
-                  <div className="billing-text">
-                    {userInfo?.billing?.toFixed(2)}$ 사용됨
-                  </div>
-                  <div className="refresh-button">
+                <div className="dropdown-menu">
+                  <div onClick={handleRefresh} className="dropdown-item">
+                    <LuRefreshCw className="dropdown-item-icon" />
                     페이지 새로고침
                   </div>
-                </div>
-                {userInfo?.admin && (
-                  <div
-                    onClick={handleAdminClick}
-                    className="dropdown-item"
-                  >
-                    사용자 관리
+                  {userInfo?.admin && (
+                    <div onClick={handleAdminClick} className="dropdown-item">
+                      <LuUsers className="dropdown-item-icon" />
+                      사용자 관리
+                    </div>
+                  )}
+                  <div onClick={handleLogoutClick} className="dropdown-item logout">
+                    <LuLogOut className="dropdown-item-icon" />
+                    로그아웃
                   </div>
-                )}
-                <div onClick={handleDeleteAll} className="dropdown-item">
-                  전체 대화 삭제
-                </div>
-                <div
-                  onClick={handleLogoutClick}
-                  className="dropdown-item"
-                  style={{ color: "red" }}
-                >
-                  로그아웃
                 </div>
               </motion.div>
             )}

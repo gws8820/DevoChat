@@ -31,7 +31,7 @@ class NoticeResponse(BaseModel):
 class MCPServer(BaseModel):
     id: str
     name: str
-    icon: str
+    description: str
     admin: bool
 
 load_dotenv()
@@ -175,19 +175,6 @@ async def serve_generated_images(file_path: str):
         }
     )
 
-@app.get("/icons/{file_path:path}")
-async def serve_icons(file_path: str):
-    file_location = Path("icons") / file_path
-    if not await aiofiles.os.path.exists(file_location):
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(
-        file_location,
-        headers={
-            "Cache-Control": "public, max-age=86400",
-            "Content-Type": "image/png"
-        }
-    )
-
 @app.get("/chat_models", response_model=dict)
 async def get_models(user: User = Depends(get_current_user)):
     try:
@@ -253,7 +240,7 @@ async def get_mcp_servers(user: User = Depends(get_current_user)):
             server = MCPServer(
                 id=server_id,
                 name=config["name"],
-                icon=f"/icons/{server_id}.png",
+                description=config.get("description", ""),
                 admin=config["admin"]
             )
             servers.append(server)

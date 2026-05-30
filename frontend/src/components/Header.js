@@ -1,44 +1,49 @@
 import React, { useState, useContext, useRef, useEffect } from "react";
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { RiMenuLine, RiArrowRightSLine, RiShare2Line, RiLightbulbLine, RiEdit2Line, RiImage2Line, RiCloseLine } from "react-icons/ri";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { motion, AnimatePresence } from "framer-motion";
+import logo from "../resources/logo.png";
 
 import Tooltip from "./Tooltip";
 import Toast from "./Toast";
 import copyToClipboard from "../utils/copyToClipboard";
 import "../styles/Header.css";
 
-function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
+function Header({ toggleSidebar, isSidebarOpen, isTouch }) {
   const {
     models,
     model,
-    temperature,
-    reason,
+    imageModels,
+    imageModel,
     verbosity,
     memory,
     instructions,
     hasImage,
-    canControlTemp,
-    canControlReason,
     canControlVerbosity,
     canControlSystemMessage,
     isDAN,
     updateModel,
-    setTemperature,
-    setReason,
+    updateImageModel,
     setVerbosity,
     setMemory,
     setInstructions,
     setIsDAN
   } = useContext(SettingsContext);
 
-  const selectedModel = models.find(m => m.model_name === model);
-  const reasonLevels = selectedModel?.controls?.reason?.levels ?? [];
-  const verbosityLevels = selectedModel?.controls?.verbosity?.levels ?? [];
-
   const location = useLocation();
-  const match = location.pathname.match(/^\/(?:chat|image)\/([^/]+)/);
+  const navigate = useNavigate();
+  const { pathname } = location;
+  const isLogoOnly = pathname.startsWith("/view") || pathname.startsWith("/share");
+  const isImage = pathname.startsWith("/image");
+  const match = pathname.match(/^\/(?:chat|image)\/([^/]+)/);
+
+  const activeModels = isImage ? imageModels : models;
+  const activeModel = isImage ? imageModel : model;
+  const activeUpdateModel = isImage ? updateImageModel : updateModel;
+
+  const selectedModel = activeModels.find(m => m.model_name === activeModel);
+  const verbosityLevels = selectedModel?.controls?.verbosity?.levels ?? [];
   const conversation_id = match?.[1];
 
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
@@ -47,40 +52,22 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("error");
   const [showToast, setShowToast] = useState(false);
-  const [localTemperature, setLocalTemperature] = useState(temperature);
   const [localMemory, setLocalMemory] = useState(memory);
-  const [localReason, setLocalReason] = useState(reason);
   const [localVerbosity, setLocalVerbosity] = useState(verbosity);
 
   const modelModalRef = useRef(null);
   const controlPanelRef = useRef(null);
   const instructionsRef = useRef(null);
-  const tempTimerRef = useRef(null);
   const memTimerRef = useRef(null);
-  const reasonTimerRef = useRef(null);
   const verbosityTimerRef = useRef(null);
 
-  useEffect(() => { setLocalTemperature(temperature); }, [temperature]);
   useEffect(() => { setLocalMemory(memory); }, [memory]);
-  useEffect(() => { setLocalReason(reason); }, [reason]);
   useEffect(() => { setLocalVerbosity(verbosity); }, [verbosity]);
-
-  const handleTemperatureChange = (val) => {
-    setLocalTemperature(val);
-    clearTimeout(tempTimerRef.current);
-    tempTimerRef.current = setTimeout(() => setTemperature(val), 150);
-  };
 
   const handleMemoryChange = (val) => {
     setLocalMemory(val);
     clearTimeout(memTimerRef.current);
     memTimerRef.current = setTimeout(() => setMemory(val), 150);
-  };
-
-  const handleReasonChange = (val) => {
-    setLocalReason(val);
-    clearTimeout(reasonTimerRef.current);
-    reasonTimerRef.current = setTimeout(() => setReason(val), 150);
   };
 
   const handleVerbosityChange = (val) => {
@@ -89,13 +76,8 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
     verbosityTimerRef.current = setTimeout(() => setVerbosity(val), 150);
   };
 
-  let modelsList = models.filter((m) => {
-    if (m.variants?.base) return false;
-    return true;
-  });
-
-  const currentModelAlias = models.find((m) => m.model_name === model)?.model_alias || "모델 선택";
-
+  const modelsList = activeModels.filter(m => !m.variants?.base);
+  const currentModelAlias = activeModels.find(m => m.model_name === activeModel)?.model_alias || "모델 선택";
 
   const handleShare = async () => {
     try {
@@ -111,19 +93,17 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            conversation_id
-          })
+          body: JSON.stringify({ conversation_id })
         }
       );
-      
+
       if (res.status === 401) {
         if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
           window.location.href = '/login?expired=true';
         }
         return;
       }
-  
+
       if (!res.ok) {
         let detail = null;
         try { detail = (await res.json())?.detail; } catch {}
@@ -143,7 +123,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
       setShowToast(true);
     }
   };
-  
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -172,24 +152,22 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [
-    isModelModalOpen,
-    isControlPanelOpen,
-    isSystemMessageOpen,
-  ]);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isModelModalOpen, isControlPanelOpen, isSystemMessageOpen]);
 
-  return (
+  if (isLogoOnly) return (
+    <div className="header" style={{ padding: "0 20px" }}>
+      <img src={logo} alt="DEVOCHAT" width="143.5px" onClick={() => navigate("/")} style={{ cursor: "pointer" }} />
+    </div>
+  );
+
+  if (isImage || pathname === "/" || pathname.startsWith("/chat/") || pathname.startsWith("/realtime")) return (
     <div className="header">
       <div className="header-left">
         {!isSidebarOpen && (
-          <Tooltip content="사이드바 열기" position="right" isTouch={isTouch}>
-            <div className="header-icon menu-icon">
-              <RiMenuLine onClick={toggleSidebar} />
-            </div>
-          </Tooltip>
+          <div className="header-icon menu-icon">
+            <RiMenuLine onClick={toggleSidebar} />
+          </div>
         )}
         <div className="model-box" onClick={() => setIsModelModalOpen(true)}>
           {currentModelAlias}
@@ -208,14 +186,15 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
           </div>
         )}
 
-        <AnimatePresence initial={false}>
-          <motion.div
-            className="header-icon-wrapper"
-            key="controls"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-          >
+        {!isImage && (
+          <AnimatePresence initial={false}>
+            <motion.div
+              className="header-icon-wrapper"
+              key="controls"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+            >
               <Tooltip content="파라미터 설정" position="left" isTouch={isTouch}>
                 <div className="header-icon slider-icon">
                   <RiLightbulbLine
@@ -227,7 +206,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                   />
                 </div>
               </Tooltip>
-              
+
               <AnimatePresence>
                 {isControlPanelOpen && (
                   <motion.div
@@ -238,42 +217,6 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    {canControlTemp && (
-                      <div className="slider-section">
-                        <div className="slider-label">
-                          <span>창의성</span>
-                          <span className="slider-value">
-                            {parseFloat(localTemperature).toFixed(1)}
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min={0.1}
-                          max={2}
-                          step={0.1}
-                          value={localTemperature}
-                          onChange={(e) => handleTemperatureChange(parseFloat(e.target.value))}
-                          className="slider"
-                        />
-                      </div>
-                    )}
-                    {canControlReason && (
-                      <div className="slider-section">
-                        <div className="slider-label">
-                          <span>추론 강도</span>
-                          <span className="slider-value">{localReason}</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={0}
-                          max={reasonLevels.length - 1}
-                          step={1}
-                          value={reasonLevels.indexOf(localReason)}
-                          onChange={(e) => handleReasonChange(reasonLevels[parseInt(e.target.value)])}
-                          className="slider"
-                        />
-                      </div>
-                    )}
                     {canControlVerbosity && (
                       <div className="slider-section">
                         <div className="slider-label">
@@ -291,79 +234,81 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                         />
                       </div>
                     )}
-                  <div className="slider-section">
-                    <div className="slider-label">
-                      <span>대화 기억</span>
-                      <span className="slider-value">
-                        {localMemory === 0 ? "기억 안함" : `${localMemory}턴`}
-                      </span>
+                    <div className="slider-section">
+                      <div className="slider-label">
+                        <span>대화 기억</span>
+                        <span className="slider-value">
+                          {localMemory === 0 ? "기억 안함" : `${localMemory}턴`}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={12}
+                        step={1}
+                        value={localMemory}
+                        onChange={(e) => handleMemoryChange(parseInt(e.target.value))}
+                        className="slider"
+                      />
                     </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={12}
-                      step={1}
-                      value={localMemory}
-                      onChange={(e) => handleMemoryChange(parseInt(e.target.value))}
-                      className="slider"
-                    />
-                  </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-          </motion.div>
-          {canControlSystemMessage && (
-            <motion.div 
-              className="header-icon-wrapper"
-              key="system"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-            >
-              <Tooltip content="지시어 설정" position="left" isTouch={isTouch}>
-                <div className="header-icon system-message-icon">
-                  <RiEdit2Line
-                    onClick={() => {
-                      setIsSystemMessageOpen(!isSystemMessageOpen);
-                      setIsControlPanelOpen(false);
-                    }}
-                    style={{ fontSize: "20px", strokeWidth: 0.3 }}
-                  />
-                </div>
-              </Tooltip>
-              
-              <AnimatePresence>
-                {isSystemMessageOpen && (
-                  <motion.div
-                    className="system-message-container"
-                    ref={instructionsRef}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className="system-message-label">
-                      <span>시스템 지시어 설정</span>
-                      <span
-                        className={`dan-toggle ${isDAN ? "active" : ""}`}
-                        onClick={() => setIsDAN(!isDAN)}
-                      >
-                        DAN
-                      </span>
-                    </div>
-                    <textarea
-                      value={instructions}
-                      onChange={(e) => setInstructions(e.target.value)}
-                      className="system-message-input"
-                      placeholder="내용을 입력하세요."
-                      rows={5}
-                    />
                   </motion.div>
                 )}
               </AnimatePresence>
             </motion.div>
-          )}
-        </AnimatePresence>
+
+            {canControlSystemMessage && (
+              <motion.div
+                className="header-icon-wrapper"
+                key="system"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+              >
+                <Tooltip content="지시어 설정" position="left" isTouch={isTouch}>
+                  <div className="header-icon system-message-icon">
+                    <RiEdit2Line
+                      onClick={() => {
+                        setIsSystemMessageOpen(!isSystemMessageOpen);
+                        setIsControlPanelOpen(false);
+                      }}
+                      style={{ fontSize: "20px", strokeWidth: 0.3 }}
+                    />
+                  </div>
+                </Tooltip>
+
+                <AnimatePresence>
+                  {isSystemMessageOpen && (
+                    <motion.div
+                      className="system-message-container"
+                      ref={instructionsRef}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="system-message-label">
+                        <span>시스템 지시어 설정</span>
+                        <span
+                          className={`dan-toggle ${isDAN ? "active" : ""}`}
+                          onClick={() => setIsDAN(!isDAN)}
+                        >
+                          DAN
+                        </span>
+                      </div>
+                      <textarea
+                        value={instructions}
+                        onChange={(e) => setInstructions(e.target.value)}
+                        className="system-message-input"
+                        placeholder="내용을 입력하세요."
+                        rows={5}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
       </div>
 
       <AnimatePresence>
@@ -394,7 +339,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                         className={`model-item${visionDisabled ? " disabled" : ""}`}
                         onClick={() => {
                           if (visionDisabled) return;
-                          updateModel(m.model_name);
+                          activeUpdateModel(m.model_name);
                           setIsModelModalOpen(false);
                         }}
                       >
@@ -407,7 +352,12 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
                           </div>
                         </div>
                         <div className="model-description">{m.description}</div>
-                        <div className="model-pricing">In {m.billing?.in_billing}$ / Out {m.billing?.out_billing}$</div>
+                        <div className="model-pricing">
+                          {isImage
+                            ? `${parseFloat(((parseFloat(m.billing?.in_billing) + parseFloat(m.billing?.out_billing)) * 100).toFixed(1))}$ / 100회`
+                            : `In ${m.billing?.in_billing}$ / Out ${m.billing?.out_billing}$`
+                          }
+                        </div>
                       </div>
                     </Tooltip>
                   );
@@ -427,6 +377,8 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch, chatMessageRef }) {
       />
     </div>
   );
+
+  return null;
 }
 
 export default React.memo(Header);
