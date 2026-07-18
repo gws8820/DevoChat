@@ -8,6 +8,16 @@
     container-type: inline-size;
 }
 
+.page-loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(254, 254, 254);
+}
+
 .welcome-container {
     width: 100%;
     display: flex;
@@ -26,7 +36,6 @@
     -ms-user-select: none;
     -webkit-touch-callout: none;
 }
-
 .drag-overlay {
     display: flex;
     align-items: center;

@@ -129,8 +129,8 @@ const ToolModal = ({ isOpen, onClose, onConfirm, currentMCPList, canSearch, isSe
             </div>
 
             <div className="tool-modal-footer">
-              <button className="tool-btn-cancel" onClick={handleCancel}>취소</button>
-              <button className="tool-btn-confirm" onClick={handleConfirm}>확인</button>
+              <div className="tool-btn-cancel" onClick={handleCancel}>취소</div>
+              <div className="tool-btn-confirm" onClick={handleConfirm}>확인</div>
             </div>
           </motion.div>
         </motion.div>

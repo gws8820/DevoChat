@@ -6,11 +6,10 @@ import { PulseLoader } from "react-spinners";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { parse as parseTld } from "tldts";
 import { useFileUpload } from "../utils/useFileUpload";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
-import Toast from "../components/Toast";
+import { useToast } from "../contexts/ToastContext";
 import InputContainer from "../components/InputContainer";
 import StatusBlock from "../components/StatusBlock";
 import "../styles/Common.css";
@@ -25,27 +24,26 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
-  const [scrollTrigger, setScrollTrigger] = useState(0);
-  const [userFixedScroll, setUserFixedScroll] = useState(false);
   const [deleteIndex, setdeleteIndex] = useState(null);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editBackup, setEditBackup] = useState(null);
   const [confirmModal, setConfirmModal] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [isButtonReady, setIsButtonReady] = useState(false);
+  const [activeTurn, setActiveTurn] = useState(false);
   const [isRemoteStreaming, setIsRemoteStreaming] = useState(false);
-  
-  const { 
-    uploadedFiles, 
+
+  const { showToast } = useToast();
+
+  const {
+    uploadedFiles,
     setUploadedFiles,
-    processFiles, 
+    processFiles,
     removeFile
-  } = useFileUpload([], userInfo);
+  } = useFileUpload([], userInfo, "chat");
 
   const abortControllerRef = useRef(null);
-  const lastScrollTopRef = useRef(0);
-  const touchStartYRef = useRef(null);
   const pollIntervalRef = useRef(null);
+  const scrollFixRef = useRef(null);
 
   const {
     models,
@@ -101,15 +99,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         return [...prev, newMessage];
       }
     });
-  }, []);
-
-  const setErrorMessage = useCallback((message) => {
-    const errorMessage = { 
-      role: "error", 
-      content: message,
-      id: generateMessageId()
-    };
-    setMessages((prev) => [...prev, errorMessage]);
   }, []);
 
   const applyData = useCallback((data) => {
@@ -170,19 +159,18 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   }, [conversation_id, applyData]);
 
   const showSendError = useCallback((shouldPoll = false) => {
-    setToastMessage("메세지 전송 중 오류가 발생했습니다.");
-    setShowToast(true);
+    showToast("메세지 전송 중 오류가 발생했습니다.");
     if (shouldPoll) pollRemote();
-  }, [pollRemote]);
+  }, [pollRemote, showToast]);
 
   const showDeleteError = useCallback((shouldPoll = false) => {
-    setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
-    setShowToast(true);
+    showToast("메세지 삭제 중 오류가 발생했습니다.");
     if (shouldPoll) pollRemote();
-  }, [pollRemote]);
+  }, [pollRemote, showToast]);
 
   const deleteMessages = useCallback(
     async (startIndex) => {
+      setActiveTurn(false);
       let savedMessages;
       setMessages((prevMessages) => {
         savedMessages = prevMessages;
@@ -212,11 +200,48 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     [conversation_id]
   );
 
+  const scrollToEnd = useCallback((behavior = "smooth") => {
+    const container = chatMessageRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior });
+  }, [chatMessageRef]);
+
+  const scrollToEndSettled = useCallback(() => {
+    const container = chatMessageRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight });
+    requestAnimationFrame(() => container.scrollTo({ top: container.scrollHeight }));
+  }, [chatMessageRef]);
+
+  const scrollLastUserToTop = useCallback((behavior = "smooth") => {
+    const container = chatMessageRef.current;
+    const userWraps = container?.querySelectorAll(".user-wrap");
+    const lastUserWrap = userWraps?.[userWraps.length - 1];
+    if (!container || !lastUserWrap) return;
+
+    const top = lastUserWrap.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+    container.scrollTo({ top, behavior });
+  }, [chatMessageRef]);
+
+  const checkIsAtBottom = useCallback(() => {
+    const container = chatMessageRef.current;
+    if (!container) return;
+    const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
+    setIsAtBottom(distance <= 50);
+  }, [chatMessageRef]);
+
+  useEffect(() => {
+    const fix = scrollFixRef.current;
+    if (!fix) return;
+    scrollFixRef.current = null;
+    if (fix === "top") scrollLastUserToTop();
+    else scrollToEndSettled();
+  }, [messages, scrollLastUserToTop, scrollToEndSettled]);
+
   const sendMessage = useCallback(
     async (message, files = uploadedFiles) => {
       if (!message.trim()) {
-        setToastMessage("내용을 입력해주세요.");
-        setShowToast(true);
+        showToast("내용을 입력해주세요.");
         return;
       }
 
@@ -237,118 +262,9 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       uploadedFiles.forEach((file) => { if (file.preview) URL.revokeObjectURL(file.preview); });
       setUploadedFiles([]);
       setIsLoading(true);
-      setTimeout(() => {
-        setScrollTrigger((v) => v + 1);
-      }, 0);
+      setActiveTurn(true);
+      scrollFixRef.current = "top";
 
-      const extractUrls = (message) => {
-        const urlPattern =
-          /(?:https?:\/\/|www\.)[^\s<>()]+|(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z]{2,63}(?::\d{1,5})?(?:\/[^\s<>()]*)?/gi;
-        
-        const cleanUrl = (url) => {
-          if (!url) return url;
-          
-          const allowedEnd = /[A-Za-z0-9._~:%+&=;,@!?*#\-/]$/;
-          while (url && !allowedEnd.test(url)) {
-            if (url.length > 1 && url[url.length - 2] === '/') break;
-            url = url.slice(0, -1);
-          }
-          return url;
-        };
-
-        const isValidDomainByPSL = (host) => {
-          const r = parseTld(host);
-          if (!r) return false;
-          if (r.isIp === true) return false;
-          return Boolean(r.domain && r.publicSuffix);
-        };
-
-        const normalizeAndValidate = (raw) => {
-          if (!raw) return null;
-          if (raw.includes("@")) return null;
-
-          const tryValidate = (candidate) => {
-            try {
-              const withScheme =
-                candidate.startsWith("http://") || candidate.startsWith("https://")
-                  ? candidate
-                  : "https://" + candidate;
-              const u = new URL(withScheme);
-              return isValidDomainByPSL(u.hostname);
-            } catch {
-              return false;
-            }
-          };
-
-          let candidate = cleanUrl(raw);
-          if (!candidate) return null;
-          if (tryValidate(candidate)) return candidate;
-
-          const maxTrim = Math.min(30, candidate.length);
-          for (let i = 1; i <= maxTrim; i++) {
-            const trimmed = candidate.slice(0, -i);
-            if (trimmed.length < 4) break;
-            if (tryValidate(trimmed)) return trimmed;
-          }
-
-          return null;
-        };
-        
-        const matches = message.match(urlPattern) || [];
-        const urls = matches
-          .map((match) => normalizeAndValidate(match))
-          .filter((url) => url && url.length > 3);
-        
-        return [...new Set(urls)];
-      };
-
-      const detectedUrls = extractUrls(message);
-      
-      if (detectedUrls.length > 0) {
-        const previewPromises = detectedUrls.map(async (token) => {
-          let url = token;
-          if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            url = "https://" + url;
-          }
-          try {
-            const res = await fetch(
-              `${process.env.REACT_APP_FASTAPI_URL}/visit_url`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url }),
-              }
-            );
-            
-            if (res.status === 401) {
-              if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-                window.location.href = '/login?expired=true';
-              }
-              return;
-            }
-            if (res.status === 413) {
-              setToastMessage("크기 제한을 초과하여 URL 인식에 실패했습니다.");
-              setShowToast(true);
-              return;
-            }
-            if (res.ok) {
-              const data = await res.json();
-              if (data.content) {
-                return { type: "url", content: data.content };
-              }
-            }
-          } catch (err) {}
-          return null;
-        });
-        
-        const urlPreviews = await Promise.all(previewPromises);
-        urlPreviews.forEach((preview) => {
-          if (preview !== null) {
-            contentParts.push(preview);
-          }
-        });
-      }
-  
       const controller = new AbortController();
       abortControllerRef.current = controller;
   
@@ -403,7 +319,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         if (!response.ok) {
           let detail = null;
           try { detail = (await response.json())?.detail; } catch {}
-          setErrorMessage("메세지 전송 중 오류가 발생했습니다: " + (detail || response.status));
+          showToast("메세지 전송 중 오류가 발생했습니다: " + (detail || response.status));
           return;
         }
 
@@ -428,7 +344,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
               try {
                 const data = JSON.parse(jsonData);
                 if (data.error) {
-                  setErrorMessage(data.error);
+                  showToast(data.error);
                   reader.cancel();
                   return;
                 } else if (data.content) {
@@ -436,7 +352,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
                   updateAssistantMessage(assistantText, false);
                 }
               } catch (err) {
-                setErrorMessage("스트리밍 중 오류가 발생했습니다: " + err.message);
+                showToast("스트리밍 중 오류가 발생했습니다: " + err.message);
                 reader.cancel();
                 return;
               }
@@ -448,7 +364,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         updateAssistantMessage(assistantText, true);
       } catch (err) {
         if (err.name === "AbortError") return;
-        setErrorMessage("메세지 전송 중 오류가 발생했습니다: " + err.message);
+        showToast("메세지 전송 중 오류가 발생했습니다: " + err.message);
       } finally {
         setIsLoading(false);
         abortControllerRef.current = null;
@@ -464,7 +380,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       instructions,
       updateAssistantMessage,
       updateTimestamp,
-      setErrorMessage,
       isReasoning,
       isSearch,
       isResearch,
@@ -475,14 +390,15 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       canControlReason,
       canControlVerbosity,
       canControlSystemMessage,
-      showSendError
+      showSendError,
+      showToast
     ]
   );
 
   const resendMesage = useCallback(
     async (messageContent, deleteIndex = null) => {
       if (isLoading || isRemoteStreaming) {
-        showSendError(isRemoteStreaming);
+        showToast("응답 생성 중에는 재생성할 수 없습니다.");
         return;
       }
 
@@ -502,7 +418,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       }
 
       const textContent = messageContent.find(item => item.type === "text")?.text || "";
-      const nonTextContent = messageContent.filter(item => item.type !== "text");
+      const nonTextContent = messageContent.filter(item => item.type !== "text" && item.type !== "url");
       sendMessage(textContent, nonTextContent);
     },
     [
@@ -510,7 +426,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       sendMessage,
       showSendError,
       isLoading,
-      isRemoteStreaming
+      isRemoteStreaming,
+      showToast
     ]
   );
 
@@ -521,11 +438,58 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     }
   }, []);
 
-  const sendEditedMessage = useCallback(
-    (idx, updatedContent) => {
-      resendMesage(updatedContent, idx);
+  const startEdit = useCallback(
+    (idx) => {
+      if (isLoading || isRemoteStreaming) {
+        showToast("응답 생성 중에는 편집할 수 없습니다.");
+        return;
+      }
+      const target = messages[idx];
+      if (!target) return;
+
+      const text = target.content.find((item) => item.type === "text")?.text || "";
+      const files = target.content
+        .filter((item) => item.type === "image" || item.type === "file")
+        .map((item) => ({ ...item, preview: undefined, id: generateMessageId() }));
+
+      setEditBackup(messages);
+      setMessages(messages.slice(0, idx));
+      setUploadedFiles(files);
+      setInputText(text);
+      setEditingIndex(idx);
+      setActiveTurn(false);
     },
-    [resendMesage]
+    [messages, isLoading, isRemoteStreaming, setUploadedFiles, showToast]
+  );
+
+  const cancelEdit = useCallback(() => {
+    if (editBackup) setMessages(editBackup);
+    uploadedFiles.forEach((file) => { if (file.preview) URL.revokeObjectURL(file.preview); });
+    setUploadedFiles([]);
+    setInputText("");
+    setEditBackup(null);
+    setEditingIndex(null);
+  }, [editBackup, uploadedFiles, setUploadedFiles]);
+
+  const handleSend = useCallback(
+    async (message) => {
+      if (editingIndex !== null) {
+        try {
+          await deleteMessages(editingIndex);
+        } catch (err) {
+          if (err.status === 400 || err.status === 409) {
+            showSendError(true);
+          } else {
+            showSendError();
+          }
+          return;
+        }
+        setEditBackup(null);
+        setEditingIndex(null);
+      }
+      sendMessage(message);
+    },
+    [editingIndex, deleteMessages, sendMessage, showSendError]
   );
 
   const handleRegenerate = useCallback(
@@ -540,12 +504,12 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
 
   const handleDelete = useCallback((idx) => {
     if (isLoading || isRemoteStreaming) {
-      showDeleteError(isRemoteStreaming);
+      showToast("응답 생성 중에는 삭제할 수 없습니다.");
       return;
     }
     setdeleteIndex(idx);
     setConfirmModal(true);
-  }, [isLoading, isRemoteStreaming, showDeleteError]);
+  }, [isLoading, isRemoteStreaming, showToast]);
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -596,6 +560,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         }
         
         else {
+          setActiveTurn(false);
           const res = await fetch(`${process.env.REACT_APP_FASTAPI_URL}/chat/conversation/${conversation_id}`, {
             credentials: 'include'
           });
@@ -614,6 +579,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           if (data.is_streaming) {
             pollRemote(data);
           } else {
+            scrollFixRef.current = "bottom";
             applyData(data);
           }
         }
@@ -636,130 +602,34 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
   }, [conversation_id, location.state]);
 
   useEffect(() => {
-    const hasImageHistory = messages.slice(-8).some((msg) => 
+    const recentMessages = memory > 0 ? messages.slice(-memory) : [];
+    const hasImageHistory = recentMessages.some((msg) =>
       Array.isArray(msg.content) && msg.content.some((item) => item.type === "image")
     );
 
     const hasUploadedImage = uploadedFiles.some((file) => {
-      return (file.type && (file.type === "image" || file.type.startsWith("image/"))) || 
+      return (file.type && (file.type === "image" || file.type.startsWith("image/"))) ||
         /\.(jpe?g|png|gif|bmp|webp)$/i.test(file.name);
     });
-  
-    setHasImage(hasImageHistory || hasUploadedImage);
-  }, [messages, setHasImage, uploadedFiles]);
 
-  useEffect(() => {
-    if (isInitialized) {
-      chatMessageRef.current.scrollTop = chatMessageRef.current.scrollHeight;
-    }
-  }, [chatMessageRef, isInitialized]);
-  
-  useEffect(() => {
-    if (scrollTrigger !== 0) {
-      chatMessageRef.current.scrollTo({ top: chatMessageRef.current.scrollHeight, behavior: "smooth" });
-    }
-  }, [chatMessageRef, scrollTrigger]);
+    setHasImage(hasImageHistory || hasUploadedImage);
+  }, [messages, memory, setHasImage, uploadedFiles]);
 
   useEffect(() => {
     if (!isRemoteStreaming) return;
-    requestAnimationFrame(() => {
-      chatMessageRef.current?.scrollTo({
-        top: chatMessageRef.current.scrollHeight,
-        behavior: "smooth"
-      });
-    });
-  }, [chatMessageRef, isRemoteStreaming]);
-
-  useEffect(() => {
-    if (isLoading && !userFixedScroll) { // Only During Streaming
-      chatMessageRef.current.scrollTo({ top: chatMessageRef.current.scrollHeight, behavior: "auto" });
-    }
-  }, [chatMessageRef, messages, isLoading, userFixedScroll]);
-
-  // userFixedScroll Logic
-  useEffect(() => {
-    const el = chatMessageRef.current;
-    lastScrollTopRef.current = el.scrollTop;
-
-    const handleWheel = (e) => {
-      if (!isLoading) return;
-      if (e.deltaY < 0) {
-        setUserFixedScroll(true);
-      } else if (e.deltaY > 0) {
-        const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-        if (distanceFromBottom <= 100) {
-          setUserFixedScroll(false);
-        }
-      }
-    };
-
-    const handleTouchStart = (e) => {
-      if (!isLoading) return;
-      if (e.touches && e.touches.length) {
-        touchStartYRef.current = e.touches[0].clientY;
-      }
-    };
-
-    const handleTouchMove = (e) => {
-      if (!isLoading) return;
-      if (!e.touches || !e.touches.length) return;
-      const currentY = e.touches[0].clientY;
-      const startY = touchStartYRef.current;
-      if (startY == null) return;
-      if (currentY > startY + 5) {
-        setUserFixedScroll(true);
-      } else if (currentY < startY - 5) {
-        const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-        if (distanceFromBottom <= 100) {
-          setUserFixedScroll(false);
-        }
-      }
-    };
-
-    const handleScroll = () => {
-      if (!isLoading) return;
-      lastScrollTopRef.current = el.scrollTop;
-    };
-
-    el.addEventListener("wheel", handleWheel, { passive: true });
-    el.addEventListener("scroll", handleScroll, { passive: true });
-    el.addEventListener("touchstart", handleTouchStart, { passive: true });
-    el.addEventListener("touchmove", handleTouchMove, { passive: true });
-
-    return () => {
-      el.removeEventListener("wheel", handleWheel);
-      el.removeEventListener("scroll", handleScroll);
-      el.removeEventListener("touchstart", handleTouchStart);
-      el.removeEventListener("touchmove", handleTouchMove);
-    };
-  }, [chatMessageRef, isLoading]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      setUserFixedScroll(false);
-    }
-  }, [isLoading]);
+    scrollToEnd("auto");
+  }, [isRemoteStreaming, scrollToEnd]);
 
   useEffect(() => {
     const container = chatMessageRef.current;
     if (!container) return;
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      setIsAtBottom(scrollHeight - scrollTop - clientHeight < 50);
-    };
-    container.addEventListener('scroll', handleScroll);
-    const t = setTimeout(() => setIsButtonReady(true), 600);
-    return () => { container.removeEventListener('scroll', handleScroll); clearTimeout(t); };
-  // eslint-disable-next-line
-  }, []);
+    container.addEventListener('scroll', checkIsAtBottom);
+    return () => { container.removeEventListener('scroll', checkIsAtBottom); };
+  }, [chatMessageRef, checkIsAtBottom]);
 
   useEffect(() => {
-    const container = chatMessageRef.current;
-    if (!container) return;
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    setIsAtBottom(scrollHeight - scrollTop - clientHeight < 50);
-  // eslint-disable-next-line
-  }, [messages.length]);
+    checkIsAtBottom();
+  }, [messages.length, checkIsAtBottom]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -776,12 +646,9 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
       e.preventDefault();
       setIsDragActive(false);
       const files = Array.from(e.dataTransfer.files);
-      await processFiles(files, (errorMessage) => {
-        setToastMessage(errorMessage);
-        setShowToast(true);
-      }, canVision);
+      await processFiles(files);
     },
-    [processFiles, canVision]
+    [processFiles]
   );
 
   return (
@@ -793,50 +660,58 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
     >
       {!isInitialized && (
         <motion.div
+          className="page-loading-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100dvh",
-            marginBottom: "30px",
-          }}
         >
           <PulseLoader loading={true} size={20} />
         </motion.div>
       )}
       <div className="chat-messages-wrapper">
       <div className="chat-messages" ref={chatMessageRef} style={{ scrollbarGutter: "stable" }}>
-        {useMemo(() =>
-          messages.map((msg, idx) => (
-            <Message
-              key={msg.id}
-              messageIndex={idx}
-              role={msg.role}
-              content={msg.content}
-              isComplete={msg.isComplete}
-              onDelete={handleDelete}
-              onRegenerate={handleRegenerate}
-              onSendEditedMessage={sendEditedMessage}
-              setScrollTrigger={setScrollTrigger}
-              isTouch={isTouch}
-              isLoading={isLoading}
-              isLastMessage={idx === messages.length - 1}
-              shouldRender={idx >= messages.length - 6}
-            />
-          )), [messages, handleDelete, handleRegenerate, sendEditedMessage, isTouch, isLoading]
-        )}
+        {useMemo(() => {
+          const turns = [];
+          messages.forEach((msg, idx) => {
+            if (msg.role === "user" || turns.length === 0) {
+              turns.push([{ msg, idx }]);
+            } else {
+              turns[turns.length - 1].push({ msg, idx });
+            }
+          });
+          return turns.map((turn, turnIdx) => (
+            <div
+              key={turn[0].msg.id}
+              className={`chat-turn ${activeTurn && turnIdx === turns.length - 1 ? 'active' : ''}`}
+            >
+              {turn.map(({ msg, idx }) => (
+                <Message
+                  key={msg.id}
+                  messageIndex={idx}
+                  role={msg.role}
+                  content={msg.content}
+                  isComplete={msg.isComplete}
+                  onDelete={handleDelete}
+                  onRegenerate={handleRegenerate}
+                  onEdit={startEdit}
+                  disableActions={editingIndex !== null}
+                  isTouch={isTouch}
+                  isLoading={isLoading}
+                  isLastMessage={idx === messages.length - 1}
+                  shouldRender={idx >= messages.length - 6}
+                />
+              ))}
+              {isLoading && turnIdx === turns.length - 1 && messages[messages.length - 1]?.role === "user" && (
+                <div className="assistant-wrap">
+                  <StatusBlock type="waiting" init />
+                </div>
+              )}
+            </div>
+          ));
+        }, [messages, handleDelete, handleRegenerate, startEdit, editingIndex, isTouch, isLoading, activeTurn])}
 
         {isRemoteStreaming && (
           <StatusBlock type="remote-streaming" />
-        )}
-
-        {isLoading && messages[messages.length - 1]?.role === "user" && (
-          <div className="assistant-wrap">
-            <StatusBlock type="waiting" init />
-          </div>
         )}
 
         <AnimatePresence>
@@ -845,7 +720,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
               message="정말 메세지를 삭제하시겠습니까?"
               onConfirm={async () => {
                 if (isLoading || isRemoteStreaming) {
-                  showDeleteError(isRemoteStreaming);
+                  showToast("응답 생성 중에는 삭제할 수 없습니다.");
                   setdeleteIndex(null);
                   setConfirmModal(false);
                   return;
@@ -856,8 +731,7 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
                   if (err.status === 400 || err.status === 409) {
                     showDeleteError(true);
                   } else {
-                    setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
-                    setShowToast(true);
+                    showDeleteError();
                   }
                 }
                 setdeleteIndex(null);
@@ -873,8 +747,8 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
 
       </div>
       <button
-        className={`scroll-to-bottom-btn ${!isAtBottom && isButtonReady ? 'visible' : ''}`}
-        onClick={() => chatMessageRef.current.scrollTo({ top: chatMessageRef.current.scrollHeight, behavior: 'smooth' })}
+        className={`scroll-to-bottom-btn ${!isAtBottom ? 'visible' : ''}`}
+        onClick={() => scrollToEnd()}
       >
         <LuArrowDown />
       </button>
@@ -886,9 +760,11 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
         inputText={inputText}
         setInputText={setInputText}
         isLoading={isLoading}
-        isSendDisabled={isRemoteStreaming}
-        onSend={sendMessage}
+        isRemoteStreaming={isRemoteStreaming}
+        onSend={handleSend}
         onCancel={cancelRequest}
+        isEditing={editingIndex !== null}
+        onCancelEdit={cancelEdit}
         uploadedFiles={uploadedFiles}
         processFiles={processFiles}
         removeFile={removeFile}
@@ -921,13 +797,6 @@ function Chat({ isTouch, chatMessageRef, userInfo }) {
           </motion.div>
         )}
       </AnimatePresence>
-      
-      <Toast
-        type="error"
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-      />
     </div>
   );
 }

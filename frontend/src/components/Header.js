@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import logo from "../resources/logo.png";
 
 import Tooltip from "./Tooltip";
-import Toast from "./Toast";
+import { useToast } from "../contexts/ToastContext";
 import copyToClipboard from "../utils/copyToClipboard";
 import "../styles/Header.css";
 
@@ -49,9 +49,7 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch }) {
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
   const [isControlPanelOpen, setIsControlPanelOpen] = useState(false);
   const [isSystemMessageOpen, setIsSystemMessageOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState("error");
-  const [showToast, setShowToast] = useState(false);
+  const { showToast } = useToast();
   const [localMemory, setLocalMemory] = useState(memory);
   const [localVerbosity, setLocalVerbosity] = useState(verbosity);
 
@@ -113,14 +111,10 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch }) {
       const data = await res.json();
       const shareUrl = `${window.location.origin}${data.path}`;
       await copyToClipboard(shareUrl);
-      setToastMessage("공유 링크가 복사되었습니다.");
-      setToastType("copy");
-      setShowToast(true);
+      showToast("공유 링크가 복사되었습니다.", "copy");
     } catch (error) {
       console.error('링크 생성 실패:', error);
-      setToastMessage(error.message || "링크 생성에 실패했습니다.");
-      setToastType("error");
-      setShowToast(true);
+      showToast(error.message || "링크 생성에 실패했습니다.");
     }
   };
 
@@ -367,14 +361,6 @@ function Header({ toggleSidebar, isSidebarOpen, isTouch }) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <Toast
-        type={toastType}
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-        duration={2000}
-      />
     </div>
   );
 

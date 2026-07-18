@@ -189,7 +189,8 @@ async def get_models(user: User = Depends(get_current_user)):
         
         return {
             "models": models,
-            "default": models_data["default"]
+            "default": models_data["default"],
+            "vision_default": models_data["vision_default"]
         }
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error occurred while fetching chat models: {str(ex)}")
@@ -208,7 +209,8 @@ async def get_image_models(user: User = Depends(get_current_user)):
 
         return {
             "models": models,
-            "default": models_data["default"]
+            "default": models_data["default"],
+            "vision_default": models_data["vision_default"]
         }
     except Exception as ex:
         raise HTTPException(status_code=500, detail=f"Error occurred while fetching image models: {str(ex)}")

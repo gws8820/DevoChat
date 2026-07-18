@@ -245,11 +245,12 @@ input:focus {
     color: #ffd700;
 }
 
-.no-result {
+.conversation-container .no-result {
     display: flex;
     flex-grow: 1;
     height: 100%;
     padding: 20px;
+    box-sizing: border-box;
     justify-content: center;
     align-items: center;
     color: #666;
@@ -305,12 +306,6 @@ input:focus {
     overflow: hidden;
 }
 
-
-.dropdown-divider {
-    height: 1px;
-    background-color: rgb(240, 240, 240);
-    margin: 0 4px;
-}
 
 .dropdown-menu {
     padding: 6px 8px;
@@ -385,12 +380,4 @@ input:focus {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-
-
-@media (hover: hover) {
-    .conversation-item:hover .delete-icon {
-        opacity: 1;
-    }
 }

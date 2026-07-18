@@ -1,19 +1,8 @@
 {
   "default": "gemini-2.5-flash-image",
-  "alias": "google/gemini-3.1-flash-lite",
+  "vision_default": "gemini-2.5-flash-image",
+  "alias": "deepseek/deepseek-v4-flash",
   "models": [
-    {
-      "model_name": "gemini-3-pro-image-preview",
-      "model_alias": "Nano Banana Pro",
-      "description": "Google",
-      "endpoint": "/image/google/gemini",
-      "billing": {
-        "in_billing": "0.002",
-        "out_billing": "0.134"
-      },
-      "capabilities": { "vision": true, "max_input": 10 },
-      "admin": true
-    },
     {
       "model_name": "gemini-3.1-flash-image-preview",
       "model_alias": "Nano Banana 2",

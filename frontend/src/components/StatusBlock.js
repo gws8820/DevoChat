@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { GoChevronRight, GoChevronUp } from "react-icons/go";
+import React, { useMemo, useState } from "react";
+import { GoChevronRight } from "react-icons/go";
 import { motion, AnimatePresence } from "framer-motion";
 import { PulseLoader } from "react-spinners";
 import "../styles/StatusBlock.css";
@@ -46,8 +46,6 @@ function StatusBlock({
   onToggle,
 }) {
   const [internalExpanded, setInternalExpanded] = useState(false);
-  const [displayedLabel, setDisplayedLabel] = useState("");
-  const [isLabelFading, setIsLabelFading] = useState(false);
   const config = STATUS_CONFIG[type];
   const isControlled = typeof expanded === "boolean";
   const isExpanded = isControlled ? expanded : internalExpanded;
@@ -61,7 +59,6 @@ function StatusBlock({
     return config.label;
   }, [activeLabel, config, isActive, isExpanded, isExpandable, labelOverride, type]);
   const animateLabel = type === "thinking" && isActive;
-  const renderedLabel = animateLabel ? displayedLabel : label;
 
   const handleToggle = () => {
     if (onToggle) {
@@ -71,29 +68,6 @@ function StatusBlock({
     setInternalExpanded((prev) => !prev);
   };
 
-  useEffect(() => {
-    if (!animateLabel) {
-      setIsLabelFading(false);
-      return undefined;
-    }
-
-    if (label === displayedLabel) {
-      return undefined;
-    }
-
-    if (!displayedLabel) {
-      setDisplayedLabel(label);
-      return undefined;
-    }
-
-    setIsLabelFading(true);
-    const timer = setTimeout(() => {
-      setDisplayedLabel(label);
-      setIsLabelFading(false);
-    }, 220);
-
-    return () => clearTimeout(timer);
-  }, [animateLabel, displayedLabel, label]);
 
   const statusContent = (
     <>
@@ -106,13 +80,49 @@ function StatusBlock({
           speedMultiplier={0.8}
         />
       )}
-      {renderedLabel && (
-        <span className={`status-label${animateLabel ? " animated" : ""}${isLabelFading ? " fading" : ""}`}>
-          {renderedLabel}
-        </span>
+      {label && (
+        animateLabel ? (
+          <AnimatePresence initial={false} mode="wait">
+            <motion.span
+              key={label}
+              className="status-label animated"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              {label}
+            </motion.span>
+          </AnimatePresence>
+        ) : (
+          <span className="status-label">
+            {label}
+          </span>
+        )
       )}
       {isExpandable && (
-        isExpanded ? <GoChevronUp strokeWidth={1} /> : <GoChevronRight strokeWidth={1} />
+        animateLabel ? (
+          <AnimatePresence initial={false} mode="wait">
+            <motion.span
+              key={label}
+              className="status-chevron"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, rotate: isExpanded ? 90 : 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              <GoChevronRight strokeWidth={1} />
+            </motion.span>
+          </AnimatePresence>
+        ) : (
+          <motion.span
+            className="status-chevron"
+            animate={{ rotate: isExpanded ? 90 : 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
+            <GoChevronRight strokeWidth={1} />
+          </motion.span>
+        )
       )}
     </>
   );

@@ -81,16 +81,10 @@ function Share() {
     <div className="container">
       {!isInitialized && (
         <motion.div
+          className="page-loading-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100dvh",
-            marginBottom: "30px",
-          }}
         >
           <PulseLoader loading={true} size={20} />
         </motion.div>

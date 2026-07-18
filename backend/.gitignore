@@ -5,7 +5,6 @@ __pycache__
 logs/
 uploads/
 generated/
-icons/
-shared_pages/
+data/
 
 config/mcp_servers.json

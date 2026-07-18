@@ -1,15 +1,13 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { CiWarning } from "react-icons/ci";
-import { GoCopy, GoCheck } from "react-icons/go";
-import { BiInfoCircle } from "react-icons/bi";
+import { FiAlertTriangle, FiCheck, FiCopy, FiInfo, FiX } from "react-icons/fi";
 import "../styles/Toast.css";
 
-function Toast({ 
-  type, 
-  message, 
-  isVisible, 
+function Toast({
+  type,
+  message,
+  isVisible,
   onClose,
 }) {
   React.useEffect(() => {
@@ -17,39 +15,23 @@ function Toast({
       const timer = setTimeout(() => {
         onClose?.();
       }, 2000);
-      
+
       return () => clearTimeout(timer);
     }
-  }, [isVisible, onClose]);
+  }, [isVisible, message, onClose]);
 
   const getIcon = () => {
     switch (type) {
       case "error":
-        return <CiWarning style={{ flexShrink: 0, marginRight: "4px", fontSize: "16px" }} />;
+        return <FiAlertTriangle className="toast-icon" />;
       case "success":
-        return <GoCheck style={{ flexShrink: 0, marginRight: "6px", fontSize: "14px" }} />;
+        return <FiCheck className="toast-icon" />;
       case "copy":
-        return <GoCopy style={{ flexShrink: 0, marginRight: "6px", fontSize: "14px" }} />;
+        return <FiCopy className="toast-icon" />;
       case "info":
-        return <BiInfoCircle style={{ flexShrink: 0, marginRight: "4px", fontSize: "16px" }} />;
+        return <FiInfo className="toast-icon" />;
       default:
         return null;
-    }
-  };
-
-  const getClassName = () => {
-    const baseClass = 'toast-container';
-    switch (type) {
-      case "error":
-        return `${baseClass} toast-error`;
-      case "success":
-        return `${baseClass} toast-success`;
-      case "copy":
-        return `${baseClass} toast-copy`;
-      case "info":
-        return `${baseClass} toast-info`;
-      default:
-        return baseClass;
     }
   };
 
@@ -58,14 +40,15 @@ function Toast({
       {isVisible && message && (
         <div className="toast-wrapper">
           <motion.div
-            className={getClassName()}
-            initial={{ opacity: 0, y: -20 }}
+            className="toast-banner"
+            initial={{ opacity: 0, y: -24 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            exit={{ opacity: 0, y: -24 }}
             transition={{ duration: 0.3 }}
           >
             {getIcon()}
-            {message}
+            <div className="toast-message">{message}</div>
+            <FiX className="toast-close" onClick={() => onClose?.()} />
           </motion.div>
         </div>
       )}
@@ -79,4 +62,4 @@ function Toast({
   return content;
 }
 
-export default Toast; 
+export default Toast;

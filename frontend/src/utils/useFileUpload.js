@@ -1,9 +1,22 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useContext } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { SettingsContext } from '../contexts/SettingsContext';
+import { useToast } from '../contexts/ToastContext';
 
-export const useFileUpload = (initialFiles = [], userInfo = null) => {
+export const useFileUpload = (initialFiles = [], userInfo = null, mode = "chat") => {
   const [uploadedFiles, setUploadedFiles] = useState(initialFiles);
-  
+  const {
+    canVision,
+    canVisionImage,
+    visionDefaultModel,
+    visionDefaultImageModel,
+    updateModel,
+    updateImageModel,
+  } = useContext(SettingsContext);
+  const { showToast } = useToast();
+
+  const currentCanVision = mode === "image" ? canVisionImage : canVision;
+
   const maxFileSize = 10 * 1024 * 1024;
 
   const uploadFiles = useCallback(
@@ -95,21 +108,28 @@ export const useFileUpload = (initialFiles = [], userInfo = null) => {
   );
 
   const processFiles = useCallback(
-    async (files, onError, imageSupport) => {
+    async (files) => {
       const imageFiles = files.filter((file) => file.type.startsWith("image/"));
-      if (imageFiles.length > 0 && !imageSupport) {
-        onError?.("해당 모델은 이미지 업로드를 지원하지 않습니다.");
-        return;
+      if (imageFiles.length > 0 && !currentCanVision) {
+        const target = mode === "image" ? visionDefaultImageModel : visionDefaultModel;
+        if (target) {
+          if (mode === "image") updateImageModel(target);
+          else updateModel(target);
+          showToast("이미지 지원 모델로 변경되었습니다.", "info");
+        } else {
+          showToast("해당 모델은 이미지 업로드를 지원하지 않습니다.");
+          return;
+        }
       }
-      
+
       let acceptedFiles = files;
       if (!userInfo?.admin) {
         const currentCount = uploadedFiles.length;
         const maxAllowed = 10;
         const remaining = maxAllowed - currentCount;
-        
+
         if (files.length > remaining) {
-          onError?.(`최대 ${maxAllowed}개까지 업로드할 수 있습니다.`);
+          showToast(`최대 ${maxAllowed}개까지 업로드할 수 있습니다.`);
           acceptedFiles = files.slice(0, remaining);
         }
       }
@@ -140,7 +160,7 @@ export const useFileUpload = (initialFiles = [], userInfo = null) => {
               )
             );
           } catch (err) {
-            onError?.(err.message);
+            showToast(err.message);
             setUploadedFiles((prev) => {
               const target = prev.find((item) => item.id === uniqueId);
               if (target && target.preview) {
@@ -151,10 +171,10 @@ export const useFileUpload = (initialFiles = [], userInfo = null) => {
           }
         })
       );
-      
+
       return uploadedFiles;
     },
-    [uploadedFiles, uploadFiles, setUploadedFiles, userInfo]
+    [uploadedFiles, uploadFiles, setUploadedFiles, userInfo, currentCanVision, visionDefaultModel, visionDefaultImageModel, updateModel, updateImageModel, showToast, mode]
   );
   
   const removeFile = useCallback((fileId) => {

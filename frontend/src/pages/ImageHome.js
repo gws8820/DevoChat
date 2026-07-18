@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { useFileUpload } from "../utils/useFileUpload";
-import Toast from "../components/Toast";
+import { useToast } from "../contexts/ToastContext";
 import InputContainer from "../components/InputContainer";
 import "../styles/Common.css";
 
@@ -14,8 +14,8 @@ function ImageHome({ isTouch, userInfo }) {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
+
+  const { showToast } = useToast();
 
   const abortControllerRef = useRef(null);
 
@@ -62,8 +62,6 @@ function ImageHome({ isTouch, userInfo }) {
   }, []);
 
   const {
-    canVision,
-    maxImageInput,
     switchImageMode,
     setHasImage
   } = useContext(SettingsContext);
@@ -74,7 +72,7 @@ function ImageHome({ isTouch, userInfo }) {
     uploadedFiles,
     processFiles,
     removeFile
-  } = useFileUpload([]);
+  } = useFileUpload([], null, "image");
 
   const uploadingFiles = uploadedFiles.some((file) => !file.content);
 
@@ -126,14 +124,13 @@ function ImageHome({ isTouch, userInfo }) {
           replace: false,
         });
       } catch (error) {
-        setToastMessage("새 대화를 시작하는 데 실패했습니다.");
-        setShowToast(true);
+        showToast("새 대화를 시작하는 데 실패했습니다.");
         setIsLoading(false);
       } finally {
         abortControllerRef.current = null;
       }
     },
-    [navigate, uploadedFiles, uploadingFiles, addConversation]
+    [navigate, uploadedFiles, uploadingFiles, addConversation, showToast]
   );
 
   const cancelRequest = useCallback(() => {
@@ -158,23 +155,15 @@ function ImageHome({ isTouch, userInfo }) {
       e.preventDefault();
       setIsDragActive(false);
       const files = Array.from(e.dataTransfer.files);
-      if (!canVision) {
-        e.stopPropagation();
-        return;
-      }
-      
+
       const imageFiles = files.filter((file) => file.type && file.type.startsWith("image/"));
       if (imageFiles.length === 0) {
-        setToastMessage("이미지만 업로드할 수 있습니다.");
-        setShowToast(true);
+        showToast("이미지만 업로드할 수 있습니다.");
         return;
       }
-      await processFiles(imageFiles, (errorMessage) => {
-        setToastMessage(errorMessage);
-        setShowToast(true);
-      }, canVision, maxImageInput);
+      await processFiles(imageFiles);
     },
-    [processFiles, canVision, maxImageInput]
+    [processFiles, showToast]
   );
 
   return (
@@ -211,7 +200,7 @@ function ImageHome({ isTouch, userInfo }) {
       />
 
       <AnimatePresence>
-        {isDragActive && canVision && (
+        {isDragActive && (
           <motion.div
             key="drag-overlay"
             className="drag-overlay"
@@ -227,13 +216,6 @@ function ImageHome({ isTouch, userInfo }) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <Toast
-        type="error"
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-      />
     </div>
   );
 }

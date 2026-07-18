@@ -5,6 +5,7 @@ beautifulsoup4==4.14.3
 bcrypt==5.0.0
 email-validator==2.3.0
 fastapi==0.129.0
+geoip2==5.2.0
 google-cloud-speech==2.36.1
 google-genai==1.63.0
 httpx==0.28.1

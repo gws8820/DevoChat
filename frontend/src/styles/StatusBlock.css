@@ -1,5 +1,5 @@
 .status-block {
-  width: fit-content;
+  align-self: stretch;
   margin: 10px 0;
 }
 
@@ -8,17 +8,11 @@
 }
 
 .status-block.waiting.init {
-  margin: 18px 14px;
+  margin: 17px 14px 14px;
 }
 
 .status-block.image-generating {
-  margin: 0 14px 14px;
-}
-
-@media (max-width: 768px) {
-  .status-block.image-generating {
-    margin-left: 5px;
-  }
+  margin: 17px 14px 31px;
 }
 
 .status-block.remote-streaming {
@@ -30,9 +24,10 @@
 
 .status-block-header {
   display: flex;
+  width: fit-content;
   align-items: center;
   gap: 4px;
-  height: 17px;
+  height: 18px;
   font-weight: 600;
   font-size: 14px;
   color: rgb(100, 100, 100);
@@ -45,21 +40,24 @@
 
 .status-spinner {
   flex-shrink: 0;
-  margin-right: 7px;
+  margin-right: 6px;
   font-size: 14px;
   line-height: 1;
 }
 
 .status-label {
   display: inline-block;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.status-chevron {
+  display: inline-flex;
+  flex-shrink: 0;
 }
 
 .status-label.animated {
-  transition: opacity 0.22s ease-in-out;
-}
-
-.status-label.fading {
-  opacity: 0.3;
+  will-change: opacity, transform;
 }
 
 .status-content {

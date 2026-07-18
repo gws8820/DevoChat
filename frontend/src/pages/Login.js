@@ -1,24 +1,23 @@
 // Login.js
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Toast from "../components/Toast";
+import { useToast } from "../contexts/ToastContext";
 import "../styles/Auth.css";
 import logo from "../resources/logo.png";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [toastMessage, setToastMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('expired') === 'true') {
-      setToastMessage("다시 로그인해 주세요.");
-      setShowToast(true);
+      showToast("다시 로그인해 주세요.");
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function validateEmail(email) {
@@ -28,14 +27,12 @@ function Login() {
 
   async function handleLogin() {
     if (!email || !password) {
-      setToastMessage("모든 필드를 입력해 주세요.");
-      setShowToast(true);
+      showToast("모든 필드를 입력해 주세요.");
       return;
     }
 
     if (!validateEmail(email)) {
-      setToastMessage("올바른 이메일 형식을 입력해 주세요.");
-      setShowToast(true);
+      showToast("올바른 이메일 형식을 입력해 주세요.");
       return;
     }
 
@@ -53,8 +50,7 @@ function Login() {
       }
       window.location.reload();
     } catch (error) {
-      setToastMessage(error.message || "알 수 없는 오류가 발생했습니다.");
-      setShowToast(true);
+      showToast(error.message || "알 수 없는 오류가 발생했습니다.");
     }
   }
 
@@ -103,13 +99,6 @@ function Login() {
           가입하기
         </button>
       </div>
-
-      <Toast
-        type="error"
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-      />
     </div>
   );
 }

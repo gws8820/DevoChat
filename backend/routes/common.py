@@ -2,12 +2,14 @@ import os
 import re
 import json
 import uuid
+import geoip2.database
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from bson import ObjectId
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from typing import Any, List, Dict, Optional
 from .auth import User
 from logging_util import logger
@@ -29,7 +31,7 @@ class ChatRequest(BaseModel):
     control: ControlFlags = ControlFlags()
     reason: str = ""
     verbosity: str = ""
-    memory: int = 4
+    memory: int = 2
     instructions: str = ""
     message: List[Dict[str, Any]]
 
@@ -95,6 +97,12 @@ except FileNotFoundError:
 generated_image_path = os.path.join(os.path.dirname(__file__), "..", "generated/images")
 os.makedirs(generated_image_path, exist_ok=True)
 
+geoip_db_path = os.getenv('GEOIP_DB_PATH', os.path.join(os.path.dirname(__file__), '..', 'data', 'GeoLite2-City.mmdb'))
+try:
+    geoip_reader = geoip2.database.Reader(geoip_db_path)
+except FileNotFoundError:
+    geoip_reader = None
+
 def check_chat_user_permissions(user: User, request: ChatRequest):
     billing_result = get_chat_model_billing(request.model)
     if not billing_result:
@@ -154,8 +162,33 @@ def get_image_alias_model() -> str:
         logger.error(f"Error reading config/image_models.json: {str(ex)}")
         return ''
 
-def build_instruction(user_name: str, custom_instructions: str = None, dan: bool = False) -> str:
-    instructions = f"[Info]\nThe user's name is {user_name}.\n\n" + DEFAULT_PROMPT
+def get_user_location(fastapi_request: Request):
+    if not geoip_reader:
+        return None, None
+    forwarded = fastapi_request.headers.get('x-forwarded-for')
+    ip = forwarded.split(',')[0].strip() if forwarded else fastapi_request.client.host
+    try:
+        response = geoip_reader.city(ip)
+        parts = [response.city.name, response.subdivisions.most_specific.name, response.country.name]
+        location = ", ".join(p for p in parts if p) or None
+        tz = ZoneInfo(response.location.time_zone) if response.location.time_zone else None
+        return location, tz
+    except (geoip2.errors.AddressNotFoundError, ValueError):
+        return None, None
+
+def build_instruction(user_name: str, model: str, fastapi_request: Request, custom_instructions: str = None, dan: bool = False) -> str:
+    location, tz = get_user_location(fastapi_request)
+    current_date = datetime.now(tz).strftime('%Y-%m-%d %H:%M (%A)')
+
+    info = (
+        f"[Info]\n"
+        f"The user's name is {user_name}.\n"
+        f"Current AI model is {get_chat_model_alias(model)}.\n"
+        f"The current date is {current_date}.\n"
+        + (f"The user's location is {location}.\n\n" if location else "\n")
+    )
+
+    instructions = info + DEFAULT_PROMPT
     if custom_instructions:
         instructions += "\n\n" + custom_instructions
     if dan and DAN_PROMPT:
@@ -170,16 +203,32 @@ def normalize_assistant_content(content):
     
     return content.strip()
 
+def get_chat_model_alias(model_name) -> str:
+    try:
+        models_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'chat_models.json')
+        with open(models_path, 'r', encoding='utf-8') as f:
+            models_data = json.load(f)
+
+        for model in models_data['models']:
+            if model['model_name'] == model_name:
+                return model['model_alias']
+
+        logger.warning(f"Model {model_name} not found in config/chat_models.json")
+        return model_name
+    except Exception as ex:
+        logger.error(f"Error reading config/chat_models.json: {str(ex)}")
+        return model_name
+
 def get_chat_model_billing(model_name):
     try:
         models_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'chat_models.json')
         with open(models_path, 'r', encoding='utf-8') as f:
             models_data = json.load(f)
-        
+
         for model in models_data['models']:
             if model['model_name'] == model_name:
                 return float(model['billing']['in_billing']), float(model['billing']['out_billing'])
-        
+
         logger.warning(f"Model {model_name} not found in config/chat_models.json")
         return None
     except Exception as ex:

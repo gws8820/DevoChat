@@ -16,7 +16,7 @@ import "katex/dist/katex.min.css";
 
 const ToolBlockStateContext = createContext();
 
-export const ToolBlockStateProvider = ({ children }) => {
+const ToolBlockStateProvider = ({ children }) => {
   const [expandedBlocks, setExpandedBlocks] = useState({});
   
   const toggleExpanded = (toolId) => {
@@ -33,7 +33,7 @@ export const ToolBlockStateProvider = ({ children }) => {
   );
 };
 
-export const useToolBlockState = () => {
+const useToolBlockState = () => {
   const context = useContext(ToolBlockStateContext);
   if (!context) {
     throw new Error('useToolBlockState must be used within ToolBlockStateProvider');
@@ -41,7 +41,7 @@ export const useToolBlockState = () => {
   return context;
 };
 
-export const InlineCode = React.memo(({ children, ...props }) => {
+const InlineCode = React.memo(({ children, ...props }) => {
   return (
     <code className="inline-code" {...props}>
       {children}
@@ -49,7 +49,7 @@ export const InlineCode = React.memo(({ children, ...props }) => {
   );
 });
 
-export const ThinkingStatusBlock = React.memo(({ children, title, isThinkClosed = false, isLoading = false, isLastMessage = false }) => {
+const ThinkingStatusBlock = React.memo(({ children, title, isThinkClosed = false, isLoading = false, isLastMessage = false }) => {
   const isThinking = !isThinkClosed && isLoading && isLastMessage;
 
   return (
@@ -59,7 +59,7 @@ export const ThinkingStatusBlock = React.memo(({ children, title, isThinkClosed 
   );
 });
 
-export const ToolStatusBlock = React.memo(({ toolData }) => {
+const ToolStatusBlock = React.memo(({ toolData }) => {
   const { expandedBlocks, toggleExpanded } = useToolBlockState();
   const toolId = toolData.tool_id;
   const isExpanded = expandedBlocks[toolId] || false;
@@ -81,7 +81,7 @@ export const ToolStatusBlock = React.memo(({ toolData }) => {
   );
 });
 
-export const CitationsBlock = React.memo(({ children }) => {
+const CitationsBlock = React.memo(({ children }) => {
   return (
     <StatusBlock type="citations">
       {children}
@@ -89,7 +89,7 @@ export const CitationsBlock = React.memo(({ children }) => {
   );
 });
 
-export const TempCodeBlock = React.memo(({ className, children, ...props }) => {
+const TempCodeBlock = React.memo(({ className, children }) => {
   const [copied, setCopied] = React.useState(false);
   const match = /language-(\w+)/.exec(className || "");
   const language = match ? match[1] : "javascript";
@@ -129,7 +129,7 @@ export const TempCodeBlock = React.memo(({ className, children, ...props }) => {
   );
 });
 
-export const CodeBlock = React.memo(({ className, children, ...props }) => {
+const CodeBlock = React.memo(({ className, children, ...props }) => {
   const [copied, setCopied] = React.useState(false);
   const match = /language-(\w+)/.exec(className || "");
   let language = match ? match[1] : "text";
@@ -177,31 +177,31 @@ export const CodeBlock = React.memo(({ className, children, ...props }) => {
   );
 });
 
-export const TempPre = React.memo((preProps) => {
+const TempPre = React.memo((preProps) => {
   const codeProps = preProps.children.props;
   return <TempCodeBlock {...codeProps} />;
 });
-export const CompletedPre = React.memo((preProps) => {
+const CompletedPre = React.memo((preProps) => {
   const codeProps = preProps.children.props;
   return <CodeBlock {...codeProps} />;
 });
 
-export const Table = React.memo((props) => (
+const Table = React.memo((props) => (
   <table className="markdown-table" {...props} />
 ));
-export const Thead = React.memo((props) => (
+const Thead = React.memo((props) => (
   <thead className="markdown-thead" {...props} />
 ));
-export const Tbody = React.memo((props) => (
+const Tbody = React.memo((props) => (
   <tbody className="markdown-tbody" {...props} />
 ));
-export const Tr = React.memo((props) => (
+const Tr = React.memo((props) => (
   <tr className="markdown-tr" {...props} />
 ));
-export const Th = React.memo((props) => (
+const Th = React.memo((props) => (
   <th className="markdown-th" {...props} />
 ));
-export const Td = React.memo((props) => (
+const Td = React.memo((props) => (
   <td className="markdown-td" {...props} />
 ));
 

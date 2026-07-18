@@ -275,6 +275,8 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
 
     instructions = build_instruction(
         user.name,
+        request.model,
+        fastapi_request,
         request.instructions if request.control.instructions else None,
         request.dan
     )

@@ -109,7 +109,7 @@ async def get_chat_conversation(conversation_id: str, current_user: User = Depen
         "mcp": doc.get("mcp", []),
         "reason": doc.get("reason", 0),
         "verbosity": doc.get("verbosity", 0),
-        "memory": doc.get("memory", 4),
+        "memory": doc.get("memory", 2),
         "instructions": doc.get("instructions", ""),
         "conversation": doc.get("conversation", []),
         "is_streaming": conversation_id in active_streams

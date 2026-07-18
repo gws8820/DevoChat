@@ -6,7 +6,7 @@ import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFileUpload } from "../utils/useFileUpload";
 import Modal from "../components/Modal";
-import Toast from "../components/Toast";
+import { useToast } from "../contexts/ToastContext";
 import InputContainer from "../components/InputContainer";
 import "../styles/Common.css";
 
@@ -18,9 +18,9 @@ function Home({ isTouch, userInfo }) {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
-  const [confirmModal, setConfirmModal] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
+  const [showNotice, setShowNotice] = useState(false);
+
+  const { showToast } = useToast();
 
   const abortControllerRef = useRef(null);
 
@@ -76,7 +76,7 @@ function Home({ isTouch, userInfo }) {
     uploadedFiles,
     processFiles,
     removeFile
-  } = useFileUpload([], userInfo);
+  } = useFileUpload([], userInfo, "chat");
 
   const { models, model, canVision, setHasImage } = useContext(SettingsContext);
   const { addConversation } = useContext(ConversationsContext);
@@ -96,7 +96,7 @@ function Home({ isTouch, userInfo }) {
         
         const storedHash = localStorage.getItem('noticeHash');
         if (hash && (!storedHash || storedHash !== hash)) {
-          setConfirmModal(true);
+          setShowNotice(true);
         }
       } catch (error) {}
     };
@@ -106,11 +106,10 @@ function Home({ isTouch, userInfo }) {
 
   useEffect(() => {
     if (location.state?.errorModal) {
-      setToastMessage(location.state.errorModal);
-      setShowToast(true);
+      showToast(location.state.errorModal);
       window.history.replaceState({}, document.title);
     }
-  }, [location.state]);
+  }, [location.state, showToast]);
 
   const sendMessage = useCallback(
     async (message) => {
@@ -157,8 +156,7 @@ function Home({ isTouch, userInfo }) {
           replace: false,
         });
       } catch (error) {
-        setToastMessage("새 대화를 시작하는 데 실패했습니다.");
-        setShowToast(true);
+        showToast("새 대화를 시작하는 데 실패했습니다.");
         setIsLoading(false);
       } finally {
         abortControllerRef.current = null;
@@ -170,7 +168,8 @@ function Home({ isTouch, userInfo }) {
       navigate,
       uploadedFiles,
       uploadingFiles,
-      addConversation
+      addConversation,
+      showToast
     ]
   );
 
@@ -205,12 +204,9 @@ function Home({ isTouch, userInfo }) {
       e.preventDefault();
       setIsDragActive(false);
       const files = Array.from(e.dataTransfer.files);
-      await processFiles(files, (errorMessage) => {
-        setToastMessage(errorMessage);
-        setShowToast(true);
-      }, canVision);
+      await processFiles(files);
     },
-    [processFiles, canVision]
+    [processFiles]
   );
 
   return (
@@ -273,24 +269,17 @@ function Home({ isTouch, userInfo }) {
       </AnimatePresence>
 
       <AnimatePresence>
-        {confirmModal && (
+        {showNotice && (
           <Modal
             message={notice}
             onConfirm={() => {
               localStorage.setItem('noticeHash', noticeHash);
-              setConfirmModal(false);
+              setShowNotice(false);
             }}
             showCancelButton={false}
           />
         )}
       </AnimatePresence>
-
-      <Toast
-        type="error"
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-      />
     </div>
   );
 }

@@ -8,6 +8,7 @@
     left: 0;
     right: 0;
     bottom: 0;
+    padding: 0 20px;
     background-color: rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(10px);
 }
@@ -17,14 +18,13 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    max-width: 500px;
-    margin: 0 10px;
-    padding: 40px 50px;
-    gap: 10px;
+    width: 100%;
+    max-width: 380px;
+    padding: 36px;
     background: #fff;
-    border-radius: 10px;
+    border-radius: 12px;
     box-sizing: border-box;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
 }
 
 .modal-content {
@@ -33,9 +33,13 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    margin: 20px 0;
-    font-size: 20px;
-    word-break: break-all;
+    padding: 5px 0 20px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgb(40, 40, 40);
+    word-break: keep-all;
+    white-space: pre-line;
+    text-align: center;
 }
 
 .modal-button {
@@ -46,20 +50,21 @@
     gap: 10px;
 }
 
-.modal-button button {
+.modal-button .button {
     flex: 1;
-    padding: 15px;
-    max-width: 120px;
-    font-size: 16px;
+    padding: 14px;
+    font-size: 15px;
+    color: rgb(40, 40, 40);
     border: 1px solid rgb(240, 240, 240);
-    border-radius: 5px;
+    border-radius: 10px;
     cursor: pointer;
-    background: transparent;
     transition: background-color 0.3s ease;
+    text-align: center;
+    box-sizing: border-box;
 }
 
-.modal-button button:hover {
-    background-color: rgb(240, 240, 240);
+.modal-button .button:hover {
+    background-color: rgb(250, 250, 250);
 }
 
 .modal-button .confirm:hover {

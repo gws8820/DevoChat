@@ -278,6 +278,8 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
 
     instructions = build_instruction(
         user.name,
+        request.model,
+        fastapi_request,
         request.instructions if request.control.instructions else None,
         request.dan
     )
@@ -406,7 +408,8 @@ async def get_image_alias(request: AliasRequest, user: User = Depends(get_curren
                 messages=[
                     {"role": "system", "content": IMAGE_ALIAS_PROMPT},
                     {"role": "user", "content": request.text}
-                ]
+                ],
+                extra_body={"reasoning": {"effort": "none"}}
             )
         alias = result.choices[0].message.content.strip()[:15]
         save_alias(user, request.conversation_id, alias)

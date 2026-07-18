@@ -197,12 +197,12 @@ const Realtime = () => {
                 audio: {
                   input: {
                     noise_reduction: {
-                      type: "near_field"
+                      type: "far_field"
                     },
                     turn_detection: {
                       type: "semantic_vad",
                       eagerness: "low",
-                      interrupt_response: false
+                      interrupt_response: true
                     }
                   }
                 }
@@ -270,16 +270,16 @@ const Realtime = () => {
 
   const toggleMicrophone = useCallback(() => {
     if (!audioStreamRef.current) return;
-    try {
-      audioStreamRef.current.getAudioTracks().forEach(track => {
-        track.enabled = !track.enabled;
-      });
-      setIsMicEnabled(!isMicEnabled);
-    } catch (err) {
-      cleanup();
-      navigate("/", { state: { errorModal: "마이크 토글 중 오류가 발생했습니다." } });
-    }
-  }, [navigate, isMicEnabled, cleanup]);
+    setIsMicEnabled((prev) => !prev);
+  }, []);
+
+  useEffect(() => {
+    const stream = audioStreamRef.current;
+    if (!stream) return;
+    stream.getAudioTracks().forEach((track) => {
+      track.enabled = isMicEnabled;
+    });
+  }, [isMicEnabled]);
 
   const handleGoBack = useCallback((e) => {
     cleanup();

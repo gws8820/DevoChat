@@ -16,16 +16,19 @@ import Register from "./pages/Register";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { SettingsContext } from "./contexts/SettingsContext";
 import { ConversationsProvider, ConversationsContext } from "./contexts/ConversationsContext";
+import { ToastProvider } from "./contexts/ToastContext";
 import logo from "./resources/logo.png";
 
 function App() {
   return (
     <Router>
-      <SettingsProvider>
-        <ConversationsProvider>
-          <AppContent />
-        </ConversationsProvider>
-      </SettingsProvider>
+      <ToastProvider>
+        <SettingsProvider>
+          <ConversationsProvider>
+            <AppContent />
+          </ConversationsProvider>
+        </SettingsProvider>
+      </ToastProvider>
     </Router>
   );
 }
@@ -169,7 +172,7 @@ function AppContent() {
     let hadTextSelectionAtStart = false;
 
     const threshold = 50;
-    const excludedClasses = ['.header', '.context-menu', '.message-edit', '.input-container', '.katex-display', '.code-block', '.mcp-modal-overlay', '.modal-overlay'];
+    const excludedClasses = ['.header', '.context-menu', '.input-container', '.katex-display', '.code-block', '.mcp-modal-overlay', '.modal-overlay'];
   
     const handleTouchStart = (e) => {
       touchStartX = e.touches[0].clientX;

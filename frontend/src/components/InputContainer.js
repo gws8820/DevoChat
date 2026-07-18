@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef, useContext, useCallback } from "react";
-import { GoPlus } from "react-icons/go";
-import { BiX } from "react-icons/bi";
-import { FiCommand } from "react-icons/fi";
-import { PiPaperPlaneRightFill, PiStopFill, PiWaveformBold } from "react-icons/pi";
+import { FiCommand, FiPlus, FiArrowUp, FiMic, FiX, FiSquare } from "react-icons/fi";
+import { GoPencil } from "react-icons/go";
 import { motion, AnimatePresence } from "framer-motion";
 import { SettingsContext } from "../contexts/SettingsContext";
 import ToolModal from "./ToolModal";
 import ThinkingModeDropdown from "./ThinkingDropdown";
-import Toast from "./Toast";
+import { useToast } from "../contexts/ToastContext";
 import "../styles/InputContainer.css";
+import "../styles/FileTile.css";
+
+const getFileExt = (name) =>
+  name && name.includes(".") ? name.split(".").pop().toUpperCase() : "FILE";
  
 function InputContainer({
   isTouch,
@@ -16,9 +18,11 @@ function InputContainer({
   inputText,
   setInputText,
   isLoading,
-  isSendDisabled = false,
+  isRemoteStreaming = false,
   onSend,
   onCancel,
+  isEditing = false,
+  onCancelEdit,
   uploadedFiles,
   processFiles,
   removeFile,
@@ -28,10 +32,10 @@ function InputContainer({
   const [isComposing, setIsComposing] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [isMCPModalOpen, setIsMCPModalOpen] = useState(false);
 
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
+  const { showToast } = useToast();
 
   const textAreaRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -64,6 +68,17 @@ function InputContainer({
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!isRecording) {
+      setRecordingSeconds(0);
+      return;
+    }
+    const id = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [isRecording]);
+
+  const formatRecordingTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
   
 const {
     isSearch,
@@ -72,16 +87,10 @@ const {
     canToggleSearch,
     canToggleResearch,
     canToggleMCP,
-    canVision,
     setMCPList,
     toggleSearch,
     toggleResearch,
   } = useContext(SettingsContext);
-
-const notifyError = useCallback((message) => {
-    setToastMessage(message);
-    setShowToast(true);
-  }, []);
 
   const handlePaste = useCallback(
     async (e) => {
@@ -91,10 +100,10 @@ const notifyError = useCallback((message) => {
         .filter(file => file && (!imageOnly || file.type.startsWith("image/")));
       if (files.length > 0) {
         e.preventDefault();
-        await processFiles(files, notifyError, canVision);
+        await processFiles(files);
       }
     },
-    [processFiles, canVision, notifyError, imageOnly]
+    [processFiles, imageOnly]
   );
 
   const handleFileClick = useCallback(() => {
@@ -118,7 +127,7 @@ const notifyError = useCallback((message) => {
   const handleRecordingStart = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      notifyError("이 브라우저는 음성 인식을 지원하지 않습니다.");
+      showToast("이 브라우저는 음성 인식을 지원하지 않습니다.");
       return;
     }
 
@@ -148,9 +157,9 @@ const notifyError = useCallback((message) => {
         recognitionRef.current = null;
         setIsRecording(false);
         if (event.error === 'aborted' && event.message && event.message.includes('Dictation')) {
-          notifyError("받아쓰기가 비활성화되어 있습니다. 설정 → 일반 → 키보드 → 받아쓰기에서 활성화해 주세요.");
+          showToast("받아쓰기가 비활성화되어 있습니다. 설정 → 일반 → 키보드 → 받아쓰기에서 활성화해 주세요.");
         } else if (event.error !== 'aborted') {
-          notifyError(`음성 인식 오류가 발생했습니다. ${event.error}`);
+          showToast(`음성 인식 오류가 발생했습니다. ${event.error}`);
         }
       };
 
@@ -173,7 +182,7 @@ const notifyError = useCallback((message) => {
     setIsRecording(true);
     if (navigator.vibrate) navigator.vibrate(100);
     startRecognition();
-  }, [notifyError, setInputText]);
+  }, [showToast, setInputText]);
 
 const handleKeyDown = useCallback((event) => {
     if (
@@ -183,29 +192,31 @@ const handleKeyDown = useCallback((event) => {
       !isTouch &&
       !uploadingFiles &&
       !isLoading &&
-      !isSendDisabled
+      !isRemoteStreaming
     ) {
       event.preventDefault();
       onSend(inputText);
     }
-  }, [inputText, isComposing, isTouch, uploadingFiles, isLoading, isSendDisabled, onSend]);
+  }, [inputText, isComposing, isTouch, uploadingFiles, isLoading, isRemoteStreaming, onSend]);
 
   const handleSendButtonClick = useCallback(() => {
-    if (isSendDisabled) return;
+    if (isRemoteStreaming) return;
     if (isLoading) {
       onCancel?.();
       return;
     }
-    if (isRecording) {
-      handleRecordingStop();
-      return;
-    }
     if (inputText.trim()) {
       onSend(inputText);
+    }
+  }, [isRemoteStreaming, isLoading, inputText, onSend, onCancel]);
+
+  const handleMicClick = useCallback(() => {
+    if (isRecording) {
+      handleRecordingStop();
     } else {
       handleRecordingStart();
     }
-  }, [isSendDisabled, isLoading, inputText, onSend, onCancel, isRecording, handleRecordingStop, handleRecordingStart]);
+  }, [isRecording, handleRecordingStop, handleRecordingStart]);
 
   const handleMCPClick = useCallback(() => {
     setIsMCPModalOpen(true);
@@ -219,6 +230,8 @@ const handleKeyDown = useCallback((event) => {
     setMCPList(selectedServers);
   }, [setMCPList]);
 
+  const sendDisabled = uploadingFiles || isRemoteStreaming || (!isLoading && !inputText.trim());
+
   return (
     <motion.div 
       className={`input-container${isTouch ? " touch" : ""}`}
@@ -226,7 +239,15 @@ const handleKeyDown = useCallback((event) => {
       animate={{ y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="content-container">
+        {isEditing && (
+          <div className="edit-header">
+            <div className="edit-header-title">
+              <GoPencil style={{ strokeWidth: 0.6 }} />
+              <span>편집</span>
+            </div>
+            <FiX className="edit-header-close" onClick={onCancelEdit} />
+          </div>
+        )}
         <AnimatePresence>
           {uploadedFiles.length > 0 && (
             <motion.div
@@ -247,13 +268,13 @@ const handleKeyDown = useCallback((event) => {
                     transition={{ duration: 0.3 }}
                     style={{ position: "relative" }}
                   >
-                    {file.preview ? (
-                      <div className={`file-object image${isTouch ? " touch" : ""}`}>
+                    {(file.preview || file.type === "image") ? (
+                      <div className="file-object image">
                         <img
-                          src={file.preview}
+                          src={file.preview || `${process.env.REACT_APP_FASTAPI_URL}${file.content}`}
                           alt={file.name}
                         />
-                        <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
+                        <FiX className="file-delete" onClick={() => handleFileDelete(file)} />
                         {!file.content && (
                           <div className="file-upload-overlay">
                             <span className="spinner" style={{ "--spinner-size": "1.2em", "--spinner-width": "1.8px" }} />
@@ -261,10 +282,10 @@ const handleKeyDown = useCallback((event) => {
                         )}
                       </div>
                     ) : (
-                      <div className={`file-object${isTouch ? " touch" : ""}`}>
+                      <div className="file-object">
                         <span className="file-name">{file.name}</span>
-                        <span className="file-ext">{file.name.includes('.') ? file.name.split('.').pop().toUpperCase() : 'FILE'}</span>
-                        <BiX className="file-delete" onClick={() => handleFileDelete(file)} />
+                        <span className="file-ext">{getFileExt(file.name)}</span>
+                        <FiX className="file-delete" onClick={() => handleFileDelete(file)} />
                         {!file.content && (
                           <div className="file-upload-overlay">
                             <span className="spinner" style={{ "--spinner-size": "1.2em", "--spinner-width": "1.8px" }} />
@@ -295,7 +316,7 @@ const handleKeyDown = useCallback((event) => {
 
         <div className="button-area">
           <div className="function-button" onClick={handleFileClick}>
-            <GoPlus style={{ strokeWidth: 0.8 }} />
+            <FiPlus style={{ strokeWidth: 2 }} />
           </div>
 
           {!imageOnly && (
@@ -308,17 +329,42 @@ const handleKeyDown = useCallback((event) => {
           )}
 
           {!imageOnly && <ThinkingModeDropdown />}
-        </div>
-      </div>
 
-      <button
-        className={`send-button${isRecording ? " recording" : ""}`}
-        onClick={handleSendButtonClick}
-        disabled={uploadingFiles || isSendDisabled}
-        aria-label={isSendDisabled ? "메시지 전송 비활성화" : isLoading ? "전송 중단" : "메시지 전송"}
-      >
-        {isLoading ? <PiStopFill /> : (!isRecording && inputText.trim()) ? <PiPaperPlaneRightFill /> : <PiWaveformBold />}
-      </button>
+          <div className="button-spacer" />
+
+          {isRecording && (
+            <div className="recording-indicator" onClick={handleMicClick}>
+              <span className="recording-dot" />
+              <span>{formatRecordingTime(recordingSeconds)}</span>
+            </div>
+          )}
+
+          <motion.div
+            layout
+            transition={{ duration: 0.2 }}
+            className={`mic-button${isRecording ? " recording" : ""}`}
+            onClick={handleMicClick}
+          >
+            <FiMic style={{ strokeWidth: 1.8 }} />
+          </motion.div>
+
+          <AnimatePresence initial={false} mode="popLayout">
+            {!isRecording && (
+              <motion.div
+                key="send-button"
+                layout
+                className={`send-button${sendDisabled ? " disabled" : ""}`}
+                onClick={handleSendButtonClick}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: sendDisabled ? 0.6 : 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {isLoading ? <FiSquare style={{ fontSize: "13px", fill: "currentColor" }} /> : <FiArrowUp />}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
       <input
         type="file"
@@ -328,10 +374,7 @@ const handleKeyDown = useCallback((event) => {
         style={{ display: "none" }}
         onChange={async (e) => {
           const files = Array.from(e.target.files);
-          await processFiles(files, (errorMessage) => {
-            setToastMessage(errorMessage);
-            setShowToast(true);
-          }, canVision);
+          await processFiles(files);
           e.target.value = "";
         }}
       />
@@ -348,13 +391,6 @@ const handleKeyDown = useCallback((event) => {
         isResearch={isResearch}
         toggleResearch={toggleResearch}
         canToggleMCP={canToggleMCP}
-      />
-
-      <Toast
-        type="error"
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
       />
     </motion.div>
   );

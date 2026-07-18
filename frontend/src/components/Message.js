@@ -1,12 +1,15 @@
 // Message.js
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useLayoutEffect } from "react";
 import PropTypes from "prop-types";
 import { GoCopy, GoCheck, GoPencil, GoTrash, GoSync } from "react-icons/go";
 import { motion } from "framer-motion";
-import TextareaAutosize from "react-textarea-autosize";
 import { MarkdownRenderer } from "./MarkdownRenderers";
 import "../styles/Message.css";
+import "../styles/FileTile.css";
 import "katex/dist/katex.min.css";
+
+const getFileExt = (name) =>
+  name && name.includes(".") ? name.split(".").pop().toUpperCase() : "FILE";
 
 function Message({
   messageIndex,
@@ -15,79 +18,23 @@ function Message({
   isComplete,
   onDelete,
   onRegenerate,
-  onSendEditedMessage,
-  setEditingHasImages,
-  setScrollTrigger,
-  isTouch,
+  onEdit,
+  disableActions,
   isLoading,
   isLastMessage,
   shouldRender
 }) {
   const [copied, setCopied] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isComposing, setIsComposing] = useState(false);
-  const [editText, setEditText] = useState("");
-  const textareaRef = useRef(null);
-  
-  const startEdit = () => {
-    let textContent = content.find((item) => item.type === "text")?.text || "";
-    setEditText(textContent);
-    setIsEditing(true);
-    if (setEditingHasImages) {
-      const hasImages = content.some((item) => item.type === "image");
-      setEditingHasImages(hasImages);
-    }
-  };
+  const [expanded, setExpanded] = useState(false);
+  const [clamped, setClamped] = useState(false);
+  const userTextRef = useRef(null);
 
-  const cancelEdit = () => {
-    setIsEditing(false);
-    setEditText("");
-    if (setEditingHasImages) {
-      setEditingHasImages(false);
-    }
-  };
-
-  useEffect(() => {
-    cancelEdit();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content]);
-
-  useEffect(() => {
-    if (!isEditing) return;
-    const vv = window.visualViewport;
-    const resetScroll = () => window.scrollTo(0, 0);
-    vv?.addEventListener('scroll', resetScroll);
-    const timer = setTimeout(() => {
-      textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 300);
-    return () => {
-      vv?.removeEventListener('scroll', resetScroll);
-      clearTimeout(timer);
-    };
-  }, [isEditing]);
-
-  const saveEdit = useCallback(() => {
-    if (!editText.trim()) return;
-
-    const nonText = content.filter((item) => item.type !== "text");
-    const updated = [{ type: "text", text: editText }, ...nonText];
-    onSendEditedMessage(messageIndex, updated);
-    setIsEditing(false);
-  }, [content, editText, messageIndex, onSendEditedMessage]);
-
-  const handleKeyDown = useCallback(
-    (e) => {
-      if (e.key === "Enter" && !e.shiftKey && !isComposing && !isTouch) {
-        e.preventDefault();
-        saveEdit();
-      }
-    },
-    [isComposing, isTouch, saveEdit]
-  );
-
-  const handleTextareaChange = (e) => {
-    setEditText(e.target.value);
-  };
+  useLayoutEffect(() => {
+    if (expanded) return;
+    const el = userTextRef.current;
+    if (!el) return;
+    setClamped(el.scrollHeight > el.clientHeight + 1);
+  }, [content, expanded]);
 
   const stripMarkdown = (text) => text
     .replace(/```[\s\S]*?```/g, (m) => m.replace(/^```\w*\n?/, '').replace(/```$/, '').trim())
@@ -144,7 +91,7 @@ function Message({
   if (role === "user") {
     return (
       <motion.div
-        className={`user-wrap ${isEditing ? "editing" : ""}`}
+        className="user-wrap"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
@@ -153,27 +100,22 @@ function Message({
           {content.map((item, idx) => {
             if (item.type === "file") {
               return (
-                <div key={idx} className="file-object">
-                  <a
-                    href={item.file_path ? `${process.env.REACT_APP_FASTAPI_URL}${item.file_path}` : undefined}
-                    className={`file-name ${item.file_path ? 'downloadable' : ''}`}
-                  >
-                    {item.name}
-                  </a>
-                </div>
+                <a
+                  key={idx}
+                  href={item.file_path ? `${process.env.REACT_APP_FASTAPI_URL}${item.file_path}` : undefined}
+                  className={`file-object ${item.file_path ? 'downloadable' : ''}`}
+                >
+                  <span className="file-name">{item.name}</span>
+                  <span className="file-ext">{getFileExt(item.name)}</span>
+                </a>
               );
             }
             if (item.type === "image") {
               return (
-                <div key={idx} className="image-object">
+                <div key={idx} className="file-object image">
                   <img
                     src={`${process.env.REACT_APP_FASTAPI_URL}${item.content}`}
                     alt={item.name}
-                    onLoad={() => {
-                      if (setScrollTrigger) {
-                        setScrollTrigger((v) => v + 1);
-                      }
-                    }}
                   />
                 </div>
               );
@@ -182,57 +124,38 @@ function Message({
           })}
         </div>
 
-        <div className={`chat-message user ${shouldRender ? 'visible' : ''}`}>
-          {isEditing ? (
-            <TextareaAutosize
-              ref={textareaRef}
-              autoFocus
-              className="message-edit"
-              minRows={1}
-              value={editText}
-              onChange={handleTextareaChange}
-              onKeyDown={handleKeyDown}
-              onCompositionStart={() => setIsComposing(true)}
-              onCompositionEnd={() => setIsComposing(false)}
-              style={{ resize: "none", overflow: "hidden" }}
-            />
-          ) : (
-            content.map((item, idx) =>
+        <div className={`chat-message user ${shouldRender ? 'visible' : ''} ${expanded ? 'expanded' : ''} ${clamped ? 'clamped' : ''}`}>
+          <div ref={userTextRef} className="user-text">
+            {content.map((item, idx) =>
               item.type === "text" ? <span key={idx}>{item.text}</span> : null
-            )
+            )}
+          </div>
+          {clamped && (
+            <button className="message-expand" onClick={() => setExpanded((v) => !v)}>
+              {expanded ? "접기" : "펼치기"}
+            </button>
           )}
         </div>
 
-        {isEditing ? (
-          <div className="edit-buttons">
-            <button className="edit-button cancel" onClick={cancelEdit}>
-              취소
-            </button>
-            <button className="edit-button save" onClick={saveEdit}>
-              완료
-            </button>
-          </div>
-        ) : (
-          <div className="message-function user">
-            {copied ? (
-              <GoCheck className="function-button" />
-            ) : (
-              <GoCopy className="function-button" onClick={handleCopy} />
-            )}
-            {onSendEditedMessage && (
-              <GoPencil
-                className="function-button"
-                onClick={startEdit}
-              />
-            )}
-            {onDelete && (
-              <GoTrash
-                className="function-button"
-                onClick={() => onDelete(messageIndex)}
-              />
-            )}
-          </div>
-        )}
+        <div className="message-function user">
+          {copied ? (
+            <GoCheck className="function-button" />
+          ) : (
+            <GoCopy className="function-button" onClick={handleCopy} />
+          )}
+          {!disableActions && onEdit && (
+            <GoPencil
+              className="function-button"
+              onClick={() => onEdit(messageIndex)}
+            />
+          )}
+          {!disableActions && onDelete && (
+            <GoTrash
+              className="function-button"
+              onClick={() => onDelete(messageIndex)}
+            />
+          )}
+        </div>
       </motion.div>
     );
   } else if (role === "assistant") {
@@ -244,16 +167,11 @@ function Message({
               <img
                 src={`${process.env.REACT_APP_FASTAPI_URL}${content.content}`}
                 alt={content.name}
-                onLoad={() => {
-                  if (setScrollTrigger) {
-                    setScrollTrigger((v) => v + 1);
-                  }
-                }}
               />
             </div>
           </div>
           <div className="message-function">
-            {onRegenerate && (
+            {onRegenerate && !disableActions && (
               <GoSync
                 className="function-button"
                 onClick={() => onRegenerate(messageIndex)}
@@ -279,7 +197,7 @@ function Message({
             ) : (
               <GoCopy className="function-button" onClick={handleCopy} />
             )}
-            {onRegenerate && (
+            {onRegenerate && !disableActions && (
               <GoSync
                 className="function-button"
                 onClick={() => onRegenerate(messageIndex)}
@@ -289,17 +207,6 @@ function Message({
         </div>
       );
     }
-  } else if (role === "error") {
-    return (
-      <motion.div
-        className={`chat-message error ${shouldRender ? 'visible' : ''}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-      >
-        <div>{content}</div>
-      </motion.div>
-    );
   }
 }
 
@@ -311,10 +218,7 @@ Message.propTypes = {
   onDelete: PropTypes.func,
   onRegenerate: PropTypes.func,
   onEdit: PropTypes.func,
-  onSendEditedMessage: PropTypes.func,
-  setEditingHasImages: PropTypes.func,
-  setScrollTrigger: PropTypes.func,
-  isTouch: PropTypes.bool,
+  disableActions: PropTypes.bool,
   isLoading: PropTypes.bool,
   isLastMessage: PropTypes.bool,
   shouldRender: PropTypes.bool

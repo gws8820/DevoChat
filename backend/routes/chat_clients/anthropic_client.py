@@ -294,6 +294,8 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
 
     instructions = build_instruction(
         user.name,
+        request.model,
+        fastapi_request,
         request.instructions if request.control.instructions else None,
         request.dan
     )
@@ -325,7 +327,7 @@ async def get_response(request: ChatRequest, user: User, fastapi_request: Reques
             if request.web_search:
                 parameters["tools"] = [{
                     "name": "web_search",
-                    "type": "web_search_20250305"
+                    "type": "web_search_20260318"
                 }]
                 
             if len(request.mcp) > 0:

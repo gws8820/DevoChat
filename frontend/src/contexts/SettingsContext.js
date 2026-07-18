@@ -3,7 +3,7 @@ import React, { createContext, useState, useEffect, useMemo, useCallback } from 
 export const SettingsContext = createContext();
 
 const INIT_VALUES = {
-  memory: 4,
+  memory: 2,
   instructions: "",
   isReasoning: true,
   isSearch: true,
@@ -23,6 +23,8 @@ export const SettingsProvider = ({ children }) => {
   const [verbosity, setVerbosity] = useState("");
   const [defaultModel, setDefaultModel] = useState("");
   const [defaultImageModel, setDefaultImageModel] = useState("");
+  const [visionDefaultModel, setVisionDefaultModel] = useState("");
+  const [visionDefaultImageModel, setVisionDefaultImageModel] = useState("");
   const [memory, setMemory] = useState(INIT_VALUES.memory);
   const [instructions, setInstructions] = useState(INIT_VALUES.instructions);
   const [isReasoning, setIsReasoning] = useState(true);
@@ -35,6 +37,7 @@ export const SettingsProvider = ({ children }) => {
   const [canControlVerbosity, setCanControlVerbosity] = useState(false);
   const [canControlSystemMessage, setCanControlSystemMessage] = useState(false);
   const [canVision, setCanVision] = useState(false);
+  const [canVisionImage, setCanVisionImage] = useState(false);
   const [canToggleReasoning, setCanToggleReasoning] = useState(false);
   const [canToggleSearch, setCanToggleSearch] = useState(false);
   const [canToggleResearch, setCanToggleResearch] = useState(false);
@@ -82,10 +85,10 @@ export const SettingsProvider = ({ children }) => {
     setCanControlReason(reasonLevels.length > 0 && nextIsReasoning === true);
     setCanControlVerbosity(verbosityLevels.length > 0);
 
-    if (reasonLevels.length > 0 && !reasonLevels.includes(reason)) {
+    if (reasonLevels.length > 0) {
       setReason(reasonDefault);
     }
-    if (verbosityLevels.length > 0 && !verbosityLevels.includes(verbosity)) {
+    if (verbosityLevels.length > 0) {
       setVerbosity(verbosityDefault);
     }
     setCanControlSystemMessage(canUseInstructions);
@@ -103,7 +106,7 @@ export const SettingsProvider = ({ children }) => {
     const maxInput = selectedImageModel?.capabilities?.max_input;
 
     setImageModel(selectedImageModel.model_name);
-    setCanVision(vision === "switch" || vision === true);
+    setCanVisionImage(vision === "switch" || vision === true);
     setMaxImageInput(maxInput);
   };
 
@@ -234,6 +237,8 @@ export const SettingsProvider = ({ children }) => {
         setRealtimeModels(realtimeModelsData?.models);
         setDefaultModel(modelsData.default);
         setDefaultImageModel(imageModelsData.default);
+        setVisionDefaultModel(modelsData.vision_default);
+        setVisionDefaultImageModel(imageModelsData.vision_default);
 
         const selectedDefaultModel = modelsData?.models?.find(m => m.model_name === modelsData.default);
         const selectedDefaultImageModel = imageModelsData?.models?.find(m => m.model_name === imageModelsData.default);
@@ -301,7 +306,10 @@ export const SettingsProvider = ({ children }) => {
     canToggleResearch,
     canToggleMCP,
     canVision,
+    canVisionImage,
     maxImageInput,
+    visionDefaultModel,
+    visionDefaultImageModel,
     updateModel,
     updateImageModel,
     updateRealtimeModel,
@@ -319,7 +327,7 @@ export const SettingsProvider = ({ children }) => {
     switchImageMode,
     resetSettings
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [models, imageModels, realtimeModels, model, imageModel, realtimeModel, isModelReady, alias, reason, verbosity, memory, instructions, hasImage, isReasoning, isSearch, isResearch, isDAN, mcpList, canControlReason, canControlVerbosity, canControlSystemMessage, canToggleReasoning, canToggleSearch, canToggleResearch, canToggleMCP, canVision, maxImageInput]);
+  }), [models, imageModels, realtimeModels, model, imageModel, realtimeModel, isModelReady, alias, reason, verbosity, memory, instructions, hasImage, isReasoning, isSearch, isResearch, isDAN, mcpList, canControlReason, canControlVerbosity, canControlSystemMessage, canToggleReasoning, canToggleSearch, canToggleResearch, canToggleMCP, canVision, canVisionImage, maxImageInput, visionDefaultModel, visionDefaultImageModel]);
 
   return (
     <SettingsContext.Provider value={value}>

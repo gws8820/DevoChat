@@ -10,7 +10,7 @@ import { useFileUpload } from "../utils/useFileUpload";
 import InputContainer from "../components/InputContainer";
 import Message from "../components/Message";
 import Modal from "../components/Modal";
-import Toast from "../components/Toast";
+import { useToast } from "../contexts/ToastContext";
 import StatusBlock from "../components/StatusBlock";
 import "../styles/Common.css";
 
@@ -18,10 +18,10 @@ function ImageChat({ isTouch, chatMessageRef }) {
   const { conversation_id } = useParams();
   const location = useLocation();
   const {
-    imageModel, 
-    imageModels, 
+    imageModel,
+    imageModels,
     maxImageInput,
-    canVision,
+    canVisionImage,
     updateImageModel,
     switchImageMode,
     setAlias,
@@ -36,21 +36,22 @@ function ImageChat({ isTouch, chatMessageRef }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [scrollTrigger, setScrollTrigger] = useState(0);
-  const [editingHasImages, setEditingHasImages] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editBackup, setEditBackup] = useState(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [isButtonReady, setIsButtonReady] = useState(false);
   const [deleteIndex, setdeleteIndex] = useState(null);
   const [confirmModal, setConfirmModal] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
   const [isRemoteStreaming, setIsRemoteStreaming] = useState(false);
 
+  const { showToast } = useToast();
+
   const {
-    uploadedFiles, 
+    uploadedFiles,
     setUploadedFiles,
-    processFiles, 
+    processFiles,
     removeFile
-  } = useFileUpload([]);
+  } = useFileUpload([], null, "image");
 
   const abortControllerRef = useRef(null);
   const pollIntervalRef = useRef(null);
@@ -60,9 +61,9 @@ function ImageChat({ isTouch, chatMessageRef }) {
 
   useEffect(() => {
     const hasUploadedImages = uploadedFiles.length > 0;
-    switchImageMode(hasUploadedImages || editingHasImages);
-    setHasImage(hasUploadedImages || editingHasImages);
-  }, [uploadedFiles, editingHasImages, switchImageMode, setHasImage]);
+    switchImageMode(hasUploadedImages);
+    setHasImage(hasUploadedImages);
+  }, [uploadedFiles, switchImageMode, setHasImage]);
 
   const addAssistantMessage = useCallback((content) => {
     const newMessage = { 
@@ -71,15 +72,6 @@ function ImageChat({ isTouch, chatMessageRef }) {
       id: generateMessageId()
     };
     setMessages((prev) => [...prev, newMessage]);
-  }, []);
-
-  const setErrorMessage = useCallback((message) => {
-    const errorMessage = { 
-      role: "error", 
-      content: message,
-      id: generateMessageId()
-    };
-    setMessages((prev) => [...prev, errorMessage]);
   }, []);
 
   const applyData = useCallback((data) => {
@@ -122,16 +114,14 @@ function ImageChat({ isTouch, chatMessageRef }) {
   }, [conversation_id, applyData]);
 
   const showSendError = useCallback((shouldPoll = false) => {
-    setToastMessage("메세지 전송 중 오류가 발생했습니다.");
-    setShowToast(true);
+    showToast("메세지 전송 중 오류가 발생했습니다.");
     if (shouldPoll) pollRemote();
-  }, [pollRemote]);
+  }, [pollRemote, showToast]);
 
   const showDeleteError = useCallback((shouldPoll = false) => {
-    setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
-    setShowToast(true);
+    showToast("메세지 삭제 중 오류가 발생했습니다.");
     if (shouldPoll) pollRemote();
-  }, [pollRemote]);
+  }, [pollRemote, showToast]);
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -186,7 +176,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
             credentials: "include"
           });
           if (!res.ok) {
-            setErrorMessage("초기화 중 오류가 발생했습니다.");
+            showToast("초기화 중 오류가 발생했습니다.");
             return;
           }
           const data = await res.json();
@@ -198,7 +188,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
           }
         }
       } catch (err) {
-        setErrorMessage("초기화 중 오류가 발생했습니다.");
+        showToast("초기화 중 오류가 발생했습니다.");
       } finally {
         if (!isInitialized) setIsInitialized(true);
       }
@@ -255,38 +245,28 @@ function ImageChat({ isTouch, chatMessageRef }) {
       e.preventDefault();
       setIsDragActive(false);
       const files = Array.from(e.dataTransfer.files);
-      if (!canVision) {
-        e.stopPropagation();
-        return;
-      }
 
       const imageFiles = files.filter((file) => file.type && file.type.startsWith("image/"));
       if (imageFiles.length === 0) {
-        setToastMessage("이미지만 업로드할 수 있습니다.");
-        setShowToast(true);
+        showToast("이미지만 업로드할 수 있습니다.");
         return;
       }
-      await processFiles(imageFiles, (errorMessage) => {
-        setToastMessage(errorMessage);
-        setShowToast(true);
-      }, canVision, maxImageInput);
+      await processFiles(imageFiles);
     },
-    [processFiles, canVision, maxImageInput]
+    [processFiles, showToast]
   );
 
   const sendMessage = useCallback(
     async (message, files = uploadedFiles) => {
       if (!message.trim() || uploadingFiles) {
         if (!message.trim()) {
-          setToastMessage("내용을 입력해주세요.");
-          setShowToast(true);
+          showToast("내용을 입력해주세요.");
         }
         return;
       }
 
-      if (canVision && files.length > maxImageInput) {
-        setToastMessage(`이미지는 최대 ${maxImageInput}개까지 업로드할 수 있습니다.`);
-        setShowToast(true);
+      if (canVisionImage && files.length > maxImageInput) {
+        showToast(`이미지는 최대 ${maxImageInput}개까지 업로드할 수 있습니다.`);
         return;
       }
 
@@ -350,7 +330,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
           return;
         }
         else if (!response.ok) {
-          setErrorMessage("이미지 생성에 실패했습니다: " + result.detail);
+          showToast("이미지 생성에 실패했습니다: " + result.detail);
           return;
         }
 
@@ -363,11 +343,11 @@ function ImageChat({ isTouch, chatMessageRef }) {
           
           updateTimestamp(conversation_id, new Date().toISOString());
         } else {
-          setErrorMessage("이미지 생성에 실패했습니다.");
+          showToast("이미지 생성에 실패했습니다.");
         }
       } catch (err) {
         if (err.name === "AbortError") return;
-        setErrorMessage("메세지 전송 중 오류가 발생했습니다: " + err.message);
+        showToast("메세지 전송 중 오류가 발생했습니다: " + err.message);
       } finally {
         setIsLoading(false);
         abortControllerRef.current = null;
@@ -378,14 +358,14 @@ function ImageChat({ isTouch, chatMessageRef }) {
       imageModel,
       imageModels,
       updateTimestamp,
-      canVision,
+      canVisionImage,
       maxImageInput,
       uploadedFiles,
       setUploadedFiles,
       uploadingFiles,
       addAssistantMessage,
-      setErrorMessage,
-      showSendError
+      showSendError,
+      showToast
     ]
   );
 
@@ -425,16 +405,48 @@ function ImageChat({ isTouch, chatMessageRef }) {
     [conversation_id]
   );
 
-  const resendMesage = useCallback(
-    async (messageContent, deleteIndex = null) => {
+  const startEdit = useCallback(
+    (idx) => {
       if (isLoading || isRemoteStreaming) {
-        showSendError(isRemoteStreaming);
+        showToast("응답 생성 중에는 편집할 수 없습니다.");
         return;
       }
+      const target = messages[idx];
+      if (!target) return;
 
-      if (deleteIndex !== null) {
+      // 편집 대상 메시지의 텍스트와 첨부를 입력창으로 이동
+      const text = target.content.find((item) => item.type === "text")?.text || "";
+      const files = target.content
+        .filter((item) => item.type === "image" || item.type === "file")
+        .map((item) => ({ ...item, preview: undefined, id: generateMessageId() }));
+
+      // 이후 메시지를 프론트엔드에서만 잘라내고 복원용으로 백업
+      setEditBackup(messages);
+      setMessages(messages.slice(0, idx));
+      setUploadedFiles(files);
+      setInputText(text);
+      setEditingIndex(idx);
+      setTimeout(() => {
+        setScrollTrigger((v) => v + 1);
+      }, 0);
+    },
+    [messages, isLoading, isRemoteStreaming, setUploadedFiles, showToast]
+  );
+
+  const cancelEdit = useCallback(() => {
+    if (editBackup) setMessages(editBackup);
+    uploadedFiles.forEach((file) => { if (file.preview) URL.revokeObjectURL(file.preview); });
+    setUploadedFiles([]);
+    setInputText("");
+    setEditBackup(null);
+    setEditingIndex(null);
+  }, [editBackup, uploadedFiles, setUploadedFiles]);
+
+  const handleSend = useCallback(
+    async (message) => {
+      if (editingIndex !== null) {
         try {
-          await deleteMessages(deleteIndex);
+          await deleteMessages(editingIndex);
         } catch (err) {
           if (err.status === 400 || err.status === 409) {
             showSendError(true);
@@ -443,36 +455,22 @@ function ImageChat({ isTouch, chatMessageRef }) {
           }
           return;
         }
+        setEditBackup(null);
+        setEditingIndex(null);
       }
-
-      const textContent = messageContent.find(item => item.type === "text")?.text || "";
-      const nonTextContent = messageContent.filter(item => item.type !== "text");
-      sendMessage(textContent, nonTextContent);
+      sendMessage(message);
     },
-    [
-      deleteMessages,
-      sendMessage,
-      showSendError,
-      isLoading,
-      isRemoteStreaming
-    ]
-  );
-
-  const sendEditedMessage = useCallback(
-    (idx, updatedContent) => {
-      resendMesage(updatedContent, idx);
-    },
-    [resendMesage]
+    [editingIndex, deleteMessages, sendMessage, showSendError]
   );
 
   const handleDelete = useCallback((idx) => {
     if (isLoading || isRemoteStreaming) {
-      showDeleteError(isRemoteStreaming);
+      showToast("응답 생성 중에는 삭제할 수 없습니다.");
       return;
     }
     setdeleteIndex(idx);
     setConfirmModal(true);
-  }, [isLoading, isRemoteStreaming, showDeleteError]);
+  }, [isLoading, isRemoteStreaming, showToast]);
 
   return (
     <div
@@ -483,16 +481,10 @@ function ImageChat({ isTouch, chatMessageRef }) {
     >
       {!isInitialized && (
         <motion.div
+          className="page-loading-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100dvh",
-            marginBottom: "30px",
-          }}
         >
           <PulseLoader loading={true} size={20} />
         </motion.div>
@@ -508,15 +500,15 @@ function ImageChat({ isTouch, chatMessageRef }) {
                 role={msg.role}
                 content={msg.content}
                 onDelete={handleDelete}
-                onSendEditedMessage={sendEditedMessage}
-                setEditingHasImages={setEditingHasImages}
+                onEdit={startEdit}
+                disableActions={editingIndex !== null}
                 setScrollTrigger={setScrollTrigger}
                 isTouch={isTouch}
                 isLoading={isLoading}
                 isLastMessage={idx === messages.length - 1}
                 shouldRender={idx >= messages.length - 6}
               />
-            )), [messages, handleDelete, sendEditedMessage, isTouch, isLoading]
+            )), [messages, handleDelete, startEdit, editingIndex, isTouch, isLoading]
           )}
 
           <AnimatePresence>
@@ -525,7 +517,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
                 message="정말 메세지를 삭제하시겠습니까?"
                 onConfirm={async () => {
                   if (isLoading || isRemoteStreaming) {
-                    showDeleteError(isRemoteStreaming);
+                    showToast("응답 생성 중에는 삭제할 수 없습니다.");
                     setdeleteIndex(null);
                     setConfirmModal(false);
                     return;
@@ -536,8 +528,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
                     if (err.status === 400 || err.status === 409) {
                       showDeleteError(true);
                     } else {
-                      setToastMessage("메세지 삭제 중 오류가 발생했습니다.");
-                      setShowToast(true);
+                      showDeleteError();
                     }
                   }
                   setdeleteIndex(null);
@@ -574,9 +565,11 @@ function ImageChat({ isTouch, chatMessageRef }) {
         inputText={inputText}
         setInputText={setInputText}
         isLoading={isLoading}
-        isSendDisabled={isRemoteStreaming}
-        onSend={sendMessage}
+        isRemoteStreaming={isRemoteStreaming}
+        onSend={handleSend}
         onCancel={cancelRequest}
+        isEditing={editingIndex !== null}
+        onCancelEdit={cancelEdit}
         uploadedFiles={uploadedFiles}
         processFiles={processFiles}
         removeFile={removeFile}
@@ -585,7 +578,7 @@ function ImageChat({ isTouch, chatMessageRef }) {
       />
 
       <AnimatePresence>
-        {isDragActive && canVision && (
+        {isDragActive && (
           <motion.div
             key="drag-overlay"
             className="drag-overlay"
@@ -601,13 +594,6 @@ function ImageChat({ isTouch, chatMessageRef }) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <Toast
-        type="error"
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-      />
     </div>
   );
 }

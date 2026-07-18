@@ -1,7 +1,187 @@
 {
-  "default": "google/gemini-3.5-flash",
-  "alias": "google/gemini-3.1-flash-lite",
+  "default": "gpt-5.6-luna",
+  "vision_default": "gpt-5.6-luna",
+  "alias": "deepseek/deepseek-v4-flash",
   "models": [
+    {
+      "model_name": "gpt-5.6-sol",
+      "model_alias": "GPT 5.6 Sol",
+      "description": "고성능 GPT 모델",
+      "endpoint": "/chat/gpt",
+      "billing": {
+        "in_billing": "5",
+        "out_billing": "30"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": true,
+        "reasoning": "toggle",
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "reason": {
+          "levels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "default": "medium"
+        },
+        "verbosity": {
+          "levels": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "default": "medium"
+        }
+      },
+      "admin": true
+    },
+    {
+      "model_name": "gpt-5.6-terra",
+      "model_alias": "GPT 5.6 Terra",
+      "description": "기본 GPT 모델",
+      "endpoint": "/chat/gpt",
+      "billing": {
+        "in_billing": "2.5",
+        "out_billing": "15"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": true,
+        "reasoning": "toggle",
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "reason": {
+          "levels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "default": "medium"
+        },
+        "verbosity": {
+          "levels": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "default": "medium"
+        }
+      },
+      "admin": false
+    },
+    {
+      "model_name": "gpt-5.6-luna",
+      "model_alias": "GPT 5.6 Luna",
+      "description": "경량 GPT 모델",
+      "endpoint": "/chat/gpt",
+      "billing": {
+        "in_billing": "1",
+        "out_billing": "6"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": true,
+        "reasoning": "toggle",
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "reason": {
+          "levels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "default": "medium"
+        },
+        "verbosity": {
+          "levels": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "default": "medium"
+        }
+      },
+      "admin": false
+    },
+    {
+      "model_name": "moonshotai/kimi-k3",
+      "model_alias": "Kimi K3",
+      "description": "기본 Kimi 모델",
+      "endpoint": "/chat/openrouter",
+      "billing": {
+        "in_billing": "3",
+        "out_billing": "15"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": true,
+        "reasoning": true,
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "reason": {
+          "levels": [
+            "max"
+          ],
+          "default": "max"
+        },
+        "verbosity": false
+      },
+      "admin": false
+    },
+    {
+      "model_name": "z-ai/glm-5.2",
+      "model_alias": "GLM 5.2",
+      "description": "기본 GLM 모델",
+      "endpoint": "/chat/openrouter",
+      "billing": {
+        "in_billing": "1.2",
+        "out_billing": "4.1"
+      },
+      "capabilities": {
+        "stream": true,
+        "vision": false,
+        "reasoning": "toggle",
+        "web_search": "toggle",
+        "research": false,
+        "mcp": true
+      },
+      "controls": {
+        "instructions": true,
+        "reason": {
+          "levels": [
+            "high",
+            "xhigh"
+          ],
+          "default": "high"
+        },
+        "verbosity": false
+      },
+      "admin": false
+    },
     {
       "model_name": "google/gemini-3.5-flash",
       "model_alias": "Gemini 3.5 Flash",
@@ -22,7 +202,12 @@
       "controls": {
         "instructions": true,
         "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
+          "levels": [
+            "minimal",
+            "low",
+            "medium",
+            "high"
+          ],
           "default": "medium"
         },
         "verbosity": false
@@ -49,7 +234,12 @@
       "controls": {
         "instructions": true,
         "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
+          "levels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
           "default": "medium"
         },
         "verbosity": false
@@ -57,18 +247,18 @@
       "admin": false
     },
     {
-      "model_name": "gpt-5.5",
-      "model_alias": "GPT 5.5",
-      "description": "고성능 GPT 모델",
-      "endpoint": "/chat/gpt",
+      "model_name": "claude-fable-5",
+      "model_alias": "Claude 5 Fable",
+      "description": "최고성능 Claude 모델",
+      "endpoint": "/chat/claude",
       "billing": {
-        "in_billing": "5",
-        "out_billing": "30"
+        "in_billing": "10",
+        "out_billing": "50"
       },
       "capabilities": {
         "stream": true,
         "vision": true,
-        "reasoning": "toggle",
+        "reasoning": true,
         "web_search": "toggle",
         "research": false,
         "mcp": true
@@ -76,24 +266,27 @@
       "controls": {
         "instructions": true,
         "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
-          "default": "medium"
+          "levels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "default": "high"
         },
-        "verbosity": {
-          "levels": ["low", "medium", "high"],
-          "default": "medium"
-        }
+        "verbosity": false
       },
       "admin": true
     },
     {
-      "model_name": "gpt-5.4",
-      "model_alias": "GPT 5.4",
-      "description": "기본 GPT 모델",
-      "endpoint": "/chat/gpt",
+      "model_name": "claude-sonnet-5",
+      "model_alias": "Claude 5 Sonnet",
+      "description": "기본 Claude 모델",
+      "endpoint": "/chat/claude",
       "billing": {
-        "in_billing": "2.5",
-        "out_billing": "15"
+        "in_billing": "2",
+        "out_billing": "10"
       },
       "capabilities": {
         "stream": true,
@@ -106,43 +299,16 @@
       "controls": {
         "instructions": true,
         "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
+          "levels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
           "default": "medium"
         },
-        "verbosity": {
-          "levels": ["low", "medium", "high"],
-          "default": "medium"
-        }
-      },
-      "admin": false
-    },
-    {
-      "model_name": "gpt-5.4-mini",
-      "model_alias": "GPT 5.4 mini",
-      "description": "경량 GPT 모델",
-      "endpoint": "/chat/gpt",
-      "billing": {
-        "in_billing": "0.75",
-        "out_billing": "4.5"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": true,
-        "reasoning": "toggle",
-        "web_search": "toggle",
-        "research": false,
-        "mcp": true
-      },
-      "controls": {
-        "instructions": true,
-        "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
-          "default": "medium"
-        },
-        "verbosity": {
-          "levels": ["low", "medium", "high"],
-          "default": "medium"
-        }
+        "verbosity": false
       },
       "admin": false
     },
@@ -166,26 +332,32 @@
       "controls": {
         "instructions": true,
         "reason": {
-          "levels": ["low", "medium", "high", "xhigh", "max"],
-          "default": "medium"
+          "levels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "default": "high"
         },
         "verbosity": false
       },
       "admin": true
     },
     {
-      "model_name": "claude-sonnet-4-6",
-      "model_alias": "Claude 4.6 Sonnet",
-      "description": "기본 Claude 모델",
-      "endpoint": "/chat/claude",
+      "model_name": "minimax/minimax-m3",
+      "model_alias": "MiniMax M3",
+      "description": "기본 MiniMax 모델",
+      "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "3",
-        "out_billing": "15"
+        "in_billing": "0.6",
+        "out_billing": "2.4"
       },
       "capabilities": {
         "stream": true,
         "vision": true,
-        "reasoning": "toggle",
+        "reasoning": true,
         "web_search": "toggle",
         "research": false,
         "mcp": true
@@ -193,7 +365,12 @@
       "controls": {
         "instructions": true,
         "reason": {
-          "levels": ["low", "medium", "high", "max"],
+          "levels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
           "default": "medium"
         },
         "verbosity": false
@@ -220,8 +397,11 @@
       "controls": {
         "instructions": true,
         "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
-          "default": "medium"
+          "levels": [
+            "high",
+            "xhigh"
+          ],
+          "default": "high"
         },
         "verbosity": false
       },
@@ -233,8 +413,8 @@
       "description": "기본 Deepseek 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "0.1",
-        "out_billing": "0.2"
+        "in_billing": "0.09",
+        "out_billing": "0.18"
       },
       "capabilities": {
         "stream": true,
@@ -247,79 +427,28 @@
       "controls": {
         "instructions": true,
         "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
-          "default": "medium"
+          "levels": [
+            "high",
+            "xhigh"
+          ],
+          "default": "high"
         },
         "verbosity": false
       },
       "admin": false
     },
     {
-      "model_name": "z-ai/glm-5.1",
-      "model_alias": "GLM 5.1",
-      "description": "기본 GLM 모델",
-      "endpoint": "/chat/openrouter",
-      "billing": {
-        "in_billing": "1.4",
-        "out_billing": "4.4"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": false,
-        "reasoning": "toggle",
-        "web_search": "toggle",
-        "research": false,
-        "mcp": true
-      },
-      "controls": {
-        "instructions": true,
-        "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
-          "default": "medium"
-        },
-        "verbosity": false
-      },
-      "admin": false
-    },
-    {
-      "model_name": "z-ai/glm-5v-turbo",
-      "model_alias": "GLM 5V Turbo",
-      "description": "고성능 GLM 모델",
-      "endpoint": "/chat/openrouter",
-      "billing": {
-        "in_billing": "1.2",
-        "out_billing": "4"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": true,
-        "reasoning": "toggle",
-        "web_search": "toggle",
-        "research": false,
-        "mcp": true
-      },
-      "controls": {
-        "instructions": true,
-        "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
-          "default": "medium"
-        },
-        "verbosity": false
-      },
-      "admin": false
-    },
-    {
-      "model_name": "qwen/qwen3.7-max",
-      "model_alias": "Qwen 3.7 Max",
+      "model_name": "qwen/qwen3.7-plus",
+      "model_alias": "Qwen 3.7 Plus",
       "description": "기본 Qwen 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "2.5",
-        "out_billing": "7.5"
+        "in_billing": "0.4",
+        "out_billing": "1.6"
       },
       "capabilities": {
         "stream": true,
-        "vision": false,
+        "vision": true,
         "reasoning": "toggle",
         "web_search": "toggle",
         "research": false,
@@ -328,7 +457,12 @@
       "controls": {
         "instructions": true,
         "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
+          "levels": [
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
           "default": "medium"
         },
         "verbosity": false
@@ -336,40 +470,13 @@
       "admin": false
     },
     {
-      "model_name": "x-ai/grok-4.3",
-      "model_alias": "Grok 4.3",
+      "model_name": "x-ai/grok-4.5",
+      "model_alias": "Grok 4.5",
       "description": "기본 Grok 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "1.25",
-        "out_billing": "2.5"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": true,
-        "reasoning": true,
-        "web_search": "toggle",
-        "research": false,
-        "mcp": true
-      },
-      "controls": {
-        "instructions": true,
-        "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
-          "default": "medium"
-        },
-        "verbosity": false
-      },
-      "admin": false
-    },
-    {
-      "model_name": "moonshotai/kimi-k2.6",
-      "model_alias": "Kimi K2.6",
-      "description": "기본 Kimi 모델",
-      "endpoint": "/chat/openrouter",
-      "billing": {
-        "in_billing": "0.8",
-        "out_billing": "3.5"
+        "in_billing": "2",
+        "out_billing": "6"
       },
       "capabilities": {
         "stream": true,
@@ -382,26 +489,30 @@
       "controls": {
         "instructions": true,
         "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
-          "default": "medium"
+          "levels": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "default": "low"
         },
         "verbosity": false
       },
       "admin": false
     },
     {
-      "model_name": "minimax/minimax-m2.7",
-      "model_alias": "MiniMax M2.7",
-      "description": "기본 MiniMax 모델",
+      "model_name": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "model_alias": "Nemotron 3 Ultra",
+      "description": "기본 Nemotron 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
-        "in_billing": "0.3",
-        "out_billing": "1.2"
+        "in_billing": "0",
+        "out_billing": "0"
       },
       "capabilities": {
         "stream": true,
         "vision": false,
-        "reasoning": true,
+        "reasoning": "toggle",
         "web_search": "toggle",
         "research": false,
         "mcp": true
@@ -409,33 +520,13 @@
       "controls": {
         "instructions": true,
         "reason": {
-          "levels": ["low", "medium", "high", "xhigh"],
+          "levels": [
+            "low",
+            "medium",
+            "high"
+          ],
           "default": "medium"
         },
-        "verbosity": false
-      },
-      "admin": false
-    },
-    {
-      "model_name": "mistralai/mistral-large-2512",
-      "model_alias": "Mistral Large 3",
-      "description": "기본 Mistral 모델",
-      "endpoint": "/chat/openrouter",
-      "billing": {
-        "in_billing": "0.5",
-        "out_billing": "1.5"
-      },
-      "capabilities": {
-        "stream": true,
-        "vision": true,
-        "reasoning": false,
-        "web_search": "toggle",
-        "research": false,
-        "mcp": true
-      },
-      "controls": {
-        "instructions": true,
-        "reason": false,
         "verbosity": false
       },
       "admin": false

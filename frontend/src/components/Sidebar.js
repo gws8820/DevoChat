@@ -7,7 +7,7 @@ import { FaUserCircle } from "react-icons/fa";
 import { ConversationsContext } from "../contexts/ConversationsContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Modal from "./Modal";
-import Toast from "./Toast";
+import { useToast } from "../contexts/ToastContext";
 import SearchModal from "./SearchModal";
 import logo from "../resources/logo.png";
 import "../styles/Sidebar.css";
@@ -142,8 +142,7 @@ function Sidebar({
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [renamingConversationId, setRenamingConversationId] = useState(null);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
+  const { showToast } = useToast();
   const [isActiveVisible, setIsActiveVisible] = useState(true);
   const [activeDirection, setActiveDirection] = useState('down');
   
@@ -197,14 +196,13 @@ function Sidebar({
       (c) => c.conversation_id === conversation_id
     );
     if (!conv) {
-      setToastMessage("대화가 존재하지 않습니다.");
-      setShowToast(true);
+      showToast("대화가 존재하지 않습니다.");
       return;
     }
     const targetPath = conv.type === 'image' ? `/image/${conversation_id}` : `/chat/${conversation_id}`;
     navigate(targetPath);
     if (isResponsive) toggleSidebar();
-  }, [navigate, isResponsive, toggleSidebar]);
+  }, [navigate, isResponsive, toggleSidebar, showToast]);
 
   const toggleStar = useCallback(async (conversation_id, e) => {
     e.stopPropagation();
@@ -227,14 +225,13 @@ function Sidebar({
         throw new Error('즐겨찾기 토글이 실패했습니다.');
       }
     } catch (error) {
-      setToastMessage("즐겨찾기 토글이 실패했습니다.");
+      showToast("즐겨찾기 토글이 실패했습니다.");
       const conversation = conversations.find(c => c.conversation_id === conversation_id);
       if (conversation) {
         toggleStarConversation(conversation_id, conversation.starred);
       }
-      setShowToast(true);
     }
-  }, [conversations, toggleStarConversation]);
+  }, [conversations, toggleStarConversation, showToast]);
 
   const handleTouchStart = useCallback((e, conversation_id) => {
     setContextMenu(prev => ({ ...prev, visible: false }));
@@ -320,10 +317,9 @@ function Sidebar({
       }
     } catch (error) {
       console.error("Failed to rename conversation.", error);
-      setToastMessage("대화 이름 편집에 실패했습니다.");
-      setShowToast(true);
+      showToast("대화 이름 편집에 실패했습니다.");
     }
-  }, [updateAlias, setAlias]);
+  }, [updateAlias, setAlias, showToast]);
 
   const handleDelete = useCallback(async (conversation_id) => {
     try {
@@ -343,10 +339,9 @@ function Sidebar({
       }
     } catch (error) {
       console.error("Failed to delete conversation.", error);
-      setToastMessage("대화 삭제에 실패했습니다.");
-      setShowToast(true);
+      showToast("대화 삭제에 실패했습니다.");
     }
-  }, [deleteConversation, currentConversationId, navigate]);
+  }, [deleteConversation, currentConversationId, navigate, showToast]);
 
   const handleRefresh = useCallback(() => {
     window.location.reload();
@@ -386,17 +381,16 @@ function Sidebar({
         window.location.href = '/login';
       } catch (error) {
         const detail = error.response?.data?.detail;
-        setToastMessage(
+        showToast(
           !Array.isArray(detail) && detail
             ? detail
             : "알 수 없는 오류가 발생했습니다."
         );
-        setShowToast(true);
       }
     }
     setShowModal(false);
     setModalAction(null);
-  }, [modalAction]);
+  }, [modalAction, showToast]);
 
   const cancelDelete = useCallback(() => {
     setShowModal(false);
@@ -676,13 +670,6 @@ function Sidebar({
           />
         )}
       </AnimatePresence>
-
-      <Toast
-        type="error"
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-      />
     </>
   );
 }

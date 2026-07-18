@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Modal from "../components/Modal";
-import Toast from "../components/Toast";
+import { useToast } from "../contexts/ToastContext";
 import "../styles/Auth.css";
 import logo from "../resources/logo.png";
 
@@ -12,8 +12,7 @@ function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmModal, setConfirmModal] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   function validateEmail(email) {
@@ -23,20 +22,17 @@ function Register() {
 
   async function handleRegister() {
     if (!name || !email || !password) {
-      setToastMessage("모든 필드를 입력해 주세요.");
-      setShowToast(true);
+      showToast("모든 필드를 입력해 주세요.");
       return;
     }
 
     if (!validateEmail(email)) {
-      setToastMessage("올바른 이메일 형식을 입력해 주세요.");
-      setShowToast(true);
+      showToast("올바른 이메일 형식을 입력해 주세요.");
       return;
     }
 
     if (password.length < 8 || password.length > 20) {
-      setToastMessage("비밀번호는 8자리 이상 20자리 이하로 입력해 주세요.");
-      setShowToast(true);
+      showToast("비밀번호는 8자리 이상 20자리 이하로 입력해 주세요.");
       return;
     }
 
@@ -54,8 +50,7 @@ function Register() {
       }
       setConfirmModal(true);
     } catch (error) {
-      setToastMessage(error.message || "알 수 없는 오류가 발생했습니다.");
-      setShowToast(true);
+      showToast(error.message || "알 수 없는 오류가 발생했습니다.");
     }
   }
 
@@ -122,13 +117,6 @@ function Register() {
           />
         )}
       </AnimatePresence>
-
-      <Toast
-        type="error"
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-      />
     </div>
   );
 }

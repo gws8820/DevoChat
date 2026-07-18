@@ -55,6 +55,7 @@
 .search-results {
     display: flex;
     flex-direction: column;
+    position: relative;
     flex: 1;
     padding: 8px 13px;
     overflow-y: auto;
@@ -70,7 +71,7 @@
     border-radius: 10px;
 }
 
-.no-result {
+.search-results .no-result {
     position: absolute;
     inset: 0;
     display: flex;

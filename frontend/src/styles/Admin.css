@@ -118,13 +118,6 @@
   z-index: 1000;
 }
 
-.admin-error {
-  text-align: center;
-  padding: 40px;
-  font-size: 18px;
-  color: #dc3545;
-}
-
 .no-data {
   text-align: center;
   padding: 30px;
