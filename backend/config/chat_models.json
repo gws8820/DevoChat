@@ -1,7 +1,7 @@
 {
-  "default": "gpt-5.6-luna",
-  "vision_default": "gpt-5.6-luna",
-  "alias": "deepseek/deepseek-v4-flash",
+  "default": "z-ai/glm-5.2",
+  "vision_default": "google/gemini-3.6-flash",
+  "alias": "minimax/minimax-m3",
   "models": [
     {
       "model_name": "gpt-5.6-sol",
@@ -183,13 +183,13 @@
       "admin": false
     },
     {
-      "model_name": "google/gemini-3.5-flash",
-      "model_alias": "Gemini 3.5 Flash",
+      "model_name": "google/gemini-3.6-flash",
+      "model_alias": "Gemini 3.6 Flash",
       "description": "기본 Gemini 모델",
       "endpoint": "/chat/openrouter",
       "billing": {
         "in_billing": "1.5",
-        "out_billing": "9"
+        "out_billing": "7.5"
       },
       "capabilities": {
         "stream": true,

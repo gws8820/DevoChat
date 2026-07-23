@@ -130,31 +130,11 @@
     min-height: 0;
     overflow-y: auto;
     list-style-type: none;
-    scrollbar-width: auto;
-    scrollbar-color: transparent transparent;
-    transition: scrollbar-color 0.2s ease;
-}
-
-.conversation-container:hover {
-    scrollbar-color: rgb(235, 235, 235) transparent;
-}
-
-.conversation-container:focus-within {
-    scrollbar-color: rgb(235, 235, 235) transparent;
+    scrollbar-width: none;
 }
 
 .conversation-container::-webkit-scrollbar {
-    width: 10px;
-}
-
-.conversation-container::-webkit-scrollbar-thumb {
-    background: transparent;
-    border-radius: 10px;
-}
-
-.conversation-container:hover::-webkit-scrollbar-thumb,
-.conversation-container:focus-within::-webkit-scrollbar-thumb {
-    background: rgb(235, 235, 235);
+    display: none;
 }
 
 .conversation-container.loading {

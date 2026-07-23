@@ -73,6 +73,7 @@ function Share() {
         messageIndex={idx}
         role={msg.role}
         content={msg.content}
+        shouldRender={true}
       />
     )), [messages]
   );

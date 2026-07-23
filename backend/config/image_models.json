@@ -1,7 +1,7 @@
 {
   "default": "gemini-2.5-flash-image",
   "vision_default": "gemini-2.5-flash-image",
-  "alias": "deepseek/deepseek-v4-flash",
+  "alias": "minimax/minimax-m3",
   "models": [
     {
       "model_name": "gemini-3.1-flash-image-preview",
@@ -49,6 +49,36 @@
         "out_billing": "0.02"
       },
       "capabilities": { "vision": true, "max_input": 3 },
+      "admin": false
+    },
+    {
+      "model_name": "bytedance/seedream-v5.0-pro",
+      "model_alias": "Seedream 5.0 Pro",
+      "description": "BytePlus",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.045"
+      },
+      "variants": {
+        "vision": "bytedance/seedream-v5.0-pro/edit"
+      },
+      "capabilities": { "vision": "switch" },
+      "admin": false
+    },
+    {
+      "model_name": "bytedance/seedream-v5.0-pro/edit",
+      "model_alias": "Seedream 5.0 Pro",
+      "description": "BytePlus",
+      "endpoint": "/image/wavespeed",
+      "billing": {
+        "in_billing": "0",
+        "out_billing": "0.045"
+      },
+      "variants": {
+        "base": "bytedance/seedream-v5.0-pro"
+      },
+      "capabilities": { "vision": "switch", "max_input": 10 },
       "admin": false
     },
     {

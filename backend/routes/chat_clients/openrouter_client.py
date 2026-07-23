@@ -389,7 +389,7 @@ async def get_chat_alias(request: AliasRequest, user: User = Depends(get_current
                 ],
                 extra_body={"reasoning": {"effort": "none"}}
             )
-        alias = result.choices[0].message.content.strip()[:15]
+        alias = result.choices[0].message.content.strip()[:20]
         save_alias(user, request.conversation_id, alias)
         return {"alias": alias}
     except Exception as ex:
@@ -411,7 +411,7 @@ async def get_image_alias(request: AliasRequest, user: User = Depends(get_curren
                 ],
                 extra_body={"reasoning": {"effort": "none"}}
             )
-        alias = result.choices[0].message.content.strip()[:15]
+        alias = result.choices[0].message.content.strip()[:20]
         save_alias(user, request.conversation_id, alias)
         return {"alias": alias}
     except Exception as ex:
